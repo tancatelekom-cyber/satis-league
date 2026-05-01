@@ -3,32 +3,13 @@ import { SignupForm } from "@/components/auth/signup-form";
 export default function SignupPage() {
   return (
     <main>
-      <h1 className="page-title">Yeni Oyuncu Kaydi</h1>
-      <p className="page-subtitle">
-        Calisanlar ve magaza mudurleri buradan hesap olusturur. Kayit tamamlandiginda
-        kullanici dogrudan aktif olmaz; once admin onayina duser.
+      <h1 className="page-title auth-page-title">Kayit Ol</h1>
+      <p className="page-subtitle auth-page-subtitle">
+        Bilgilerinizi doldurun, admin onayindan sonra kullanima acilsin.
       </p>
 
-      <section className="auth-layout">
+      <section className="auth-layout auth-layout-simple">
         <SignupForm />
-
-        <aside className="guide-card">
-          <h3>Bu ekranda ne oluyor?</h3>
-          <div className="step-list">
-            <div className="step-item">
-              <strong>1. Bilgiler girilir</strong>
-              <span>Adi soyadi, mail, telefon, gorev ve magazasi secilir.</span>
-            </div>
-            <div className="step-item">
-              <strong>2. Hesap olusur</strong>
-              <span>Supabase kullaniciyi olusturur ve profil kaydini beklemeye alir.</span>
-            </div>
-            <div className="step-item">
-              <strong>3. Admin onayi beklenir</strong>
-              <span>Admin panelinden onay verilince kullanici aktif hale gelir.</span>
-            </div>
-          </div>
-        </aside>
       </section>
     </main>
   );

@@ -11,32 +11,13 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   return (
     <main>
-      <h1 className="page-title">Kullanici Girisi</h1>
-      <p className="page-subtitle">
-        Admin tarafindan onaylanan kullanicilar buradan giris yapar. Onaysiz hesaplar
-        kampanyayi goremez.
+      <h1 className="page-title auth-page-title">Giris</h1>
+      <p className="page-subtitle auth-page-subtitle">
+        Mail adresiniz ve sifrenizle devam edin.
       </p>
 
-      <section className="auth-layout">
+      <section className="auth-layout auth-layout-simple">
         <LoginForm message={params?.message} />
-
-        <aside className="guide-card">
-          <h3>Giris sonrasi ne olacak?</h3>
-          <div className="step-list">
-            <div className="step-item">
-              <strong>Calisan</strong>
-              <span>Kendi kampanya ve satis ekranina yonlenir.</span>
-            </div>
-            <div className="step-item">
-              <strong>Magaza Muduru</strong>
-              <span>Kendi magazasi ve personeli icin veri girebilir.</span>
-            </div>
-            <div className="step-item">
-              <strong>Yonetim ve Admin</strong>
-              <span>Rapor ve yonetim ekranlarini gorur.</span>
-            </div>
-          </div>
-        </aside>
       </section>
     </main>
   );

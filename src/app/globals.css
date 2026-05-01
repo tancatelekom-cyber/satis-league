@@ -64,49 +64,79 @@ button {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 16px;
-  padding: 18px 20px;
+  gap: 20px;
+  padding: 14px 18px;
   margin-top: 8px;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 999px;
-  background: rgba(9, 17, 31, 0.66);
-  backdrop-filter: blur(18px);
+  border-radius: 24px;
+  background: rgba(9, 17, 31, 0.82);
+  backdrop-filter: blur(14px);
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
 }
 
 .brand-badge {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   display: grid;
   place-items: center;
-  border-radius: 14px;
+  border-radius: 12px;
   color: #09111f;
   background: linear-gradient(135deg, var(--accent), var(--accent-strong));
   box-shadow: var(--shadow);
 }
 
+.topbar-auth {
+  justify-content: flex-start;
+  padding-inline: 16px;
+}
+
+.topbar-app {
+  align-items: center;
+}
+
+.topbar-auth .subtle {
+  font-size: 0.82rem;
+}
+
+.nav-cluster {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+  min-width: 0;
+  width: 100%;
+}
+
 .nav-links {
   display: flex;
-  gap: 14px;
+  align-items: center;
+  gap: 8px;
   flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .nav-link {
-  padding: 10px 14px;
+  padding: 8px 12px;
   border-radius: 999px;
   color: var(--muted);
+  font-size: 0.95rem;
 }
 
 .nav-link:hover {
   background: rgba(255, 255, 255, 0.06);
   color: var(--text);
+}
+
+.nav-link-active {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .hero {
@@ -328,6 +358,22 @@ button {
   grid-template-columns: 1.1fr 0.9fr;
   gap: 22px;
   align-items: start;
+}
+
+.auth-layout-simple {
+  grid-template-columns: minmax(0, 560px);
+  justify-content: center;
+}
+
+.auth-page-title,
+.auth-page-subtitle {
+  text-align: center;
+}
+
+.auth-page-subtitle {
+  max-width: 42ch;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .campaign-card,
@@ -1118,9 +1164,19 @@ button {
   }
 
   .topbar {
-    border-radius: 28px;
-    align-items: flex-start;
+    border-radius: 20px;
+    align-items: stretch;
     flex-direction: column;
+  }
+
+  .nav-cluster {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .nav-links {
+    justify-content: flex-start;
   }
 
   .repeater-row,
@@ -1140,6 +1196,23 @@ button {
 
   .hero-grid {
     grid-template-columns: 1fr;
+  }
+
+  .topbar {
+    padding: 12px 14px;
+  }
+
+  .brand {
+    font-size: 0.95rem;
+  }
+
+  .nav-links {
+    gap: 6px;
+  }
+
+  .nav-link {
+    width: 100%;
+    text-align: center;
   }
 
   .campaign-header,

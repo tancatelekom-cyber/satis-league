@@ -119,7 +119,7 @@ export function AppShellHeader() {
       <Link className="brand" href={loggedIn ? "/kampanyalar" : "/"}>
         <div className="brand-badge">S+</div>
         <div>
-          <div>SATIS LEAGUE</div>
+          <div>TANCA SATIS LEAGUE</div>
           <small className="subtle">{isAuthPage ? "Hesabiniza giris" : "Satis motivasyon uygulamasi"}</small>
         </div>
       </Link>

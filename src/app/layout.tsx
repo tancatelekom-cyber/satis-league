@@ -3,7 +3,7 @@ import { AppShellHeader } from "@/components/app-shell-header";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Satis Kampanya Oyunu",
+  title: "Tanca Satis League",
   description: "Satis ekibini motive eden mobil uyumlu web oyunu"
 };
 

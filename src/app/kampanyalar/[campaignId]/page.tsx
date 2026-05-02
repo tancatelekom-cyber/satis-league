@@ -154,7 +154,11 @@ export default async function CampaignDetailPage({
                 key={product.id}
                 campaignId={campaign.id}
                 campaignMode={campaign.mode}
-                defaultProfileId={dashboard.profile.id}
+                defaultProfileId={
+                  dashboard.profile.role === "manager" && dashboard.teamProfiles.length > 0
+                    ? dashboard.teamProfiles[0].id
+                    : dashboard.profile.id
+                }
                 defaultStoreId={dashboard.profile.store_id ?? null}
                 isManager={dashboard.profile.role === "manager"}
                 product={product}

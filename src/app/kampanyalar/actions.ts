@@ -98,16 +98,30 @@ export async function submitSaleEntryAction(formData: FormData) {
   let finalTargetStoreId: string | null = null;
 
   if (campaignRow.mode === "employee") {
-    if (actorRow.role === "manager" && targetProfileId) {
+    if (actorRow.role === "manager") {
+      if (!targetProfileId) {
+        redirectWithMessage(
+          "Magaza muduru satis girerken bir calisan secmelidir.",
+          "error",
+          errorRedirectTo
+        );
+      }
+
       const { data: targetProfile } = await admin
         .from("profiles")
-        .select("id, store_id, approval")
+        .select("id, store_id, approval, role, is_on_leave")
         .eq("id", targetProfileId)
         .single();
 
-      if (!targetProfile || targetProfile.approval !== "approved" || targetProfile.store_id !== actorRow.store_id) {
+      if (
+        !targetProfile ||
+        targetProfile.approval !== "approved" ||
+        targetProfile.store_id !== actorRow.store_id ||
+        targetProfile.role !== "employee" ||
+        targetProfile.is_on_leave
+      ) {
         redirectWithMessage(
-          "Magaza muduru sadece kendi magazasindaki onayli personele giris yapabilir.",
+          "Magaza muduru sadece kendi magazasindaki aktif calisana giris yapabilir.",
           "error",
           errorRedirectTo
         );

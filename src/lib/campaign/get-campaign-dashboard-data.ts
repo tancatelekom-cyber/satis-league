@@ -192,7 +192,12 @@ export async function getCampaignDashboardData(userId: string): Promise<UserCamp
   const teamProfiles =
     profile.role === "manager"
       ? approvedPeople
-          .filter((person) => person.store_id === profile.store_id && !person.is_on_leave)
+          .filter(
+            (person) =>
+              person.store_id === profile.store_id &&
+              !person.is_on_leave &&
+              person.role === "employee"
+          )
           .map((person) => ({ id: person.id, full_name: person.full_name }))
       : [];
 

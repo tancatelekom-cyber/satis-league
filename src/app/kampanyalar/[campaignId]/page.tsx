@@ -79,7 +79,7 @@ export default async function CampaignDetailPage({
           </Link>
           <h1 className="page-title">{campaign.name}</h1>
           <p className="page-subtitle">
-            Bu kampanyada sadece ihtiyaciniz olan adimi secin: siralama veya satis girisi.
+            Sadece ihtiyaciniz olan alani secin.
           </p>
         </div>
       </div>
@@ -90,40 +90,40 @@ export default async function CampaignDetailPage({
         </div>
       ) : null}
 
-      <section className="guide-card campaign-detail-summary">
-        <div className="season-entry-summary">
-          <div className="season-entry-chip">
+      <section className="guide-card campaign-detail-summary compact-hero-card">
+        <div className="compact-stat-row">
+          <div className="compact-stat">
             <span>Siraniz</span>
             <strong>{personal.rank ? `#${personal.rank}` : "Liste disi"}</strong>
           </div>
-          <div className="season-entry-chip">
+          <div className="compact-stat">
             <span>Skorunuz</span>
             <strong>{scoreLabel(personal.currentScore, campaign.scoring)}</strong>
           </div>
-          <div className="season-entry-chip">
+          <div className="compact-stat">
             <span>Lidere fark</span>
             <strong>{scoreLabel(personal.gap, campaign.scoring)}</strong>
           </div>
-          <div className="season-entry-chip">
+          <div className="compact-stat">
             <span>Bitise kalan</span>
             <strong>{daysLeftLabel(campaign.end_at)}</strong>
           </div>
         </div>
 
-        <div className="campaign-directory-meta">
-          <span>
+        <div className="compact-meta-row">
+          <span className="mission-pill">
             {campaign.mode === "employee" ? "Calisan Bazli" : "Magaza Bazli"} |{" "}
             {campaign.scoring === "points" ? "Puan" : "Adet"}
           </span>
-          <span>Bitis: {formatCampaignDateTime(campaign.end_at)}</span>
+          <span className="mission-pill">Bitis: {formatCampaignDateTime(campaign.end_at)}</span>
         </div>
       </section>
 
-      <section className="quick-nav-grid">
+      <section className="detail-switch-grid">
         {menuItems.map((item) => (
           <Link
             key={item.href}
-            className={`quick-nav-card ${item.active ? "admin-shortcut-card-active" : ""}`}
+            className={`detail-switch-card ${item.active ? "admin-shortcut-card-active" : ""}`}
             href={item.href}
           >
             <strong>{item.title}</strong>

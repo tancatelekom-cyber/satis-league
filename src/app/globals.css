@@ -426,6 +426,42 @@ button {
   margin-bottom: 20px;
 }
 
+.compact-hero-card {
+  padding: 16px 18px;
+}
+
+.compact-stat-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.compact-stat {
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.compact-stat span {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.compact-stat strong {
+  display: block;
+  font-size: 1rem;
+}
+
+.compact-meta-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
 .back-link {
   display: inline-flex;
   margin-bottom: 10px;
@@ -433,6 +469,31 @@ button {
 
 .ranking-summary-card {
   margin-bottom: 20px;
+}
+
+.detail-switch-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.detail-switch-card {
+  display: block;
+  padding: 16px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.detail-switch-card strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.detail-switch-card span {
+  color: var(--muted);
+  line-height: 1.5;
 }
 
 .quick-nav-grid,
@@ -1369,8 +1430,10 @@ button {
   .versus-hero,
   .auth-layout,
   .season-entry-summary,
+  .compact-stat-row,
   .quick-nav-grid,
   .ranking-focus-grid,
+  .detail-switch-grid,
   .admin-shortcuts,
   .admin-overview-grid,
   .admin-quick-grid,
@@ -1467,6 +1530,22 @@ button {
     text-align: center;
     color: var(--text);
     background: rgba(255, 255, 255, 0.08);
+  }
+
+  .compact-hero-card {
+    padding: 14px;
+  }
+
+  .compact-stat {
+    padding: 10px 12px;
+  }
+
+  .compact-stat strong {
+    font-size: 0.95rem;
+  }
+
+  .detail-switch-card {
+    padding: 14px 16px;
   }
 
   .campaign-header,

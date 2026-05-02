@@ -113,30 +113,6 @@ export default async function CampaignDetailPage({
 
       {view === "leaderboard" ? (
         <section className="guide-card">
-          <div className="podium-grid">
-            {leaderboard.slice(1, 2).map((row) => (
-              <div key={row.id} className="podium-card silver">
-                <span>2</span>
-                <strong>{row.label}</strong>
-                <small>{scoreLabel(row.score, campaign.scoring)}</small>
-              </div>
-            ))}
-            {leaderboard.slice(0, 1).map((row) => (
-              <div key={row.id} className="podium-card gold">
-                <span>1</span>
-                <strong>{row.label}</strong>
-                <small>{scoreLabel(row.score, campaign.scoring)}</small>
-              </div>
-            ))}
-            {leaderboard.slice(2, 3).map((row) => (
-              <div key={row.id} className="podium-card bronze">
-                <span>3</span>
-                <strong>{row.label}</strong>
-                <small>{scoreLabel(row.score, campaign.scoring)}</small>
-              </div>
-            ))}
-          </div>
-
           <div className="leaderboard-list">
             {leaderboard.map((row, index) => (
               <div key={row.id} className="leaderboard-row">

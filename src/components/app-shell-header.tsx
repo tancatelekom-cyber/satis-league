@@ -22,6 +22,7 @@ export function AppShellHeader() {
   const [ready, setReady] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
   const [profile, setProfile] = useState<HeaderProfile | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -60,6 +61,10 @@ export function AppShellHeader() {
     return () => {
       subscription.unsubscribe();
     };
+  }, [pathname]);
+
+  useEffect(() => {
+    setMenuOpen(false);
   }, [pathname]);
 
   const isAuthPage = pathname === "/giris" || pathname === "/kayit";
@@ -125,7 +130,17 @@ export function AppShellHeader() {
       </Link>
 
       {!isAuthPage ? (
-        <div className="nav-cluster">
+        <div className={`nav-cluster ${menuOpen ? "nav-cluster-open" : ""}`}>
+          <button
+            aria-expanded={menuOpen}
+            aria-label="Menuyu ac veya kapat"
+            className="menu-toggle"
+            onClick={() => setMenuOpen((current) => !current)}
+            type="button"
+          >
+            {menuOpen ? "Kapat" : "Menu"}
+          </button>
+
           {navItems.length ? (
             <nav className="nav-links">
               {navItems.map((item) => (

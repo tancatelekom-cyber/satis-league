@@ -114,6 +114,15 @@ button {
   width: 100%;
 }
 
+.menu-toggle {
+  display: none;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.08);
+}
+
 .nav-links {
   display: flex;
   align-items: center;
@@ -417,6 +426,53 @@ button {
 .admin-card,
 .auth-card {
   padding: 24px;
+}
+
+.admin-shortcuts,
+.admin-overview-grid,
+.admin-quick-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.admin-shortcut-card,
+.admin-overview-card,
+.admin-quick-card {
+  display: block;
+  padding: 18px 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.admin-shortcut-card strong,
+.admin-overview-card strong,
+.admin-quick-card strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.admin-shortcut-card span,
+.admin-overview-card span,
+.admin-quick-card span,
+.admin-overview-card p {
+  color: var(--muted);
+}
+
+.admin-shortcut-card-active {
+  border-color: rgba(88, 240, 196, 0.32);
+  background: rgba(88, 240, 196, 0.1);
+}
+
+.admin-overview-card strong {
+  font-size: 1.45rem;
+}
+
+.admin-overview-card p {
+  margin: 0;
+  line-height: 1.6;
 }
 
 .player-spotlight,
@@ -1183,6 +1239,9 @@ button {
   .versus-hero,
   .auth-layout,
   .season-entry-summary,
+  .admin-shortcuts,
+  .admin-overview-grid,
+  .admin-quick-grid,
   .metrics-grid,
   .feature-grid,
   .admin-grid {
@@ -1212,8 +1271,32 @@ button {
     gap: 12px;
   }
 
+  .menu-toggle {
+    display: inline-flex;
+    align-self: flex-end;
+    justify-content: center;
+  }
+
   .nav-links {
+    display: none;
     justify-content: flex-start;
+  }
+
+  .nav-cluster .auth-actions,
+  .nav-cluster .button-secondary {
+    display: none;
+  }
+
+  .nav-cluster-open .nav-links {
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .nav-cluster-open .button-secondary {
+    display: inline-flex;
   }
 
   .repeater-row,
@@ -1250,6 +1333,8 @@ button {
   .nav-link {
     width: 100%;
     text-align: center;
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.08);
   }
 
   .campaign-header,

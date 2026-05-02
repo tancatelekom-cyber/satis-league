@@ -6,9 +6,28 @@ import { requireAdminAccess } from "@/lib/auth/require-admin";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { localDateTimeToIso } from "@/lib/campaign-utils";
 
-function redirectWithMessage(message: string, type: "success" | "error" = "success") {
+const allowedAdminRedirects = new Set([
+  "/admin",
+  "/admin/sezonlar",
+  "/admin/sezon-satislari",
+  "/admin/kampanyalar",
+  "/admin/magazalar",
+  "/admin/onaylar",
+  "/admin/siralama"
+]);
+
+function getRedirectTo(formData: FormData) {
+  const redirectTo = String(formData.get("redirectTo") ?? "/admin").trim();
+  return allowedAdminRedirects.has(redirectTo) ? redirectTo : "/admin";
+}
+
+function redirectWithMessage(
+  message: string,
+  type: "success" | "error" = "success",
+  redirectTo = "/admin"
+) {
   const params = new URLSearchParams({ message, type });
-  redirect(`/admin?${params.toString()}`);
+  redirect(`${redirectTo}?${params.toString()}`);
 }
 
 function parseProducts(rawProducts: string) {
@@ -216,6 +235,7 @@ async function broadcastNotification(input: {
 
 export async function createStoreAction(formData: FormData) {
   await requireAdminAccess();
+  const redirectTo = getRedirectTo(formData);
   const supabase = createAdminClient();
   const name = String(formData.get("name") ?? "").trim();
   const city = String(formData.get("city") ?? "").trim();
@@ -223,7 +243,7 @@ export async function createStoreAction(formData: FormData) {
   const baseMultiplier = Number(baseMultiplierValue || "1");
 
   if (!name) {
-    redirectWithMessage("Magaza adi bos olamaz.", "error");
+    redirectWithMessage("Magaza adi bos olamaz.", "error", redirectTo);
   }
 
   const { error } = await supabase.from("stores").insert({
@@ -234,16 +254,17 @@ export async function createStoreAction(formData: FormData) {
   });
 
   if (error) {
-    redirectWithMessage(`Magaza eklenemedi: ${error.message}`, "error");
+    redirectWithMessage(`Magaza eklenemedi: ${error.message}`, "error", redirectTo);
   }
 
   revalidatePath("/admin");
   revalidatePath("/kayit");
-  redirectWithMessage("Magaza basariyla eklendi.");
+  redirectWithMessage("Magaza basariyla eklendi.", "success", redirectTo);
 }
 
 export async function createSeasonAction(formData: FormData) {
   await requireAdminAccess();
+  const redirectTo = getRedirectTo(formData);
   const supabase = createAdminClient();
   const name = String(formData.get("name") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
@@ -261,15 +282,15 @@ export async function createSeasonAction(formData: FormData) {
   let storeMultipliers: Array<{ store_id: string; multiplier: number }> = [];
 
   if (!name || !startDate || !endDate) {
-    redirectWithMessage("Sezon icin ad, baslangic ve bitis tarihleri zorunlu.", "error");
+    redirectWithMessage("Sezon icin ad, baslangic ve bitis tarihleri zorunlu.", "error", redirectTo);
   }
 
   if (new Date(startDate).getTime() > new Date(endDate).getTime()) {
-    redirectWithMessage("Sezon bitis tarihi baslangic tarihinden sonra olmali.", "error");
+    redirectWithMessage("Sezon bitis tarihi baslangic tarihinden sonra olmali.", "error", redirectTo);
   }
 
   if (seasonProducts.length === 0) {
-    redirectWithMessage("En az bir sezon urunu girmelisiniz.", "error");
+    redirectWithMessage("En az bir sezon urunu girmelisiniz.", "error", redirectTo);
   }
 
   try {
@@ -277,7 +298,7 @@ export async function createSeasonAction(formData: FormData) {
       String(formData.get("seasonStoreMultipliers") ?? "").trim()
     );
   } catch (error) {
-    redirectWithMessage(error instanceof Error ? error.message : "Sezon magaza carpanlari okunamadi.", "error");
+    redirectWithMessage(error instanceof Error ? error.message : "Sezon magaza carpanlari okunamadi.", "error", redirectTo);
   }
 
   const { data: season, error } = await supabase
@@ -301,7 +322,7 @@ export async function createSeasonAction(formData: FormData) {
     .single();
 
   if (error || !season) {
-    redirectWithMessage(`Sezon olusturulamadi: ${error?.message ?? "Bilinmeyen hata"}`, "error");
+    redirectWithMessage(`Sezon olusturulamadi: ${error?.message ?? "Bilinmeyen hata"}`, "error", redirectTo);
   }
 
   const seasonRow = season!;
@@ -315,7 +336,7 @@ export async function createSeasonAction(formData: FormData) {
     );
 
     if (productError) {
-      redirectWithMessage(`Sezon urunleri eklenemedi: ${productError.message}`, "error");
+      redirectWithMessage(`Sezon urunleri eklenemedi: ${productError.message}`, "error", redirectTo);
     }
   }
 
@@ -328,7 +349,7 @@ export async function createSeasonAction(formData: FormData) {
     );
 
     if (multiplierError) {
-      redirectWithMessage(`Sezon magaza carpanlari eklenemedi: ${multiplierError.message}`, "error");
+      redirectWithMessage(`Sezon magaza carpanlari eklenemedi: ${multiplierError.message}`, "error", redirectTo);
     }
   }
 
@@ -338,11 +359,12 @@ export async function createSeasonAction(formData: FormData) {
 
   revalidatePath("/admin");
   revalidatePath("/lig");
-  redirectWithMessage("Sezon basariyla olusturuldu.");
+  redirectWithMessage("Sezon basariyla olusturuldu.", "success", redirectTo);
 }
 
 export async function updateSeasonAction(formData: FormData) {
   await requireAdminAccess();
+  const redirectTo = getRedirectTo(formData);
   const supabase = createAdminClient();
   const seasonId = String(formData.get("seasonId") ?? "").trim();
   const name = String(formData.get("name") ?? "").trim();
@@ -361,15 +383,15 @@ export async function updateSeasonAction(formData: FormData) {
   let storeMultipliers: Array<{ store_id: string; multiplier: number }> = [];
 
   if (!seasonId || !name || !startDate || !endDate) {
-    redirectWithMessage("Sezon guncelleme icin gerekli alanlar eksik.", "error");
+    redirectWithMessage("Sezon guncelleme icin gerekli alanlar eksik.", "error", redirectTo);
   }
 
   if (new Date(startDate).getTime() > new Date(endDate).getTime()) {
-    redirectWithMessage("Sezon bitis tarihi baslangic tarihinden sonra olmali.", "error");
+    redirectWithMessage("Sezon bitis tarihi baslangic tarihinden sonra olmali.", "error", redirectTo);
   }
 
   if (seasonProducts.length === 0) {
-    redirectWithMessage("En az bir sezon urunu girmelisiniz.", "error");
+    redirectWithMessage("En az bir sezon urunu girmelisiniz.", "error", redirectTo);
   }
 
   try {
@@ -377,7 +399,7 @@ export async function updateSeasonAction(formData: FormData) {
       String(formData.get("seasonStoreMultipliers") ?? "").trim()
     );
   } catch (error) {
-    redirectWithMessage(error instanceof Error ? error.message : "Sezon magaza carpanlari okunamadi.", "error");
+    redirectWithMessage(error instanceof Error ? error.message : "Sezon magaza carpanlari okunamadi.", "error", redirectTo);
   }
 
   const { error } = await supabase
@@ -400,7 +422,7 @@ export async function updateSeasonAction(formData: FormData) {
     .eq("id", seasonId);
 
   if (error) {
-    redirectWithMessage(`Sezon guncellenemedi: ${error.message}`, "error");
+    redirectWithMessage(`Sezon guncellenemedi: ${error.message}`, "error", redirectTo);
   }
 
   await supabase.from("season_products").delete().eq("season_id", seasonId);
@@ -415,7 +437,7 @@ export async function updateSeasonAction(formData: FormData) {
     );
 
     if (productError) {
-      redirectWithMessage(`Sezon urunleri guncellenemedi: ${productError.message}`, "error");
+      redirectWithMessage(`Sezon urunleri guncellenemedi: ${productError.message}`, "error", redirectTo);
     }
   }
 
@@ -428,7 +450,7 @@ export async function updateSeasonAction(formData: FormData) {
     );
 
     if (multiplierError) {
-      redirectWithMessage(`Sezon magaza carpanlari guncellenemedi: ${multiplierError.message}`, "error");
+      redirectWithMessage(`Sezon magaza carpanlari guncellenemedi: ${multiplierError.message}`, "error", redirectTo);
     }
   }
 
@@ -438,24 +460,25 @@ export async function updateSeasonAction(formData: FormData) {
 
   revalidatePath("/admin");
   revalidatePath("/lig");
-  redirectWithMessage("Sezon guncellendi.");
+  redirectWithMessage("Sezon guncellendi.", "success", redirectTo);
 }
 
 export async function toggleSeasonStatusAction(formData: FormData) {
   await requireAdminAccess();
+  const redirectTo = getRedirectTo(formData);
   const supabase = createAdminClient();
   const seasonId = String(formData.get("seasonId") ?? "").trim();
   const currentValue = String(formData.get("isActive") ?? "false") === "true";
 
   if (!seasonId) {
-    redirectWithMessage("Sezon secilemedi.", "error");
+    redirectWithMessage("Sezon secilemedi.", "error", redirectTo);
   }
 
   if (currentValue) {
     const { error } = await supabase.from("seasons").update({ is_active: false }).eq("id", seasonId);
 
     if (error) {
-      redirectWithMessage(`Sezon pasife alinamadi: ${error.message}`, "error");
+      redirectWithMessage(`Sezon pasife alinamadi: ${error.message}`, "error", redirectTo);
     }
   } else {
     await setOnlyActiveSeason(supabase, seasonId);
@@ -463,27 +486,29 @@ export async function toggleSeasonStatusAction(formData: FormData) {
 
   revalidatePath("/admin");
   revalidatePath("/lig");
-  redirectWithMessage(currentValue ? "Sezon pasife alindi." : "Sezon aktif yapildi.");
+  redirectWithMessage(currentValue ? "Sezon pasife alindi." : "Sezon aktif yapildi.", "success", redirectTo);
 }
 
 export async function deleteSeasonAction(formData: FormData) {
   await requireAdminAccess();
+  const redirectTo = getRedirectTo(formData);
   const supabase = createAdminClient();
   const seasonId = String(formData.get("seasonId") ?? "").trim();
 
   const { error } = await supabase.from("seasons").delete().eq("id", seasonId);
 
   if (error) {
-    redirectWithMessage(`Sezon silinemedi: ${error.message}`, "error");
+    redirectWithMessage(`Sezon silinemedi: ${error.message}`, "error", redirectTo);
   }
 
   revalidatePath("/admin");
   revalidatePath("/lig");
-  redirectWithMessage("Sezon silindi.");
+  redirectWithMessage("Sezon silindi.", "success", redirectTo);
 }
 
 export async function createSeasonEmployeeSaleAction(formData: FormData) {
   await requireAdminAccess();
+  const redirectTo = getRedirectTo(formData);
   const supabase = createAdminClient();
   const seasonId = String(formData.get("seasonId") ?? "").trim();
   const productId = String(formData.get("productId") ?? "").trim();
@@ -492,7 +517,7 @@ export async function createSeasonEmployeeSaleAction(formData: FormData) {
   const note = String(formData.get("note") ?? "").trim();
 
   if (!seasonId || !productId || !targetProfileId) {
-    redirectWithMessage("Sezon satis girisi icin sezon, urun ve calisan secilmeli.", "error");
+    redirectWithMessage("Sezon satis girisi icin sezon, urun ve calisan secilmeli.", "error", redirectTo);
   }
 
   const [{ data: season }, { data: product }, { data: targetProfile }] =
@@ -508,11 +533,11 @@ export async function createSeasonEmployeeSaleAction(formData: FormData) {
     ]);
 
   if (!season || season.mode !== "employee" || !product || !targetProfile) {
-    redirectWithMessage("Bu sezon icin calisan satis girisi uygun degil.", "error");
+    redirectWithMessage("Bu sezon icin calisan satis girisi uygun degil.", "error", redirectTo);
   }
 
   if (!Number.isFinite(quantity) || quantity <= 0) {
-    redirectWithMessage("Miktar en az 1 olmali.", "error");
+    redirectWithMessage("Miktar en az 1 olmali.", "error", redirectTo);
   }
 
   const safeTargetProfile = targetProfile!;
@@ -535,16 +560,17 @@ export async function createSeasonEmployeeSaleAction(formData: FormData) {
   });
 
   if (error) {
-    redirectWithMessage(`Sezon calisan satisi eklenemedi: ${error.message}`, "error");
+    redirectWithMessage(`Sezon calisan satisi eklenemedi: ${error.message}`, "error", redirectTo);
   }
 
   revalidatePath("/admin");
   revalidatePath("/lig");
-  redirectWithMessage("Sezon icin calisan satisi eklendi.");
+  redirectWithMessage("Sezon icin calisan satisi eklendi.", "success", redirectTo);
 }
 
 export async function createSeasonStoreSaleAction(formData: FormData) {
   await requireAdminAccess();
+  const redirectTo = getRedirectTo(formData);
   const supabase = createAdminClient();
   const seasonId = String(formData.get("seasonId") ?? "").trim();
   const productId = String(formData.get("productId") ?? "").trim();
@@ -553,7 +579,7 @@ export async function createSeasonStoreSaleAction(formData: FormData) {
   const note = String(formData.get("note") ?? "").trim();
 
   if (!seasonId || !productId || !targetStoreId) {
-    redirectWithMessage("Sezon satis girisi icin sezon, urun ve magaza secilmeli.", "error");
+    redirectWithMessage("Sezon satis girisi icin sezon, urun ve magaza secilmeli.", "error", redirectTo);
   }
 
   const [{ data: season }, { data: product }, { data: storeMultiplierRow }] = await Promise.all([
@@ -573,11 +599,11 @@ export async function createSeasonStoreSaleAction(formData: FormData) {
   ]);
 
   if (!season || season.mode !== "store" || !product) {
-    redirectWithMessage("Bu sezon icin magaza satis girisi uygun degil.", "error");
+    redirectWithMessage("Bu sezon icin magaza satis girisi uygun degil.", "error", redirectTo);
   }
 
   if (!Number.isFinite(quantity) || quantity <= 0) {
-    redirectWithMessage("Miktar en az 1 olmali.", "error");
+    redirectWithMessage("Miktar en az 1 olmali.", "error", redirectTo);
   }
 
   const sale = await calculateStoreSeasonSale({
@@ -599,16 +625,17 @@ export async function createSeasonStoreSaleAction(formData: FormData) {
   });
 
   if (error) {
-    redirectWithMessage(`Sezon magaza satisi eklenemedi: ${error.message}`, "error");
+    redirectWithMessage(`Sezon magaza satisi eklenemedi: ${error.message}`, "error", redirectTo);
   }
 
   revalidatePath("/admin");
   revalidatePath("/lig");
-  redirectWithMessage("Sezon icin magaza satisi eklendi.");
+  redirectWithMessage("Sezon icin magaza satisi eklendi.", "success", redirectTo);
 }
 
 export async function updateSeasonSaleAction(formData: FormData) {
   await requireAdminAccess();
+  const redirectTo = getRedirectTo(formData);
   const supabase = createAdminClient();
   const saleId = String(formData.get("saleId") ?? "").trim();
   const seasonId = String(formData.get("seasonId") ?? "").trim();
@@ -619,7 +646,7 @@ export async function updateSeasonSaleAction(formData: FormData) {
   const note = String(formData.get("note") ?? "").trim();
 
   if (!saleId || !seasonId || !productId || !Number.isFinite(quantity) || quantity <= 0) {
-    redirectWithMessage("Sezon satis guncelleme alanlari eksik.", "error");
+    redirectWithMessage("Sezon satis guncelleme alanlari eksik.", "error", redirectTo);
   }
 
   const { data: season } = await supabase
@@ -629,7 +656,7 @@ export async function updateSeasonSaleAction(formData: FormData) {
     .single();
 
   if (!season) {
-    redirectWithMessage("Sezon bulunamadi.", "error");
+    redirectWithMessage("Sezon bulunamadi.", "error", redirectTo);
   }
 
   const safeSeason = season!;
@@ -678,36 +705,38 @@ export async function updateSeasonSaleAction(formData: FormData) {
     .eq("season_id", seasonId);
 
   if (error) {
-    redirectWithMessage(`Sezon satisi guncellenemedi: ${error.message}`, "error");
+    redirectWithMessage(`Sezon satisi guncellenemedi: ${error.message}`, "error", redirectTo);
   }
 
   revalidatePath("/admin");
   revalidatePath("/lig");
-  redirectWithMessage("Sezon satisi guncellendi.");
+  redirectWithMessage("Sezon satisi guncellendi.", "success", redirectTo);
 }
 
 export async function deleteSeasonSaleAction(formData: FormData) {
   await requireAdminAccess();
+  const redirectTo = getRedirectTo(formData);
   const supabase = createAdminClient();
   const saleId = String(formData.get("saleId") ?? "").trim();
 
   if (!saleId) {
-    redirectWithMessage("Silinecek sezon satisi secilemedi.", "error");
+    redirectWithMessage("Silinecek sezon satisi secilemedi.", "error", redirectTo);
   }
 
   const { error } = await supabase.from("season_sales_entries").delete().eq("id", saleId);
 
   if (error) {
-    redirectWithMessage(`Sezon satisi silinemedi: ${error.message}`, "error");
+    redirectWithMessage(`Sezon satisi silinemedi: ${error.message}`, "error", redirectTo);
   }
 
   revalidatePath("/admin");
   revalidatePath("/lig");
-  redirectWithMessage("Sezon satisi silindi.");
+  redirectWithMessage("Sezon satisi silindi.", "success", redirectTo);
 }
 
 export async function updateStoreAction(formData: FormData) {
   await requireAdminAccess();
+  const redirectTo = getRedirectTo(formData);
   const supabase = createAdminClient();
   const id = String(formData.get("id") ?? "");
   const name = String(formData.get("name") ?? "").trim();
@@ -715,7 +744,7 @@ export async function updateStoreAction(formData: FormData) {
   const baseMultiplier = Number(String(formData.get("baseMultiplier") ?? "1").trim());
 
   if (!id || !name) {
-    redirectWithMessage("Magaza guncelleme icin gerekli alanlar eksik.", "error");
+    redirectWithMessage("Magaza guncelleme icin gerekli alanlar eksik.", "error", redirectTo);
   }
 
   const { error } = await supabase
@@ -728,16 +757,17 @@ export async function updateStoreAction(formData: FormData) {
     .eq("id", id);
 
   if (error) {
-    redirectWithMessage(`Magaza guncellenemedi: ${error.message}`, "error");
+    redirectWithMessage(`Magaza guncellenemedi: ${error.message}`, "error", redirectTo);
   }
 
   revalidatePath("/admin");
   revalidatePath("/kayit");
-  redirectWithMessage("Magaza bilgileri guncellendi.");
+  redirectWithMessage("Magaza bilgileri guncellendi.", "success", redirectTo);
 }
 
 export async function toggleStoreStatusAction(formData: FormData) {
   await requireAdminAccess();
+  const redirectTo = getRedirectTo(formData);
   const supabase = createAdminClient();
   const id = String(formData.get("id") ?? "");
   const currentValue = String(formData.get("isActive") ?? "true") === "true";
@@ -748,16 +778,17 @@ export async function toggleStoreStatusAction(formData: FormData) {
     .eq("id", id);
 
   if (error) {
-    redirectWithMessage(`Magaza durumu degistirilemedi: ${error.message}`, "error");
+    redirectWithMessage(`Magaza durumu degistirilemedi: ${error.message}`, "error", redirectTo);
   }
 
   revalidatePath("/admin");
   revalidatePath("/kayit");
-  redirectWithMessage(currentValue ? "Magaza pasif yapildi." : "Magaza tekrar aktif edildi.");
+  redirectWithMessage(currentValue ? "Magaza pasif yapildi." : "Magaza tekrar aktif edildi.", "success", redirectTo);
 }
 
 export async function updateApprovalAction(formData: FormData) {
   await requireAdminAccess();
+  const redirectTo = getRedirectTo(formData);
   const supabase = createAdminClient();
   const profileId = String(formData.get("profileId") ?? "");
   const approval = String(formData.get("approval") ?? "pending");
@@ -768,7 +799,7 @@ export async function updateApprovalAction(formData: FormData) {
     .eq("id", profileId);
 
   if (error) {
-    redirectWithMessage(`Kullanici guncellenemedi: ${error.message}`, "error");
+    redirectWithMessage(`Kullanici guncellenemedi: ${error.message}`, "error", redirectTo);
   }
 
   revalidatePath("/admin");
@@ -788,11 +819,12 @@ export async function updateApprovalAction(formData: FormData) {
 
   redirectWithMessage(
     approval === "approved" ? "Kullanici onaylandi." : "Kullanici reddedildi."
-  );
+  , "success", redirectTo);
 }
 
 export async function createCampaignAction(formData: FormData) {
   await requireAdminAccess();
+  const redirectTo = getRedirectTo(formData);
   const supabase = createAdminClient();
   const name = String(formData.get("name") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
@@ -815,21 +847,21 @@ export async function createCampaignAction(formData: FormData) {
   let storeMultipliers: Array<{ store_id: string; multiplier: number }> = [];
 
   if (!name || !startAt || !endAt) {
-    redirectWithMessage("Kampanya icin ad, baslangic ve bitis zamani zorunlu.", "error");
+    redirectWithMessage("Kampanya icin ad, baslangic ve bitis zamani zorunlu.", "error", redirectTo);
   }
 
   if (products.length === 0) {
-    redirectWithMessage("En az bir kampanya urunu girmelisiniz.", "error");
+    redirectWithMessage("En az bir kampanya urunu girmelisiniz.", "error", redirectTo);
   }
 
   if (new Date(startAt).getTime() >= new Date(endAt).getTime()) {
-    redirectWithMessage("Bitis zamani baslangic zamanindan sonra olmali.", "error");
+    redirectWithMessage("Bitis zamani baslangic zamanindan sonra olmali.", "error", redirectTo);
   }
 
   try {
     storeMultipliers = await parseStoreMultipliers(storeMultipliersText);
   } catch (error) {
-    redirectWithMessage(error instanceof Error ? error.message : "Magaza carpanlari okunamadi.", "error");
+    redirectWithMessage(error instanceof Error ? error.message : "Magaza carpanlari okunamadi.", "error", redirectTo);
   }
 
   const { data: campaign, error: campaignError } = await supabase
@@ -854,14 +886,14 @@ export async function createCampaignAction(formData: FormData) {
     .single();
 
   if (campaignError || !campaign) {
-    redirectWithMessage(`Kampanya olusturulamadi: ${campaignError?.message ?? "Bilinmeyen hata"}`, "error");
+    redirectWithMessage(`Kampanya olusturulamadi: ${campaignError?.message ?? "Bilinmeyen hata"}`, "error", redirectTo);
     return;
   }
 
   const campaignId = campaign?.id;
 
   if (!campaignId) {
-    redirectWithMessage("Kampanya kimligi alinamadi.", "error");
+    redirectWithMessage("Kampanya kimligi alinamadi.", "error", redirectTo);
   }
 
   if (storeMultipliers.length > 0) {
@@ -875,7 +907,7 @@ export async function createCampaignAction(formData: FormData) {
       );
 
     if (multiplierError) {
-      redirectWithMessage(`Magaza carpanlari eklenemedi: ${multiplierError.message}`, "error");
+      redirectWithMessage(`Magaza carpanlari eklenemedi: ${multiplierError.message}`, "error", redirectTo);
     }
   }
 
@@ -887,7 +919,7 @@ export async function createCampaignAction(formData: FormData) {
   );
 
   if (productError) {
-    redirectWithMessage(`Kampanya urunleri eklenemedi: ${productError.message}`, "error");
+    redirectWithMessage(`Kampanya urunleri eklenemedi: ${productError.message}`, "error", redirectTo);
   }
 
   await broadcastNotification({
@@ -898,11 +930,12 @@ export async function createCampaignAction(formData: FormData) {
   });
 
   refreshCampaignPages();
-  redirectWithMessage("Kampanya ve urunleri basariyla olusturuldu.");
+  redirectWithMessage("Kampanya ve urunleri basariyla olusturuldu.", "success", redirectTo);
 }
 
 export async function updateCampaignAction(formData: FormData) {
   await requireAdminAccess();
+  const redirectTo = getRedirectTo(formData);
   const supabase = createAdminClient();
   const campaignId = String(formData.get("campaignId") ?? "");
   const name = String(formData.get("name") ?? "").trim();
@@ -924,17 +957,17 @@ export async function updateCampaignAction(formData: FormData) {
   let storeMultipliers: Array<{ store_id: string; multiplier: number }> = [];
 
   if (!campaignId || !name || !startAt || !endAt) {
-    redirectWithMessage("Kampanya guncelleme icin gerekli alanlar eksik.", "error");
+    redirectWithMessage("Kampanya guncelleme icin gerekli alanlar eksik.", "error", redirectTo);
   }
 
   if (new Date(startAt).getTime() >= new Date(endAt).getTime()) {
-    redirectWithMessage("Bitis zamani baslangic zamanindan sonra olmali.", "error");
+    redirectWithMessage("Bitis zamani baslangic zamanindan sonra olmali.", "error", redirectTo);
   }
 
   try {
     storeMultipliers = await parseStoreMultipliers(storeMultipliersText);
   } catch (error) {
-    redirectWithMessage(error instanceof Error ? error.message : "Magaza carpanlari okunamadi.", "error");
+    redirectWithMessage(error instanceof Error ? error.message : "Magaza carpanlari okunamadi.", "error", redirectTo);
   }
 
   const { error: campaignError } = await supabase
@@ -957,7 +990,7 @@ export async function updateCampaignAction(formData: FormData) {
     .eq("id", campaignId);
 
   if (campaignError) {
-    redirectWithMessage(`Kampanya guncellenemedi: ${campaignError.message}`, "error");
+    redirectWithMessage(`Kampanya guncellenemedi: ${campaignError.message}`, "error", redirectTo);
   }
 
   const { error: clearMultiplierError } = await supabase
@@ -966,7 +999,7 @@ export async function updateCampaignAction(formData: FormData) {
     .eq("campaign_id", campaignId);
 
   if (clearMultiplierError) {
-    redirectWithMessage(`Eski magaza carpanlari silinemedi: ${clearMultiplierError.message}`, "error");
+    redirectWithMessage(`Eski magaza carpanlari silinemedi: ${clearMultiplierError.message}`, "error", redirectTo);
   }
 
   if (storeMultipliers.length > 0) {
@@ -980,7 +1013,7 @@ export async function updateCampaignAction(formData: FormData) {
       );
 
     if (insertMultiplierError) {
-      redirectWithMessage(`Yeni magaza carpanlari eklenemedi: ${insertMultiplierError.message}`, "error");
+      redirectWithMessage(`Yeni magaza carpanlari eklenemedi: ${insertMultiplierError.message}`, "error", redirectTo);
     }
   }
 
@@ -992,11 +1025,12 @@ export async function updateCampaignAction(formData: FormData) {
   });
 
   refreshCampaignPages();
-  redirectWithMessage("Kampanya bilgileri guncellendi.");
+  redirectWithMessage("Kampanya bilgileri guncellendi.", "success", redirectTo);
 }
 
 export async function endCampaignAction(formData: FormData) {
   await requireAdminAccess();
+  const redirectTo = getRedirectTo(formData);
   const supabase = createAdminClient();
   const campaignId = String(formData.get("campaignId") ?? "");
   const now = new Date();
@@ -1013,7 +1047,7 @@ export async function endCampaignAction(formData: FormData) {
     .eq("id", campaignId);
 
   if (error) {
-    redirectWithMessage(`Kampanya sonlandirilamadi: ${error.message}`, "error");
+    redirectWithMessage(`Kampanya sonlandirilamadi: ${error.message}`, "error", redirectTo);
   }
 
   await broadcastNotification({
@@ -1024,20 +1058,21 @@ export async function endCampaignAction(formData: FormData) {
   });
 
   refreshCampaignPages();
-  redirectWithMessage("Kampanya sonlandirildi.");
+  redirectWithMessage("Kampanya sonlandirildi.", "success", redirectTo);
 }
 
 export async function deleteCampaignAction(formData: FormData) {
   await requireAdminAccess();
+  const redirectTo = getRedirectTo(formData);
   const supabase = createAdminClient();
   const campaignId = String(formData.get("campaignId") ?? "");
 
   const { error } = await supabase.from("campaigns").delete().eq("id", campaignId);
 
   if (error) {
-    redirectWithMessage(`Kampanya silinemedi: ${error.message}`, "error");
+    redirectWithMessage(`Kampanya silinemedi: ${error.message}`, "error", redirectTo);
   }
 
   refreshCampaignPages();
-  redirectWithMessage("Kampanya silindi.");
+  redirectWithMessage("Kampanya silindi.", "success", redirectTo);
 }

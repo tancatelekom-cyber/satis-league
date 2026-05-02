@@ -53,7 +53,7 @@ export default async function LeaguePage() {
   const [{ data: profiles }, { data: stores }, { data: seasonSales }] = await Promise.all([
     admin
       .from("profiles")
-      .select("id, full_name, approval, is_on_leave, store:stores(name)")
+      .select("id, full_name, role, approval, is_on_leave, store:stores(name)")
       .eq("approval", "approved"),
     admin.from("stores").select("id, name").eq("is_active", true),
     seasonIds.length > 0
@@ -68,9 +68,12 @@ export default async function LeaguePage() {
     ((profiles as Array<{
       id: string;
       full_name: string;
+      role: string;
       is_on_leave: boolean;
       store: { name: string } | null;
-    }> | null) ?? []).filter((profile) => !profile.is_on_leave);
+    }> | null) ?? []).filter(
+      (profile) => !profile.is_on_leave && profile.role === "employee"
+    );
   const storeRows = ((stores as Array<{ id: string; name: string }> | null) ?? []);
   const saleRows = (seasonSales as SaleRow[] | null) ?? [];
   const today = new Date().toISOString().slice(0, 10);

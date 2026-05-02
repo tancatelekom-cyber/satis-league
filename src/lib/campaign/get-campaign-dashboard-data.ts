@@ -66,7 +66,7 @@ function buildLeaderboard(
   if (campaign.mode === "employee") {
     return withBadges(
       approvedPeople
-        .filter((person) => !person.is_on_leave)
+        .filter((person) => !person.is_on_leave && person.role === "employee")
         .map((person) => {
           const total = saleRows
             .filter(

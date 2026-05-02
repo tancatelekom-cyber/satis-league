@@ -441,6 +441,11 @@ button {
   min-height: 46px;
 }
 
+.season-entry-actions {
+  margin-top: 16px;
+  justify-content: flex-end;
+}
+
 .filter-chip-row {
   display: flex;
   flex-wrap: wrap;

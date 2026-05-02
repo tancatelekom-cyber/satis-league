@@ -934,6 +934,165 @@ export async function saveSeasonTableRowAction(formData: FormData) {
   redirectWithMessage("Aylik tablo satiri kaydedildi.", "success", redirectTo, { entryMonth: monthKey });
 }
 
+export async function saveSeasonTableAction(formData: FormData) {
+  await requireAdminAccess();
+  const redirectTo = getRedirectTo(formData);
+  const supabase = createAdminClient();
+  const seasonId = String(formData.get("seasonId") ?? "").trim();
+  const rawEntryMonth = String(formData.get("entryMonth") ?? "").trim();
+  const entryDate = normalizeMonthInput(rawEntryMonth);
+
+  if (!seasonId || !entryDate) {
+    redirectWithMessage("Tabloyu kaydetmek icin sezon ve ay zorunlu.", "error", redirectTo);
+  }
+
+  const { start: monthStart, endExclusive: nextMonthStart, monthKey } = getMonthRange(entryDate!);
+  const [{ data: season }, { data: products }] = await Promise.all([
+    supabase.from("seasons").select("mode").eq("id", seasonId).single(),
+    supabase.from("season_products").select("id").eq("season_id", seasonId).order("sort_order")
+  ]);
+
+  if (!season || !products) {
+    redirectWithMessage("Sezon veya urunler bulunamadi.", "error", redirectTo, { entryMonth: monthKey });
+  }
+
+  const safeSeason = season!;
+  const targetType = safeSeason.mode === "employee" ? "employee" : "store";
+  const { data: existingEntries } = await supabase
+    .from("season_sales_entries")
+    .select("id, product_id, target_profile_id, target_store_id")
+    .eq("season_id", seasonId)
+    .gte("entry_date", monthStart)
+    .lt("entry_date", nextMonthStart);
+
+  const productIds = new Set((products as Array<{ id: string }>).map((product) => product.id));
+  const targetIds = new Set<string>();
+
+  Array.from(formData.keys()).forEach((key) => {
+    const match = key.match(/^qty__(.+?)__(.+)$/);
+    if (!match) {
+      return;
+    }
+
+    const [, targetId, productId] = match;
+    if (targetId && productIds.has(productId)) {
+      targetIds.add(targetId);
+    }
+  });
+
+  const matchingEntries =
+    ((existingEntries as Array<{
+      id: string;
+      product_id: string | null;
+      target_profile_id: string | null;
+      target_store_id: string | null;
+    }> | null) ?? []).filter((entry) => entry.product_id);
+
+  for (const targetId of targetIds) {
+    for (const product of products as Array<{ id: string }>) {
+      const quantity = Number(String(formData.get(`qty__${targetId}__${product.id}`) ?? "0").trim() || "0");
+      const productEntries = matchingEntries.filter((entry) => {
+        const entryTargetId = targetType === "employee" ? entry.target_profile_id : entry.target_store_id;
+        return entryTargetId === targetId && entry.product_id === product.id;
+      });
+
+      if (quantity > 0) {
+        const sale =
+          targetType === "employee"
+            ? await calculateEmployeeSeasonSale({
+                seasonId,
+                productId: product.id,
+                targetProfileId: targetId,
+                quantity
+              })
+            : await calculateStoreSeasonSale({
+                seasonId,
+                productId: product.id,
+                targetStoreId: targetId,
+                quantity
+              });
+
+        const payload =
+          targetType === "employee"
+            ? {
+                season_id: seasonId,
+                product_id: sale.productId,
+                product_name: sale.productName,
+                entry_date: entryDate,
+                target_profile_id: targetId,
+                target_store_id: null,
+                quantity,
+                raw_score: sale.rawScore,
+                score: sale.weightedScore,
+                note: null
+              }
+            : {
+                season_id: seasonId,
+                product_id: sale.productId,
+                product_name: sale.productName,
+                entry_date: entryDate,
+                target_profile_id: null,
+                target_store_id: targetId,
+                quantity,
+                raw_score: sale.rawScore,
+                score: sale.weightedScore,
+                note: null
+              };
+
+        if (productEntries.length > 0) {
+          const [firstEntry, ...extraEntries] = productEntries;
+          const { error: updateError } = await supabase
+            .from("season_sales_entries")
+            .update(payload)
+            .eq("id", firstEntry.id);
+
+          if (updateError) {
+            redirectWithMessage(`Tablo guncellenemedi: ${updateError.message}`, "error", redirectTo, {
+              entryMonth: monthKey
+            });
+          }
+
+          if (extraEntries.length > 0) {
+            await supabase
+              .from("season_sales_entries")
+              .delete()
+              .in(
+                "id",
+                extraEntries.map((entry) => entry.id)
+              );
+          }
+        } else {
+          const { error: insertError } = await supabase.from("season_sales_entries").insert(payload);
+
+          if (insertError) {
+            redirectWithMessage(`Tabloya eklenemedi: ${insertError.message}`, "error", redirectTo, {
+              entryMonth: monthKey
+            });
+          }
+        }
+      } else if (productEntries.length > 0) {
+        const { error: deleteError } = await supabase
+          .from("season_sales_entries")
+          .delete()
+          .in(
+            "id",
+            productEntries.map((entry) => entry.id)
+          );
+
+        if (deleteError) {
+          redirectWithMessage(`Eski ay verisi silinemedi: ${deleteError.message}`, "error", redirectTo, {
+            entryMonth: monthKey
+          });
+        }
+      }
+    }
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/lig");
+  redirectWithMessage("Aylik sezon tablosu kaydedildi.", "success", redirectTo, { entryMonth: monthKey });
+}
+
 export async function updateStoreAction(formData: FormData) {
   await requireAdminAccess();
   const redirectTo = getRedirectTo(formData);

@@ -1,6 +1,6 @@
 import {
   deleteSeasonSaleAction,
-  saveSeasonTableRowAction,
+  saveSeasonTableAction,
   updateSeasonSaleAction
 } from "@/app/admin/actions";
 import { AdminSectionNav } from "@/components/admin/admin-section-nav";
@@ -133,56 +133,56 @@ export default async function SeasonSalesPage({ searchParams }: SeasonSalesPageP
                     </div>
                   ) : null}
 
-                  <div className="season-entry-table-wrap">
-                    <table className="season-entry-table">
-                      <thead>
-                        <tr>
-                          <th>{data.activeSeason.mode === "employee" ? "Calisan" : "Magaza"}</th>
-                          {data.activeSeasonProducts.map((product) => (
-                            <th key={product.id}>
-                              <span>{product.name}</span>
-                              <small>{product.category_name}</small>
-                            </th>
-                          ))}
-                          <th>Kaydet</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {data.seasonEntryTargets.map((target) => (
-                          <tr key={target.id}>
-                            <td>
-                              <strong>{target.label}</strong>
-                              <small>{target.secondary}</small>
-                            </td>
-                            <td colSpan={data.activeSeasonProducts.length + 1}>
-                              <form action={saveSeasonTableRowAction} className="season-entry-row-form">
-                                <input name="redirectTo" type="hidden" value="/admin/sezon-satislari" />
-                                <input name="seasonId" type="hidden" value={data.activeSeason?.id ?? ""} />
-                                <input name="targetId" type="hidden" value={target.id} />
-                                <input name="entryMonth" type="hidden" value={data.entryMonth} />
-                                <div className="season-entry-row-grid">
-                                  {data.activeSeasonProducts.map((product) => (
-                                    <label key={product.id} className="season-entry-cell">
-                                      <span>{product.name}</span>
-                                      <input
-                                        defaultValue={data.monthQuantityMap.get(`${target.id}__${product.id}`) ?? 0}
-                                        min="0"
-                                        name={`qty__${product.id}`}
-                                        type="number"
-                                      />
-                                    </label>
-                                  ))}
-                                  <button className="tiny-button approve season-entry-save" type="submit">
-                                    Satiri Kaydet
-                                  </button>
-                                </div>
-                              </form>
-                            </td>
+                  <form action={saveSeasonTableAction} className="season-entry-row-form">
+                    <input name="redirectTo" type="hidden" value="/admin/sezon-satislari" />
+                    <input name="seasonId" type="hidden" value={data.activeSeason?.id ?? ""} />
+                    <input name="entryMonth" type="hidden" value={data.entryMonth} />
+
+                    <div className="season-entry-table-wrap">
+                      <table className="season-entry-table">
+                        <thead>
+                          <tr>
+                            <th>{data.activeSeason.mode === "employee" ? "Calisan" : "Magaza"}</th>
+                            {data.activeSeasonProducts.map((product) => (
+                              <th key={product.id}>
+                                <span>{product.name}</span>
+                                <small>{product.category_name}</small>
+                              </th>
+                            ))}
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                        </thead>
+                        <tbody>
+                          {data.seasonEntryTargets.map((target) => (
+                            <tr key={target.id}>
+                              <td>
+                                <strong>{target.label}</strong>
+                                <small>{target.secondary}</small>
+                              </td>
+                              {data.activeSeasonProducts.map((product) => (
+                                <td key={`${target.id}-${product.id}`}>
+                                  <label className="season-entry-cell">
+                                    <span>{product.name}</span>
+                                    <input
+                                      defaultValue={data.monthQuantityMap.get(`${target.id}__${product.id}`) ?? 0}
+                                      min="0"
+                                      name={`qty__${target.id}__${product.id}`}
+                                      type="number"
+                                    />
+                                  </label>
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div className="auth-actions season-entry-actions">
+                      <button className="tiny-button approve season-entry-save" type="submit">
+                        Tum Tabloyu Kaydet
+                      </button>
+                    </div>
+                  </form>
                 </article>
 
                 <article className="campaign-card">

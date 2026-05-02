@@ -6,9 +6,23 @@ import { isSalesWindowOpen } from "@/lib/campaign-utils";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
-function redirectWithMessage(message: string, type: "success" | "error" = "success") {
+function getRedirectTo(formData: FormData) {
+  const value = String(formData.get("redirectTo") ?? "").trim();
+
+  if (!value.startsWith("/kampanyalar")) {
+    return "/kampanyalar";
+  }
+
+  return value;
+}
+
+function redirectWithMessage(
+  message: string,
+  type: "success" | "error" = "success",
+  redirectTo = "/kampanyalar"
+) {
   const params = new URLSearchParams({ message, type });
-  redirect(`/kampanyalar?${params.toString()}`);
+  redirect(`${redirectTo}${redirectTo.includes("?") ? "&" : "?"}${params.toString()}`);
 }
 
 export async function submitSaleEntryAction(formData: FormData) {
@@ -27,6 +41,7 @@ export async function submitSaleEntryAction(formData: FormData) {
   const quantity = Number(String(formData.get("quantity") ?? "1"));
   const targetProfileId = String(formData.get("targetProfileId") ?? "");
   const targetStoreId = String(formData.get("targetStoreId") ?? "");
+  const redirectTo = getRedirectTo(formData);
 
   const [{ data: actor }, { data: campaign }, { data: product }] = await Promise.all([
     admin
@@ -47,11 +62,11 @@ export async function submitSaleEntryAction(formData: FormData) {
   ]);
 
   if (!actor || actor.approval !== "approved") {
-    redirectWithMessage("Satis girmek icin onayli kullanici olmalisiniz.", "error");
+    redirectWithMessage("Satis girmek icin onayli kullanici olmalisiniz.", "error", redirectTo);
   }
 
   if (!campaign || !product || product.campaign_id !== campaignId) {
-    redirectWithMessage("Kampanya urunu bulunamadi.", "error");
+    redirectWithMessage("Kampanya urunu bulunamadi.", "error", redirectTo);
   }
 
   const actorRow = actor!;
@@ -59,11 +74,15 @@ export async function submitSaleEntryAction(formData: FormData) {
   const productRow = product!;
 
   if (!Number.isFinite(quantity) || quantity <= 0) {
-    redirectWithMessage("Miktar en az 1 olmali.", "error");
+    redirectWithMessage("Miktar en az 1 olmali.", "error", redirectTo);
   }
 
   if (!isSalesWindowOpen(campaignRow.start_at, campaignRow.end_at)) {
-    redirectWithMessage("Bu kampanya icin satis giris suresi doldu. Bitisten 10 dakika sonra kapanir.", "error");
+    redirectWithMessage(
+      "Bu kampanya icin satis giris suresi doldu. Bitisten 10 dakika sonra kapanir.",
+      "error",
+      redirectTo
+    );
   }
 
   let finalTargetProfileId: string | null = null;
@@ -78,7 +97,11 @@ export async function submitSaleEntryAction(formData: FormData) {
         .single();
 
       if (!targetProfile || targetProfile.approval !== "approved" || targetProfile.store_id !== actorRow.store_id) {
-        redirectWithMessage("Magaza muduru sadece kendi magazasindaki onayli personele giris yapabilir.", "error");
+        redirectWithMessage(
+          "Magaza muduru sadece kendi magazasindaki onayli personele giris yapabilir.",
+          "error",
+          redirectTo
+        );
       }
 
       finalTargetProfileId = targetProfile!.id;
@@ -89,7 +112,11 @@ export async function submitSaleEntryAction(formData: FormData) {
     finalTargetStoreId = targetStoreId || actorRow.store_id;
 
     if (!finalTargetStoreId) {
-      redirectWithMessage("Magaza bazli kampanyada kullanicinin magazasi olmali.", "error");
+      redirectWithMessage(
+        "Magaza bazli kampanyada kullanicinin magazasi olmali.",
+        "error",
+        redirectTo
+      );
     }
   }
 
@@ -126,10 +153,11 @@ export async function submitSaleEntryAction(formData: FormData) {
   });
 
   if (error) {
-    redirectWithMessage(`Satis kaydi eklenemedi: ${error.message}`, "error");
+    redirectWithMessage(`Satis kaydi eklenemedi: ${error.message}`, "error", redirectTo);
   }
 
   revalidatePath("/kampanyalar");
+  revalidatePath(`/kampanyalar/${campaignId}`);
   revalidatePath("/bildirimler");
   revalidatePath("/lig");
   revalidatePath("/magaza-vs-magaza");
@@ -143,5 +171,5 @@ export async function submitSaleEntryAction(formData: FormData) {
     link_path: "/kampanyalar"
   });
 
-  redirectWithMessage("Satis kaydi basariyla eklendi.");
+  redirectWithMessage("Satis kaydi basariyla eklendi.", "success", redirectTo);
 }

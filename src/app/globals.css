@@ -379,6 +379,62 @@ button {
   gap: 24px;
 }
 
+.campaign-directory {
+  display: grid;
+  gap: 14px;
+}
+
+.campaign-directory-card {
+  display: grid;
+  gap: 12px;
+  padding: 18px 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.campaign-directory-card:hover {
+  border-color: rgba(88, 240, 196, 0.28);
+  background: rgba(88, 240, 196, 0.07);
+}
+
+.campaign-directory-head,
+.campaign-directory-meta,
+.detail-page-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.campaign-directory-head strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.campaign-directory-head span,
+.campaign-directory-meta span,
+.back-link {
+  color: var(--muted);
+}
+
+.campaign-directory-meta {
+  flex-wrap: wrap;
+}
+
+.campaign-detail-summary {
+  margin-bottom: 20px;
+}
+
+.back-link {
+  display: inline-flex;
+  margin-bottom: 10px;
+}
+
+.ranking-summary-card {
+  margin-bottom: 20px;
+}
+
 .quick-nav-grid,
 .ranking-focus-grid {
   display: grid;
@@ -1402,6 +1458,9 @@ button {
   }
 
   .campaign-header,
+  .campaign-directory-head,
+  .campaign-directory-meta,
+  .detail-page-head,
   .ranking-focus-head,
   .product-header,
   .leaderboard-row,

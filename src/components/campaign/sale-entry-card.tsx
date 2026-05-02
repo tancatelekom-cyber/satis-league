@@ -23,6 +23,7 @@ type SaleEntryCardProps = {
   defaultStoreId: string | null;
   isManager: boolean;
   teamProfiles: TeamProfileOption[];
+  redirectTo?: string;
 };
 
 const quickAdds = [1, 5, 10];
@@ -35,7 +36,8 @@ export function SaleEntryCard({
   defaultProfileId,
   defaultStoreId,
   isManager,
-  teamProfiles
+  teamProfiles,
+  redirectTo
 }: SaleEntryCardProps) {
   const [quantity, setQuantity] = useState(1);
 
@@ -69,6 +71,11 @@ export function SaleEntryCard({
         <input name="campaignId" type="hidden" value={campaignId} />
         <input name="productId" type="hidden" value={product.id} />
         <input name="quantity" type="hidden" value={quantity} />
+        <input
+          name="redirectTo"
+          type="hidden"
+          value={redirectTo ?? `/kampanyalar/${campaignId}?view=sales`}
+        />
 
         {campaignMode === "store" ? (
           <input name="targetStoreId" type="hidden" value={defaultStoreId ?? ""} />

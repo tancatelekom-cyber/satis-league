@@ -244,7 +244,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       ) : null}
 
       <section className="admin-stack">
-        <article className="admin-card">
+        <article className="admin-card" id="sezon-yonetimi">
           <h3>Sezon Yonetimi</h3>
           <p>
             Lig tablosunun hangi tarih araligini ve hangi sezon urunlerini kullanacagini buradan siz belirlersiniz.
@@ -494,13 +494,47 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           </p>
 
           {activeSeason ? (
-            <div className="campaign-layout">
+            <div className="message-box success-box">
+              Aktif sezon hazir: <strong>{activeSeason.name}</strong>. Satislari bu alanin altindan girebilirsiniz.
+            </div>
+          ) : (
+            <div className="message-box error-box">
+              Henuz aktif sezon secilmedigi icin satis giris alani acilmiyor. Once yukaridaki{" "}
+              <a href="#sezon-yonetimi">Sezon Yonetimi</a> bolumunden bir sezonu <strong>Aktif Yap</strong>.
+            </div>
+          )}
+
+          {activeSeason ? (
+            <div className="season-entry-shell">
+              <div className="season-entry-summary">
+                <div className="season-entry-chip">
+                  <span>Aktif Sezon</span>
+                  <strong>{activeSeason.name}</strong>
+                </div>
+                <div className="season-entry-chip">
+                  <span>Yaris Tipi</span>
+                  <strong>{activeSeason.mode === "employee" ? "Calisan Bazli" : "Magaza Bazli"}</strong>
+                </div>
+                <div className="season-entry-chip">
+                  <span>Olcum</span>
+                  <strong>{activeSeason.scoring === "points" ? "Puan" : "Adet"}</strong>
+                </div>
+                <div className="season-entry-chip">
+                  <span>Urun Sayisi</span>
+                  <strong>{activeSeasonProducts.length}</strong>
+                </div>
+              </div>
+
+              <div className="campaign-layout">
               <article className="campaign-card">
                 <h4>
                   {activeSeason.mode === "employee"
                     ? "Calisan Icin Sezon Girisi"
                     : "Magaza Icin Sezon Girisi"}
                 </h4>
+                <p className="season-entry-tip">
+                  Sirayla hedefi secin, urunu secin, miktari girin ve kaydedin.
+                </p>
                 <form
                   action={
                     activeSeason.mode === "employee"
@@ -528,7 +562,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                     </label>
                     {activeSeason.mode === "employee" ? (
                       <label className="field">
-                        <span>Calisan</span>
+                        <span>Hedef Calisan</span>
                         <select name="targetProfileId" required>
                           <option value="">Calisan secin</option>
                           {approvedProfilesForSeason.map((profile) => (
@@ -540,7 +574,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                       </label>
                     ) : (
                       <label className="field">
-                        <span>Magaza</span>
+                        <span>Hedef Magaza</span>
                         <select name="targetStoreId" required>
                           <option value="">Magaza secin</option>
                           {storeRows.filter((store) => store.is_active).map((store) => (
@@ -602,6 +636,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                   </div>
                 </div>
               </article>
+            </div>
             </div>
           ) : (
             <div className="step-item">

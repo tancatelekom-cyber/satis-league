@@ -43,7 +43,14 @@ export default async function CampaignPage({ searchParams }: CampaignPageProps) 
     );
   }
 
-  const summaryCards = dashboard.activeLeaderboards.map((item) => ({
+  const now = Date.now();
+  const strictActiveLeaderboards = dashboard.activeLeaderboards.filter(
+    (item) =>
+      new Date(item.campaign.start_at).getTime() <= now &&
+      new Date(item.campaign.end_at).getTime() >= now
+  );
+
+  const summaryCards = strictActiveLeaderboards.map((item) => ({
     id: item.campaign.id,
     name: item.campaign.name,
     rank: item.personal.rank,

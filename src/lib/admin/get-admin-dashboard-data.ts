@@ -11,6 +11,7 @@ import {
 } from "@/lib/types";
 
 type AdminDashboardParams = {
+  entryDate?: string;
   saleSearch?: string;
   saleDateFrom?: string;
   saleDateTo?: string;
@@ -36,6 +37,7 @@ export type ActiveSeasonSaleRecord = {
 };
 
 export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
+  const entryDate = String(params.entryDate ?? "").trim() || new Date().toISOString().slice(0, 10);
   const saleSearch = String(params.saleSearch ?? "").trim().toLocaleLowerCase("tr-TR");
   const saleDateFrom = String(params.saleDateFrom ?? "").trim();
   const saleDateTo = String(params.saleDateTo ?? "").trim();
@@ -131,13 +133,18 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
   const approvedProfilesForSeason =
     ((await supabase
       .from("profiles")
-      .select("id, full_name, approval, store_id")
+      .select("id, full_name, approval, store_id, role, is_on_leave")
       .eq("approval", "approved")).data as Array<{
       id: string;
       full_name: string;
       approval: string;
       store_id: string | null;
+      role: string;
+      is_on_leave: boolean;
     }> | null) ?? [];
+  const activeEmployeeTargets = approvedProfilesForSeason.filter(
+    (profile) => profile.role === "employee" && !profile.is_on_leave
+  );
 
   const activeSeason = seasonRows.find((season) => season.is_active) ?? null;
   const activeSeasonProducts = activeSeason
@@ -231,6 +238,18 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
     }),
     { count: 0, quantity: 0, rawScore: 0, score: 0 }
   );
+  const activeDaySales = activeSeasonSales.filter((sale) => sale.entry_date === entryDate);
+  const dayQuantityMap = new Map<string, number>();
+
+  activeDaySales.forEach((sale) => {
+    const targetId = sale.target_profile_id ?? sale.target_store_id;
+    if (!targetId || !sale.product_id) {
+      return;
+    }
+
+    const key = `${targetId}__${sale.product_id}`;
+    dayQuantityMap.set(key, Number(dayQuantityMap.get(key) ?? 0) + Number(sale.quantity ?? 0));
+  });
 
   return {
     storeRows,
@@ -241,11 +260,24 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
     multiplierRows: (campaignStoreMultipliers as CampaignStoreMultiplierRecord[] | null) ?? [],
     seasonProductRows: (seasonProducts as SeasonProductRecord[] | null) ?? [],
     seasonMultiplierRows: (seasonStoreMultipliers as SeasonStoreMultiplierRecord[] | null) ?? [],
-    approvedProfilesForSeason,
+    approvedProfilesForSeason: activeEmployeeTargets,
+    seasonEntryTargets:
+      activeSeason?.mode === "employee"
+        ? activeEmployeeTargets.map((profile) => ({
+            id: profile.id,
+            label: profile.full_name,
+            secondary: storeRows.find((store) => store.id === profile.store_id)?.name ?? "Magaza yok"
+          }))
+        : storeRows
+            .filter((store) => store.is_active)
+            .map((store) => ({ id: store.id, label: store.name, secondary: store.city ?? "Magaza" })),
     activeSeason,
     activeSeasonProducts,
     activeSeasonCategories,
     activeSeasonSales,
+    activeDaySales,
+    dayQuantityMap,
+    entryDate,
     filteredActiveSeasonSales,
     filteredSeasonSummary,
     saleSearch,

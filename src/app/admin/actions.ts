@@ -24,9 +24,17 @@ function getRedirectTo(formData: FormData) {
 function redirectWithMessage(
   message: string,
   type: "success" | "error" = "success",
-  redirectTo = "/admin"
+  redirectTo = "/admin",
+  extraParams?: Record<string, string>
 ) {
   const params = new URLSearchParams({ message, type });
+  if (extraParams) {
+    Object.entries(extraParams).forEach(([key, value]) => {
+      if (value) {
+        params.set(key, value);
+      }
+    });
+  }
   redirect(`${redirectTo}?${params.toString()}`);
 }
 
@@ -54,10 +62,16 @@ function parseSeasonProducts(rawProducts: string) {
     .map((line) => line.trim())
     .filter(Boolean)
     .map((line, index) => {
-      const [name, points, unit] = line.split("|").map((part) => part.trim());
+      const parts = line.split("|").map((part) => part.trim());
+      const [name, maybeCategory, maybePoints, maybeUnit] = parts;
+      const hasCategory = parts.length >= 4;
+      const category = hasCategory ? maybeCategory : "Genel";
+      const points = hasCategory ? maybePoints : maybeCategory;
+      const unit = hasCategory ? maybeUnit : maybePoints;
 
       return {
         name,
+        category_name: category || "Genel",
         base_points: Number(points || "1"),
         unit_label: unit || "adet",
         sort_order: index
@@ -514,6 +528,7 @@ export async function createSeasonEmployeeSaleAction(formData: FormData) {
   const productId = String(formData.get("productId") ?? "").trim();
   const targetProfileId = String(formData.get("targetProfileId") ?? "").trim();
   const quantity = Number(String(formData.get("quantity") ?? "1"));
+  const entryDate = String(formData.get("entryDate") ?? "").trim();
   const note = String(formData.get("note") ?? "").trim();
 
   if (!seasonId || !productId || !targetProfileId) {
@@ -540,6 +555,10 @@ export async function createSeasonEmployeeSaleAction(formData: FormData) {
     redirectWithMessage("Miktar en az 1 olmali.", "error", redirectTo);
   }
 
+  if (!entryDate) {
+    redirectWithMessage("Satis tarihi secmelisiniz.", "error", redirectTo);
+  }
+
   const safeTargetProfile = targetProfile!;
   const sale = await calculateEmployeeSeasonSale({
     seasonId,
@@ -552,6 +571,7 @@ export async function createSeasonEmployeeSaleAction(formData: FormData) {
     season_id: seasonId,
     product_id: sale.productId,
     product_name: sale.productName,
+    entry_date: entryDate,
     target_profile_id: targetProfileId,
     quantity: Number.isFinite(quantity) && quantity > 0 ? quantity : 1,
     raw_score: sale.rawScore,
@@ -576,6 +596,7 @@ export async function createSeasonStoreSaleAction(formData: FormData) {
   const productId = String(formData.get("productId") ?? "").trim();
   const targetStoreId = String(formData.get("targetStoreId") ?? "").trim();
   const quantity = Number(String(formData.get("quantity") ?? "1"));
+  const entryDate = String(formData.get("entryDate") ?? "").trim();
   const note = String(formData.get("note") ?? "").trim();
 
   if (!seasonId || !productId || !targetStoreId) {
@@ -606,6 +627,10 @@ export async function createSeasonStoreSaleAction(formData: FormData) {
     redirectWithMessage("Miktar en az 1 olmali.", "error", redirectTo);
   }
 
+  if (!entryDate) {
+    redirectWithMessage("Satis tarihi secmelisiniz.", "error", redirectTo);
+  }
+
   const sale = await calculateStoreSeasonSale({
     seasonId,
     productId,
@@ -617,6 +642,7 @@ export async function createSeasonStoreSaleAction(formData: FormData) {
     season_id: seasonId,
     product_id: sale.productId,
     product_name: sale.productName,
+    entry_date: entryDate,
     target_store_id: targetStoreId,
     quantity: Number.isFinite(quantity) && quantity > 0 ? quantity : 1,
     raw_score: sale.rawScore,
@@ -643,9 +669,10 @@ export async function updateSeasonSaleAction(formData: FormData) {
   const targetProfileId = String(formData.get("targetProfileId") ?? "").trim();
   const targetStoreId = String(formData.get("targetStoreId") ?? "").trim();
   const quantity = Number(String(formData.get("quantity") ?? "1"));
+  const entryDate = String(formData.get("entryDate") ?? "").trim();
   const note = String(formData.get("note") ?? "").trim();
 
-  if (!saleId || !seasonId || !productId || !Number.isFinite(quantity) || quantity <= 0) {
+  if (!saleId || !seasonId || !productId || !entryDate || !Number.isFinite(quantity) || quantity <= 0) {
     redirectWithMessage("Sezon satis guncelleme alanlari eksik.", "error", redirectTo);
   }
 
@@ -682,6 +709,7 @@ export async function updateSeasonSaleAction(formData: FormData) {
           product_name: sale.productName,
           target_profile_id: targetProfileId,
           target_store_id: null,
+          entry_date: entryDate,
           quantity,
           raw_score: sale.rawScore,
           score: sale.weightedScore,
@@ -692,6 +720,7 @@ export async function updateSeasonSaleAction(formData: FormData) {
           product_name: sale.productName,
           target_profile_id: null,
           target_store_id: targetStoreId,
+          entry_date: entryDate,
           quantity,
           raw_score: sale.rawScore,
           score: sale.weightedScore,
@@ -732,6 +761,141 @@ export async function deleteSeasonSaleAction(formData: FormData) {
   revalidatePath("/admin");
   revalidatePath("/lig");
   redirectWithMessage("Sezon satisi silindi.", "success", redirectTo);
+}
+
+export async function saveSeasonTableRowAction(formData: FormData) {
+  await requireAdminAccess();
+  const redirectTo = getRedirectTo(formData);
+  const supabase = createAdminClient();
+  const seasonId = String(formData.get("seasonId") ?? "").trim();
+  const targetId = String(formData.get("targetId") ?? "").trim();
+  const entryDate = String(formData.get("entryDate") ?? "").trim();
+
+  if (!seasonId || !targetId || !entryDate) {
+    redirectWithMessage("Tablo satirini kaydetmek icin sezon, hedef ve tarih zorunlu.", "error", redirectTo);
+  }
+
+  const [{ data: season }, { data: products }] = await Promise.all([
+    supabase.from("seasons").select("mode").eq("id", seasonId).single(),
+    supabase
+      .from("season_products")
+      .select("id")
+      .eq("season_id", seasonId)
+      .order("sort_order")
+  ]);
+
+  if (!season || !products) {
+    redirectWithMessage("Sezon veya urunler bulunamadi.", "error", redirectTo, { entryDate });
+  }
+
+  const safeSeason = season!;
+  const targetType = safeSeason.mode === "employee" ? "employee" : "store";
+  const { data: existingEntries } = await supabase
+    .from("season_sales_entries")
+    .select("id, product_id")
+    .eq("season_id", seasonId)
+    .eq("entry_date", entryDate)
+    .eq(targetType === "employee" ? "target_profile_id" : "target_store_id", targetId);
+  const matchingEntries = ((existingEntries as Array<{ id: string; product_id: string | null }> | null) ?? []).filter(
+    (entry) => entry.product_id
+  );
+
+  for (const product of products as Array<{ id: string }>) {
+    const quantity = Number(String(formData.get(`qty__${product.id}`) ?? "0").trim() || "0");
+    const productEntries = matchingEntries.filter((entry) => entry.product_id === product.id);
+
+    if (quantity > 0) {
+      const sale =
+        targetType === "employee"
+          ? await calculateEmployeeSeasonSale({
+              seasonId,
+              productId: product.id,
+              targetProfileId: targetId,
+              quantity
+            })
+          : await calculateStoreSeasonSale({
+              seasonId,
+              productId: product.id,
+              targetStoreId: targetId,
+              quantity
+            });
+
+      const payload =
+        targetType === "employee"
+          ? {
+              season_id: seasonId,
+              product_id: sale.productId,
+              product_name: sale.productName,
+              entry_date: entryDate,
+              target_profile_id: targetId,
+              target_store_id: null,
+              quantity,
+              raw_score: sale.rawScore,
+              score: sale.weightedScore,
+              note: null
+            }
+          : {
+              season_id: seasonId,
+              product_id: sale.productId,
+              product_name: sale.productName,
+              entry_date: entryDate,
+              target_profile_id: null,
+              target_store_id: targetId,
+              quantity,
+              raw_score: sale.rawScore,
+              score: sale.weightedScore,
+              note: null
+            };
+
+      if (productEntries.length > 0) {
+        const [firstEntry, ...extraEntries] = productEntries;
+        const { error: updateError } = await supabase
+          .from("season_sales_entries")
+          .update(payload)
+          .eq("id", firstEntry.id);
+
+        if (updateError) {
+          redirectWithMessage(`Satir guncellenemedi: ${updateError.message}`, "error", redirectTo, {
+            entryDate
+          });
+        }
+
+        if (extraEntries.length > 0) {
+          await supabase
+            .from("season_sales_entries")
+            .delete()
+            .in(
+              "id",
+              extraEntries.map((entry) => entry.id)
+            );
+        }
+      } else {
+        const { error: insertError } = await supabase.from("season_sales_entries").insert(payload);
+
+        if (insertError) {
+          redirectWithMessage(`Satir eklenemedi: ${insertError.message}`, "error", redirectTo, { entryDate });
+        }
+      }
+    } else if (productEntries.length > 0) {
+      const { error: deleteError } = await supabase
+        .from("season_sales_entries")
+        .delete()
+        .in(
+          "id",
+          productEntries.map((entry) => entry.id)
+        );
+
+      if (deleteError) {
+        redirectWithMessage(`Eski satirlar silinemedi: ${deleteError.message}`, "error", redirectTo, {
+          entryDate
+        });
+      }
+    }
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/lig");
+  redirectWithMessage("Tablo satiri kaydedildi.", "success", redirectTo, { entryDate });
 }
 
 export async function updateStoreAction(formData: FormData) {

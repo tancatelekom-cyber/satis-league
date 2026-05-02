@@ -374,6 +374,73 @@ button {
   color: var(--muted);
 }
 
+.season-entry-table-wrap {
+  overflow-x: auto;
+  margin-top: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+}
+
+.season-entry-table {
+  width: 100%;
+  min-width: 860px;
+  border-collapse: collapse;
+}
+
+.season-entry-table th,
+.season-entry-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  vertical-align: top;
+}
+
+.season-entry-table th {
+  background: rgba(255, 255, 255, 0.05);
+  text-align: left;
+  font-size: 0.92rem;
+}
+
+.season-entry-table th span,
+.season-entry-table td strong {
+  display: block;
+}
+
+.season-entry-table th small,
+.season-entry-table td small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+}
+
+.season-entry-row-form {
+  width: 100%;
+}
+
+.season-entry-row-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)) 140px;
+  gap: 10px;
+  align-items: end;
+}
+
+.season-entry-cell {
+  display: grid;
+  gap: 6px;
+}
+
+.season-entry-cell span {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.season-entry-cell input {
+  width: 100%;
+}
+
+.season-entry-save {
+  min-height: 46px;
+}
+
 .filter-chip-row {
   display: flex;
   flex-wrap: wrap;

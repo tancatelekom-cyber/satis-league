@@ -1,7 +1,6 @@
 import {
-  createSeasonEmployeeSaleAction,
-  createSeasonStoreSaleAction,
   deleteSeasonSaleAction,
+  saveSeasonTableRowAction,
   updateSeasonSaleAction
 } from "@/app/admin/actions";
 import { AdminSectionNav } from "@/components/admin/admin-section-nav";
@@ -19,6 +18,7 @@ type SeasonSalesPageProps = {
     saleDateTo?: string;
     saleMonth?: string;
     saleCategory?: string;
+    entryDate?: string;
   }>;
 };
 
@@ -87,92 +87,88 @@ export default async function SeasonSalesPage({ searchParams }: SeasonSalesPageP
                 <article className="campaign-card">
                   <h4>
                     {data.activeSeason.mode === "employee"
-                      ? "Calisan Icin Sezon Girisi"
-                      : "Magaza Icin Sezon Girisi"}
+                      ? "Calisanlar Icin Gunluk Sezon Tablosu"
+                      : "Magazalar Icin Gunluk Sezon Tablosu"}
                   </h4>
                   <p className="season-entry-tip">
-                    Hedefi secin, urunu secin, miktari girin ve kaydedin.
+                    Isimleri listeden secmek yerine tabloda ilgili hucreye miktari yazin ve sadece o satiri kaydedin.
                   </p>
 
-                  <form
-                    action={
-                      data.activeSeason.mode === "employee"
-                        ? createSeasonEmployeeSaleAction
-                        : createSeasonStoreSaleAction
-                    }
-                    className="admin-form"
-                  >
-                    <input name="redirectTo" type="hidden" value="/admin/sezon-satislari" />
-                    <input name="seasonId" type="hidden" value={data.activeSeason.id} />
-
+                  <form className="admin-form" method="get">
                     <div className="auth-grid">
                       <label className="field">
-                        <span>Kayit Tarihi</span>
-                        <input defaultValue={new Date().toISOString().slice(0, 10)} name="entryDate" required type="date" />
+                        <span>Calisacaginiz Gun</span>
+                        <input defaultValue={data.entryDate} name="entryDate" required type="date" />
                       </label>
                       <label className="field">
                         <span>Aktif Sezon</span>
                         <input disabled value={data.activeSeason.name} />
                       </label>
                       <label className="field">
-                        <span>Sezon Urunu</span>
-                        <select name="productId" required>
-                          <option value="">Urun secin</option>
-                          {data.activeSeasonProducts.map((product) => (
-                            <option key={product.id} value={product.id}>
-                              {product.name} / {product.category_name} ({product.base_points} {product.unit_label})
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      {data.activeSeason.mode === "employee" ? (
-                        <label className="field">
-                          <span>Hedef Calisan</span>
-                          <select name="targetProfileId" required>
-                            <option value="">Calisan secin</option>
-                            {data.approvedProfilesForSeason.map((profile) => (
-                              <option key={profile.id} value={profile.id}>
-                                {profile.full_name}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                      ) : (
-                        <label className="field">
-                          <span>Hedef Magaza</span>
-                          <select name="targetStoreId" required>
-                            <option value="">Magaza secin</option>
-                            {data.storeRows.filter((store) => store.is_active).map((store) => (
-                              <option key={store.id} value={store.id}>
-                                {store.name}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                      )}
-                      <label className="field">
-                        <span>Miktar</span>
-                        <input defaultValue="1" min="1" name="quantity" type="number" />
-                      </label>
-                      <label className="field">
-                        <span>Olcum Sekli</span>
-                        <input disabled value={data.activeSeason.scoring === "points" ? "Puan" : "Adet"} />
+                        <span>Yaris Tipi</span>
+                        <input
+                          disabled
+                          value={data.activeSeason.mode === "employee" ? "Calisan Bazli" : "Magaza Bazli"}
+                        />
                       </label>
                     </div>
-
-                    <label className="field">
-                      <span>Not</span>
-                      <input name="note" placeholder="Ornek: Vitrin paketi satisi" />
-                    </label>
-
                     <div className="auth-actions">
-                      <button className="button-primary" type="submit">
-                        {data.activeSeason.mode === "employee"
-                          ? "Calisan Sezon Girisi Kaydet"
-                          : "Magaza Sezon Girisi Kaydet"}
+                      <button className="tiny-button approve" type="submit">
+                        Tabloyu Guncelle
                       </button>
                     </div>
                   </form>
+
+                  <div className="season-entry-table-wrap">
+                    <table className="season-entry-table">
+                      <thead>
+                        <tr>
+                          <th>{data.activeSeason.mode === "employee" ? "Calisan" : "Magaza"}</th>
+                          {data.activeSeasonProducts.map((product) => (
+                            <th key={product.id}>
+                              <span>{product.name}</span>
+                              <small>{product.category_name}</small>
+                            </th>
+                          ))}
+                          <th>Kaydet</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {data.seasonEntryTargets.map((target) => (
+                          <tr key={target.id}>
+                            <td>
+                              <strong>{target.label}</strong>
+                              <small>{target.secondary}</small>
+                            </td>
+                            <td colSpan={data.activeSeasonProducts.length + 1}>
+                              <form action={saveSeasonTableRowAction} className="season-entry-row-form">
+                                <input name="redirectTo" type="hidden" value="/admin/sezon-satislari" />
+                                <input name="seasonId" type="hidden" value={data.activeSeason?.id ?? ""} />
+                                <input name="targetId" type="hidden" value={target.id} />
+                                <input name="entryDate" type="hidden" value={data.entryDate} />
+                                <div className="season-entry-row-grid">
+                                  {data.activeSeasonProducts.map((product) => (
+                                    <label key={product.id} className="season-entry-cell">
+                                      <span>{product.name}</span>
+                                      <input
+                                        defaultValue={data.dayQuantityMap.get(`${target.id}__${product.id}`) ?? 0}
+                                        min="0"
+                                        name={`qty__${product.id}`}
+                                        type="number"
+                                      />
+                                    </label>
+                                  ))}
+                                  <button className="tiny-button approve season-entry-save" type="submit">
+                                    Satiri Kaydet
+                                  </button>
+                                </div>
+                              </form>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </article>
 
                 <article className="campaign-card">

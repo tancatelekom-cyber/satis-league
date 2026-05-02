@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SaleEntryCard } from "@/components/campaign/sale-entry-card";
 import {
@@ -342,19 +343,99 @@ export default async function CampaignPage({ searchParams }: CampaignPageProps) 
       done: spotlight ? spotlight.personal.gap <= 10 : false
     }
   ];
+  const quickLinks = [
+    {
+      href: "/kampanyalar",
+      title: "Canli Siralama",
+      body: "Acik kampanyalarda anlik liderligi ve kendi yerinizi gorun."
+    },
+    {
+      href: "/lig",
+      title: "Sezon Ligi",
+      body: "Aktif sezon puanlarini ve genel sezon podyumunu acin."
+    },
+    {
+      href: "/bildirimler",
+      title: "Bildirimler",
+      body: "Admin duyurulari, kampanya guncellemeleri ve onay mesajlari."
+    },
+    {
+      href: "/hesabim",
+      title: "Hesabim",
+      body: "Rol, magaza ve onay durumunuzu hizlica kontrol edin."
+    }
+  ];
 
   return (
     <main>
       <h1 className="page-title">Kampanya Oyunu Ekrani</h1>
       <p className="page-subtitle">
-        Artik bu ekran mock veri degil. Adminin actigi kampanyalar ve sizin girdiginiz satislar
-        burada canli akar.
+        Ilk ekranda kampanya siralamalari acik gelir. Diger alanlara ise menuden veya hizli
+        gecis kartlarindan ilerleyebilirsiniz.
       </p>
 
       {params?.message ? (
         <div className={`message-box ${params.type === "error" ? "error-box" : "success-box"}`}>
           {params.message}
         </div>
+      ) : null}
+
+      <section className="quick-nav-grid">
+        {quickLinks.map((link) => (
+          <Link key={link.href} className="quick-nav-card" href={link.href}>
+            <strong>{link.title}</strong>
+            <span>{link.body}</span>
+          </Link>
+        ))}
+      </section>
+
+      {activeLeaderboards.length > 0 ? (
+        <section className="guide-card ranking-focus-card">
+          <div className="section-title compact-title">
+            <div>
+              <h2>Canli Kampanya Siralamalari</h2>
+              <p>Giris sonrasi once anlik yaris durumunu gorursunuz.</p>
+            </div>
+          </div>
+
+          <div className="ranking-focus-grid">
+            {activeLeaderboards.map(({ campaign, leaderboard, personal }) => (
+              <article key={campaign.id} className="ranking-focus-item">
+                <div className="ranking-focus-head">
+                  <div>
+                    <strong>{campaign.name}</strong>
+                    <span>
+                      {campaign.mode === "employee" ? "Calisan Bazli" : "Magaza Bazli"} |{" "}
+                      {campaign.scoring === "points" ? "Puan" : "Adet"}
+                    </span>
+                  </div>
+                  <div className="store-status">
+                    <span>Siraniz</span>
+                    <strong>{personal.rank ? `#${personal.rank}` : "Liste disi"}</strong>
+                  </div>
+                </div>
+
+                <div className="leaderboard-list compact-leaderboard">
+                  {leaderboard.slice(0, 5).map((row, index) => (
+                    <div key={row.id} className="leaderboard-row">
+                      <div className="leaderboard-rank">{index + 1}</div>
+                      <div>
+                        <h4>{row.label}</h4>
+                        <p className="subtle">{row.badge ?? "Canli toplam"}</p>
+                      </div>
+                      <div className="score">
+                        <strong>{row.score.toFixed(0)}</strong>
+                        <span className="subtle">
+                          {campaign.scoring === "points" ? "puan" : "adet"}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
       ) : null}
 
       <section className="game-hub">
@@ -533,6 +614,59 @@ export default async function CampaignPage({ searchParams }: CampaignPageProps) 
 
             return (
               <section key={campaign.id} className="campaign-layout">
+                <aside className="leaderboard-card">
+                  <h3>Liderlik Arenasi</h3>
+                  <p>
+                    {campaign.mode === "employee"
+                      ? "Calisan bazli kampanyada personel siralamasi burada gorunur."
+                      : "Magaza bazli kampanyada magaza siralamasi burada gorunur."}
+                  </p>
+
+                  {podium.length > 0 ? (
+                    <div className="podium-grid">
+                      {podium.slice(1, 2).map((row) => (
+                        <div key={row.id} className="podium-card silver">
+                          <span>2</span>
+                          <strong>{row.label}</strong>
+                          <small>{scoreLabel(row.score, campaign.scoring)}</small>
+                        </div>
+                      ))}
+                      {podium.slice(0, 1).map((row) => (
+                        <div key={row.id} className="podium-card gold">
+                          <span>1</span>
+                          <strong>{row.label}</strong>
+                          <small>{scoreLabel(row.score, campaign.scoring)}</small>
+                        </div>
+                      ))}
+                      {podium.slice(2, 3).map((row) => (
+                        <div key={row.id} className="podium-card bronze">
+                          <span>3</span>
+                          <strong>{row.label}</strong>
+                          <small>{scoreLabel(row.score, campaign.scoring)}</small>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  <div className="leaderboard-list">
+                    {leaderboard.map((row, index) => (
+                      <div key={row.id} className="leaderboard-row">
+                        <div className="leaderboard-rank">{index + 1}</div>
+                        <div>
+                          <h4>{row.label}</h4>
+                          <p className="subtle">{row.badge ?? "Canli toplam"}</p>
+                        </div>
+                        <div className="score">
+                          <strong>{row.score.toFixed(0)}</strong>
+                          <span className="subtle">
+                            toplam {campaign.scoring === "points" ? "puan" : "adet"}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </aside>
+
                 <article className="campaign-card">
                   <div className="campaign-header">
                     <div>
@@ -614,59 +748,6 @@ export default async function CampaignPage({ searchParams }: CampaignPageProps) 
                     ))}
                   </div>
                 </article>
-
-                <aside className="leaderboard-card">
-                  <h3>Liderlik Arenasi</h3>
-                  <p>
-                    {campaign.mode === "employee"
-                      ? "Calisan bazli kampanyada personel siralamasi burada gorunur."
-                      : "Magaza bazli kampanyada magaza siralamasi burada gorunur."}
-                  </p>
-
-                  {podium.length > 0 ? (
-                    <div className="podium-grid">
-                      {podium.slice(1, 2).map((row) => (
-                        <div key={row.id} className="podium-card silver">
-                          <span>2</span>
-                          <strong>{row.label}</strong>
-                          <small>{scoreLabel(row.score, campaign.scoring)}</small>
-                        </div>
-                      ))}
-                      {podium.slice(0, 1).map((row) => (
-                        <div key={row.id} className="podium-card gold">
-                          <span>1</span>
-                          <strong>{row.label}</strong>
-                          <small>{scoreLabel(row.score, campaign.scoring)}</small>
-                        </div>
-                      ))}
-                      {podium.slice(2, 3).map((row) => (
-                        <div key={row.id} className="podium-card bronze">
-                          <span>3</span>
-                          <strong>{row.label}</strong>
-                          <small>{scoreLabel(row.score, campaign.scoring)}</small>
-                        </div>
-                      ))}
-                    </div>
-                  ) : null}
-
-                  <div className="leaderboard-list">
-                    {leaderboard.map((row, index) => (
-                      <div key={row.id} className="leaderboard-row">
-                        <div className="leaderboard-rank">{index + 1}</div>
-                        <div>
-                          <h4>{row.label}</h4>
-                          <p className="subtle">{row.badge ?? "Canli toplam"}</p>
-                        </div>
-                        <div className="score">
-                          <strong>{row.score.toFixed(0)}</strong>
-                          <span className="subtle">
-                            toplam {campaign.scoring === "points" ? "puan" : "adet"}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </aside>
               </section>
             );
           })}

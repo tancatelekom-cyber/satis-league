@@ -42,7 +42,7 @@ export function LoginForm({ message }: LoginFormProps) {
       return;
     }
 
-    router.push("/hesabim");
+    router.push("/kampanyalar");
     router.refresh();
   }
 

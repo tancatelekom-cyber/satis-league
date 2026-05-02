@@ -379,6 +379,68 @@ button {
   gap: 24px;
 }
 
+.quick-nav-grid,
+.ranking-focus-grid {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.quick-nav-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.quick-nav-card,
+.ranking-focus-item {
+  display: block;
+  padding: 18px 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.quick-nav-card strong,
+.ranking-focus-item strong {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.quick-nav-card span,
+.ranking-focus-head span {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.quick-nav-card:hover {
+  border-color: rgba(88, 240, 196, 0.28);
+  background: rgba(88, 240, 196, 0.08);
+}
+
+.ranking-focus-card {
+  padding-top: 18px;
+}
+
+.ranking-focus-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.ranking-focus-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.compact-title {
+  margin-top: 0;
+  margin-bottom: 14px;
+}
+
+.compact-leaderboard {
+  gap: 10px;
+}
+
 .game-hub {
   display: grid;
   grid-template-columns: 1.1fr 0.9fr;
@@ -1239,6 +1301,8 @@ button {
   .versus-hero,
   .auth-layout,
   .season-entry-summary,
+  .quick-nav-grid,
+  .ranking-focus-grid,
   .admin-shortcuts,
   .admin-overview-grid,
   .admin-quick-grid,
@@ -1338,6 +1402,7 @@ button {
   }
 
   .campaign-header,
+  .ranking-focus-head,
   .product-header,
   .leaderboard-row,
   .approval-row,

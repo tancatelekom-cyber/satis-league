@@ -77,7 +77,7 @@ export default async function CampaignPage({ searchParams }: CampaignPageProps) 
         {summaryCards.length > 0 ? (
           <div className="quick-nav-grid">
             {summaryCards.map((item) => (
-              <div key={item.id} className="quick-nav-card">
+              <Link key={item.id} className="quick-nav-card" href={`/kampanyalar/${item.id}`}>
                 <strong>{item.name}</strong>
                 <span>
                   Siraniz: {item.rank ? `#${item.rank}` : "Liste disi"} | Skor:{" "}
@@ -86,7 +86,7 @@ export default async function CampaignPage({ searchParams }: CampaignPageProps) 
                 <span>
                   Lidere fark: {item.gap.toFixed(0)} {item.scoring === "points" ? "puan" : "adet"}
                 </span>
-              </div>
+              </Link>
             ))}
           </div>
         ) : (

@@ -1,7 +1,8 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { SeasonRecord } from "@/lib/types";
+import { LeaguePeriod, SeasonProductRecord, SeasonRecord } from "@/lib/types";
 
 type LeagueRow = {
   id: string;
@@ -12,12 +13,76 @@ type LeagueRow = {
 
 type SaleRow = {
   season_id: string;
+  product_id: string | null;
   target_profile_id: string | null;
   target_store_id: string | null;
   score: number;
+  entry_date: string;
 };
 
-export default async function LeaguePage() {
+type LeaguePageProps = {
+  searchParams?: Promise<{
+    period?: LeaguePeriod;
+    category?: string;
+  }>;
+};
+
+const periodOptions: Array<{ value: LeaguePeriod; label: string }> = [
+  { value: "month", label: "Ay" },
+  { value: "quarter", label: "Q" },
+  { value: "year", label: "Yil" }
+];
+
+function getPeriodRange(period: LeaguePeriod, today: Date) {
+  const year = today.getFullYear();
+  const month = today.getMonth();
+
+  if (period === "year") {
+    return {
+      start: new Date(year, 0, 1),
+      end: new Date(year, 11, 31),
+      label: `${year} Yili`
+    };
+  }
+
+  if (period === "quarter") {
+    const quarterStartMonth = Math.floor(month / 3) * 3;
+    const quarterIndex = Math.floor(month / 3) + 1;
+    return {
+      start: new Date(year, quarterStartMonth, 1),
+      end: new Date(year, quarterStartMonth + 3, 0),
+      label: `${year} Q${quarterIndex}`
+    };
+  }
+
+  return {
+    start: new Date(year, month, 1),
+    end: new Date(year, month + 1, 0),
+    label: `${today.toLocaleString("tr-TR", { month: "long" })} ${year}`
+  };
+}
+
+function toDateString(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function clampDate(value: string, min: string, max: string) {
+  if (value < min) {
+    return min;
+  }
+
+  if (value > max) {
+    return max;
+  }
+
+  return value;
+}
+
+export default async function LeaguePage({ searchParams }: LeaguePageProps) {
+  const params = searchParams ? await searchParams : undefined;
   const supabase = await createClient();
   const admin = createAdminClient();
   const {
@@ -27,6 +92,10 @@ export default async function LeaguePage() {
   if (!user) {
     redirect("/giris");
   }
+
+  const selectedPeriod: LeaguePeriod =
+    params?.period === "quarter" || params?.period === "year" ? params.period : "month";
+  const selectedCategory = String(params?.category ?? "").trim();
 
   const { data: seasons } = await admin
     .from("seasons")
@@ -50,19 +119,25 @@ export default async function LeaguePage() {
   }
 
   const seasonIds = seasonRows.map((season) => season.id);
-  const [{ data: profiles }, { data: stores }, { data: seasonSales }] = await Promise.all([
-    admin
-      .from("profiles")
-      .select("id, full_name, role, approval, is_on_leave, store:stores(name)")
-      .eq("approval", "approved"),
-    admin.from("stores").select("id, name").eq("is_active", true),
-    seasonIds.length > 0
-      ? admin
-          .from("season_sales_entries")
-          .select("season_id, target_profile_id, target_store_id, score")
-          .in("season_id", seasonIds)
-      : Promise.resolve({ data: [] })
-  ]);
+  const [{ data: profiles }, { data: stores }, { data: seasonProducts }, { data: seasonSales }] =
+    await Promise.all([
+      admin
+        .from("profiles")
+        .select("id, full_name, role, approval, is_on_leave, store:stores(name)")
+        .eq("approval", "approved"),
+      admin.from("stores").select("id, name").eq("is_active", true),
+      admin
+        .from("season_products")
+        .select("id, season_id, name, category_name, unit_label, base_points, sort_order")
+        .eq("season_id", activeSeason.id)
+        .order("sort_order"),
+      seasonIds.length > 0
+        ? admin
+            .from("season_sales_entries")
+            .select("season_id, product_id, target_profile_id, target_store_id, score, entry_date")
+            .in("season_id", seasonIds)
+        : Promise.resolve({ data: [] })
+    ]);
 
   const profileRows =
     ((profiles as Array<{
@@ -71,54 +146,87 @@ export default async function LeaguePage() {
       role: string;
       is_on_leave: boolean;
       store: { name: string } | null;
-    }> | null) ?? []).filter(
-      (profile) => !profile.is_on_leave && profile.role === "employee"
-    );
-  const storeRows = ((stores as Array<{ id: string; name: string }> | null) ?? []);
+    }> | null) ?? []).filter((profile) => !profile.is_on_leave && profile.role === "employee");
+  const storeRows = (stores as Array<{ id: string; name: string }> | null) ?? [];
+  const productRows = (seasonProducts as SeasonProductRecord[] | null) ?? [];
   const saleRows = (seasonSales as SaleRow[] | null) ?? [];
-  const today = new Date().toISOString().slice(0, 10);
 
-  function buildEmployeeLeague(seasonId: string): LeagueRow[] {
+  const categoryOptions = Array.from(
+    new Set(productRows.map((product) => product.category_name?.trim() || "Genel").filter(Boolean))
+  );
+  const effectiveCategory = categoryOptions.includes(selectedCategory) ? selectedCategory : "";
+  const productCategoryMap = new Map(
+    productRows.map((product) => [product.id, product.category_name?.trim() || "Genel"])
+  );
+
+  const today = new Date();
+  const rawRange = getPeriodRange(selectedPeriod, today);
+  const clampedStart = clampDate(toDateString(rawRange.start), activeSeason.start_date, activeSeason.end_date);
+  const clampedEnd = clampDate(toDateString(rawRange.end), activeSeason.start_date, activeSeason.end_date);
+  const activeSeasonSales = saleRows.filter((sale) => sale.season_id === activeSeason.id);
+  const filteredSeasonSales = activeSeasonSales.filter((sale) => {
+    const saleDate = sale.entry_date;
+    const categoryName = productCategoryMap.get(sale.product_id ?? "") ?? "Genel";
+
+    if (saleDate < clampedStart || saleDate > clampedEnd) {
+      return false;
+    }
+
+    if (effectiveCategory && categoryName !== effectiveCategory) {
+      return false;
+    }
+
+    return true;
+  });
+
+  function buildEmployeeLeague(seasonId: string, sourceRows: SaleRow[]): LeagueRow[] {
     return profileRows
       .map((profile) => ({
         id: profile.id,
         label: profile.full_name,
         storeName: profile.store?.name ?? "Magaza yok",
-        score: saleRows
+        score: sourceRows
           .filter((entry) => entry.season_id === seasonId && entry.target_profile_id === profile.id)
           .reduce((sum, entry) => sum + Number(entry.score ?? 0), 0)
       }))
       .sort((a, b) => b.score - a.score);
   }
 
-  function buildStoreLeague(seasonId: string): LeagueRow[] {
+  function buildStoreLeague(seasonId: string, sourceRows: SaleRow[]): LeagueRow[] {
     return storeRows
       .map((store) => ({
         id: store.id,
         label: store.name,
-        score: saleRows
+        score: sourceRows
           .filter((entry) => entry.season_id === seasonId && entry.target_store_id === store.id)
           .reduce((sum, entry) => sum + Number(entry.score ?? 0), 0)
       }))
       .sort((a, b) => b.score - a.score);
   }
 
-  const activeEmployeeLeague = buildEmployeeLeague(activeSeason.id).slice(0, 12);
-  const activeStoreLeague = buildStoreLeague(activeSeason.id).slice(0, 12);
+  const activeEmployeeLeague = buildEmployeeLeague(activeSeason.id, filteredSeasonSales);
+  const activeStoreLeague = buildStoreLeague(activeSeason.id, filteredSeasonSales);
   const primaryLeague =
     activeSeason.mode === "employee" ? activeEmployeeLeague : activeStoreLeague;
   const secondaryLeague =
     activeSeason.mode === "employee" ? activeStoreLeague : activeEmployeeLeague;
-  const podiumRows = [primaryLeague[1], primaryLeague[0], primaryLeague[2]].filter(Boolean) as LeagueRow[];
   const champion = primaryLeague[0] ?? null;
+  const filteredTotalScore = filteredSeasonSales.reduce(
+    (sum, row) => sum + Number(row.score ?? 0),
+    0
+  );
   const completedSeasons = seasonRows
-    .filter((season) => season.id !== activeSeason.id && season.end_date <= today)
+    .filter((season) => season.id !== activeSeason.id && season.end_date < toDateString(today))
     .map((season) => {
-      const seasonPrimaryLeague =
-        season.mode === "employee" ? buildEmployeeLeague(season.id) : buildStoreLeague(season.id);
+      const seasonSourceRows = saleRows.filter((row) => row.season_id === season.id);
+      const winnerLeague =
+        season.mode === "employee"
+          ? buildEmployeeLeague(season.id, seasonSourceRows)
+          : buildStoreLeague(season.id, seasonSourceRows);
+
       return {
         ...season,
-        champion: seasonPrimaryLeague[0] ?? null
+        champion: winnerLeague[0] ?? null
       };
     })
     .filter((season) => season.champion)
@@ -131,65 +239,99 @@ export default async function LeaguePage() {
         Aktif sezon: {activeSeason.name} | {activeSeason.start_date} - {activeSeason.end_date}
       </p>
 
+      <section className="guide-card game-brief-card">
+        <h3>Donem Secimi</h3>
+        <div className="filter-chip-row">
+          {periodOptions.map((period) => (
+            <Link
+              key={period.value}
+              className={`filter-chip ${selectedPeriod === period.value ? "active" : ""}`}
+              href={`/lig?period=${period.value}${effectiveCategory ? `&category=${encodeURIComponent(effectiveCategory)}` : ""}`}
+            >
+              {period.label}
+            </Link>
+          ))}
+        </div>
+
+        <h3>Urun Kategorisi</h3>
+        <div className="filter-chip-row">
+          <Link
+            className={`filter-chip ${effectiveCategory ? "" : "active"}`}
+            href={`/lig?period=${selectedPeriod}`}
+          >
+            Tum Kategoriler
+          </Link>
+          {categoryOptions.map((category) => (
+            <Link
+              key={category}
+              className={`filter-chip ${effectiveCategory === category ? "active" : ""}`}
+              href={`/lig?period=${selectedPeriod}&category=${encodeURIComponent(category)}`}
+            >
+              {category}
+            </Link>
+          ))}
+        </div>
+      </section>
+
       <section className="momentum-grid">
         <article className="guide-card">
-          <h3>Sezon Aciklamasi</h3>
-          <p>{activeSeason.description ?? "Bu sezon icin aciklama girilmedi."}</p>
+          <h3>Gosterilen Donem</h3>
+          <p>{rawRange.label}</p>
+          <div className="mission-pills">
+            <span className="mission-pill">
+              {clampedStart} - {clampedEnd}
+            </span>
+            <span className="mission-pill">
+              {effectiveCategory || "Tum kategoriler"}
+            </span>
+          </div>
         </article>
 
         <article className="guide-card">
-          <h3>Sezon Urunleri</h3>
-          <div className="mission-pills">
-            {activeSeason.season_products.length > 0 ? (
-              activeSeason.season_products.map((product) => (
-                <span key={product} className="mission-pill">
-                  {product}
-                </span>
-              ))
-            ) : (
-              <span className="mission-pill">Sezon urunu tanimlanmadi</span>
-            )}
+          <h3>Donem Ozeti</h3>
+          <div className="profile-summary">
+            <div className="summary-card">
+              <span>Kayit</span>
+              <strong>{filteredSeasonSales.length}</strong>
+            </div>
+            <div className="summary-card">
+              <span>Toplam Puan</span>
+              <strong>{filteredTotalScore.toFixed(0)}</strong>
+            </div>
+            <div className="summary-card">
+              <span>Lider</span>
+              <strong>{champion?.label ?? "-"}</strong>
+            </div>
           </div>
         </article>
       </section>
 
       <section className="campaign-layout">
         <article className="leaderboard-card">
-          <h3>Sezon Sampiyonu</h3>
+          <h3>
+            {periodOptions.find((option) => option.value === selectedPeriod)?.label} Birincisi
+          </h3>
           {champion ? (
-            <>
-              <div className="podium-grid">
-                {podiumRows.map((row, index) => {
-                  const visualClass = index === 0 ? "silver" : index === 1 ? "gold" : "bronze";
-                  const rank = index === 0 ? 2 : index === 1 ? 1 : 3;
-                  return (
-                    <div key={row.id} className={`podium-card ${visualClass}`}>
-                      <span>{rank}</span>
-                      <strong>{row.label}</strong>
-                      <small>{row.storeName ?? "Magaza siralamasi"}</small>
-                      <strong>{row.score.toFixed(0)}</strong>
-                    </div>
-                  );
-                })}
+            <div className="profile-summary">
+              <div className="summary-row">
+                <span>Kazanan</span>
+                <strong>{champion.label}</strong>
               </div>
-
-              <div className="profile-summary">
-                <div className="summary-row">
-                  <span>Lider</span>
-                  <strong>{champion.label}</strong>
-                </div>
-                <div className="summary-row">
-                  <span>Toplam Sezon Puani</span>
-                  <strong>{champion.score.toFixed(0)}</strong>
-                </div>
-                <div className="summary-row">
-                  <span>Yaris Turu</span>
-                  <strong>{activeSeason.mode === "employee" ? "Calisan Bazli" : "Magaza Bazli"}</strong>
-                </div>
+              <div className="summary-row">
+                <span>Toplam</span>
+                <strong>{champion.score.toFixed(0)}</strong>
               </div>
-            </>
+              <div className="summary-row">
+                <span>Yaris Turu</span>
+                <strong>{activeSeason.mode === "employee" ? "Calisan Bazli" : "Magaza Bazli"}</strong>
+              </div>
+              <div className="summary-row">
+                <span>Kategori</span>
+                <strong>{effectiveCategory || "Tum kategoriler"}</strong>
+              </div>
+            </div>
           ) : (
-            <p>Bu sezon icin henuz puan birikmedi.</p>
+            <p>Bu donemde henuz sezon girisi yok.</p>
           )}
         </article>
 
@@ -218,18 +360,18 @@ export default async function LeaguePage() {
 
       <section className="campaign-layout">
         <article className="leaderboard-card">
-          <h3>{activeSeason.mode === "employee" ? "Calisan Ligi" : "Magaza Ligi"}</h3>
+          <h3>{activeSeason.mode === "employee" ? "Calisan Siralamasi" : "Magaza Siralamasi"}</h3>
           <div className="leaderboard-list">
             {primaryLeague.map((row, index) => (
               <div key={row.id} className="leaderboard-row">
                 <div className="leaderboard-rank">{index + 1}</div>
                 <div>
                   <h4>{row.label}</h4>
-                  <p className="subtle">{row.storeName ?? "Sezon genel sirasi"}</p>
+                  <p className="subtle">{row.storeName ?? rawRange.label}</p>
                 </div>
                 <div className="score">
                   <strong>{row.score.toFixed(0)}</strong>
-                  <span className="subtle">sezon puani</span>
+                  <span className="subtle">donem puani</span>
                 </div>
               </div>
             ))}
@@ -245,7 +387,10 @@ export default async function LeaguePage() {
                 <div>
                   <h4>{row.label}</h4>
                   <p className="subtle">
-                    {row.storeName ?? (activeSeason.mode === "employee" ? "Calisan sezon girdilerinden gelen toplam" : "Magaza sezonuna katki ozeti")}
+                    {row.storeName ??
+                      (activeSeason.mode === "employee"
+                        ? "Calisan donem girislerinden gelen toplam"
+                        : "Magaza sezonuna katki ozeti")}
                   </p>
                 </div>
                 <div className="score">
@@ -256,6 +401,24 @@ export default async function LeaguePage() {
             ))}
           </div>
         </article>
+      </section>
+
+      <section className="guide-card game-brief-card">
+        <h3>Sezon Urun Kategorileri</h3>
+        <div className="approval-list">
+          {productRows.map((product) => (
+            <div key={product.id} className="approval-row">
+              <div>
+                <h4>{product.name}</h4>
+                <p className="subtle">{product.category_name}</p>
+              </div>
+              <div className="score">
+                <strong>{Number(product.base_points).toFixed(0)}</strong>
+                <span className="subtle">{product.unit_label}</span>
+              </div>
+            </div>
+          ))}
+        </div>
       </section>
 
       <section className="guide-card game-brief-card">

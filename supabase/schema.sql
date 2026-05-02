@@ -108,10 +108,14 @@ create table if not exists public.season_products (
   id uuid primary key default gen_random_uuid(),
   season_id uuid not null references public.seasons(id) on delete cascade,
   name text not null,
+  category_name text not null default 'Genel',
   unit_label text not null default 'adet',
   base_points numeric(10,2) not null default 1,
   sort_order integer not null default 0
 );
+
+alter table public.season_products
+  add column if not exists category_name text not null default 'Genel';
 
 create table if not exists public.season_store_multipliers (
   id uuid primary key default gen_random_uuid(),
@@ -193,6 +197,7 @@ create table if not exists public.season_sales_entries (
   season_id uuid not null references public.seasons(id) on delete cascade,
   product_id uuid references public.season_products(id) on delete set null,
   product_name text not null,
+  entry_date date not null default current_date,
   target_profile_id uuid references public.profiles(id) on delete set null,
   target_store_id uuid references public.stores(id) on delete set null,
   quantity integer not null default 1,
@@ -201,6 +206,9 @@ create table if not exists public.season_sales_entries (
   note text,
   created_at timestamptz not null default now()
 );
+
+alter table public.season_sales_entries
+  add column if not exists entry_date date not null default current_date;
 
 create table if not exists public.notifications (
   id uuid primary key default gen_random_uuid(),

@@ -14,6 +14,8 @@ type AdminDashboardParams = {
   saleSearch?: string;
   saleDateFrom?: string;
   saleDateTo?: string;
+  saleMonth?: string;
+  saleCategory?: string;
 };
 
 export type ActiveSeasonSaleRecord = {
@@ -21,6 +23,7 @@ export type ActiveSeasonSaleRecord = {
   season_id: string;
   product_id: string | null;
   product_name: string;
+  entry_date: string;
   quantity: number;
   raw_score: number;
   score: number;
@@ -36,6 +39,8 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
   const saleSearch = String(params.saleSearch ?? "").trim().toLocaleLowerCase("tr-TR");
   const saleDateFrom = String(params.saleDateFrom ?? "").trim();
   const saleDateTo = String(params.saleDateTo ?? "").trim();
+  const saleMonth = String(params.saleMonth ?? "").trim();
+  const saleCategory = String(params.saleCategory ?? "").trim();
   const supabase = createAdminClient();
 
   const [{ data: stores }, { data: pendingProfiles }, { data: campaigns }, { data: seasons }] =
@@ -105,7 +110,7 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
     ? await Promise.all([
         supabase
           .from("season_products")
-          .select("id, season_id, name, unit_label, base_points, sort_order")
+          .select("id, season_id, name, category_name, unit_label, base_points, sort_order")
           .in("season_id", seasonIds)
           .order("sort_order"),
         supabase
@@ -140,6 +145,16 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
         (product) => product.season_id === activeSeason.id
       )
     : [];
+  const activeSeasonCategories = Array.from(
+    new Set(
+      activeSeasonProducts
+        .map((product) => product.category_name?.trim() || "Genel")
+        .filter(Boolean)
+    )
+  );
+  const productCategoryMap = new Map(
+    activeSeasonProducts.map((product) => [product.id, product.category_name?.trim() || "Genel"])
+  );
 
   const activeSeasonSales =
     activeSeason
@@ -151,6 +166,7 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
               season_id,
               product_id,
               product_name,
+              entry_date,
               quantity,
               raw_score,
               score,
@@ -163,6 +179,7 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
             `
           )
           .eq("season_id", activeSeason.id)
+          .order("entry_date", { ascending: false })
           .order("created_at", { ascending: false })
           .limit(100)).data as ActiveSeasonSaleRecord[] | null) ?? [])
       : [];
@@ -170,13 +187,14 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
   const filteredActiveSeasonSales = activeSeasonSales.filter((sale) => {
     const searchableText = [
       sale.product_name,
+      productCategoryMap.get(sale.product_id ?? "") ?? "Genel",
       sale.note ?? "",
       sale.targetProfile?.full_name ?? "",
       sale.targetStore?.name ?? ""
     ]
       .join(" ")
       .toLocaleLowerCase("tr-TR");
-    const saleDay = sale.created_at.slice(0, 10);
+    const saleDay = sale.entry_date || sale.created_at.slice(0, 10);
 
     if (saleSearch && !searchableText.includes(saleSearch)) {
       return false;
@@ -188,6 +206,17 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
 
     if (saleDateTo && saleDay > saleDateTo) {
       return false;
+    }
+
+    if (saleMonth && !saleDay.startsWith(saleMonth)) {
+      return false;
+    }
+
+    if (saleCategory) {
+      const categoryName = productCategoryMap.get(sale.product_id ?? "") ?? "Genel";
+      if (categoryName !== saleCategory) {
+        return false;
+      }
     }
 
     return true;
@@ -215,11 +244,14 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
     approvedProfilesForSeason,
     activeSeason,
     activeSeasonProducts,
+    activeSeasonCategories,
     activeSeasonSales,
     filteredActiveSeasonSales,
     filteredSeasonSummary,
     saleSearch,
     saleDateFrom,
-    saleDateTo
+    saleDateTo,
+    saleMonth,
+    saleCategory
   };
 }

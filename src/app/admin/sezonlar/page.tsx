@@ -28,7 +28,7 @@ export default async function SeasonAdminPage({ searchParams }: SeasonAdminPageP
     <main>
       <h1 className="page-title">Sezon Yonetimi</h1>
       <p className="page-subtitle">
-        Buradan sezonlari olusturun, urunleri ekleyin, magaza carpanlarini belirleyin ve aktif sezonu secin.
+        Buradan sezonlari olusturun, urunleri kategori bazli ekleyin, magaza carpanlarini belirleyin ve aktif sezonu secin.
       </p>
 
       {params?.message ? (
@@ -150,7 +150,10 @@ export default async function SeasonAdminPage({ searchParams }: SeasonAdminPageP
                       Sezon urunleri:{" "}
                       {data.seasonProductRows
                         .filter((item) => item.season_id === season.id)
-                        .map((item) => `${item.name} (${item.base_points} ${item.unit_label})`)
+                        .map(
+                          (item) =>
+                            `${item.name} / ${item.category_name} (${item.base_points} ${item.unit_label})`
+                        )
                         .join(", ") || "Tanimlanmadi"}
                     </p>
                   </div>
@@ -234,6 +237,7 @@ export default async function SeasonAdminPage({ searchParams }: SeasonAdminPageP
                           .filter((item) => item.season_id === season.id)
                           .map((item) => ({
                             name: item.name,
+                            category_name: item.category_name,
                             base_points: item.base_points,
                             unit_label: item.unit_label
                           }))}

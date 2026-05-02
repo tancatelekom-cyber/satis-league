@@ -1,6 +1,7 @@
 export type UserRole = "employee" | "manager" | "management" | "admin";
 export type CampaignMode = "employee" | "store";
 export type ScoringType = "points" | "quantity";
+export type LeaguePeriod = "month" | "quarter" | "year";
 
 export type CampaignProduct = {
   id: string;
@@ -102,6 +103,7 @@ export type SeasonProductRecord = {
   id: string;
   season_id: string;
   name: string;
+  category_name: string;
   unit_label: string;
   base_points: number;
   sort_order: number;
@@ -207,6 +209,7 @@ export type SeasonSalesEntryRecord = {
   season_id: string;
   product_id: string | null;
   product_name: string;
+  entry_date: string;
   target_profile_id: string | null;
   target_store_id: string | null;
   quantity: number;

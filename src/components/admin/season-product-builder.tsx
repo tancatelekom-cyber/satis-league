@@ -6,6 +6,7 @@ import { AdminStore } from "@/lib/types";
 type ProductRow = {
   id: string;
   name: string;
+  category: string;
   points: string;
   unit: string;
 };
@@ -22,6 +23,7 @@ type SeasonProductBuilderProps = {
   multiplierFieldName: string;
   initialProducts?: Array<{
     name: string;
+    category_name: string;
     base_points: number;
     unit_label: string;
   }>;
@@ -47,10 +49,11 @@ export function SeasonProductBuilder({
       ? initialProducts.map((product) => ({
           id: createId("season-product"),
           name: product.name,
+          category: product.category_name,
           points: String(product.base_points),
           unit: product.unit_label
         }))
-      : [{ id: createId("season-product"), name: "", points: "1", unit: "adet" }]
+      : [{ id: createId("season-product"), name: "", category: "Genel", points: "1", unit: "adet" }]
   );
   const [storeMultipliers, setStoreMultipliers] = useState<StoreMultiplierRow[]>(
     initialMultipliers && initialMultipliers.length > 0
@@ -78,7 +81,7 @@ export function SeasonProductBuilder({
   function addProductRow() {
     setProducts((current) => [
       ...current,
-      { id: createId("season-product"), name: "", points: "1", unit: "adet" }
+      { id: createId("season-product"), name: "", category: "Genel", points: "1", unit: "adet" }
     ]);
     setFeedback("Yeni sezon urunu satiri eklendi.");
   }
@@ -92,8 +95,14 @@ export function SeasonProductBuilder({
   }
 
   const productsPayload = products
-    .map((product) => `${product.name.trim()}|${product.points.trim() || "1"}|${product.unit.trim() || "adet"}`)
-    .filter((line) => !line.startsWith("|"))
+    .map(
+      (product) =>
+        `${product.name.trim()}|${product.category.trim() || "Genel"}|${product.points.trim() || "1"}|${product.unit.trim() || "adet"}`
+    )
+    .filter((line) => {
+      const [name] = line.split("|");
+      return Boolean(name);
+    })
     .join("\n");
 
   const multipliersPayload = storeMultipliers
@@ -123,6 +132,15 @@ export function SeasonProductBuilder({
                   onChange={(event) => updateProduct(product.id, "name", event.target.value)}
                   placeholder="Ornek: Ekran Koruyucu"
                   value={product.name}
+                />
+              </label>
+
+              <label className="field compact">
+                <span>Kategori</span>
+                <input
+                  onChange={(event) => updateProduct(product.id, "category", event.target.value)}
+                  placeholder="Ornek: Aksesuar"
+                  value={product.category}
                 />
               </label>
 

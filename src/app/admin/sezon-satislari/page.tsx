@@ -17,6 +17,8 @@ type SeasonSalesPageProps = {
     saleSearch?: string;
     saleDateFrom?: string;
     saleDateTo?: string;
+    saleMonth?: string;
+    saleCategory?: string;
   }>;
 };
 
@@ -35,7 +37,7 @@ export default async function SeasonSalesPage({ searchParams }: SeasonSalesPageP
     <main>
       <h1 className="page-title">Sezon Satislari</h1>
       <p className="page-subtitle">
-        Sezon puanlarini sadece admin girer. Telefon ekraninda daha rahat kullanmak icin bu alan artik tek basina duruyor.
+        Sezon puanlarini sadece admin girer. Gunluk kayit girin, ayni ayi tekrar tekrar duzenleyin ve Ay/Q/Yil liglerini ayni veriden besleyin.
       </p>
 
       {params?.message ? (
@@ -105,6 +107,10 @@ export default async function SeasonSalesPage({ searchParams }: SeasonSalesPageP
 
                     <div className="auth-grid">
                       <label className="field">
+                        <span>Kayit Tarihi</span>
+                        <input defaultValue={new Date().toISOString().slice(0, 10)} name="entryDate" required type="date" />
+                      </label>
+                      <label className="field">
                         <span>Aktif Sezon</span>
                         <input disabled value={data.activeSeason.name} />
                       </label>
@@ -114,7 +120,7 @@ export default async function SeasonSalesPage({ searchParams }: SeasonSalesPageP
                           <option value="">Urun secin</option>
                           {data.activeSeasonProducts.map((product) => (
                             <option key={product.id} value={product.id}>
-                              {product.name} ({product.base_points} {product.unit_label})
+                              {product.name} / {product.category_name} ({product.base_points} {product.unit_label})
                             </option>
                           ))}
                         </select>
@@ -171,10 +177,14 @@ export default async function SeasonSalesPage({ searchParams }: SeasonSalesPageP
 
                 <article className="campaign-card">
                   <h4>Sezon Kurallari</h4>
-                  <div className="step-list">
-                    <div className="step-item">
-                      <strong>Sezon Tipi</strong>
-                      <span>{data.activeSeason.mode === "employee" ? "Calisan Bazli" : "Magaza Bazli"}</span>
+                    <div className="step-list">
+                      <div className="step-item">
+                        <strong>Kategoriler</strong>
+                        <span>{data.activeSeasonCategories.join(", ") || "Genel"}</span>
+                      </div>
+                      <div className="step-item">
+                        <strong>Sezon Tipi</strong>
+                        <span>{data.activeSeason.mode === "employee" ? "Calisan Bazli" : "Magaza Bazli"}</span>
                     </div>
                     <div className="step-item">
                       <strong>Olcum Tipi</strong>
@@ -202,6 +212,21 @@ export default async function SeasonSalesPage({ searchParams }: SeasonSalesPageP
 
             <form className="admin-form" method="get">
               <div className="auth-grid">
+                <label className="field compact">
+                  <span>Ay Filtresi</span>
+                  <input defaultValue={data.saleMonth} name="saleMonth" type="month" />
+                </label>
+                <label className="field compact">
+                  <span>Kategori</span>
+                  <select defaultValue={data.saleCategory} name="saleCategory">
+                    <option value="">Tum kategoriler</option>
+                    {data.activeSeasonCategories.map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </select>
+                </label>
                 <label className="field compact">
                   <span>Arama</span>
                   <input
@@ -265,6 +290,11 @@ export default async function SeasonSalesPage({ searchParams }: SeasonSalesPageP
                           : sale.targetStore?.name ?? "Magaza"}
                       </p>
                       <p className="subtle">
+                        Tarih: {sale.entry_date} | Kategori:{" "}
+                        {data.activeSeasonProducts.find((product) => product.id === sale.product_id)?.category_name ??
+                          "Genel"}
+                      </p>
+                      <p className="subtle">
                         Miktar: {sale.quantity} | Ham: {Number(sale.raw_score).toFixed(2)} | Puan:{" "}
                         {Number(sale.score).toFixed(2)}
                       </p>
@@ -278,11 +308,16 @@ export default async function SeasonSalesPage({ searchParams }: SeasonSalesPageP
 
                         <div className="auth-grid">
                           <label className="field compact">
+                            <span>Tarih</span>
+                            <input defaultValue={sale.entry_date} name="entryDate" required type="date" />
+                          </label>
+
+                          <label className="field compact">
                             <span>Urun</span>
                             <select defaultValue={sale.product_id ?? ""} name="productId" required>
                               {data.activeSeasonProducts.map((product) => (
                                 <option key={product.id} value={product.id}>
-                                  {product.name}
+                                  {product.name} / {product.category_name}
                                 </option>
                               ))}
                             </select>

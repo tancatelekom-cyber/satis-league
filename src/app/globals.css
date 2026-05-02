@@ -1018,11 +1018,17 @@ button {
 }
 
 .product-header,
-.leaderboard-row,
 .approval-row {
   display: flex;
   justify-content: space-between;
   gap: 14px;
+  align-items: center;
+}
+
+.leaderboard-row {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  gap: 12px;
   align-items: center;
 }
 
@@ -1108,6 +1114,12 @@ button {
   color: #09111f;
   font-weight: 900;
   background: linear-gradient(135deg, var(--accent-strong), var(--accent));
+}
+
+.leaderboard-row h4 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .score {
@@ -1463,7 +1475,6 @@ button {
   .detail-page-head,
   .ranking-focus-head,
   .product-header,
-  .leaderboard-row,
   .approval-row,
   .notification-item,
   .section-title,

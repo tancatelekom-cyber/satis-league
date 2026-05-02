@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { SaleEntryCard } from "@/components/campaign/sale-entry-card";
-import { daysLeftLabel, formatCampaignDateTime } from "@/lib/campaign-utils";
+import { daysLeftLabel, formatCampaignDateTime, isSalesWindowOpen } from "@/lib/campaign-utils";
 import { getCampaignDashboardData } from "@/lib/campaign/get-campaign-dashboard-data";
 import { createClient } from "@/lib/supabase/server";
 
@@ -46,29 +46,35 @@ export default async function CampaignDetailPage({
     redirect("/hesabim");
   }
 
-  const activeItem = dashboard.activeLeaderboards.find(
+  const activeItem = dashboard.activeLeaderboards.find((item) => item.campaign.id === routeParams.campaignId);
+  const finishedItem = dashboard.finishedLeaderboards.find(
     (item) => item.campaign.id === routeParams.campaignId
   );
+  const campaignItem = activeItem ?? finishedItem ?? null;
 
-  if (!activeItem) {
+  if (!campaignItem) {
     notFound();
   }
 
-  const { campaign, leaderboard, personal } = activeItem;
+  const { campaign, leaderboard, personal } = campaignItem;
+  const isActiveCampaign = isSalesWindowOpen(campaign.start_at, campaign.end_at);
   const menuItems = [
     {
       href: `/kampanyalar/${campaign.id}?view=leaderboard`,
       title: "Kampanya Siralama",
       body: "Canli sira, podyum ve lider farkini gorun.",
       active: view === "leaderboard"
-    },
-    {
+    }
+  ];
+
+  if (isActiveCampaign) {
+    menuItems.push({
       href: `/kampanyalar/${campaign.id}?view=sales`,
       title: "Kampanya Girisi",
       body: "Urun secip hizli satis girisi yapin.",
       active: view === "sales"
-    }
-  ];
+    });
+  }
 
   return (
     <main>
@@ -91,7 +97,9 @@ export default async function CampaignDetailPage({
         <span className="mission-pill">Sira: {personal.rank ? `#${personal.rank}` : "Liste disi"}</span>
         <span className="mission-pill">Skor: {scoreLabel(personal.currentScore, campaign.scoring)}</span>
         <span className="mission-pill">Fark: {scoreLabel(personal.gap, campaign.scoring)}</span>
-        <span className="mission-pill">Kalan: {daysLeftLabel(campaign.end_at)}</span>
+          <span className="mission-pill">
+            {isActiveCampaign ? `Kalan: ${daysLeftLabel(campaign.end_at)}` : "Durum: Gecmis kampanya"}
+          </span>
         <span className="mission-pill">
           {campaign.mode === "employee" ? "Calisan Bazli" : "Magaza Bazli"} |{" "}
           {campaign.scoring === "points" ? "Puan" : "Adet"}
@@ -111,7 +119,7 @@ export default async function CampaignDetailPage({
         ))}
       </section>
 
-      {view === "leaderboard" ? (
+      {!isActiveCampaign || view === "leaderboard" ? (
         <section className="guide-card">
           <div className="leaderboard-list">
             {leaderboard.map((row, index) => (

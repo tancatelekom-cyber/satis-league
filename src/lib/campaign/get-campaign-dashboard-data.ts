@@ -48,6 +48,7 @@ export type UserCampaignDashboardData = {
   activeCampaigns: CampaignPageCampaign[];
   finishedCampaigns: CampaignPageCampaign[];
   activeLeaderboards: ActiveCampaignLeaderboard[];
+  finishedLeaderboards: ActiveCampaignLeaderboard[];
 };
 
 function withBadges(rows: LeaderboardRow[]) {
@@ -217,12 +218,22 @@ export async function getCampaignDashboardData(userId: string): Promise<UserCamp
     };
   });
 
+  const finishedLeaderboards = finishedCampaigns.map((campaign) => {
+    const leaderboard = buildLeaderboard(campaign, approvedPeople, saleRows, storeRows);
+    return {
+      campaign,
+      leaderboard,
+      personal: buildPersonalStats(campaign, leaderboard, profile.id, profile.store_id)
+    };
+  });
+
   return {
     profile,
     teamProfiles,
     plannedCampaigns,
     activeCampaigns,
     finishedCampaigns,
-    activeLeaderboards
+    activeLeaderboards,
+    finishedLeaderboards
   };
 }

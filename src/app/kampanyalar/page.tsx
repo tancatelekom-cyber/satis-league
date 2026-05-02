@@ -139,6 +139,48 @@ export default async function CampaignPage({ searchParams }: CampaignPageProps) 
         )}
       </section>
 
+      <section className="guide-card">
+        <div className="section-title compact-title">
+          <div>
+            <h2>Gecmis Kampanyalar</h2>
+            <p>Bitmis kampanyalarda sadece siralama ve bilgi goruntulenir.</p>
+          </div>
+        </div>
+
+        {dashboard.finishedLeaderboards.length > 0 ? (
+          <div className="campaign-directory">
+            {dashboard.finishedLeaderboards.map(({ campaign, leaderboard }) => (
+              <Link
+                key={campaign.id}
+                className="campaign-directory-card archive-card"
+                href={`/kampanyalar/${campaign.id}`}
+              >
+                <div className="campaign-directory-head">
+                  <div>
+                    <strong>{campaign.name}</strong>
+                    <span>
+                      {campaign.mode === "employee" ? "Calisan Bazli" : "Magaza Bazli"} |{" "}
+                      {campaign.scoring === "points" ? "Puan" : "Adet"}
+                    </span>
+                  </div>
+                  <div className="store-status">
+                    <span>Kazanan</span>
+                    <strong>{leaderboard[0]?.label ?? "Veri yok"}</strong>
+                  </div>
+                </div>
+
+                <div className="campaign-directory-meta">
+                  <span>Bitis: {formatCampaignDateTime(campaign.end_at)}</span>
+                  <span>Durum: Sadece goruntuleme</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <p className="subtle">Henuz bitmis kampanya yok.</p>
+        )}
+      </section>
+
       {dashboard.plannedCampaigns.length > 0 ? (
         <section className="guide-card">
           <h3>Planlanan Kampanyalar</h3>

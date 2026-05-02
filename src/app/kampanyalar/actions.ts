@@ -6,8 +6,8 @@ import { isSalesWindowOpen } from "@/lib/campaign-utils";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
-function getRedirectTo(formData: FormData) {
-  const value = String(formData.get("redirectTo") ?? "").trim();
+function getRedirectTo(formData: FormData, fieldName: "successRedirectTo" | "errorRedirectTo") {
+  const value = String(formData.get(fieldName) ?? "").trim();
 
   if (!value.startsWith("/kampanyalar")) {
     return "/kampanyalar";
@@ -41,7 +41,8 @@ export async function submitSaleEntryAction(formData: FormData) {
   const quantity = Number(String(formData.get("quantity") ?? "1"));
   const targetProfileId = String(formData.get("targetProfileId") ?? "");
   const targetStoreId = String(formData.get("targetStoreId") ?? "");
-  const redirectTo = getRedirectTo(formData);
+  const successRedirectTo = getRedirectTo(formData, "successRedirectTo");
+  const errorRedirectTo = getRedirectTo(formData, "errorRedirectTo");
 
   const [{ data: actor }, { data: campaign }, { data: product }] = await Promise.all([
     admin
@@ -62,11 +63,15 @@ export async function submitSaleEntryAction(formData: FormData) {
   ]);
 
   if (!actor || actor.approval !== "approved") {
-    redirectWithMessage("Satis girmek icin onayli kullanici olmalisiniz.", "error", redirectTo);
+    redirectWithMessage(
+      "Satis girmek icin onayli kullanici olmalisiniz.",
+      "error",
+      errorRedirectTo
+    );
   }
 
   if (!campaign || !product || product.campaign_id !== campaignId) {
-    redirectWithMessage("Kampanya urunu bulunamadi.", "error", redirectTo);
+    redirectWithMessage("Kampanya urunu bulunamadi.", "error", errorRedirectTo);
   }
 
   const actorRow = actor!;
@@ -74,14 +79,18 @@ export async function submitSaleEntryAction(formData: FormData) {
   const productRow = product!;
 
   if (!Number.isFinite(quantity) || quantity === 0) {
-    redirectWithMessage("Miktar 0 olamaz. Arttirmak icin arti, dusurmek icin eksi kullanin.", "error", redirectTo);
+    redirectWithMessage(
+      "Miktar 0 olamaz. Arttirmak icin arti, dusurmek icin eksi kullanin.",
+      "error",
+      errorRedirectTo
+    );
   }
 
   if (!isSalesWindowOpen(campaignRow.start_at, campaignRow.end_at)) {
     redirectWithMessage(
       "Bu kampanya icin satis giris suresi doldu. Bitisten 10 dakika sonra kapanir.",
       "error",
-      redirectTo
+      errorRedirectTo
     );
   }
 
@@ -100,7 +109,7 @@ export async function submitSaleEntryAction(formData: FormData) {
         redirectWithMessage(
           "Magaza muduru sadece kendi magazasindaki onayli personele giris yapabilir.",
           "error",
-          redirectTo
+          errorRedirectTo
         );
       }
 
@@ -115,7 +124,7 @@ export async function submitSaleEntryAction(formData: FormData) {
       redirectWithMessage(
         "Magaza bazli kampanyada kullanicinin magazasi olmali.",
         "error",
-        redirectTo
+        errorRedirectTo
       );
     }
   }
@@ -153,7 +162,7 @@ export async function submitSaleEntryAction(formData: FormData) {
   });
 
   if (error) {
-    redirectWithMessage(`Satis kaydi eklenemedi: ${error.message}`, "error", redirectTo);
+    redirectWithMessage(`Satis kaydi eklenemedi: ${error.message}`, "error", errorRedirectTo);
   }
 
   revalidatePath("/kampanyalar");
@@ -171,5 +180,5 @@ export async function submitSaleEntryAction(formData: FormData) {
     link_path: "/kampanyalar"
   });
 
-  redirectWithMessage("Satis islemi basariyla kaydedildi.", "success", redirectTo);
+  redirectWithMessage("Satis islemi basariyla kaydedildi.", "success", successRedirectTo);
 }

@@ -40,8 +40,13 @@ export function SaleEntryCard({
   redirectTo
 }: SaleEntryCardProps) {
   const [quantity, setQuantity] = useState(1);
+  const [submitting, setSubmitting] = useState(false);
 
   function changeQuantity(nextValue: number) {
+    if (submitting) {
+      return;
+    }
+
     setQuantity(nextValue);
   }
 
@@ -67,12 +72,23 @@ export function SaleEntryCard({
         </strong>
       </div>
 
-      <form action={submitSaleEntryAction} className="sale-form">
+      <form
+        action={submitSaleEntryAction}
+        className="sale-form"
+        onSubmit={() => {
+          setSubmitting(true);
+        }}
+      >
         <input name="campaignId" type="hidden" value={campaignId} />
         <input name="productId" type="hidden" value={product.id} />
         <input name="quantity" type="hidden" value={quantity} />
         <input
-          name="redirectTo"
+          name="successRedirectTo"
+          type="hidden"
+          value={`/kampanyalar/${campaignId}?view=leaderboard`}
+        />
+        <input
+          name="errorRedirectTo"
           type="hidden"
           value={redirectTo ?? `/kampanyalar/${campaignId}?view=sales`}
         />
@@ -102,6 +118,7 @@ export function SaleEntryCard({
           <div className="counter-row game-counter-row">
             <button
               className="counter-button"
+              disabled={submitting}
               onClick={() => changeQuantity(quantity - 1)}
               type="button"
             >
@@ -110,6 +127,7 @@ export function SaleEntryCard({
             <div className="counter-value game-counter-value">{quantity}</div>
             <button
               className="counter-button"
+              disabled={submitting}
               onClick={() => changeQuantity(quantity + 1)}
               type="button"
             >
@@ -122,6 +140,7 @@ export function SaleEntryCard({
               <button
                 key={amount}
                 className="quick-add-chip"
+                disabled={submitting}
                 onClick={() => changeQuantity(quantity + amount)}
                 type="button"
               >
@@ -132,8 +151,8 @@ export function SaleEntryCard({
         </div>
 
         <div className="action-row">
-          <button className="button-primary" type="submit">
-            Skoru Isle
+          <button className="button-primary" disabled={submitting} type="submit">
+            {submitting ? "Isleniyor..." : "Satisi Isle"}
           </button>
         </div>
       </form>

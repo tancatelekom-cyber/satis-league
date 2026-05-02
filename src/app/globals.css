@@ -426,6 +426,18 @@ button {
   margin-bottom: 20px;
 }
 
+.compact-page-title {
+  margin: 0;
+  font-size: clamp(1.55rem, 6vw, 2.1rem);
+}
+
+.compact-top-strip {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
 .compact-hero-card {
   padding: 16px 18px;
 }
@@ -478,6 +490,11 @@ button {
   margin-bottom: 18px;
 }
 
+.compact-switch-grid {
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
 .detail-switch-card {
   display: block;
   padding: 16px 18px;
@@ -489,6 +506,17 @@ button {
 .detail-switch-card strong {
   display: block;
   margin-bottom: 6px;
+}
+
+.compact-switch-card {
+  padding: 12px 14px;
+  border-radius: 14px;
+  text-align: center;
+}
+
+.compact-switch-card strong {
+  margin: 0;
+  font-size: 0.95rem;
 }
 
 .detail-switch-card span {
@@ -1536,6 +1564,11 @@ button {
     padding: 14px;
   }
 
+  .compact-top-strip {
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+
   .compact-stat {
     padding: 10px 12px;
   }
@@ -1546,6 +1579,10 @@ button {
 
   .detail-switch-card {
     padding: 14px 16px;
+  }
+
+  .compact-switch-card {
+    padding: 10px 12px;
   }
 
   .campaign-header,

@@ -77,10 +77,7 @@ export default async function CampaignDetailPage({
           <Link className="back-link" href="/kampanyalar">
             Tum Kampanyalara Don
           </Link>
-          <h1 className="page-title">{campaign.name}</h1>
-          <p className="page-subtitle">
-            Sadece ihtiyaciniz olan alani secin.
-          </p>
+          <h1 className="page-title compact-page-title">{campaign.name}</h1>
         </div>
       </div>
 
@@ -90,57 +87,32 @@ export default async function CampaignDetailPage({
         </div>
       ) : null}
 
-      <section className="guide-card campaign-detail-summary compact-hero-card">
-        <div className="compact-stat-row">
-          <div className="compact-stat">
-            <span>Siraniz</span>
-            <strong>{personal.rank ? `#${personal.rank}` : "Liste disi"}</strong>
-          </div>
-          <div className="compact-stat">
-            <span>Skorunuz</span>
-            <strong>{scoreLabel(personal.currentScore, campaign.scoring)}</strong>
-          </div>
-          <div className="compact-stat">
-            <span>Lidere fark</span>
-            <strong>{scoreLabel(personal.gap, campaign.scoring)}</strong>
-          </div>
-          <div className="compact-stat">
-            <span>Bitise kalan</span>
-            <strong>{daysLeftLabel(campaign.end_at)}</strong>
-          </div>
-        </div>
-
-        <div className="compact-meta-row">
-          <span className="mission-pill">
-            {campaign.mode === "employee" ? "Calisan Bazli" : "Magaza Bazli"} |{" "}
-            {campaign.scoring === "points" ? "Puan" : "Adet"}
-          </span>
-          <span className="mission-pill">Bitis: {formatCampaignDateTime(campaign.end_at)}</span>
-        </div>
+      <section className="compact-top-strip">
+        <span className="mission-pill">Sira: {personal.rank ? `#${personal.rank}` : "Liste disi"}</span>
+        <span className="mission-pill">Skor: {scoreLabel(personal.currentScore, campaign.scoring)}</span>
+        <span className="mission-pill">Fark: {scoreLabel(personal.gap, campaign.scoring)}</span>
+        <span className="mission-pill">Kalan: {daysLeftLabel(campaign.end_at)}</span>
+        <span className="mission-pill">
+          {campaign.mode === "employee" ? "Calisan Bazli" : "Magaza Bazli"} |{" "}
+          {campaign.scoring === "points" ? "Puan" : "Adet"}
+        </span>
+        <span className="mission-pill">Bitis: {formatCampaignDateTime(campaign.end_at)}</span>
       </section>
 
-      <section className="detail-switch-grid">
+      <section className="detail-switch-grid compact-switch-grid">
         {menuItems.map((item) => (
           <Link
             key={item.href}
-            className={`detail-switch-card ${item.active ? "admin-shortcut-card-active" : ""}`}
+            className={`detail-switch-card compact-switch-card ${item.active ? "admin-shortcut-card-active" : ""}`}
             href={item.href}
           >
             <strong>{item.title}</strong>
-            <span>{item.body}</span>
           </Link>
         ))}
       </section>
 
       {view === "leaderboard" ? (
         <section className="guide-card">
-          <div className="section-title compact-title">
-            <div>
-              <h2>Kampanya Siralamasi</h2>
-              <p>Bu kampanyadaki canli sira burada gorunur.</p>
-            </div>
-          </div>
-
           <div className="podium-grid">
             {leaderboard.slice(1, 2).map((row) => (
               <div key={row.id} className="podium-card silver">

@@ -13,6 +13,7 @@ type SeasonSalesPageProps = {
   searchParams?: Promise<{
     message?: string;
     type?: "success" | "error";
+    seasonId?: string;
     saleSearch?: string;
     saleDateFrom?: string;
     saleDateTo?: string;
@@ -53,7 +54,7 @@ export default async function SeasonSalesPage({ searchParams }: SeasonSalesPageP
           <h3>Sezon Satis Girisi</h3>
           {data.activeSeason ? (
             <div className="message-box success-box">
-              Aktif sezon hazir: <strong>{data.activeSeason.name}</strong>. Satislari bu ekranin altindan girebilirsiniz.
+              Secili sezon hazir: <strong>{data.activeSeason.name}</strong>. Satislari bu ekranin altindan girebilirsiniz.
             </div>
           ) : (
             <div className="message-box error-box">
@@ -97,6 +98,17 @@ export default async function SeasonSalesPage({ searchParams }: SeasonSalesPageP
                   <form className="admin-form" method="get">
                     <div className="auth-grid">
                       <label className="field">
+                        <span>Sezon Secin</span>
+                        <select defaultValue={data.selectedSeasonId} name="seasonId" required>
+                          {data.seasonRows.map((season) => (
+                            <option key={season.id} value={season.id}>
+                              {season.name}
+                              {season.is_active ? " (Aktif)" : ""}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="field">
                         <span>Calisacaginiz Ay</span>
                         <input defaultValue={data.entryMonth} name="entryMonth" required type="month" />
                       </label>
@@ -125,7 +137,7 @@ export default async function SeasonSalesPage({ searchParams }: SeasonSalesPageP
                         <a
                           key={month.value}
                           className={`filter-chip ${data.entryMonth === month.value ? "active" : ""}`}
-                          href={`/admin/sezon-satislari?entryMonth=${month.value}`}
+                          href={`/admin/sezon-satislari?seasonId=${data.selectedSeasonId}&entryMonth=${month.value}`}
                         >
                           {month.label}
                         </a>

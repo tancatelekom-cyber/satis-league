@@ -238,11 +238,6 @@ function refreshCampaignPages() {
   revalidatePath("/magaza-vs-magaza");
 }
 
-async function setOnlyActiveSeason(supabase: ReturnType<typeof createAdminClient>, seasonId: string) {
-  await supabase.from("seasons").update({ is_active: false }).neq("id", seasonId);
-  await supabase.from("seasons").update({ is_active: true }).eq("id", seasonId);
-}
-
 async function broadcastNotification(input: {
   title: string;
   body: string;
@@ -396,10 +391,6 @@ export async function createSeasonAction(formData: FormData) {
     }
   }
 
-  if (isActive) {
-    await setOnlyActiveSeason(supabase, seasonRow.id);
-  }
-
   revalidatePath("/admin");
   revalidatePath("/lig");
   redirectWithMessage("Sezon basariyla olusturuldu.", "success", redirectTo);
@@ -497,10 +488,6 @@ export async function updateSeasonAction(formData: FormData) {
     }
   }
 
-  if (isActive) {
-    await setOnlyActiveSeason(supabase, seasonId);
-  }
-
   revalidatePath("/admin");
   revalidatePath("/lig");
   redirectWithMessage("Sezon guncellendi.", "success", redirectTo);
@@ -524,12 +511,20 @@ export async function toggleSeasonStatusAction(formData: FormData) {
       redirectWithMessage(`Sezon pasife alinamadi: ${error.message}`, "error", redirectTo);
     }
   } else {
-    await setOnlyActiveSeason(supabase, seasonId);
+    const { error } = await supabase.from("seasons").update({ is_active: true }).eq("id", seasonId);
+
+    if (error) {
+      redirectWithMessage(`Sezon aktif yapilamadi: ${error.message}`, "error", redirectTo);
+    }
   }
 
   revalidatePath("/admin");
   revalidatePath("/lig");
-  redirectWithMessage(currentValue ? "Sezon pasife alindi." : "Sezon aktif yapildi.", "success", redirectTo);
+  redirectWithMessage(
+    currentValue ? "Sezon pasife alindi." : "Sezon aktif yapildi. Diger sezonlar aktif kalabilir.",
+    "success",
+    redirectTo
+  );
 }
 
 export async function deleteSeasonAction(formData: FormData) {

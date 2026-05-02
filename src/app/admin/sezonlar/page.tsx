@@ -28,7 +28,7 @@ export default async function SeasonAdminPage({ searchParams }: SeasonAdminPageP
     <main>
       <h1 className="page-title">Sezon Yonetimi</h1>
       <p className="page-subtitle">
-        Buradan sezonlari olusturun, urunleri kategori bazli ekleyin, magaza carpanlarini belirleyin ve aktif sezonu secin.
+        Buradan sezonlari olusturun, urunleri kategori bazli ekleyin, magaza carpanlarini belirleyin ve birden fazla sezonu ayni anda aktif tutun.
       </p>
 
       {params?.message ? (

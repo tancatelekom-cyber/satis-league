@@ -11,6 +11,7 @@ import {
 } from "@/lib/types";
 
 type AdminDashboardParams = {
+  seasonId?: string;
   entryMonth?: string;
   saleSearch?: string;
   saleDateFrom?: string;
@@ -73,6 +74,7 @@ function buildSeasonMonthOptions(startDate: string, endDate: string) {
 }
 
 export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
+  const seasonId = String(params.seasonId ?? "").trim();
   const entryMonth = String(params.entryMonth ?? "").trim() || new Date().toISOString().slice(0, 7);
   const saleSearch = String(params.saleSearch ?? "").trim().toLocaleLowerCase("tr-TR");
   const saleDateFrom = String(params.saleDateFrom ?? "").trim();
@@ -182,7 +184,11 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
     (profile) => profile.role === "employee" && !profile.is_on_leave
   );
 
-  const activeSeason = seasonRows.find((season) => season.is_active) ?? null;
+  const activeSeason =
+    seasonRows.find((season) => season.id === seasonId) ??
+    seasonRows.find((season) => season.is_active) ??
+    seasonRows[0] ??
+    null;
   const activeSeasonProducts = activeSeason
     ? ((seasonProducts as SeasonProductRecord[] | null) ?? []).filter(
         (product) => product.season_id === activeSeason.id
@@ -312,6 +318,7 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
             .filter((store) => store.is_active)
             .map((store) => ({ id: store.id, label: store.name, secondary: store.city ?? "Magaza" })),
     activeSeason,
+    selectedSeasonId: activeSeason?.id ?? "",
     activeSeasonProducts,
     activeSeasonCategories,
     seasonMonthOptions,

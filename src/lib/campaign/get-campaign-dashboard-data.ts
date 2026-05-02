@@ -1,3 +1,4 @@
+import { unstable_noStore as noStore } from "next/cache";
 import { isPlannedCampaign, isRecentFinishedCampaign, isSalesWindowOpen } from "@/lib/campaign-utils";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { CampaignPageCampaign, CampaignProductRecord, LeaderboardRow, ProfileSummary } from "@/lib/types";
@@ -128,6 +129,7 @@ function buildPersonalStats(
 }
 
 export async function getCampaignDashboardData(userId: string): Promise<UserCampaignDashboardData | null> {
+  noStore();
   const admin = createAdminClient();
   const [{ data: profileData }, { data: campaigns }, { data: salesEntries }, { data: approvedProfiles }, { data: activeStores }] =
     await Promise.all([

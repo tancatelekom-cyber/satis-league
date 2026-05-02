@@ -5,12 +5,14 @@ import { daysLeftLabel, formatCampaignDateTime, isSalesWindowOpen } from "@/lib/
 import { getCampaignDashboardData } from "@/lib/campaign/get-campaign-dashboard-data";
 import { createClient } from "@/lib/supabase/server";
 
+export const dynamic = "force-dynamic";
+
 type CampaignDetailPageProps = {
   params: Promise<{
     campaignId: string;
   }>;
   searchParams?: Promise<{
-    view?: "leaderboard" | "sales";
+    view?: "leaderboard" | "sales" | "details";
     message?: string;
     type?: "success" | "error";
   }>;
@@ -26,7 +28,12 @@ export default async function CampaignDetailPage({
 }: CampaignDetailPageProps) {
   const routeParams = await params;
   const pageParams = searchParams ? await searchParams : undefined;
-  const view = pageParams?.view === "sales" ? "sales" : "leaderboard";
+  const view =
+    pageParams?.view === "sales"
+      ? "sales"
+      : pageParams?.view === "details"
+        ? "details"
+        : "leaderboard";
   const supabase = await createClient();
   const {
     data: { user }
@@ -62,8 +69,12 @@ export default async function CampaignDetailPage({
     {
       href: `/kampanyalar/${campaign.id}?view=leaderboard`,
       title: "Kampanya Siralama",
-      body: "Canli sira, podyum ve lider farkini gorun.",
       active: view === "leaderboard"
+    },
+    {
+      href: `/kampanyalar/${campaign.id}?view=details`,
+      title: "Kampanya Detay",
+      active: view === "details"
     }
   ];
 
@@ -71,7 +82,6 @@ export default async function CampaignDetailPage({
     menuItems.push({
       href: `/kampanyalar/${campaign.id}?view=sales`,
       title: "Kampanya Girisi",
-      body: "Urun secip hizli satis girisi yapin.",
       active: view === "sales"
     });
   }
@@ -119,7 +129,53 @@ export default async function CampaignDetailPage({
         ))}
       </section>
 
-      {!isActiveCampaign || view === "leaderboard" ? (
+      {view === "details" ? (
+        <section className="guide-card">
+          <div className="step-list">
+            <div className="step-item">
+              <strong>Kampanya Aciklamasi</strong>
+              <span>{campaign.description ?? "Bu kampanya icin aciklama girilmedi."}</span>
+            </div>
+            <div className="step-item">
+              <strong>Kampanya Turu</strong>
+              <span>
+                {campaign.mode === "employee" ? "Calisan Bazli" : "Magaza Bazli"} |{" "}
+                {campaign.scoring === "points" ? "Puan" : "Adet"}
+              </span>
+            </div>
+            <div className="step-item">
+              <strong>Baslangic - Bitis</strong>
+              <span>
+                {formatCampaignDateTime(campaign.start_at)} - {formatCampaignDateTime(campaign.end_at)}
+              </span>
+            </div>
+            <div className="step-item">
+              <strong>Odul Basligi</strong>
+              <span>{campaign.reward_title ?? "Odul basligi tanimlanmadi"}</span>
+            </div>
+            <div className="step-item">
+              <strong>Odul Detayi</strong>
+              <span>{campaign.reward_details ?? "Odul detayi tanimlanmadi"}</span>
+            </div>
+            <div className="step-item">
+              <strong>Podyum Odulleri</strong>
+              <span>
+                1. Sira: {campaign.reward_first ?? "Tanimlanmadi"} | 2. Sira:{" "}
+                {campaign.reward_second ?? "Tanimlanmadi"} | 3. Sira:{" "}
+                {campaign.reward_third ?? "Tanimlanmadi"}
+              </span>
+            </div>
+            <div className="step-item">
+              <strong>Kampanya Urunleri</strong>
+              <span>
+                {campaign.products.length > 0
+                  ? campaign.products.map((product) => product.name).join(", ")
+                  : "Urun tanimlanmadi"}
+              </span>
+            </div>
+          </div>
+        </section>
+      ) : !isActiveCampaign || view === "leaderboard" ? (
         <section className="guide-card">
           <div className="leaderboard-list">
             {leaderboard.map((row, index) => (

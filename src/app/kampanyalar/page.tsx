@@ -8,6 +8,8 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { getCampaignDashboardData } from "@/lib/campaign/get-campaign-dashboard-data";
 
+export const dynamic = "force-dynamic";
+
 type CampaignPageProps = {
   searchParams?: Promise<{
     message?: string;

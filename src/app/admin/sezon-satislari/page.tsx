@@ -18,7 +18,7 @@ type SeasonSalesPageProps = {
     saleDateTo?: string;
     saleMonth?: string;
     saleCategory?: string;
-    entryDate?: string;
+    entryMonth?: string;
   }>;
 };
 
@@ -37,7 +37,7 @@ export default async function SeasonSalesPage({ searchParams }: SeasonSalesPageP
     <main>
       <h1 className="page-title">Sezon Satislari</h1>
       <p className="page-subtitle">
-        Sezon puanlarini sadece admin girer. Gunluk kayit girin, ayni ayi tekrar tekrar duzenleyin ve Ay/Q/Yil liglerini ayni veriden besleyin.
+        Sezon puanlarini sadece admin girer. Ay secin, o aya ait veriyi tabloda gorun ve ay boyunca ayni tabloyu tekrar tekrar guncelleyin.
       </p>
 
       {params?.message ? (
@@ -87,18 +87,18 @@ export default async function SeasonSalesPage({ searchParams }: SeasonSalesPageP
                 <article className="campaign-card">
                   <h4>
                     {data.activeSeason.mode === "employee"
-                      ? "Calisanlar Icin Gunluk Sezon Tablosu"
-                      : "Magazalar Icin Gunluk Sezon Tablosu"}
+                      ? "Calisanlar Icin Aylik Sezon Tablosu"
+                      : "Magazalar Icin Aylik Sezon Tablosu"}
                   </h4>
                   <p className="season-entry-tip">
-                    Isimleri listeden secmek yerine tabloda ilgili hucreye miktari yazin ve sadece o satiri kaydedin.
+                    Isimleri secmeyin; satirlarin karsisina o ayin rakamlarini yazin. Tekrar geldiginde ayni ayin mevcut verisi tabloda dolu gelir.
                   </p>
 
                   <form className="admin-form" method="get">
                     <div className="auth-grid">
                       <label className="field">
-                        <span>Calisacaginiz Gun</span>
-                        <input defaultValue={data.entryDate} name="entryDate" required type="date" />
+                        <span>Calisacaginiz Ay</span>
+                        <input defaultValue={data.entryMonth} name="entryMonth" required type="month" />
                       </label>
                       <label className="field">
                         <span>Aktif Sezon</span>
@@ -114,10 +114,24 @@ export default async function SeasonSalesPage({ searchParams }: SeasonSalesPageP
                     </div>
                     <div className="auth-actions">
                       <button className="tiny-button approve" type="submit">
-                        Tabloyu Guncelle
+                        Ayi Ac
                       </button>
                     </div>
                   </form>
+
+                  {data.seasonMonthOptions.length > 0 ? (
+                    <div className="filter-chip-row">
+                      {data.seasonMonthOptions.map((month) => (
+                        <a
+                          key={month.value}
+                          className={`filter-chip ${data.entryMonth === month.value ? "active" : ""}`}
+                          href={`/admin/sezon-satislari?entryMonth=${month.value}`}
+                        >
+                          {month.label}
+                        </a>
+                      ))}
+                    </div>
+                  ) : null}
 
                   <div className="season-entry-table-wrap">
                     <table className="season-entry-table">
@@ -145,13 +159,13 @@ export default async function SeasonSalesPage({ searchParams }: SeasonSalesPageP
                                 <input name="redirectTo" type="hidden" value="/admin/sezon-satislari" />
                                 <input name="seasonId" type="hidden" value={data.activeSeason?.id ?? ""} />
                                 <input name="targetId" type="hidden" value={target.id} />
-                                <input name="entryDate" type="hidden" value={data.entryDate} />
+                                <input name="entryMonth" type="hidden" value={data.entryMonth} />
                                 <div className="season-entry-row-grid">
                                   {data.activeSeasonProducts.map((product) => (
                                     <label key={product.id} className="season-entry-cell">
                                       <span>{product.name}</span>
                                       <input
-                                        defaultValue={data.dayQuantityMap.get(`${target.id}__${product.id}`) ?? 0}
+                                        defaultValue={data.monthQuantityMap.get(`${target.id}__${product.id}`) ?? 0}
                                         min="0"
                                         name={`qty__${product.id}`}
                                         type="number"
@@ -304,8 +318,8 @@ export default async function SeasonSalesPage({ searchParams }: SeasonSalesPageP
 
                         <div className="auth-grid">
                           <label className="field compact">
-                            <span>Tarih</span>
-                            <input defaultValue={sale.entry_date} name="entryDate" required type="date" />
+                            <span>Ay</span>
+                            <input defaultValue={sale.entry_date.slice(0, 7)} name="entryDate" required type="month" />
                           </label>
 
                           <label className="field compact">

@@ -38,6 +38,35 @@ function redirectWithMessage(
   redirect(`${redirectTo}?${params.toString()}`);
 }
 
+function normalizeMonthInput(rawValue: string) {
+  const value = rawValue.trim();
+  if (!value) {
+    return null;
+  }
+
+  if (/^\d{4}-\d{2}$/.test(value)) {
+    return `${value}-01`;
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return value;
+  }
+
+  return null;
+}
+
+function getMonthRange(monthDate: string) {
+  const [year, month] = monthDate.split("-").map(Number);
+  const start = new Date(Date.UTC(year, month - 1, 1));
+  const next = new Date(Date.UTC(year, month, 1));
+
+  return {
+    start: start.toISOString().slice(0, 10),
+    endExclusive: next.toISOString().slice(0, 10),
+    monthKey: monthDate.slice(0, 7)
+  };
+}
+
 function parseProducts(rawProducts: string) {
   return rawProducts
     .split(/\r?\n/)
@@ -669,7 +698,8 @@ export async function updateSeasonSaleAction(formData: FormData) {
   const targetProfileId = String(formData.get("targetProfileId") ?? "").trim();
   const targetStoreId = String(formData.get("targetStoreId") ?? "").trim();
   const quantity = Number(String(formData.get("quantity") ?? "1"));
-  const entryDate = String(formData.get("entryDate") ?? "").trim();
+  const rawEntryDate = String(formData.get("entryDate") ?? "").trim();
+  const entryDate = normalizeMonthInput(rawEntryDate);
   const note = String(formData.get("note") ?? "").trim();
 
   if (!saleId || !seasonId || !productId || !entryDate || !Number.isFinite(quantity) || quantity <= 0) {
@@ -769,11 +799,14 @@ export async function saveSeasonTableRowAction(formData: FormData) {
   const supabase = createAdminClient();
   const seasonId = String(formData.get("seasonId") ?? "").trim();
   const targetId = String(formData.get("targetId") ?? "").trim();
-  const entryDate = String(formData.get("entryDate") ?? "").trim();
+  const rawEntryMonth = String(formData.get("entryMonth") ?? "").trim();
+  const entryDate = normalizeMonthInput(rawEntryMonth);
 
   if (!seasonId || !targetId || !entryDate) {
-    redirectWithMessage("Tablo satirini kaydetmek icin sezon, hedef ve tarih zorunlu.", "error", redirectTo);
+    redirectWithMessage("Tablo satirini kaydetmek icin sezon, hedef ve ay zorunlu.", "error", redirectTo);
   }
+
+  const { start: monthStart, endExclusive: nextMonthStart, monthKey } = getMonthRange(entryDate!);
 
   const [{ data: season }, { data: products }] = await Promise.all([
     supabase.from("seasons").select("mode").eq("id", seasonId).single(),
@@ -785,7 +818,7 @@ export async function saveSeasonTableRowAction(formData: FormData) {
   ]);
 
   if (!season || !products) {
-    redirectWithMessage("Sezon veya urunler bulunamadi.", "error", redirectTo, { entryDate });
+    redirectWithMessage("Sezon veya urunler bulunamadi.", "error", redirectTo, { entryMonth: monthKey });
   }
 
   const safeSeason = season!;
@@ -794,7 +827,8 @@ export async function saveSeasonTableRowAction(formData: FormData) {
     .from("season_sales_entries")
     .select("id, product_id")
     .eq("season_id", seasonId)
-    .eq("entry_date", entryDate)
+    .gte("entry_date", monthStart)
+    .lt("entry_date", nextMonthStart)
     .eq(targetType === "employee" ? "target_profile_id" : "target_store_id", targetId);
   const matchingEntries = ((existingEntries as Array<{ id: string; product_id: string | null }> | null) ?? []).filter(
     (entry) => entry.product_id
@@ -856,7 +890,7 @@ export async function saveSeasonTableRowAction(formData: FormData) {
 
         if (updateError) {
           redirectWithMessage(`Satir guncellenemedi: ${updateError.message}`, "error", redirectTo, {
-            entryDate
+            entryMonth: monthKey
           });
         }
 
@@ -873,7 +907,9 @@ export async function saveSeasonTableRowAction(formData: FormData) {
         const { error: insertError } = await supabase.from("season_sales_entries").insert(payload);
 
         if (insertError) {
-          redirectWithMessage(`Satir eklenemedi: ${insertError.message}`, "error", redirectTo, { entryDate });
+          redirectWithMessage(`Satir eklenemedi: ${insertError.message}`, "error", redirectTo, {
+            entryMonth: monthKey
+          });
         }
       }
     } else if (productEntries.length > 0) {
@@ -887,7 +923,7 @@ export async function saveSeasonTableRowAction(formData: FormData) {
 
       if (deleteError) {
         redirectWithMessage(`Eski satirlar silinemedi: ${deleteError.message}`, "error", redirectTo, {
-          entryDate
+          entryMonth: monthKey
         });
       }
     }
@@ -895,7 +931,7 @@ export async function saveSeasonTableRowAction(formData: FormData) {
 
   revalidatePath("/admin");
   revalidatePath("/lig");
-  redirectWithMessage("Tablo satiri kaydedildi.", "success", redirectTo, { entryDate });
+  redirectWithMessage("Aylik tablo satiri kaydedildi.", "success", redirectTo, { entryMonth: monthKey });
 }
 
 export async function updateStoreAction(formData: FormData) {

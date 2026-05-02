@@ -11,7 +11,7 @@ import {
 } from "@/lib/types";
 
 type AdminDashboardParams = {
-  entryDate?: string;
+  entryMonth?: string;
   saleSearch?: string;
   saleDateFrom?: string;
   saleDateTo?: string;
@@ -36,8 +36,44 @@ export type ActiveSeasonSaleRecord = {
   targetStore: { name: string } | null;
 };
 
+const MONTH_LABELS = [
+  "Ocak",
+  "Subat",
+  "Mart",
+  "Nisan",
+  "Mayis",
+  "Haziran",
+  "Temmuz",
+  "Agustos",
+  "Eylul",
+  "Ekim",
+  "Kasim",
+  "Aralik"
+];
+
+function buildSeasonMonthOptions(startDate: string, endDate: string) {
+  const [startYear, startMonth] = startDate.split("-").map(Number);
+  const [endYear, endMonth] = endDate.split("-").map(Number);
+  const cursor = new Date(Date.UTC(startYear, startMonth - 1, 1));
+  const finish = new Date(Date.UTC(endYear, endMonth - 1, 1));
+  const options: Array<{ value: string; label: string }> = [];
+
+  while (cursor <= finish) {
+    const year = cursor.getUTCFullYear();
+    const month = cursor.getUTCMonth() + 1;
+    const value = `${year}-${String(month).padStart(2, "0")}`;
+    options.push({
+      value,
+      label: `${MONTH_LABELS[month - 1]} ${year}`
+    });
+    cursor.setUTCMonth(cursor.getUTCMonth() + 1);
+  }
+
+  return options;
+}
+
 export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
-  const entryDate = String(params.entryDate ?? "").trim() || new Date().toISOString().slice(0, 10);
+  const entryMonth = String(params.entryMonth ?? "").trim() || new Date().toISOString().slice(0, 7);
   const saleSearch = String(params.saleSearch ?? "").trim().toLocaleLowerCase("tr-TR");
   const saleDateFrom = String(params.saleDateFrom ?? "").trim();
   const saleDateTo = String(params.saleDateTo ?? "").trim();
@@ -162,6 +198,10 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
   const productCategoryMap = new Map(
     activeSeasonProducts.map((product) => [product.id, product.category_name?.trim() || "Genel"])
   );
+  const seasonMonthOptions =
+    activeSeason && activeSeason.start_date && activeSeason.end_date
+      ? buildSeasonMonthOptions(activeSeason.start_date, activeSeason.end_date)
+      : [];
 
   const activeSeasonSales =
     activeSeason
@@ -238,17 +278,17 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
     }),
     { count: 0, quantity: 0, rawScore: 0, score: 0 }
   );
-  const activeDaySales = activeSeasonSales.filter((sale) => sale.entry_date === entryDate);
-  const dayQuantityMap = new Map<string, number>();
+  const activeMonthSales = activeSeasonSales.filter((sale) => sale.entry_date.startsWith(entryMonth));
+  const monthQuantityMap = new Map<string, number>();
 
-  activeDaySales.forEach((sale) => {
+  activeMonthSales.forEach((sale) => {
     const targetId = sale.target_profile_id ?? sale.target_store_id;
     if (!targetId || !sale.product_id) {
       return;
     }
 
     const key = `${targetId}__${sale.product_id}`;
-    dayQuantityMap.set(key, Number(dayQuantityMap.get(key) ?? 0) + Number(sale.quantity ?? 0));
+    monthQuantityMap.set(key, Number(monthQuantityMap.get(key) ?? 0) + Number(sale.quantity ?? 0));
   });
 
   return {
@@ -274,10 +314,11 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
     activeSeason,
     activeSeasonProducts,
     activeSeasonCategories,
+    seasonMonthOptions,
     activeSeasonSales,
-    activeDaySales,
-    dayQuantityMap,
-    entryDate,
+    activeMonthSales,
+    monthQuantityMap,
+    entryMonth,
     filteredActiveSeasonSales,
     filteredSeasonSummary,
     saleSearch,

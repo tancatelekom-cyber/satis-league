@@ -73,8 +73,8 @@ export async function submitSaleEntryAction(formData: FormData) {
   const campaignRow = campaign!;
   const productRow = product!;
 
-  if (!Number.isFinite(quantity) || quantity <= 0) {
-    redirectWithMessage("Miktar en az 1 olmali.", "error", redirectTo);
+  if (!Number.isFinite(quantity) || quantity === 0) {
+    redirectWithMessage("Miktar 0 olamaz. Arttirmak icin arti, dusurmek icin eksi kullanin.", "error", redirectTo);
   }
 
   if (!isSalesWindowOpen(campaignRow.start_at, campaignRow.end_at)) {
@@ -166,10 +166,10 @@ export async function submitSaleEntryAction(formData: FormData) {
   await admin.from("notifications").insert({
     profile_id: notifyProfileId,
     title: "Yeni skor islendi",
-    body: `${quantity} adet giris yapildi. Bu islem ${weightedScore.toFixed(0)} puan etkisi olusturdu.`,
+    body: `${quantity} adetlik islem yapildi. Bu islem ${weightedScore.toFixed(0)} puan etkisi olusturdu.`,
     level: "success",
     link_path: "/kampanyalar"
   });
 
-  redirectWithMessage("Satis kaydi basariyla eklendi.", "success", redirectTo);
+  redirectWithMessage("Satis islemi basariyla kaydedildi.", "success", redirectTo);
 }

@@ -26,7 +26,7 @@ type SaleEntryCardProps = {
   redirectTo?: string;
 };
 
-const quickAdds = [1, 5, 10];
+const quickAdds = [-10, -5, -1, 1, 5, 10];
 
 export function SaleEntryCard({
   campaignId,
@@ -42,7 +42,7 @@ export function SaleEntryCard({
   const [quantity, setQuantity] = useState(1);
 
   function changeQuantity(nextValue: number) {
-    setQuantity(Math.max(1, nextValue));
+    setQuantity(nextValue);
   }
 
   const projectedScore =
@@ -61,7 +61,7 @@ export function SaleEntryCard({
       </div>
 
       <div className="product-energy-bar">
-        <span>Bu giris</span>
+        <span>Bu islem</span>
         <strong>
           {projectedScore} {scoring === "points" ? "puan" : product.unit_label}
         </strong>
@@ -97,7 +97,7 @@ export function SaleEntryCard({
         )}
 
         <div className="quantity-hud">
-          <span className="subtle">Miktar sec</span>
+          <span className="subtle">Miktar sec. Eksi deger dusum islemi yapar.</span>
 
           <div className="counter-row game-counter-row">
             <button
@@ -125,7 +125,7 @@ export function SaleEntryCard({
                 onClick={() => changeQuantity(quantity + amount)}
                 type="button"
               >
-                +{amount}
+                {amount > 0 ? `+${amount}` : amount}
               </button>
             ))}
           </div>

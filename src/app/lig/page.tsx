@@ -22,6 +22,7 @@ type SaleRow = {
 
 type LeaguePageProps = {
   searchParams?: Promise<{
+    seasonId?: string;
     period?: LeaguePeriod;
     category?: string;
   }>;
@@ -93,6 +94,7 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
     redirect("/giris");
   }
 
+  const selectedSeasonId = String(params?.seasonId ?? "").trim();
   const selectedPeriod: LeaguePeriod =
     params?.period === "quarter" || params?.period === "year" ? params.period : "month";
   const selectedCategory = String(params?.category ?? "").trim();
@@ -105,7 +107,11 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
     .order("start_date", { ascending: false });
 
   const seasonRows = (seasons as SeasonRecord[] | null) ?? [];
-  const activeSeason = seasonRows.find((season) => season.is_active) ?? seasonRows[0] ?? null;
+  const activeSeason =
+    seasonRows.find((season) => season.id === selectedSeasonId) ??
+    seasonRows.find((season) => season.is_active) ??
+    seasonRows[0] ??
+    null;
 
   if (!activeSeason) {
     return (
@@ -236,17 +242,31 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
     <main>
       <h1 className="page-title">Sezonluk Lig Tablosu</h1>
       <p className="page-subtitle">
-        Aktif sezon: {activeSeason.name} | {activeSeason.start_date} - {activeSeason.end_date}
+        Secili sezon: {activeSeason.name} | {activeSeason.start_date} - {activeSeason.end_date}
       </p>
 
       <section className="guide-card game-brief-card">
+        <h3>Sezon Secimi</h3>
+        <div className="filter-chip-row">
+          {seasonRows.map((season) => (
+            <Link
+              key={season.id}
+              className={`filter-chip ${activeSeason.id === season.id ? "active" : ""}`}
+              href={`/lig?seasonId=${season.id}&period=${selectedPeriod}${effectiveCategory ? `&category=${encodeURIComponent(effectiveCategory)}` : ""}`}
+            >
+              {season.name}
+              {season.is_active ? " (Aktif)" : ""}
+            </Link>
+          ))}
+        </div>
+
         <h3>Donem Secimi</h3>
         <div className="filter-chip-row">
           {periodOptions.map((period) => (
             <Link
               key={period.value}
               className={`filter-chip ${selectedPeriod === period.value ? "active" : ""}`}
-              href={`/lig?period=${period.value}${effectiveCategory ? `&category=${encodeURIComponent(effectiveCategory)}` : ""}`}
+              href={`/lig?seasonId=${activeSeason.id}&period=${period.value}${effectiveCategory ? `&category=${encodeURIComponent(effectiveCategory)}` : ""}`}
             >
               {period.label}
             </Link>
@@ -257,7 +277,7 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
         <div className="filter-chip-row">
           <Link
             className={`filter-chip ${effectiveCategory ? "" : "active"}`}
-            href={`/lig?period=${selectedPeriod}`}
+            href={`/lig?seasonId=${activeSeason.id}&period=${selectedPeriod}`}
           >
             Tum Kategoriler
           </Link>
@@ -265,7 +285,7 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
             <Link
               key={category}
               className={`filter-chip ${effectiveCategory === category ? "active" : ""}`}
-              href={`/lig?period=${selectedPeriod}&category=${encodeURIComponent(category)}`}
+              href={`/lig?seasonId=${activeSeason.id}&period=${selectedPeriod}&category=${encodeURIComponent(category)}`}
             >
               {category}
             </Link>

@@ -22,6 +22,29 @@ function scoreLabel(value: number, scoring: "points" | "quantity") {
   return `${value.toFixed(0)} ${scoring === "points" ? "puan" : "adet"}`;
 }
 
+function campaignRewardLabel(
+  campaign: {
+    reward_first?: string | null;
+    reward_second?: string | null;
+    reward_third?: string | null;
+  },
+  index: number
+) {
+  if (index === 0) {
+    return campaign.reward_first?.trim() || null;
+  }
+
+  if (index === 1) {
+    return campaign.reward_second?.trim() || null;
+  }
+
+  if (index === 2) {
+    return campaign.reward_third?.trim() || null;
+  }
+
+  return null;
+}
+
 export default async function CampaignDetailPage({
   params,
   searchParams
@@ -178,7 +201,10 @@ export default async function CampaignDetailPage({
       ) : !isActiveCampaign || view === "leaderboard" ? (
         <section className="guide-card">
           <div className="leaderboard-list">
-            {leaderboard.map((row, index) => (
+            {leaderboard.map((row, index) => {
+              const rewardLabel = campaignRewardLabel(campaign, index);
+
+              return (
               <div key={row.id} className="leaderboard-row">
                 <div className={`leaderboard-rank ${row.score <= 0 ? "leaderboard-rank-empty" : ""}`}>
                   {index + 1}
@@ -193,6 +219,7 @@ export default async function CampaignDetailPage({
                     ) : null}
                   </h4>
                   <p className="subtle">{row.badge ?? "Canli toplam"}</p>
+                  {rewardLabel ? <div className="leaderboard-reward">{rewardLabel}</div> : null}
                 </div>
                 <div className="score">
                   <strong>{row.score.toFixed(0)}</strong>
@@ -201,7 +228,7 @@ export default async function CampaignDetailPage({
                   </span>
                 </div>
               </div>
-            ))}
+            )})}
           </div>
         </section>
       ) : (

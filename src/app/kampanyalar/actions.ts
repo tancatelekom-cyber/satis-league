@@ -19,9 +19,17 @@ function getRedirectTo(formData: FormData, fieldName: "successRedirectTo" | "err
 function redirectWithMessage(
   message: string,
   type: "success" | "error" = "success",
-  redirectTo = "/kampanyalar"
+  redirectTo = "/kampanyalar",
+  extraParams?: Record<string, string>
 ) {
   const params = new URLSearchParams({ message, type });
+  if (extraParams) {
+    Object.entries(extraParams).forEach(([key, value]) => {
+      if (value) {
+        params.set(key, value);
+      }
+    });
+  }
   redirect(`${redirectTo}${redirectTo.includes("?") ? "&" : "?"}${params.toString()}`);
 }
 
@@ -194,5 +202,7 @@ export async function submitSaleEntryAction(formData: FormData) {
     link_path: "/kampanyalar"
   });
 
-  redirectWithMessage("Satis islemi basariyla kaydedildi.", "success", successRedirectTo);
+  redirectWithMessage("Satis islemi basariyla kaydedildi.", "success", successRedirectTo, {
+    sync: Date.now().toString()
+  });
 }

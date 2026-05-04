@@ -7,6 +7,7 @@ import {
   updateCampaignSaleAction,
   updateCampaignAction
 } from "@/app/admin/actions";
+import { AdminCampaignSaleForm } from "@/components/admin/admin-campaign-sale-form";
 import { AdminSectionNav } from "@/components/admin/admin-section-nav";
 import { AdminSetupNotice } from "@/components/admin/admin-setup-notice";
 import { CampaignBuilder } from "@/components/admin/campaign-builder";
@@ -127,6 +128,38 @@ export default async function CampaignAdminPage({ searchParams }: CampaignAdminP
         </article>
 
         <article className="admin-card">
+          <h3>Canli Kampanya Satis Girisi</h3>
+          <p className="subtle">
+            Admin olarak kampanyayi secin, sonra hedef personel veya magazayi secip satisi o hesaba isleyin.
+          </p>
+
+          <AdminCampaignSaleForm
+            action={createCampaignSaleByAdminAction}
+            campaigns={data.campaignRows.map((campaign) => ({
+              id: campaign.id,
+              name: campaign.name,
+              mode: campaign.mode,
+              products: data.productRows
+                .filter((product) => product.campaign_id === campaign.id)
+                .map((product) => ({
+                  id: product.id,
+                  name: product.name,
+                  base_points: product.base_points,
+                  unit_label: product.unit_label
+                }))
+            }))}
+            employees={data.approvedProfilesForSeason.map((profile) => ({
+              id: profile.id,
+              full_name: profile.full_name
+            }))}
+            stores={data.storeRows.filter((store) => store.is_active).map((store) => ({
+              id: store.id,
+              name: store.name
+            }))}
+          />
+        </article>
+
+        <article className="admin-card">
           <h3>Son Kampanyalar</h3>
           <div className="approval-list">
             {data.campaignRows.length === 0 ? (
@@ -216,66 +249,6 @@ export default async function CampaignAdminPage({ searchParams }: CampaignAdminP
                   </div>
 
                   <div className="campaign-manage-card">
-                    <form action={createCampaignSaleByAdminAction} className="admin-form compact-guide">
-                      <input name="redirectTo" type="hidden" value="/admin/kampanyalar" />
-                      <input name="campaignId" type="hidden" value={campaign.id} />
-
-                      <div className="auth-grid">
-                        <label className="field compact">
-                          <span>Urun</span>
-                          <select name="productId" required>
-                            <option value="">Urun secin</option>
-                            {data.productRows
-                              .filter((product) => product.campaign_id === campaign.id)
-                              .map((product) => (
-                                <option key={product.id} value={product.id}>
-                                  {product.name} ({product.base_points} {product.unit_label})
-                                </option>
-                              ))}
-                          </select>
-                        </label>
-
-                        {campaign.mode === "employee" ? (
-                          <label className="field compact">
-                            <span>Hedef Personel</span>
-                            <select name="targetProfileId" required>
-                              <option value="">Personel secin</option>
-                              {data.approvedProfilesForSeason.map((profile) => (
-                                <option key={profile.id} value={profile.id}>
-                                  {profile.full_name}
-                                </option>
-                              ))}
-                            </select>
-                          </label>
-                        ) : (
-                          <label className="field compact">
-                            <span>Hedef Magaza</span>
-                            <select name="targetStoreId" required>
-                              <option value="">Magaza secin</option>
-                              {data.storeRows
-                                .filter((store) => store.is_active)
-                                .map((store) => (
-                                  <option key={store.id} value={store.id}>
-                                    {store.name}
-                                  </option>
-                                ))}
-                            </select>
-                          </label>
-                        )}
-
-                        <label className="field compact">
-                          <span>Miktar</span>
-                          <input defaultValue="1" name="quantity" required type="number" />
-                        </label>
-                      </div>
-
-                      <div className="campaign-manage-actions">
-                        <button className="tiny-button approve" type="submit">
-                          Admin Satis Gir
-                        </button>
-                      </div>
-                    </form>
-
                     <form action={updateCampaignAction} className="admin-form">
                       <input name="redirectTo" type="hidden" value="/admin/kampanyalar" />
                       <input name="campaignId" type="hidden" value={campaign.id} />

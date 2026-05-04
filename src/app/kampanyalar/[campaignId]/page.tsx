@@ -186,7 +186,11 @@ export default async function CampaignDetailPage({
                 <div>
                   <h4>
                     {row.label}
-                    {index === 0 ? <span className="leaderboard-cup">Kupa</span> : null}
+                    {index === 0 ? (
+                      <span aria-label="Lider kupasi" className="leaderboard-cup" title="Lider kupasi">
+                        🏆
+                      </span>
+                    ) : null}
                   </h4>
                   <p className="subtle">{row.badge ?? "Canli toplam"}</p>
                 </div>

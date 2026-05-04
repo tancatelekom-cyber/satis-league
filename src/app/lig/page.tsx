@@ -609,7 +609,11 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
                 <div>
                   <h4>
                     {row.label}
-                    {index === 0 ? <span className="leaderboard-cup">Kupa</span> : null}
+                    {index === 0 ? (
+                      <span aria-label="Lider kupasi" className="leaderboard-cup" title="Lider kupasi">
+                        🏆
+                      </span>
+                    ) : null}
                   </h4>
                   <p className="subtle">{row.storeName ?? rawRange.label}</p>
                 </div>
@@ -633,7 +637,11 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
                 <div>
                   <h4>
                     {row.label}
-                    {index === 0 ? <span className="leaderboard-cup">Kupa</span> : null}
+                    {index === 0 ? (
+                      <span aria-label="Lider kupasi" className="leaderboard-cup" title="Lider kupasi">
+                        🏆
+                      </span>
+                    ) : null}
                   </h4>
                   <p className="subtle">
                     {row.storeName ??

@@ -60,10 +60,6 @@ export default async function RankingAdminPage({ searchParams }: RankingAdminPag
           <strong>Kampanya Ekrani</strong>
           <span>Canli kampanya listesi ve aktif/planlanan/sonuclanan alanlarini ac.</span>
         </Link>
-        <Link className="admin-quick-card" href="/magaza-vs-magaza">
-          <strong>Magaza VS Magaza</strong>
-          <span>Magaza yarisi ekranini telefon gorunumunde kontrol et.</span>
-        </Link>
       </section>
     </main>
   );

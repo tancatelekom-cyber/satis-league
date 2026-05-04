@@ -79,9 +79,8 @@ const sections = [
     title: "9. Bildirimler ve Yardimci Ekranlar",
     items: [
       "`/bildirimler` ekraninda kampanya ve onay bildirimleri geliyor mu bakin.",
-      "`/magaza-vs-magaza` ekraninda aktif magaza kapismalari aciliyor mu kontrol edin.",
-      "Hesabim ekraninda rol, onay durumu ve izin bilgisi dogru mu bakin."
-    ]
+        "Hesabim ekraninda rol, onay durumu ve izin bilgisi dogru mu bakin."
+      ]
   },
   {
     title: "10. Canliya Hazirlik",

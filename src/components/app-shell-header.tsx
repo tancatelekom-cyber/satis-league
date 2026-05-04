@@ -101,17 +101,16 @@ export function AppShellHeader() {
     }
 
     if (profile.role === "manager") {
-      return [...commonApproved, { href: "/magaza-vs-magaza", label: "Magaza VS" }];
+      return commonApproved;
     }
 
     if (profile.role === "management") {
-      return [...commonApproved, { href: "/magaza-vs-magaza", label: "Magaza VS" }];
+      return commonApproved;
     }
 
     return [
       { href: "/kampanyalar", label: "Kampanyalar" },
       { href: "/lig", label: "Sezon Ligi" },
-      { href: "/magaza-vs-magaza", label: "Magaza VS" },
       { href: "/bildirimler", label: "Bildirimler" },
       { href: "/admin", label: "Admin" },
       { href: "/kontrol-listesi", label: "Kontrol" },

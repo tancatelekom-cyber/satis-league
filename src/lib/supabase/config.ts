@@ -1,3 +1,5 @@
+const DEFAULT_APP_URL = "https://satis-league-git-main-tancatelekom-8777s-projects.vercel.app";
+
 export function getSupabasePublicEnv() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -29,4 +31,14 @@ export function getSupabaseAdminEnv() {
 
 export function isSupabaseAdminConfigured() {
   return Boolean(getSupabaseAdminEnv());
+}
+
+export function getAppBaseUrl() {
+  const configuredAppUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
+
+  if (configuredAppUrl) {
+    return configuredAppUrl.replace(/\/$/, "");
+  }
+
+  return DEFAULT_APP_URL;
 }

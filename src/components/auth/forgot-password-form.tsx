@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { createClient } from "@/lib/supabase/browser";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { getAppBaseUrl, isSupabaseConfigured } from "@/lib/supabase/config";
 
 export function ForgotPasswordForm() {
   const [submitting, setSubmitting] = useState(false);
@@ -25,7 +25,7 @@ export function ForgotPasswordForm() {
     const formData = new FormData(event.currentTarget);
     const email = String(formData.get("email") ?? "").trim();
     const supabase = createClient();
-    const redirectTo = `${window.location.origin}/sifre-yenile`;
+    const redirectTo = `${getAppBaseUrl()}/sifre-yenile`;
 
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo

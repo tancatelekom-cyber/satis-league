@@ -450,6 +450,12 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
           <>
             <h3>Ay Secimi</h3>
             <div className="filter-chip-row">
+              <Link
+                className="filter-chip"
+                href={buildLeagueHref({ period: "year" })}
+              >
+                Yilin Tumu
+              </Link>
               {monthOptions.map((month) => (
                 <Link
                   key={month.value}
@@ -467,6 +473,12 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
           <>
             <h3>Q Secimi</h3>
             <div className="filter-chip-row">
+              <Link
+                className="filter-chip"
+                href={buildLeagueHref({ period: "year" })}
+              >
+                Tum Q'lar
+              </Link>
               {quarterOptions.map((quarter) => (
                 <Link
                   key={quarter.value}

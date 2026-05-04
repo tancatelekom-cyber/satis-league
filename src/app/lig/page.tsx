@@ -25,6 +25,9 @@ type LeaguePageProps = {
     seasonId?: string;
     period?: LeaguePeriod;
     category?: string;
+    year?: string;
+    month?: string;
+    quarter?: string;
   }>;
 };
 
@@ -34,9 +37,80 @@ const periodOptions: Array<{ value: LeaguePeriod; label: string }> = [
   { value: "year", label: "Yil" }
 ];
 
-function getPeriodRange(period: LeaguePeriod, today: Date) {
-  const year = today.getFullYear();
-  const month = today.getMonth();
+const MONTH_LABELS = [
+  "Ocak",
+  "Subat",
+  "Mart",
+  "Nisan",
+  "Mayis",
+  "Haziran",
+  "Temmuz",
+  "Agustos",
+  "Eylul",
+  "Ekim",
+  "Kasim",
+  "Aralik"
+];
+
+function buildYearOptions(startDate: string, endDate: string) {
+  const startYear = Number(startDate.slice(0, 4));
+  const endYear = Number(endDate.slice(0, 4));
+  const options: string[] = [];
+
+  for (let year = startYear; year <= endYear; year += 1) {
+    options.push(String(year));
+  }
+
+  return options;
+}
+
+function buildMonthOptionsForYear(startDate: string, endDate: string, year: string) {
+  const startYear = Number(startDate.slice(0, 4));
+  const endYear = Number(endDate.slice(0, 4));
+  const targetYear = Number(year);
+
+  if (targetYear < startYear || targetYear > endYear) {
+    return [] as Array<{ value: string; label: string }>;
+  }
+
+  const startMonth = targetYear === startYear ? Number(startDate.slice(5, 7)) : 1;
+  const endMonth = targetYear === endYear ? Number(endDate.slice(5, 7)) : 12;
+  const options: Array<{ value: string; label: string }> = [];
+
+  for (let month = startMonth; month <= endMonth; month += 1) {
+    options.push({
+      value: `${year}-${String(month).padStart(2, "0")}`,
+      label: MONTH_LABELS[month - 1]
+    });
+  }
+
+  return options;
+}
+
+function buildQuarterOptionsForYear(startDate: string, endDate: string, year: string) {
+  const monthOptions = buildMonthOptionsForYear(startDate, endDate, year);
+  const quarterSet = new Set<string>();
+
+  monthOptions.forEach((option) => {
+    const monthIndex = Number(option.value.slice(5, 7));
+    quarterSet.add(String(Math.floor((monthIndex - 1) / 3) + 1));
+  });
+
+  return Array.from(quarterSet)
+    .sort()
+    .map((value) => ({
+      value,
+      label: `Q${value}`
+    }));
+}
+
+function getPeriodRange(
+  period: LeaguePeriod,
+  selectedYear: string,
+  selectedMonth: string,
+  selectedQuarter: string
+) {
+  const year = Number(selectedYear);
 
   if (period === "year") {
     return {
@@ -47,8 +121,8 @@ function getPeriodRange(period: LeaguePeriod, today: Date) {
   }
 
   if (period === "quarter") {
-    const quarterStartMonth = Math.floor(month / 3) * 3;
-    const quarterIndex = Math.floor(month / 3) + 1;
+    const quarterIndex = Number(selectedQuarter);
+    const quarterStartMonth = (quarterIndex - 1) * 3;
     return {
       start: new Date(year, quarterStartMonth, 1),
       end: new Date(year, quarterStartMonth + 3, 0),
@@ -56,10 +130,12 @@ function getPeriodRange(period: LeaguePeriod, today: Date) {
     };
   }
 
+  const month = Number(selectedMonth.slice(5, 7)) - 1;
+
   return {
     start: new Date(year, month, 1),
     end: new Date(year, month + 1, 0),
-    label: `${today.toLocaleString("tr-TR", { month: "long" })} ${year}`
+    label: `${MONTH_LABELS[month]} ${year}`
   };
 }
 
@@ -124,6 +200,28 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
     );
   }
 
+  const yearOptions = buildYearOptions(activeSeason.start_date, activeSeason.end_date);
+  const currentYear = String(new Date().getFullYear());
+  const effectiveYear = yearOptions.includes(String(params?.year ?? "").trim())
+    ? String(params?.year)
+    : yearOptions.includes(currentYear)
+      ? currentYear
+      : yearOptions[0];
+  const monthOptions = buildMonthOptionsForYear(activeSeason.start_date, activeSeason.end_date, effectiveYear);
+  const currentMonthValue = `${currentYear}-${String(new Date().getMonth() + 1).padStart(2, "0")}`;
+  const effectiveMonth = monthOptions.some((option) => option.value === String(params?.month ?? "").trim())
+    ? String(params?.month)
+    : monthOptions.some((option) => option.value === currentMonthValue)
+      ? currentMonthValue
+      : (monthOptions[0]?.value ?? `${effectiveYear}-01`);
+  const quarterOptions = buildQuarterOptionsForYear(activeSeason.start_date, activeSeason.end_date, effectiveYear);
+  const currentQuarter = String(Math.floor(new Date().getMonth() / 3) + 1);
+  const effectiveQuarter = quarterOptions.some((option) => option.value === String(params?.quarter ?? "").trim())
+    ? String(params?.quarter)
+    : quarterOptions.some((option) => option.value === currentQuarter)
+      ? currentQuarter
+      : (quarterOptions[0]?.value ?? "1");
+
   const seasonIds = seasonRows.map((season) => season.id);
   const [{ data: profiles }, { data: stores }, { data: seasonProducts }, { data: seasonSales }] =
     await Promise.all([
@@ -166,7 +264,7 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
   );
 
   const today = new Date();
-  const rawRange = getPeriodRange(selectedPeriod, today);
+  const rawRange = getPeriodRange(selectedPeriod, effectiveYear, effectiveMonth, effectiveQuarter);
   const clampedStart = clampDate(toDateString(rawRange.start), activeSeason.start_date, activeSeason.end_date);
   const clampedEnd = clampDate(toDateString(rawRange.end), activeSeason.start_date, activeSeason.end_date);
   const activeSeasonSales = saleRows.filter((sale) => sale.season_id === activeSeason.id);
@@ -238,6 +336,41 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
     .filter((season) => season.champion)
     .slice(0, 6);
 
+  const buildLeagueHref = (overrides?: Partial<{
+    seasonId: string;
+    period: LeaguePeriod;
+    category: string;
+    year: string;
+    month: string;
+    quarter: string;
+  }>) => {
+    const params = new URLSearchParams();
+    const seasonId = overrides?.seasonId ?? activeSeason.id;
+    const period = overrides?.period ?? selectedPeriod;
+    const category = overrides?.category ?? effectiveCategory;
+    const year = overrides?.year ?? effectiveYear;
+    const month = overrides?.month ?? effectiveMonth;
+    const quarter = overrides?.quarter ?? effectiveQuarter;
+
+    params.set("seasonId", seasonId);
+    params.set("period", period);
+    params.set("year", year);
+
+    if (period === "month") {
+      params.set("month", month);
+    }
+
+    if (period === "quarter") {
+      params.set("quarter", quarter);
+    }
+
+    if (category) {
+      params.set("category", category);
+    }
+
+    return `/lig?${params.toString()}`;
+  };
+
   return (
     <main>
       <h1 className="page-title">Sezonluk Lig Tablosu</h1>
@@ -252,12 +385,33 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
             <Link
               key={season.id}
               className={`filter-chip ${activeSeason.id === season.id ? "active" : ""}`}
-              href={`/lig?seasonId=${season.id}&period=${selectedPeriod}${effectiveCategory ? `&category=${encodeURIComponent(effectiveCategory)}` : ""}`}
+              href={buildLeagueHref({ seasonId: season.id })}
             >
               {season.name}
               {season.is_active ? " (Aktif)" : ""}
             </Link>
           ))}
+        </div>
+
+        <h3>Yil Secimi</h3>
+        <div className="filter-chip-row">
+          {yearOptions.map((year) => {
+            const yearMonthOptions = buildMonthOptionsForYear(activeSeason.start_date, activeSeason.end_date, year);
+            const yearQuarterOptions = buildQuarterOptionsForYear(activeSeason.start_date, activeSeason.end_date, year);
+            return (
+              <Link
+                key={year}
+                className={`filter-chip ${effectiveYear === year ? "active" : ""}`}
+                href={buildLeagueHref({
+                  year,
+                  month: yearMonthOptions[0]?.value ?? `${year}-01`,
+                  quarter: yearQuarterOptions[0]?.value ?? "1"
+                })}
+              >
+                {year}
+              </Link>
+            );
+          })}
         </div>
 
         <h3>Donem Secimi</h3>
@@ -266,18 +420,52 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
             <Link
               key={period.value}
               className={`filter-chip ${selectedPeriod === period.value ? "active" : ""}`}
-              href={`/lig?seasonId=${activeSeason.id}&period=${period.value}${effectiveCategory ? `&category=${encodeURIComponent(effectiveCategory)}` : ""}`}
+              href={buildLeagueHref({ period: period.value })}
             >
               {period.label}
             </Link>
           ))}
         </div>
 
+        {selectedPeriod === "month" ? (
+          <>
+            <h3>Ay Secimi</h3>
+            <div className="filter-chip-row">
+              {monthOptions.map((month) => (
+                <Link
+                  key={month.value}
+                  className={`filter-chip ${effectiveMonth === month.value ? "active" : ""}`}
+                  href={buildLeagueHref({ month: month.value })}
+                >
+                  {month.label}
+                </Link>
+              ))}
+            </div>
+          </>
+        ) : null}
+
+        {selectedPeriod === "quarter" ? (
+          <>
+            <h3>Q Secimi</h3>
+            <div className="filter-chip-row">
+              {quarterOptions.map((quarter) => (
+                <Link
+                  key={quarter.value}
+                  className={`filter-chip ${effectiveQuarter === quarter.value ? "active" : ""}`}
+                  href={buildLeagueHref({ quarter: quarter.value })}
+                >
+                  {quarter.label}
+                </Link>
+              ))}
+            </div>
+          </>
+        ) : null}
+
         <h3>Urun Kategorisi</h3>
         <div className="filter-chip-row">
           <Link
             className={`filter-chip ${effectiveCategory ? "" : "active"}`}
-            href={`/lig?seasonId=${activeSeason.id}&period=${selectedPeriod}`}
+            href={buildLeagueHref({ category: "" })}
           >
             Tum Kategoriler
           </Link>
@@ -285,7 +473,7 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
             <Link
               key={category}
               className={`filter-chip ${effectiveCategory === category ? "active" : ""}`}
-              href={`/lig?seasonId=${activeSeason.id}&period=${selectedPeriod}&category=${encodeURIComponent(category)}`}
+              href={buildLeagueHref({ category })}
             >
               {category}
             </Link>

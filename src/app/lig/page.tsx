@@ -227,7 +227,7 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
     await Promise.all([
       admin
         .from("profiles")
-        .select("id, full_name, role, approval, is_on_leave, store:stores(name)")
+        .select("id, full_name, role, approval, is_on_leave, store_id, store:stores(id, name)")
         .eq("approval", "approved"),
       admin.from("stores").select("id, name").eq("is_active", true),
       admin
@@ -249,7 +249,8 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
       full_name: string;
       role: string;
       is_on_leave: boolean;
-      store: { name: string } | null;
+      store_id?: string | null;
+      store: { id?: string; name: string } | null;
     }> | null) ?? []).filter((profile) => !profile.is_on_leave && profile.role === "employee");
   const storeRows = (stores as Array<{ id: string; name: string }> | null) ?? [];
   const productRows = (seasonProducts as SeasonProductRecord[] | null) ?? [];
@@ -297,12 +298,30 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
   }
 
   function buildStoreLeague(seasonId: string, sourceRows: SaleRow[]): LeagueRow[] {
+    const profileStoreMap = new Map(
+      profileRows.map((profile) => [profile.id, profile.store_id ?? profile.store?.id ?? null])
+    );
+
     return storeRows
       .map((store) => ({
         id: store.id,
         label: store.name,
         score: sourceRows
-          .filter((entry) => entry.season_id === seasonId && entry.target_store_id === store.id)
+          .filter((entry) => {
+            if (entry.season_id !== seasonId) {
+              return false;
+            }
+
+            if (entry.target_store_id === store.id) {
+              return true;
+            }
+
+            const profileStoreId = entry.target_profile_id
+              ? profileStoreMap.get(entry.target_profile_id) ?? null
+              : null;
+
+            return profileStoreId === store.id;
+          })
           .reduce((sum, entry) => sum + Number(entry.score ?? 0), 0)
       }))
       .sort((a, b) => b.score - a.score);

@@ -1316,10 +1316,29 @@ button {
   background: linear-gradient(135deg, var(--accent-strong), var(--accent));
 }
 
+.leaderboard-rank-empty {
+  color: #fff1f1;
+  background: linear-gradient(135deg, rgba(255, 107, 107, 0.95), rgba(170, 24, 24, 0.95));
+}
+
 .leaderboard-row h4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.leaderboard-cup {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: #09111f;
+  font-size: 0.75rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #ffe08a, #ffd166);
 }
 
 .score {

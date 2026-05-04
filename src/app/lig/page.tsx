@@ -603,9 +603,14 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
           <div className="leaderboard-list">
             {primaryLeague.map((row, index) => (
               <div key={row.id} className="leaderboard-row">
-                <div className="leaderboard-rank">{index + 1}</div>
+                <div className={`leaderboard-rank ${row.score <= 0 ? "leaderboard-rank-empty" : ""}`}>
+                  {index + 1}
+                </div>
                 <div>
-                  <h4>{row.label}</h4>
+                  <h4>
+                    {row.label}
+                    {index === 0 ? <span className="leaderboard-cup">Kupa</span> : null}
+                  </h4>
                   <p className="subtle">{row.storeName ?? rawRange.label}</p>
                 </div>
                 <div className="score">
@@ -622,9 +627,14 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
           <div className="leaderboard-list">
             {secondaryLeague.map((row, index) => (
               <div key={row.id} className="leaderboard-row">
-                <div className="leaderboard-rank">{index + 1}</div>
+                <div className={`leaderboard-rank ${row.score <= 0 ? "leaderboard-rank-empty" : ""}`}>
+                  {index + 1}
+                </div>
                 <div>
-                  <h4>{row.label}</h4>
+                  <h4>
+                    {row.label}
+                    {index === 0 ? <span className="leaderboard-cup">Kupa</span> : null}
+                  </h4>
                   <p className="subtle">
                     {row.storeName ??
                       (activeSeason.mode === "employee"

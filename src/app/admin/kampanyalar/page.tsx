@@ -1,7 +1,9 @@
 import {
   createCampaignAction,
+  deleteCampaignSaleAction,
   deleteCampaignAction,
   endCampaignAction,
+  updateCampaignSaleAction,
   updateCampaignAction
 } from "@/app/admin/actions";
 import { AdminSectionNav } from "@/components/admin/admin-section-nav";
@@ -157,6 +159,59 @@ export default async function CampaignAdminPage({ searchParams }: CampaignAdminP
                         .map((item) => `${item.store?.name ?? "Magaza"} x${item.multiplier}`)
                         .join(", ") || "Varsayilan 1.00"}
                     </p>
+
+                    <div className="campaign-sales-admin">
+                      <strong>Canli Satis Kayitlari</strong>
+                      <div className="campaign-sales-list">
+                        {data.campaignSales.filter((sale) => sale.campaign_id === campaign.id).length === 0 ? (
+                          <div className="compact-sale-row empty">Bu kampanyada henuz satis kaydi yok.</div>
+                        ) : (
+                          data.campaignSales
+                            .filter((sale) => sale.campaign_id === campaign.id)
+                            .slice(0, 12)
+                            .map((sale) => (
+                              <div key={sale.id} className="compact-sale-row">
+                                <div className="compact-sale-copy">
+                                  <strong>{sale.targetProfile?.full_name ?? sale.targetStore?.name ?? "Hedef yok"}</strong>
+                                  <span>
+                                    {sale.product?.name ?? "Urun"} | {sale.quantity} {sale.product?.unit_label ?? "adet"} |{" "}
+                                    {Number(sale.weighted_score ?? 0).toFixed(0)} puan
+                                  </span>
+                                  <span className="subtle">
+                                    Giren: {sale.actorProfile?.full_name ?? "Bilinmiyor"} |{" "}
+                                    {new Date(sale.created_at).toLocaleString("tr-TR")}
+                                  </span>
+                                </div>
+
+                                <div className="compact-sale-actions">
+                                  <form action={updateCampaignSaleAction} className="compact-sale-form">
+                                    <input name="redirectTo" type="hidden" value="/admin/kampanyalar" />
+                                    <input name="saleId" type="hidden" value={sale.id} />
+                                    <input name="campaignId" type="hidden" value={campaign.id} />
+                                    <input
+                                      className="compact-sale-input"
+                                      defaultValue={sale.quantity}
+                                      name="quantity"
+                                      type="number"
+                                    />
+                                    <button className="tiny-button approve" type="submit">
+                                      Guncelle
+                                    </button>
+                                  </form>
+
+                                  <form action={deleteCampaignSaleAction}>
+                                    <input name="redirectTo" type="hidden" value="/admin/kampanyalar" />
+                                    <input name="saleId" type="hidden" value={sale.id} />
+                                    <button className="tiny-button danger" type="submit">
+                                      Sil
+                                    </button>
+                                  </form>
+                                </div>
+                              </div>
+                            ))
+                        )}
+                      </div>
+                    </div>
                   </div>
 
                   <div className="campaign-manage-card">

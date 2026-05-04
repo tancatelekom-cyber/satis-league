@@ -230,6 +230,62 @@ async function calculateStoreSeasonSale(input: {
   };
 }
 
+async function calculateCampaignSaleForEntry(input: {
+  campaignId: string;
+  productId: string;
+  actorProfileId: string;
+  targetProfileId: string | null;
+  targetStoreId: string | null;
+  quantity: number;
+}) {
+  const supabase = createAdminClient();
+  const [{ data: campaign }, { data: product }, { data: actorProfile }] = await Promise.all([
+    supabase.from("campaigns").select("mode, scoring").eq("id", input.campaignId).single(),
+    supabase
+      .from("campaign_products")
+      .select("id, name, base_points")
+      .eq("id", input.productId)
+      .eq("campaign_id", input.campaignId)
+      .single(),
+    supabase.from("profiles").select("id, store_id").eq("id", input.actorProfileId).single()
+  ]);
+
+  if (!campaign || !product || !actorProfile) {
+    throw new Error("Kampanya satis kaydi yeniden hesaplanamadi.");
+  }
+
+  const multiplierStoreId = actorProfile.store_id ?? input.targetStoreId;
+  const profileMultiplierTarget = input.targetProfileId ?? input.actorProfileId;
+
+  const [{ data: storeMultiplierRow }, { data: profileMultiplierRow }] = await Promise.all([
+    multiplierStoreId
+      ? supabase
+          .from("campaign_store_multipliers")
+          .select("multiplier")
+          .eq("campaign_id", input.campaignId)
+          .eq("store_id", multiplierStoreId)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+    supabase
+      .from("campaign_profile_multipliers")
+      .select("multiplier")
+      .eq("campaign_id", input.campaignId)
+      .eq("profile_id", profileMultiplierTarget)
+      .maybeSingle()
+  ]);
+
+  const storeMultiplier = Number(storeMultiplierRow?.multiplier ?? 1);
+  const profileMultiplier = Number(profileMultiplierRow?.multiplier ?? 1);
+  const rawScore =
+    campaign.scoring === "points" ? input.quantity * Number(product.base_points ?? 1) : input.quantity;
+  const weightedScore = rawScore * storeMultiplier * profileMultiplier;
+
+  return {
+    rawScore,
+    weightedScore
+  };
+}
+
 function refreshCampaignPages() {
   revalidatePath("/admin");
   revalidatePath("/kampanyalar");
@@ -1429,4 +1485,94 @@ export async function deleteCampaignAction(formData: FormData) {
 
   refreshCampaignPages();
   redirectWithMessage("Kampanya silindi.", "success", redirectTo);
+}
+
+export async function updateCampaignSaleAction(formData: FormData) {
+  await requireAdminAccess();
+  const redirectTo = getRedirectTo(formData);
+  const supabase = createAdminClient();
+  const saleId = String(formData.get("saleId") ?? "").trim();
+  const campaignId = String(formData.get("campaignId") ?? "").trim();
+  const quantity = Number(String(formData.get("quantity") ?? "").trim());
+
+  if (!saleId || !campaignId || !Number.isFinite(quantity)) {
+    redirectWithMessage("Kampanya satisi guncellemek icin miktar zorunlu.", "error", redirectTo);
+  }
+
+  const { data: entry } = await supabase
+    .from("sales_entries")
+    .select("id, campaign_id, product_id, actor_profile_id, target_profile_id, target_store_id")
+    .eq("id", saleId)
+    .eq("campaign_id", campaignId)
+    .single();
+
+  if (!entry) {
+    redirectWithMessage("Kampanya satis kaydi bulunamadi.", "error", redirectTo);
+  }
+
+  if (quantity === 0) {
+    const { error: deleteError } = await supabase.from("sales_entries").delete().eq("id", saleId);
+
+    if (deleteError) {
+      redirectWithMessage(`Kampanya satisi silinemedi: ${deleteError.message}`, "error", redirectTo);
+    }
+
+    refreshCampaignPages();
+    redirectWithMessage("Kampanya satis kaydi silindi.", "success", redirectTo);
+  }
+
+  let recalculated;
+
+  try {
+    recalculated = await calculateCampaignSaleForEntry({
+      campaignId,
+      productId: entry!.product_id,
+      actorProfileId: entry!.actor_profile_id,
+      targetProfileId: entry!.target_profile_id,
+      targetStoreId: entry!.target_store_id,
+      quantity
+    });
+  } catch (error) {
+    redirectWithMessage(
+      error instanceof Error ? error.message : "Kampanya satis puani hesaplanamadi.",
+      "error",
+      redirectTo
+    );
+  }
+
+  const { error } = await supabase
+    .from("sales_entries")
+    .update({
+      quantity,
+      raw_score: recalculated!.rawScore,
+      weighted_score: recalculated!.weightedScore
+    })
+    .eq("id", saleId);
+
+  if (error) {
+    redirectWithMessage(`Kampanya satisi guncellenemedi: ${error.message}`, "error", redirectTo);
+  }
+
+  refreshCampaignPages();
+  redirectWithMessage("Kampanya satis kaydi guncellendi.", "success", redirectTo);
+}
+
+export async function deleteCampaignSaleAction(formData: FormData) {
+  await requireAdminAccess();
+  const redirectTo = getRedirectTo(formData);
+  const supabase = createAdminClient();
+  const saleId = String(formData.get("saleId") ?? "").trim();
+
+  if (!saleId) {
+    redirectWithMessage("Silinecek kampanya satisi secilmedi.", "error", redirectTo);
+  }
+
+  const { error } = await supabase.from("sales_entries").delete().eq("id", saleId);
+
+  if (error) {
+    redirectWithMessage(`Kampanya satisi silinemedi: ${error.message}`, "error", redirectTo);
+  }
+
+  refreshCampaignPages();
+  redirectWithMessage("Kampanya satis kaydi silindi.", "success", redirectTo);
 }

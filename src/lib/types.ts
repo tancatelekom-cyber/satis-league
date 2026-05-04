@@ -157,6 +157,33 @@ export type CampaignStoreMultiplierRecord = {
   } | null;
 };
 
+export type AdminCampaignSaleRecord = {
+  id: string;
+  campaign_id: string;
+  product_id: string;
+  actor_profile_id: string;
+  target_profile_id: string | null;
+  target_store_id: string | null;
+  quantity: number;
+  raw_score: number;
+  weighted_score: number;
+  created_at: string;
+  product: {
+    name: string;
+    unit_label: string;
+    base_points: number;
+  } | null;
+  actorProfile: {
+    full_name: string;
+  } | null;
+  targetProfile: {
+    full_name: string;
+  } | null;
+  targetStore: {
+    name: string;
+  } | null;
+};
+
 export type CampaignPageCampaign = {
   id: string;
   name: string;

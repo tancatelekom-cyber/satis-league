@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   AdminCampaign,
+  AdminCampaignSaleRecord,
   AdminPendingProfile,
   AdminSeason,
   AdminStore,
@@ -124,7 +125,7 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
   const campaignIds = campaignRows.map((campaign) => campaign.id);
   const seasonIds = seasonRows.map((season) => season.id);
 
-  const [{ data: campaignProducts }, { data: campaignStoreMultipliers }] = campaignIds.length
+  const [{ data: campaignProducts }, { data: campaignStoreMultipliers }, { data: campaignSales }] = campaignIds.length
     ? await Promise.all([
         supabase
           .from("campaign_products")
@@ -142,9 +143,36 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
               store:stores(name)
             `
           )
+          .in("campaign_id", campaignIds),
+        supabase
+          .from("sales_entries")
+          .select(
+            `
+              id,
+              campaign_id,
+              product_id,
+              actor_profile_id,
+              target_profile_id,
+              target_store_id,
+              quantity,
+              raw_score,
+              weighted_score,
+              created_at,
+              product:campaign_products!sales_entries_product_id_fkey(name, unit_label, base_points),
+              actorProfile:profiles!sales_entries_actor_profile_id_fkey(full_name),
+              targetProfile:profiles!sales_entries_target_profile_id_fkey(full_name),
+              targetStore:stores!sales_entries_target_store_id_fkey(name)
+            `
+          )
           .in("campaign_id", campaignIds)
+          .order("created_at", { ascending: false })
+          .limit(200)
       ])
-    : [{ data: [] as CampaignProductRecord[] }, { data: [] as CampaignStoreMultiplierRecord[] }];
+    : [
+        { data: [] as CampaignProductRecord[] },
+        { data: [] as CampaignStoreMultiplierRecord[] },
+        { data: [] as AdminCampaignSaleRecord[] }
+      ];
 
   const [{ data: seasonProducts }, { data: seasonStoreMultipliers }] = seasonIds.length
     ? await Promise.all([
@@ -304,6 +332,7 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
     seasonRows,
     productRows: (campaignProducts as CampaignProductRecord[] | null) ?? [],
     multiplierRows: (campaignStoreMultipliers as CampaignStoreMultiplierRecord[] | null) ?? [],
+    campaignSales: (campaignSales as AdminCampaignSaleRecord[] | null) ?? [],
     seasonProductRows: (seasonProducts as SeasonProductRecord[] | null) ?? [],
     seasonMultiplierRows: (seasonStoreMultipliers as SeasonStoreMultiplierRecord[] | null) ?? [],
     approvedProfilesForSeason: activeEmployeeTargets,

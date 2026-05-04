@@ -121,10 +121,10 @@ export function AppShellHeader() {
   return (
     <header className={`topbar ${isAuthPage ? "topbar-auth" : "topbar-app"}`}>
       <Link className="brand" href={loggedIn ? "/kampanyalar" : "/"}>
-        <div className="brand-badge">S+</div>
+        <div className="brand-badge">T+</div>
         <div>
           <div>TANCA SUPER LIG</div>
-          <small className="subtle">{isAuthPage ? "Hesabiniza giris" : "Satis motivasyon uygulamasi"}</small>
+          {isAuthPage ? <small className="subtle">Hesabiniza giris</small> : null}
         </div>
       </Link>
 

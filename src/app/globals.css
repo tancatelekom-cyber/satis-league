@@ -1077,6 +1077,18 @@ button {
   margin-top: 18px;
 }
 
+.auth-footer-links {
+  margin-top: 14px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.auth-inline-link {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 700;
+}
+
 .admin-form {
   display: grid;
   gap: 16px;

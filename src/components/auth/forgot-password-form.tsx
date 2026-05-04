@@ -1,24 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { createClient } from "@/lib/supabase/browser";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
-type LoginFormProps = {
-  message?: string;
-};
-
-export function LoginForm({ message }: LoginFormProps) {
-  const router = useRouter();
+export function ForgotPasswordForm() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSubmitting(true);
     setError("");
+    setSuccess("");
 
     if (!isSupabaseConfigured()) {
       setError("Once .env.local dosyasina Supabase bilgilerini girmelisiniz.");
@@ -28,62 +24,48 @@ export function LoginForm({ message }: LoginFormProps) {
 
     const formData = new FormData(event.currentTarget);
     const email = String(formData.get("email") ?? "").trim();
-    const password = String(formData.get("password") ?? "");
     const supabase = createClient();
+    const redirectTo = `${window.location.origin}/sifre-yenile`;
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo
     });
 
-    if (signInError) {
-      setError(signInError.message);
+    if (resetError) {
+      setError(resetError.message);
       setSubmitting(false);
       return;
     }
 
-    router.push("/kampanyalar");
-    router.refresh();
+    setSuccess("Sifre yenileme linki tanimli mail adresinize gonderildi.");
+    setSubmitting(false);
+    event.currentTarget.reset();
   }
 
   return (
     <form className="auth-card" onSubmit={handleSubmit}>
       <div className="auth-header">
-        <span className="status-chip">Giris</span>
-        <h2>Hesabina Gir</h2>
-        <p>
-          Admin onayi tamamlanan kullanicilar kampanya ekranlarina erisebilir.
-        </p>
+        <span className="status-chip">Sifre Destegi</span>
+        <h2>Sifremi Unuttum</h2>
+        <p>Mail adresinizi yazin, yeni sifre belirlemeniz icin dogrulama linki gelsin.</p>
       </div>
-
-      {message ? <div className="message-box success-box">{message}</div> : null}
 
       <div className="auth-grid single-column">
         <label className="field">
           <span>Mail Adresi</span>
           <input name="email" required type="email" placeholder="ornek@firma.com" />
         </label>
-
-        <label className="field">
-          <span>Sifre</span>
-          <input name="password" required type="password" placeholder="Sifreniz" />
-        </label>
       </div>
 
       {error ? <div className="message-box error-box">{error}</div> : null}
+      {success ? <div className="message-box success-box">{success}</div> : null}
 
       <div className="auth-actions">
         <button className="button-primary" disabled={submitting} type="submit">
-          {submitting ? "Giris yapiliyor..." : "Giris Yap"}
+          {submitting ? "Mail gonderiliyor..." : "Sifre Linki Gonder"}
         </button>
-        <Link className="button-secondary" href="/kayit">
-          Yeni Hesap Olustur
-        </Link>
-      </div>
-
-      <div className="auth-footer-links">
-        <Link className="auth-inline-link" href="/sifremi-unuttum">
-          Sifremi Unuttum
+        <Link className="button-secondary" href="/giris">
+          Girise Don
         </Link>
       </div>
     </form>

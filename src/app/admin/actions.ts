@@ -1487,6 +1487,123 @@ export async function deleteCampaignAction(formData: FormData) {
   redirectWithMessage("Kampanya silindi.", "success", redirectTo);
 }
 
+export async function createCampaignSaleByAdminAction(formData: FormData) {
+  const { profile } = await requireAdminAccess();
+  const redirectTo = getRedirectTo(formData);
+  const supabase = createAdminClient();
+  const campaignId = String(formData.get("campaignId") ?? "").trim();
+  const productId = String(formData.get("productId") ?? "").trim();
+  const quantity = Number(String(formData.get("quantity") ?? "").trim());
+  const targetProfileId = String(formData.get("targetProfileId") ?? "").trim();
+  const targetStoreId = String(formData.get("targetStoreId") ?? "").trim();
+
+  if (!campaignId || !productId || !Number.isFinite(quantity) || quantity === 0) {
+    redirectWithMessage("Kampanya satisi icin urun ve sifirdan farkli miktar zorunlu.", "error", redirectTo);
+  }
+
+  const [{ data: campaign }, { data: product }] = await Promise.all([
+    supabase.from("campaigns").select("id, mode, scoring").eq("id", campaignId).single(),
+    supabase
+      .from("campaign_products")
+      .select("id, campaign_id, name, base_points, unit_label")
+      .eq("id", productId)
+      .single()
+  ]);
+
+  if (!campaign || !product || product.campaign_id !== campaignId) {
+    redirectWithMessage("Kampanya veya kampanya urunu bulunamadi.", "error", redirectTo);
+  }
+
+  let finalTargetProfileId: string | null = null;
+  let finalTargetStoreId: string | null = null;
+  let multiplierStoreId: string | null = null;
+  let profileMultiplierTargetId: string | null = null;
+
+  if (campaign!.mode === "employee") {
+    if (!targetProfileId) {
+      redirectWithMessage("Calisan bazli kampanyada hedef personel secmelisiniz.", "error", redirectTo);
+    }
+
+    const { data: targetProfile } = await supabase
+      .from("profiles")
+      .select("id, store_id, approval, role, is_on_leave")
+      .eq("id", targetProfileId)
+      .single();
+
+    if (
+      !targetProfile ||
+      targetProfile.approval !== "approved" ||
+      targetProfile.role !== "employee" ||
+      targetProfile.is_on_leave
+    ) {
+      redirectWithMessage("Secilen personel aktif ve onayli bir calisan olmali.", "error", redirectTo);
+    }
+
+    finalTargetProfileId = targetProfile!.id;
+    multiplierStoreId = targetProfile!.store_id;
+    profileMultiplierTargetId = targetProfile!.id;
+  } else {
+    if (!targetStoreId) {
+      redirectWithMessage("Magaza bazli kampanyada hedef magaza secmelisiniz.", "error", redirectTo);
+    }
+
+    const { data: targetStore } = await supabase
+      .from("stores")
+      .select("id, is_active")
+      .eq("id", targetStoreId)
+      .single();
+
+    if (!targetStore || !targetStore.is_active) {
+      redirectWithMessage("Secilen magaza aktif olmali.", "error", redirectTo);
+    }
+
+    finalTargetStoreId = targetStore!.id;
+    multiplierStoreId = targetStore!.id;
+  }
+
+  const [{ data: storeMultiplierRow }, { data: profileMultiplierRow }] = await Promise.all([
+    multiplierStoreId
+      ? supabase
+          .from("campaign_store_multipliers")
+          .select("multiplier")
+          .eq("campaign_id", campaignId)
+          .eq("store_id", multiplierStoreId)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+    profileMultiplierTargetId
+      ? supabase
+          .from("campaign_profile_multipliers")
+          .select("multiplier")
+          .eq("campaign_id", campaignId)
+          .eq("profile_id", profileMultiplierTargetId)
+          .maybeSingle()
+      : Promise.resolve({ data: null })
+  ]);
+
+  const rawScore =
+    campaign!.scoring === "points" ? quantity * Number(product!.base_points ?? 1) : quantity;
+  const weightedScore =
+    rawScore * Number(storeMultiplierRow?.multiplier ?? 1) * Number(profileMultiplierRow?.multiplier ?? 1);
+
+  const { error } = await supabase.from("sales_entries").insert({
+    campaign_id: campaignId,
+    product_id: productId,
+    actor_profile_id: profile.id,
+    target_profile_id: finalTargetProfileId,
+    target_store_id: finalTargetStoreId,
+    quantity,
+    raw_score: rawScore,
+    weighted_score: weightedScore
+  });
+
+  if (error) {
+    redirectWithMessage(`Kampanya satisi eklenemedi: ${error.message}`, "error", redirectTo);
+  }
+
+  refreshCampaignPages();
+  redirectWithMessage("Kampanya satis kaydi eklendi.", "success", redirectTo);
+}
+
 export async function updateCampaignSaleAction(formData: FormData) {
   await requireAdminAccess();
   const redirectTo = getRedirectTo(formData);

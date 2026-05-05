@@ -1,6 +1,11 @@
 import { AdminSectionNav } from "@/components/admin/admin-section-nav";
 import { AdminSetupNotice } from "@/components/admin/admin-setup-notice";
-import { createTariffAction, deleteTariffAction, updateTariffAction } from "@/app/admin/actions";
+import {
+  createTariffAction,
+  deleteTariffAction,
+  refreshTurkcellTariffsAction,
+  updateTariffAction
+} from "@/app/admin/actions";
 import { requireAdminAccess } from "@/lib/auth/require-admin";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
@@ -25,6 +30,12 @@ export default async function AdminTariffsPage({ searchParams }: AdminTariffsPag
   const supabase = createAdminClient();
   const { data } = await supabase.from("tariffs").select("*").order("updated_at", { ascending: false });
   const tariffs = (data as TariffRecord[] | null) ?? [];
+  const lastScrapedAt =
+    tariffs
+      .map((item) => item.scraped_at)
+      .filter(Boolean)
+      .sort()
+      .at(-1) ?? null;
 
   return (
     <main>
@@ -52,6 +63,25 @@ export default async function AdminTariffsPage({ searchParams }: AdminTariffsPag
           <strong>{tariffs.filter((item) => item.is_active).length}</strong>
           <p>Sadece aktif tarifeler kullanici menusu olan Tarifeler ekraninda listelenir.</p>
         </article>
+        <article className="admin-overview-card">
+          <span>Son Turkcell Cekimi</span>
+          <strong>{lastScrapedAt ? new Date(lastScrapedAt).toLocaleString("tr-TR") : "Henuz cekilmedi"}</strong>
+          <p>Guncel faturali hat tarifeleri Turkcell sayfasindan otomatik yenilenebilir.</p>
+        </article>
+      </section>
+
+      <section className="admin-card">
+        <h3>Turkcell'den Otomatik Guncelle</h3>
+        <p>
+          Online ya da dijitale ozel olmayan Turkcell faturali hat tarifelerini resmi sayfadan ceker,
+          mevcut kayitlari gunceller ve artik sitede olmayanlari pasife alir.
+        </p>
+        <form action={refreshTurkcellTariffsAction} className="action-row">
+          <input name="redirectTo" type="hidden" value="/admin/tarifeler" />
+          <button className="button-primary" type="submit">
+            Turkcell'den Simdi Cek
+          </button>
+        </form>
       </section>
 
       <section className="admin-card">

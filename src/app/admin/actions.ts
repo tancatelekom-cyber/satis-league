@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { requireAdminAccess } from "@/lib/auth/require-admin";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { localDateTimeToIso } from "@/lib/campaign-utils";
+import { syncTurkcellTariffs } from "@/lib/turkcell/tariff-sync";
 
 const allowedAdminRedirects = new Set([
   "/admin",
@@ -1782,4 +1783,27 @@ export async function deleteTariffAction(formData: FormData) {
   revalidatePath("/tarifeler");
   revalidatePath("/admin/tarifeler");
   redirectWithMessage("Tarife silindi.", "success", redirectTo);
+}
+
+export async function refreshTurkcellTariffsAction(formData: FormData) {
+  await requireAdminAccess();
+  const redirectTo = getRedirectTo(formData);
+
+  try {
+    const result = await syncTurkcellTariffs();
+
+    revalidatePath("/tarifeler");
+    revalidatePath("/admin/tarifeler");
+    redirectWithMessage(
+      `Turkcell'den ${result.scrapedCount} tarife cekildi. ${result.insertedCount} yeni, ${result.updatedCount} guncel, ${result.deactivatedCount} pasif.`,
+      "success",
+      redirectTo
+    );
+  } catch (error) {
+    redirectWithMessage(
+      error instanceof Error ? `Tarifeler yenilenemedi: ${error.message}` : "Tarifeler yenilenemedi.",
+      "error",
+      redirectTo
+    );
+  }
 }

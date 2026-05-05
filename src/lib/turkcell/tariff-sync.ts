@@ -59,6 +59,15 @@ function normalizeText(value: string) {
     .trim();
 }
 
+function stripHtml(value: string) {
+  return normalizeText(
+    value
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/<[^>]+>/g, " ")
+  );
+}
+
 function toNumber(value: unknown) {
   if (typeof value === "number") {
     return value;
@@ -220,6 +229,52 @@ function parseBenefits(benefits: TurkcellBenefit[] | null | undefined) {
   return { dataGb, minutes, sms };
 }
 
+function buildFallbackPackageFromHtml(url: string, html: string): TurkcellPackage | null {
+  const text = stripHtml(html);
+  const titleMatch =
+    html.match(/<meta[^>]+property="og:title"[^>]+content="([^"]+)"/i) ??
+    html.match(/<title>([^<]+)<\/title>/i) ??
+    html.match(/<h1[^>]*>([^<]+)<\/h1>/i);
+  const rawTitle = titleMatch?.[1] ? normalizeText(titleMatch[1]) : "";
+  const title = rawTitle.replace(/\s*\|\s*Turkcell$/i, "").trim();
+
+  if (!title) {
+    return null;
+  }
+
+  const dataMatch = text.match(/(\d+(?:[.,]\d+)?)\s*GB/i);
+  const minuteMatch = text.match(/(\d[\d.,]*)\s*DK/i);
+  const smsMatch = text.match(/(\d[\d.,]*)\s*SMS/i);
+
+  const taahhutluSegment =
+    text.match(/TAAHHÜTLÜ ABONELİK\s+(\d[\d.,]*)\s*TL/i) ??
+    text.match(/Taahhütlü Abonelik\s+(\d[\d.,]*)\s*TL/i) ??
+    text.match(/(\d[\d.,]*)\s*TL/i);
+
+  const descriptionMatch =
+    html.match(/<meta[^>]+name="description"[^>]+content="([^"]+)"/i) ??
+    html.match(/<meta[^>]+property="og:description"[^>]+content="([^"]+)"/i);
+
+  return {
+    id: url,
+    title,
+    shortDescription: descriptionMatch?.[1] ? normalizeText(descriptionMatch[1]) : null,
+    fullUrl: url,
+    paymentType: "POSTPAID",
+    cpcmTariffOfferId: url,
+    benefits: [
+      { type: "INTERNET", unitValue: "GB", value: dataMatch?.[1] ? toNumber(dataMatch[1]) : 0 },
+      { type: "VOICE", unitValue: "DK", value: minuteMatch?.[1] ? toNumber(minuteMatch[1]) : 0 },
+      { type: "SMS", unitValue: "SMS", value: smsMatch?.[1] ? toNumber(smsMatch[1]) : 0 }
+    ],
+    price: {
+      amountDouble: taahhutluSegment?.[1] ? toNumber(taahhutluSegment[1]) : 0,
+      onlineExclusive: false
+    },
+    selectedTags: []
+  };
+}
+
 function packageToTariff(pkg: TurkcellPackageSource): TariffUpsertPayload {
   const item = pkg.package;
   const details = normalizeText(item.shortDescription ?? "");
@@ -286,6 +341,16 @@ async function fetchTurkcellPackagesFrom(url: string) {
 
     uniqueMap.set(key, { package: pkg, sourceUrl: url });
   });
+
+  if (uniqueMap.size === 0) {
+    const fallbackPackage = buildFallbackPackageFromHtml(url, html);
+    if (fallbackPackage) {
+      uniqueMap.set(fallbackPackage.id || fallbackPackage.title || url, {
+        package: fallbackPackage,
+        sourceUrl: url
+      });
+    }
+  }
 
   return Array.from(uniqueMap.values()).filter((item) => isCorePostpaidTariff(item.package));
 }

@@ -1788,17 +1788,17 @@ export async function deleteTariffAction(formData: FormData) {
 export async function refreshTurkcellTariffsAction(formData: FormData) {
   await requireAdminAccess();
   const redirectTo = getRedirectTo(formData);
+  let result:
+    | {
+        scrapedCount: number;
+        updatedCount: number;
+        insertedCount: number;
+        deactivatedCount: number;
+      }
+    | null = null;
 
   try {
-    const result = await syncTurkcellTariffs();
-
-    revalidatePath("/tarifeler");
-    revalidatePath("/admin/tarifeler");
-    redirectWithMessage(
-      `Turkcell'den ${result.scrapedCount} tarife cekildi. ${result.insertedCount} yeni, ${result.updatedCount} guncel, ${result.deactivatedCount} pasif.`,
-      "success",
-      redirectTo
-    );
+    result = await syncTurkcellTariffs();
   } catch (error) {
     redirectWithMessage(
       error instanceof Error ? `Tarifeler yenilenemedi: ${error.message}` : "Tarifeler yenilenemedi.",
@@ -1806,4 +1806,19 @@ export async function refreshTurkcellTariffsAction(formData: FormData) {
       redirectTo
     );
   }
+
+  revalidatePath("/tarifeler");
+  revalidatePath("/admin/tarifeler");
+
+  if (!result) {
+    redirectWithMessage("Tarifeler yenilenemedi.", "error", redirectTo);
+  }
+
+  const safeResult = result!;
+
+  redirectWithMessage(
+    `Turkcell'den ${safeResult.scrapedCount} tarife cekildi. ${safeResult.insertedCount} yeni, ${safeResult.updatedCount} guncel, ${safeResult.deactivatedCount} pasif.`,
+    "success",
+    redirectTo
+  );
 }

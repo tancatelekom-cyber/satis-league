@@ -393,83 +393,90 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
       </div>
 
       <section className="guide-card game-brief-card">
-        <h3>Sezon Secimi</h3>
-        <FilterSelectNav
-          ariaLabel="Sezon secimi"
-          value={buildLeagueHref({ seasonId: activeSeason.id })}
-          options={seasonRows.map((season) => ({
-            value: buildLeagueHref({ seasonId: season.id }),
-            label: `${season.name}${season.is_active ? " (Aktif)" : ""}`
-          }))}
-        />
-
-        <h3>Yil Secimi</h3>
-        <FilterSelectNav
-          ariaLabel="Yil secimi"
-          value={buildLeagueHref({
-            year: effectiveYear,
-            month: monthOptions[0]?.value ?? `${effectiveYear}-01`,
-            quarter: quarterOptions[0]?.value ?? "1"
-          })}
-          options={yearOptions.map((year) => {
-            const yearMonthOptions = buildMonthOptionsForYear(activeSeason.start_date, activeSeason.end_date, year);
-            const yearQuarterOptions = buildQuarterOptionsForYear(activeSeason.start_date, activeSeason.end_date, year);
-
-            return {
-              value: buildLeagueHref({
-                year,
-                month: yearMonthOptions[0]?.value ?? `${year}-01`,
-                quarter: yearQuarterOptions[0]?.value ?? "1"
-              }),
-              label: year
-            };
-          })}
-        />
-
-        <h3>Donem Secimi</h3>
-        <FilterSelectNav
-          ariaLabel="Donem secimi"
-          value={buildLeagueHref({ period: selectedPeriod })}
-          options={periodOptions.map((period) => ({
-            value: buildLeagueHref({ period: period.value }),
-            label: period.label
-          }))}
-        />
-
-        {selectedPeriod === "month" ? (
-          <>
-            <h3>Ay Secimi</h3>
+        <div className="league-filter-grid">
+          <div className="league-filter-item league-filter-item-wide">
+            <span className="league-filter-label">Sezon</span>
             <FilterSelectNav
-              ariaLabel="Ay secimi"
-              value={buildLeagueHref({ month: effectiveMonth })}
-              options={[
-                { value: buildLeagueHref({ period: "year" }), label: "Yilin Tumu" },
-                ...monthOptions.map((month) => ({
-                  value: buildLeagueHref({ month: month.value }),
-                  label: month.label
-                }))
-              ]}
+              ariaLabel="Sezon secimi"
+              value={buildLeagueHref({ seasonId: activeSeason.id })}
+              options={seasonRows.map((season) => ({
+                value: buildLeagueHref({ seasonId: season.id }),
+                label: `${season.name}${season.is_active ? " (Aktif)" : ""}`
+              }))}
             />
-          </>
-        ) : null}
+          </div>
 
-        {selectedPeriod === "quarter" ? (
-          <>
-            <h3>Q Secimi</h3>
+          <div className="league-filter-item">
+            <span className="league-filter-label">Yil</span>
             <FilterSelectNav
-              ariaLabel="Q secimi"
-              value={buildLeagueHref({ quarter: effectiveQuarter })}
-              options={[
-                { value: buildLeagueHref({ period: "year" }), label: "Tum Q'lar" },
-                ...quarterOptions.map((quarter) => ({
-                  value: buildLeagueHref({ quarter: quarter.value }),
-                  label: quarter.label
-                }))
-              ]}
-            />
-          </>
-        ) : null}
+              ariaLabel="Yil secimi"
+              value={buildLeagueHref({
+                year: effectiveYear,
+                month: monthOptions[0]?.value ?? `${effectiveYear}-01`,
+                quarter: quarterOptions[0]?.value ?? "1"
+              })}
+              options={yearOptions.map((year) => {
+                const yearMonthOptions = buildMonthOptionsForYear(activeSeason.start_date, activeSeason.end_date, year);
+                const yearQuarterOptions = buildQuarterOptionsForYear(activeSeason.start_date, activeSeason.end_date, year);
 
+                return {
+                  value: buildLeagueHref({
+                    year,
+                    month: yearMonthOptions[0]?.value ?? `${year}-01`,
+                    quarter: yearQuarterOptions[0]?.value ?? "1"
+                  }),
+                  label: year
+                };
+              })}
+            />
+          </div>
+
+          <div className="league-filter-item">
+            <span className="league-filter-label">Donem</span>
+            <FilterSelectNav
+              ariaLabel="Donem secimi"
+              value={buildLeagueHref({ period: selectedPeriod })}
+              options={periodOptions.map((period) => ({
+                value: buildLeagueHref({ period: period.value }),
+                label: period.label
+              }))}
+            />
+          </div>
+
+          {selectedPeriod === "month" ? (
+            <div className="league-filter-item league-filter-item-wide">
+              <span className="league-filter-label">Ay</span>
+              <FilterSelectNav
+                ariaLabel="Ay secimi"
+                value={buildLeagueHref({ month: effectiveMonth })}
+                options={[
+                  { value: buildLeagueHref({ period: "year" }), label: "Yilin Tumu" },
+                  ...monthOptions.map((month) => ({
+                    value: buildLeagueHref({ month: month.value }),
+                    label: month.label
+                  }))
+                ]}
+              />
+            </div>
+          ) : null}
+
+          {selectedPeriod === "quarter" ? (
+            <div className="league-filter-item league-filter-item-wide">
+              <span className="league-filter-label">Q</span>
+              <FilterSelectNav
+                ariaLabel="Q secimi"
+                value={buildLeagueHref({ quarter: effectiveQuarter })}
+                options={[
+                  { value: buildLeagueHref({ period: "year" }), label: "Tum Q'lar" },
+                  ...quarterOptions.map((quarter) => ({
+                    value: buildLeagueHref({ quarter: quarter.value }),
+                    label: quarter.label
+                  }))
+                ]}
+              />
+            </div>
+          ) : null}
+        </div>
       </section>
 
       <section className="momentum-grid">

@@ -3,6 +3,15 @@ import { getCampaignDashboardData } from "@/lib/campaign/get-campaign-dashboard-
 import { buildCsv } from "@/lib/export/csv";
 import { createClient } from "@/lib/supabase/server";
 
+function safeFileName(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .toLowerCase() || "kampanya";
+}
+
 function rewardLabel(
   campaign: {
     reward_first?: string | null;
@@ -73,7 +82,7 @@ export async function GET(
   ];
 
   const csv = buildCsv(rows);
-  const fileName = `${item.campaign.name.toLowerCase().replace(/\s+/g, "-")}-siralama.csv`;
+  const fileName = `${safeFileName(item.campaign.name)}-siralama.csv`;
 
   return new NextResponse(csv, {
     status: 200,

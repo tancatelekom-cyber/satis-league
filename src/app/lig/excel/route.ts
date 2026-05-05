@@ -35,6 +35,15 @@ const MONTH_LABELS = [
   "Aralik"
 ];
 
+function safeFileName(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .toLowerCase() || "sezon-lig";
+}
+
 function buildYearOptions(startDate: string, endDate: string) {
   const startYear = Number(startDate.slice(0, 4));
   const endYear = Number(endDate.slice(0, 4));
@@ -342,7 +351,7 @@ export async function GET(request: Request) {
   ];
 
   const csv = buildCsv(rows);
-  const fileName = `${activeSeason.name.toLowerCase().replace(/\s+/g, "-")}-lig.csv`;
+  const fileName = `${safeFileName(activeSeason.name)}-lig.csv`;
 
   return new NextResponse(csv, {
     status: 200,

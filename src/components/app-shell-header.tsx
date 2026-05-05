@@ -90,9 +90,9 @@ export function AppShellHeader() {
     }
 
     const commonApproved: NavItem[] = [
-      { href: "/kampanyalar", label: "Kampanyalar" },
+      { href: "/kampanyalar", label: "Gunluk Kampanyalar" },
       { href: "/bildirimler", label: "Bildirimler" },
-      { href: "/lig", label: "Sezon Ligi" },
+      { href: "/lig", label: "Yildizlar Kulubu" },
       { href: "/hesabim", label: "Hesabim" }
     ];
 
@@ -109,8 +109,8 @@ export function AppShellHeader() {
     }
 
     return [
-      { href: "/kampanyalar", label: "Kampanyalar" },
-      { href: "/lig", label: "Sezon Ligi" },
+      { href: "/kampanyalar", label: "Gunluk Kampanyalar" },
+      { href: "/lig", label: "Yildizlar Kulubu" },
       { href: "/bildirimler", label: "Bildirimler" },
       { href: "/admin", label: "Admin" },
       { href: "/kontrol-listesi", label: "Kontrol" },

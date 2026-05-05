@@ -191,7 +191,7 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
   if (!activeSeason) {
     return (
       <main>
-        <h1 className="page-title">Sezonluk Lig Tablosu</h1>
+        <h1 className="page-title">Yildizlar Kulubu</h1>
         <p className="page-subtitle">
           Henuz aktif bir sezon tanimlanmadi. Once admin panelinden sezon olusturun.
         </p>
@@ -381,7 +381,7 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
 
   return (
     <main>
-      <h1 className="page-title">Sezonluk Lig Tablosu</h1>
+      <h1 className="page-title">Yildizlar Kulubu</h1>
       <p className="page-subtitle">
         Secili sezon: {activeSeason.name} | {activeSeason.start_date} - {activeSeason.end_date}
       </p>

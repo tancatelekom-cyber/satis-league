@@ -37,7 +37,7 @@ export default async function CampaignPage({ searchParams }: CampaignPageProps) 
   if (dashboard.profile.approval !== "approved") {
     return (
       <main>
-        <h1 className="page-title">Kampanyalar</h1>
+        <h1 className="page-title">Gunluk Kampanyalar</h1>
         <p className="page-subtitle">
           Kampanyalari gormek icin once admin onayiniz tamamlanmali.
         </p>
@@ -63,7 +63,7 @@ export default async function CampaignPage({ searchParams }: CampaignPageProps) 
 
   return (
     <main>
-      <h1 className="page-title">Kampanyalar</h1>
+      <h1 className="page-title">Gunluk Kampanyalar</h1>
       <p className="page-subtitle">
         Ilk giriste sadece ozet siralamanizi gorursunuz. Bir kampanyaya girdiginizde siralama
         veya satis girisi adimini secerek devam edersiniz.

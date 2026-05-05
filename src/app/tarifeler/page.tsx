@@ -7,7 +7,8 @@ import {
   buildTariffFilterOptions,
   filterTariffs,
   formatTariffDataGb,
-  getTariffPresetLabel
+  getTariffPresetLabel,
+  matchesTariffPreset
 } from "@/lib/tariffs";
 import { TariffCategoryMode, TariffPreset, TariffRecord } from "@/lib/types";
 
@@ -72,8 +73,11 @@ export default async function TariffsPage({ searchParams }: TariffsPageProps) {
     .order("price");
 
   const tariffs = (data as TariffRecord[] | null) ?? [];
-  const filterOptions = buildTariffFilterOptions(tariffs, selectedMode);
-  const filteredTariffs = filterTariffs(tariffs, selectedMode, selectedPreset, selectedBucket, search);
+  const presetTariffs = tariffs.filter((tariff) => matchesTariffPreset(tariff, selectedPreset));
+  const filterOptions = buildTariffFilterOptions(presetTariffs, selectedMode);
+  const bucketExists = !selectedBucket || filterOptions.some((option) => option.value === selectedBucket);
+  const effectiveBucket = bucketExists ? selectedBucket : "";
+  const filteredTariffs = filterTariffs(tariffs, selectedMode, selectedPreset, effectiveBucket, search);
 
   return (
     <main>
@@ -88,7 +92,7 @@ export default async function TariffsPage({ searchParams }: TariffsPageProps) {
             <span className="league-filter-label">Hazir Baslik</span>
             <FilterSelectNav
               ariaLabel="Hazir tarife basligi secimi"
-              value={buildHref(selectedMode, selectedPreset, selectedBucket, search)}
+              value={buildHref(selectedMode, selectedPreset, "", search)}
               options={[
                 { value: buildHref(selectedMode, "all", "", search), label: "Tum Basliklar" },
                 { value: buildHref(selectedMode, "emekli", "", search), label: "Emekli" },
@@ -104,7 +108,7 @@ export default async function TariffsPage({ searchParams }: TariffsPageProps) {
             <span className="league-filter-label">Kategori</span>
             <FilterSelectNav
               ariaLabel="Tarife kategori secimi"
-              value={buildHref(selectedMode, selectedPreset, selectedBucket, search)}
+              value={buildHref(selectedMode, selectedPreset, "", search)}
               options={[
                 { value: buildHref("gb", selectedPreset, "", search), label: "GB Gruplari" },
                 { value: buildHref("minutes", selectedPreset, "", search), label: "Dakika Gruplari" },
@@ -117,7 +121,7 @@ export default async function TariffsPage({ searchParams }: TariffsPageProps) {
             <span className="league-filter-label">Filtre</span>
             <FilterSelectNav
               ariaLabel="Tarife filtre secimi"
-              value={buildHref(selectedMode, selectedPreset, selectedBucket, search)}
+              value={buildHref(selectedMode, selectedPreset, effectiveBucket, search)}
               options={[
                 { value: buildHref(selectedMode, selectedPreset, "", search), label: "Tum Tarifeler" },
                 ...filterOptions.map((option) => ({
@@ -139,7 +143,7 @@ export default async function TariffsPage({ searchParams }: TariffsPageProps) {
         <form className="tariff-search-row" action="/tarifeler" method="get">
           <input name="mode" type="hidden" value={selectedMode} />
           <input name="preset" type="hidden" value={selectedPreset} />
-          {selectedBucket ? <input name="bucket" type="hidden" value={selectedBucket} /> : null}
+          {effectiveBucket ? <input name="bucket" type="hidden" value={effectiveBucket} /> : null}
           <input
             className="input"
             defaultValue={search}

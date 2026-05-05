@@ -776,6 +776,83 @@ button {
   margin-bottom: 14px;
 }
 
+.league-compact-shell {
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+
+.league-summary-strip {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.league-summary-pill {
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.league-summary-pill span {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.league-summary-pill strong {
+  display: block;
+  font-size: 0.92rem;
+  line-height: 1.2;
+}
+
+.league-summary-pill-wide {
+  grid-column: span 2;
+}
+
+.league-inline-detail-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.league-inline-detail {
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.league-inline-detail summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.league-inline-detail summary::-webkit-details-marker {
+  display: none;
+}
+
+.league-inline-detail summary span {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.league-inline-detail summary strong {
+  color: var(--text);
+  font-size: 0.88rem;
+  text-align: right;
+}
+
+.league-inline-detail[open] summary {
+  margin-bottom: 10px;
+}
+
 .league-overview-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -2115,9 +2192,45 @@ button {
     width: 100%;
   }
 
+  .league-compact-shell {
+    padding: 10px 12px;
+  }
+
+  .league-summary-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .league-summary-pill {
+    padding: 8px 9px;
+  }
+
+  .league-summary-pill strong {
+    font-size: 0.86rem;
+  }
+
+  .league-summary-pill-wide {
+    grid-column: span 2;
+  }
+
+  .league-inline-detail-row,
   .league-overview-grid,
   .league-overview-accordion-row {
     grid-template-columns: 1fr;
+  }
+
+  .league-inline-detail {
+    padding: 8px 9px;
+  }
+
+  .league-inline-detail summary {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .league-inline-detail summary strong {
+    text-align: left;
   }
 
   .league-mini-card-wide {

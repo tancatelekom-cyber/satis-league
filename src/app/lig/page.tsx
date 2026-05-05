@@ -479,83 +479,83 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
         </div>
       </section>
 
-      <section className="league-overview-card guide-card">
-        <div className="league-overview-grid">
-          <div className="league-mini-card">
+      <section className="league-compact-shell guide-card">
+        <div className="league-summary-strip">
+          <div className="league-summary-pill">
             <span>Donem</span>
             <strong>{rawRange.label}</strong>
           </div>
-          <div className="league-mini-card">
+          <div className="league-summary-pill">
             <span>Aralik</span>
             <strong>
               {clampedStart} - {clampedEnd}
             </strong>
           </div>
-          <div className="league-mini-card">
+          <div className="league-summary-pill">
             <span>Kayit</span>
             <strong>{filteredSeasonSales.length}</strong>
           </div>
-          <div className="league-mini-card">
+          <div className="league-summary-pill">
             <span>Toplam</span>
             <strong>{filteredTotalScore.toFixed(0)}</strong>
           </div>
-          <div className="league-mini-card league-mini-card-wide">
+          <div className="league-summary-pill league-summary-pill-wide">
             <span>Lider</span>
             <strong>{champion?.label ?? "-"}</strong>
           </div>
         </div>
-      </section>
 
-      <section className="league-overview-accordion-row">
-        <details className="leaderboard-card compact-detail-card">
-          <summary>
-            <span>{periodOptions.find((option) => option.value === selectedPeriod)?.label} Birincisi</span>
-            <strong>{champion?.label ?? "-"}</strong>
-          </summary>
-          {champion ? (
-            <div className="profile-summary compact-profile-summary">
-              <div className="summary-row">
-                <span>Kazanan</span>
-                <strong>{champion.label}</strong>
+        <div className="league-inline-detail-row">
+          <details className="league-inline-detail">
+            <summary>
+              <span>{periodOptions.find((option) => option.value === selectedPeriod)?.label} Birincisi</span>
+              <strong>{champion?.label ?? "-"}</strong>
+            </summary>
+            {champion ? (
+              <div className="profile-summary compact-profile-summary">
+                <div className="summary-row">
+                  <span>Kazanan</span>
+                  <strong>{champion.label}</strong>
+                </div>
+                <div className="summary-row">
+                  <span>Toplam</span>
+                  <strong>{champion.score.toFixed(0)}</strong>
+                </div>
+                <div className="summary-row">
+                  <span>Yaris Turu</span>
+                  <strong>{activeSeason.mode === "employee" ? "Calisan Bazli" : "Magaza Bazli"}</strong>
+                </div>
               </div>
-              <div className="summary-row">
-                <span>Toplam</span>
-                <strong>{champion.score.toFixed(0)}</strong>
-              </div>
-              <div className="summary-row">
-                <span>Yaris Turu</span>
-                <strong>{activeSeason.mode === "employee" ? "Calisan Bazli" : "Magaza Bazli"}</strong>
-              </div>
-            </div>
-          ) : (
-            <p>Bu donemde henuz sezon girisi yok.</p>
-          )}
-        </details>
+            ) : (
+              <p>Bu donemde henuz sezon girisi yok.</p>
+            )}
+          </details>
 
-        <details className="leaderboard-card compact-detail-card">
-          <summary>
-            <span>Odul Vitrini</span>
-            <strong>{activeSeason.reward_first ?? activeSeason.reward_title ?? "Detay"}</strong>
-          </summary>
-          <div className="step-list compact-step-list">
-            <div className="step-item">
-              <strong>{activeSeason.reward_title ?? "Odul tanimi bekleniyor"}</strong>
-              <span>{activeSeason.reward_details ?? "Bu sezon icin odul aciklamasi girilmedi."}</span>
+          <details className="league-inline-detail">
+            <summary>
+              <span>Odul Vitrini</span>
+              <strong>{activeSeason.reward_first ?? activeSeason.reward_title ?? "Detay"}</strong>
+            </summary>
+            <div className="step-list compact-step-list">
+              <div className="step-item">
+                <strong>{activeSeason.reward_title ?? "Odul tanimi bekleniyor"}</strong>
+                <span>{activeSeason.reward_details ?? "Bu sezon icin odul aciklamasi girilmedi."}</span>
+              </div>
+              <div className="step-item">
+                <strong>1. Sira</strong>
+                <span>{activeSeason.reward_first ?? "Tanimlanmadi"}</span>
+              </div>
+              <div className="step-item">
+                <strong>2. Sira</strong>
+                <span>{activeSeason.reward_second ?? "Tanimlanmadi"}</span>
+              </div>
+              <div className="step-item">
+                <strong>3. Sira</strong>
+                <span>{activeSeason.reward_third ?? "Tanimlanmadi"}</span>
+              </div>
             </div>
-            <div className="step-item">
-              <strong>1. Sira</strong>
-              <span>{activeSeason.reward_first ?? "Tanimlanmadi"}</span>
-            </div>
-            <div className="step-item">
-              <strong>2. Sira</strong>
-              <span>{activeSeason.reward_second ?? "Tanimlanmadi"}</span>
-            </div>
-            <div className="step-item">
-              <strong>3. Sira</strong>
-              <span>{activeSeason.reward_third ?? "Tanimlanmadi"}</span>
-            </div>
-          </div>
-        </details>
+          </details>
+        </div>
       </section>
 
       <section className="campaign-layout">

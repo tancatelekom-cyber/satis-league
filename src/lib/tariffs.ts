@@ -1,4 +1,4 @@
-import { TariffCategoryMode, TariffRecord } from "@/lib/types";
+import { TariffCategoryMode, TariffPreset, TariffRecord } from "@/lib/types";
 
 export function formatTariffDataGb(value: number) {
   return `${Number(value).toFixed(value % 1 === 0 ? 0 : 1)} GB`;
@@ -43,15 +43,63 @@ export function buildTariffFilterOptions(tariffs: TariffRecord[], mode: TariffCa
   }));
 }
 
+function normalizeTariffText(tariff: TariffRecord) {
+  return [tariff.name, tariff.category_name, tariff.provider, tariff.details ?? ""]
+    .join(" ")
+    .toLocaleLowerCase("tr-TR");
+}
+
+export function getTariffPresetLabel(preset: TariffPreset) {
+  switch (preset) {
+    case "new-member":
+      return "Yeni Musteriye Ozel";
+    case "platinum":
+      return "Platinum";
+    case "gnc":
+      return "GNC";
+    case "general-postpaid":
+      return "Genel Faturali";
+    default:
+      return "Tum Basliklar";
+  }
+}
+
+export function matchesTariffPreset(tariff: TariffRecord, preset: TariffPreset): boolean {
+  if (preset === "all") {
+    return true;
+  }
+
+  const haystack = normalizeTariffText(tariff);
+
+  if (preset === "new-member") {
+    return /ilk turkcell|yeni musteri|yeni turkcell/.test(haystack);
+  }
+
+  if (preset === "platinum") {
+    return /platinum/.test(haystack);
+  }
+
+  if (preset === "gnc") {
+    return /gnc|gnç|genc|genclik/.test(haystack);
+  }
+
+  return !matchesTariffPreset(tariff, "new-member") && !matchesTariffPreset(tariff, "platinum") && !matchesTariffPreset(tariff, "gnc");
+}
+
 export function filterTariffs(
   tariffs: TariffRecord[],
   mode: TariffCategoryMode,
+  preset: TariffPreset,
   selectedValue: string,
   search: string
 ) {
   const normalizedSearch = search.trim().toLocaleLowerCase("tr-TR");
 
   return tariffs.filter((tariff) => {
+    if (!matchesTariffPreset(tariff, preset)) {
+      return false;
+    }
+
     if (selectedValue && getTariffBucketLabel(tariff, mode) !== selectedValue) {
       return false;
     }
@@ -60,14 +108,7 @@ export function filterTariffs(
       return true;
     }
 
-    const haystack = [
-      tariff.name,
-      tariff.category_name,
-      tariff.provider,
-      tariff.details ?? ""
-    ]
-      .join(" ")
-      .toLocaleLowerCase("tr-TR");
+    const haystack = normalizeTariffText(tariff);
 
     return haystack.includes(normalizedSearch);
   });

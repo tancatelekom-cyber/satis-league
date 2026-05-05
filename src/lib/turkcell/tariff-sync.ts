@@ -2,6 +2,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { TariffRecord } from "@/lib/types";
 
 const TURKCELL_TARIFF_URL = "https://www.turkcell.com.tr/paket-ve-tarifeler/faturali-hat";
+const TURKCELL_NEW_MEMBER_URL = "https://www.turkcell.com.tr/trc/turkcellli-olmak/paket-secimi";
 
 type TurkcellBenefit = {
   value?: string | number | null;
@@ -17,6 +18,7 @@ type TurkcellPackage = {
   fullUrl?: string | null;
   paymentType?: string | null;
   benefits?: TurkcellBenefit[] | null;
+  selectedTags?: Array<{ title?: string | null }> | null;
   price?: {
     amount?: string | number | null;
     amountDouble?: number | null;
@@ -24,6 +26,11 @@ type TurkcellPackage = {
   } | null;
   cpcmTariffOfferId?: string | null;
   tab?: string | null;
+};
+
+type TurkcellPackageSource = {
+  package: TurkcellPackage;
+  sourceUrl: string;
 };
 
 type TariffUpsertPayload = Omit<
@@ -102,8 +109,12 @@ function isCorePostpaidTariff(pkg: TurkcellPackage) {
     return false;
   }
 
+  if (/superbox|mobil wifi|hotspot|gezgin|oyna|izle/.test(title)) {
+    return false;
+  }
+
   if (
-    /superbox|mobil wifi|hotspot|ek |günlük|haftalık|gezgin|sms paketi|dakika paketi|internet paketi|oyna|izle|akıllı fatura tl paketi/.test(
+    /(ek paket|günlük|haftalık|sms paketi|dakika paketi|internet paketi|akıllı fatura tl paketi)/.test(
       title
     )
   ) {
@@ -113,7 +124,12 @@ function isCorePostpaidTariff(pkg: TurkcellPackage) {
   return true;
 }
 
-function inferCategoryName(name: string) {
+function inferCategoryName(name: string, selectedTags?: Array<{ title?: string | null }> | null) {
+  const selectedTag = selectedTags?.find((tag) => tag?.title)?.title?.trim();
+  if (selectedTag) {
+    return normalizeText(selectedTag);
+  }
+
   const lower = name.toLocaleLowerCase("tr-TR");
 
   if (lower.includes("platinum+ black")) return "Platinum+ Black";
@@ -159,32 +175,34 @@ function parseBenefits(benefits: TurkcellBenefit[] | null | undefined) {
   return { dataGb, minutes, sms };
 }
 
-function packageToTariff(pkg: TurkcellPackage): TariffUpsertPayload {
-  const details = normalizeText(pkg.shortDescription ?? "");
-  const benefits = parseBenefits(pkg.benefits);
+function packageToTariff(pkg: TurkcellPackageSource): TariffUpsertPayload {
+  const item = pkg.package;
+  const details = normalizeText(item.shortDescription ?? "");
+  const benefits = parseBenefits(item.benefits);
   const now = new Date().toISOString();
 
   return {
     provider: "Turkcell",
-    source_url: pkg.fullUrl || (pkg.endpoint ? `https://www.turkcell.com.tr${pkg.endpoint}` : TURKCELL_TARIFF_URL),
-    name: normalizeText(pkg.title ?? "Turkcell Tarifesi"),
-    category_name: inferCategoryName(pkg.title ?? ""),
+    source_url:
+      item.fullUrl || (item.endpoint ? `https://www.turkcell.com.tr${item.endpoint}` : pkg.sourceUrl),
+    name: normalizeText(item.title ?? "Turkcell Tarifesi"),
+    category_name: inferCategoryName(item.title ?? "", item.selectedTags),
     line_type: "faturali",
     data_gb: benefits.dataGb,
     minutes: benefits.minutes,
     sms: benefits.sms,
-    price: Number(pkg.price?.amountDouble ?? toNumber(pkg.price?.amount)),
+    price: Number(item.price?.amountDouble ?? toNumber(item.price?.amount)),
     details: details || null,
-    is_online_only: Boolean(pkg.price?.onlineExclusive),
-    is_digital_only: isDigitalOnly(pkg),
+    is_online_only: Boolean(item.price?.onlineExclusive),
+    is_digital_only: isDigitalOnly(item),
     is_active: true,
     scraped_at: now,
     updated_at: now
   };
 }
 
-async function fetchTurkcellPackages() {
-  const response = await fetch(TURKCELL_TARIFF_URL, {
+async function fetchTurkcellPackagesFrom(url: string) {
+  const response = await fetch(url, {
     headers: {
       "accept-language": "tr-TR,tr;q=0.9"
     },
@@ -204,17 +222,37 @@ async function fetchTurkcellPackages() {
 
   const nextData = JSON.parse(match[1]);
   const packageArrays = collectPackageArrays(nextData);
-  const uniqueMap = new Map<string, TurkcellPackage>();
+  const uniqueMap = new Map<string, TurkcellPackageSource>();
 
   packageArrays.flat().forEach((pkg) => {
     if (!pkg?.id) {
       return;
     }
 
-    uniqueMap.set(pkg.id, pkg);
+    uniqueMap.set(pkg.id, { package: pkg, sourceUrl: url });
   });
 
-  return Array.from(uniqueMap.values()).filter(isCorePostpaidTariff);
+  return Array.from(uniqueMap.values()).filter((item) => isCorePostpaidTariff(item.package));
+}
+
+async function fetchTurkcellPackages() {
+  const [corePackages, newMemberPackages] = await Promise.all([
+    fetchTurkcellPackagesFrom(TURKCELL_TARIFF_URL),
+    fetchTurkcellPackagesFrom(TURKCELL_NEW_MEMBER_URL)
+  ]);
+
+  const combined = [...corePackages, ...newMemberPackages];
+  const uniqueMap = new Map<string, TurkcellPackageSource>();
+
+  combined.forEach((item) => {
+    const key = item.package.fullUrl || item.package.endpoint || item.package.id || item.package.title || "";
+    if (!key) {
+      return;
+    }
+    uniqueMap.set(key, item);
+  });
+
+  return Array.from(uniqueMap.values());
 }
 
 export async function syncTurkcellTariffs() {
@@ -295,7 +333,7 @@ export async function syncTurkcellTariffs() {
   }
 
   return {
-    sourceUrl: TURKCELL_TARIFF_URL,
+    sourceUrl: `${TURKCELL_TARIFF_URL} + ${TURKCELL_NEW_MEMBER_URL}`,
     scrapedCount: scrapedTariffs.length,
     updatedCount,
     insertedCount,

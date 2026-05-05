@@ -544,6 +544,26 @@ button {
   gap: 14px;
 }
 
+.tariff-active-preset {
+  display: grid;
+  gap: 4px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(88, 240, 196, 0.2);
+  background: rgba(88, 240, 196, 0.08);
+}
+
+.tariff-active-preset strong {
+  color: #dffdf6;
+  font-size: 0.95rem;
+}
+
+.tariff-active-preset span {
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
 .campaign-directory-card {
   display: grid;
   gap: 12px;

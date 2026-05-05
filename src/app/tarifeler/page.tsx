@@ -3,22 +3,29 @@ import { redirect } from "next/navigation";
 import { FilterSelectNav } from "@/components/ui/filter-select-nav";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { filterTariffs, buildTariffFilterOptions, formatTariffDataGb } from "@/lib/tariffs";
-import { TariffCategoryMode, TariffRecord } from "@/lib/types";
+import {
+  buildTariffFilterOptions,
+  filterTariffs,
+  formatTariffDataGb,
+  getTariffPresetLabel
+} from "@/lib/tariffs";
+import { TariffCategoryMode, TariffPreset, TariffRecord } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
 type TariffsPageProps = {
   searchParams?: Promise<{
     mode?: TariffCategoryMode;
+    preset?: TariffPreset;
     bucket?: string;
     search?: string;
   }>;
 };
 
-function buildHref(mode: TariffCategoryMode, bucket?: string, search?: string) {
+function buildHref(mode: TariffCategoryMode, preset: TariffPreset, bucket?: string, search?: string) {
   const params = new URLSearchParams();
   params.set("mode", mode);
+  if (preset !== "all") params.set("preset", preset);
   if (bucket) params.set("bucket", bucket);
   if (search) params.set("search", search);
   return `/tarifeler?${params.toString()}`;
@@ -27,6 +34,13 @@ function buildHref(mode: TariffCategoryMode, bucket?: string, search?: string) {
 export default async function TariffsPage({ searchParams }: TariffsPageProps) {
   const params = searchParams ? await searchParams : undefined;
   const selectedMode = params?.mode === "minutes" || params?.mode === "name" ? params.mode : "gb";
+  const selectedPreset: TariffPreset =
+    params?.preset === "new-member" ||
+    params?.preset === "platinum" ||
+    params?.preset === "gnc" ||
+    params?.preset === "general-postpaid"
+      ? params.preset
+      : "all";
   const selectedBucket = String(params?.bucket ?? "").trim();
   const search = String(params?.search ?? "").trim();
 
@@ -58,7 +72,7 @@ export default async function TariffsPage({ searchParams }: TariffsPageProps) {
 
   const tariffs = (data as TariffRecord[] | null) ?? [];
   const filterOptions = buildTariffFilterOptions(tariffs, selectedMode);
-  const filteredTariffs = filterTariffs(tariffs, selectedMode, selectedBucket, search);
+  const filteredTariffs = filterTariffs(tariffs, selectedMode, selectedPreset, selectedBucket, search);
 
   return (
     <main>
@@ -70,14 +84,29 @@ export default async function TariffsPage({ searchParams }: TariffsPageProps) {
       <section className="guide-card game-brief-card">
         <div className="league-filter-grid">
           <div className="league-filter-item">
+            <span className="league-filter-label">Hazir Baslik</span>
+            <FilterSelectNav
+              ariaLabel="Hazir tarife basligi secimi"
+              value={buildHref(selectedMode, selectedPreset, selectedBucket, search)}
+              options={[
+                { value: buildHref(selectedMode, "all", "", search), label: "Tum Basliklar" },
+                { value: buildHref(selectedMode, "new-member", "", search), label: "Yeni Musteriye Ozel" },
+                { value: buildHref(selectedMode, "platinum", "", search), label: "Platinum" },
+                { value: buildHref(selectedMode, "gnc", "", search), label: "GNC" },
+                { value: buildHref(selectedMode, "general-postpaid", "", search), label: "Genel Faturali" }
+              ]}
+            />
+          </div>
+
+          <div className="league-filter-item">
             <span className="league-filter-label">Kategori</span>
             <FilterSelectNav
               ariaLabel="Tarife kategori secimi"
-              value={buildHref(selectedMode, selectedBucket, search)}
+              value={buildHref(selectedMode, selectedPreset, selectedBucket, search)}
               options={[
-                { value: buildHref("gb", "", search), label: "GB Gruplari" },
-                { value: buildHref("minutes", "", search), label: "Dakika Gruplari" },
-                { value: buildHref("name", "", search), label: "Tarife Gruplari" }
+                { value: buildHref("gb", selectedPreset, "", search), label: "GB Gruplari" },
+                { value: buildHref("minutes", selectedPreset, "", search), label: "Dakika Gruplari" },
+                { value: buildHref("name", selectedPreset, "", search), label: "Tarife Gruplari" }
               ]}
             />
           </div>
@@ -86,11 +115,11 @@ export default async function TariffsPage({ searchParams }: TariffsPageProps) {
             <span className="league-filter-label">Filtre</span>
             <FilterSelectNav
               ariaLabel="Tarife filtre secimi"
-              value={buildHref(selectedMode, selectedBucket, search)}
+              value={buildHref(selectedMode, selectedPreset, selectedBucket, search)}
               options={[
-                { value: buildHref(selectedMode, "", search), label: "Tum Tarifeler" },
+                { value: buildHref(selectedMode, selectedPreset, "", search), label: "Tum Tarifeler" },
                 ...filterOptions.map((option) => ({
-                  value: buildHref(selectedMode, option.value, search),
+                  value: buildHref(selectedMode, selectedPreset, option.value, search),
                   label: option.label
                 }))
               ]}
@@ -98,8 +127,16 @@ export default async function TariffsPage({ searchParams }: TariffsPageProps) {
           </div>
         </div>
 
+        {selectedPreset !== "all" ? (
+          <div className="tariff-active-preset">
+            <strong>{getTariffPresetLabel(selectedPreset)}</strong>
+            <span>hazir basligi aktif. Isterseniz alttan farkli grup ve arama ile daraltabilirsiniz.</span>
+          </div>
+        ) : null}
+
         <form className="tariff-search-row" action="/tarifeler" method="get">
           <input name="mode" type="hidden" value={selectedMode} />
+          <input name="preset" type="hidden" value={selectedPreset} />
           {selectedBucket ? <input name="bucket" type="hidden" value={selectedBucket} /> : null}
           <input
             className="input"

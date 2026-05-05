@@ -173,7 +173,6 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
   const selectedSeasonId = String(params?.seasonId ?? "").trim();
   const selectedPeriod: LeaguePeriod =
     params?.period === "quarter" || params?.period === "year" ? params.period : "month";
-  const selectedCategory = String(params?.category ?? "").trim();
 
   const { data: seasons } = await admin
     .from("seasons")
@@ -253,16 +252,17 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
       store: { id?: string; name: string } | null;
     }> | null) ?? []).filter((profile) => !profile.is_on_leave && profile.role === "employee");
   const storeRows = (stores as Array<{ id: string; name: string }> | null) ?? [];
-  const productRows = (seasonProducts as SeasonProductRecord[] | null) ?? [];
+  const productRows =
+    (seasonProducts as Array<{
+      id: string;
+      season_id: string;
+      name: string;
+      category_name: string | null;
+      unit_label: string;
+      base_points: number | string;
+      sort_order: number;
+    }> | null) ?? [];
   const saleRows = (seasonSales as SaleRow[] | null) ?? [];
-
-  const categoryOptions = Array.from(
-    new Set(productRows.map((product) => product.category_name?.trim() || "Genel").filter(Boolean))
-  );
-  const effectiveCategory = categoryOptions.includes(selectedCategory) ? selectedCategory : "";
-  const productCategoryMap = new Map(
-    productRows.map((product) => [product.id, product.category_name?.trim() || "Genel"])
-  );
 
   const today = new Date();
   const rawRange = getPeriodRange(selectedPeriod, effectiveYear, effectiveMonth, effectiveQuarter);
@@ -271,13 +271,8 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
   const activeSeasonSales = saleRows.filter((sale) => sale.season_id === activeSeason.id);
   const filteredSeasonSales = activeSeasonSales.filter((sale) => {
     const saleDate = sale.entry_date;
-    const categoryName = productCategoryMap.get(sale.product_id ?? "") ?? "Genel";
 
     if (saleDate < clampedStart || saleDate > clampedEnd) {
-      return false;
-    }
-
-    if (effectiveCategory && categoryName !== effectiveCategory) {
       return false;
     }
 
@@ -358,7 +353,6 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
   const buildLeagueHref = (overrides?: Partial<{
     seasonId: string;
     period: LeaguePeriod;
-    category: string;
     year: string;
     month: string;
     quarter: string;
@@ -366,7 +360,6 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
     const params = new URLSearchParams();
     const seasonId = overrides?.seasonId ?? activeSeason.id;
     const period = overrides?.period ?? selectedPeriod;
-    const category = overrides?.category ?? effectiveCategory;
     const year = overrides?.year ?? effectiveYear;
     const month = overrides?.month ?? effectiveMonth;
     const quarter = overrides?.quarter ?? effectiveQuarter;
@@ -381,10 +374,6 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
 
     if (period === "quarter") {
       params.set("quarter", quarter);
-    }
-
-    if (category) {
-      params.set("category", category);
     }
 
     return `/lig?${params.toString()}`;
@@ -498,24 +487,6 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
           </>
         ) : null}
 
-        <h3>Urun Kategorisi</h3>
-        <div className="filter-chip-row">
-          <Link
-            className={`filter-chip ${effectiveCategory ? "" : "active"}`}
-            href={buildLeagueHref({ category: "" })}
-          >
-            Tum Kategoriler
-          </Link>
-          {categoryOptions.map((category) => (
-            <Link
-              key={category}
-              className={`filter-chip ${effectiveCategory === category ? "active" : ""}`}
-              href={buildLeagueHref({ category })}
-            >
-              {category}
-            </Link>
-          ))}
-        </div>
       </section>
 
       <section className="momentum-grid">
@@ -525,9 +496,6 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
           <div className="mission-pills">
             <span className="mission-pill">
               {clampedStart} - {clampedEnd}
-            </span>
-            <span className="mission-pill">
-              {effectiveCategory || "Tum kategoriler"}
             </span>
           </div>
         </article>
@@ -569,10 +537,6 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
               <div className="summary-row">
                 <span>Yaris Turu</span>
                 <strong>{activeSeason.mode === "employee" ? "Calisan Bazli" : "Magaza Bazli"}</strong>
-              </div>
-              <div className="summary-row">
-                <span>Kategori</span>
-                <strong>{effectiveCategory || "Tum kategoriler"}</strong>
               </div>
             </div>
           ) : (

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { FilterSelectNav } from "@/components/ui/filter-select-nav";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { LeaguePeriod, SeasonProductRecord, SeasonRecord } from "@/lib/types";
@@ -394,18 +395,14 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
 
       <section className="guide-card game-brief-card">
         <h3>Sezon Secimi</h3>
-        <div className="filter-chip-row">
-          {seasonRows.map((season) => (
-            <Link
-              key={season.id}
-              className={`filter-chip ${activeSeason.id === season.id ? "active" : ""}`}
-              href={buildLeagueHref({ seasonId: season.id })}
-            >
-              {season.name}
-              {season.is_active ? " (Aktif)" : ""}
-            </Link>
-          ))}
-        </div>
+        <FilterSelectNav
+          ariaLabel="Sezon secimi"
+          value={buildLeagueHref({ seasonId: activeSeason.id })}
+          options={seasonRows.map((season) => ({
+            value: buildLeagueHref({ seasonId: season.id }),
+            label: `${season.name}${season.is_active ? " (Aktif)" : ""}`
+          }))}
+        />
 
         <h3>Yil Secimi</h3>
         <div className="filter-chip-row">

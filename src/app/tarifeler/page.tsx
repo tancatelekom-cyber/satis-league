@@ -69,7 +69,6 @@ export default async function TariffsPage({ searchParams }: TariffsPageProps) {
     .eq("provider", "Turkcell")
     .eq("line_type", "faturali")
     .eq("is_online_only", false)
-    .eq("is_digital_only", false)
     .order("price");
 
   const tariffs = (data as TariffRecord[] | null) ?? [];

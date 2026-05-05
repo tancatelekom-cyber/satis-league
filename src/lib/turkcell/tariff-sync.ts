@@ -105,10 +105,6 @@ function isCorePostpaidTariff(pkg: TurkcellPackage) {
     return false;
   }
 
-  if (isDigitalOnly(pkg)) {
-    return false;
-  }
-
   if (/superbox|mobil wifi|hotspot|gezgin|oyna|izle/.test(title)) {
     return false;
   }

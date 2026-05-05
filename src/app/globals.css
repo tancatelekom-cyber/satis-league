@@ -148,6 +148,10 @@ button {
   background: rgba(255, 255, 255, 0.08);
 }
 
+.mobile-tabbar {
+  display: none;
+}
+
 .hero {
   display: grid;
   grid-template-columns: 1.1fr 0.9fr;
@@ -1950,6 +1954,49 @@ button {
     display: inline-flex;
   }
 
+  .mobile-tabbar {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    z-index: 40;
+    padding: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    background: rgba(8, 16, 30, 0.94);
+    backdrop-filter: blur(18px);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.3);
+  }
+
+  .mobile-tab {
+    display: grid;
+    justify-items: center;
+    gap: 4px;
+    padding: 8px 6px;
+    border-radius: 18px;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  .mobile-tab-active {
+    color: var(--text);
+    background: linear-gradient(180deg, rgba(88, 240, 196, 0.18), rgba(88, 240, 196, 0.08));
+  }
+
+  .mobile-tab-icon {
+    font-size: 1rem;
+    line-height: 1;
+  }
+
+  .mobile-tab-label {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+  }
+
   .repeater-row,
   .store-edit-form {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1958,7 +2005,9 @@ button {
 
 @media (max-width: 640px) {
   .page-shell {
-    width: min(100% - 20px, 100%);
+    width: 100%;
+    min-height: 100dvh;
+    padding: 0 0 110px;
   }
 
   .hero {
@@ -1970,11 +2019,23 @@ button {
   }
 
   .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    margin-top: 0;
     padding: 12px 14px;
+    border-radius: 0 0 24px 24px;
+    border-left: 0;
+    border-right: 0;
+    background: rgba(6, 14, 28, 0.96);
   }
 
   .brand {
     font-size: 0.95rem;
+  }
+
+  main {
+    padding-inline: 14px;
   }
 
   .nav-links {

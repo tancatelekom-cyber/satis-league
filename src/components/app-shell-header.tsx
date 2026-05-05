@@ -17,6 +17,23 @@ type NavItem = {
   label: string;
 };
 
+function getMobileNavMeta(href: string, label: string) {
+  switch (href) {
+    case "/kampanyalar":
+      return { icon: "◉", shortLabel: "Bugun" };
+    case "/lig":
+      return { icon: "★", shortLabel: "Yildiz" };
+    case "/bildirimler":
+      return { icon: "◌", shortLabel: "Bildirim" };
+    case "/admin":
+      return { icon: "▣", shortLabel: "Admin" };
+    case "/hesabim":
+      return { icon: "◍", shortLabel: "Hesap" };
+    default:
+      return { icon: "•", shortLabel: label };
+  }
+}
+
 export function AppShellHeader() {
   const pathname = usePathname();
   const [ready, setReady] = useState(false);
@@ -116,6 +133,7 @@ export function AppShellHeader() {
       { href: "/hesabim", label: "Hesabim" }
     ];
   }, [loggedIn, profile, ready]);
+  const mobilePrimaryNav = useMemo(() => navItems.slice(0, 4), [navItems]);
 
   return (
     <header className={`topbar ${isAuthPage ? "topbar-auth" : "topbar-app"}`}>
@@ -128,33 +146,56 @@ export function AppShellHeader() {
       </Link>
 
       {!isAuthPage ? (
-        <div className={`nav-cluster ${menuOpen ? "nav-cluster-open" : ""}`}>
-          <button
-            aria-expanded={menuOpen}
-            aria-label="Menuyu ac veya kapat"
-            className="menu-toggle"
-            onClick={() => setMenuOpen((current) => !current)}
-            type="button"
-          >
-            {menuOpen ? "Kapat" : "Menu"}
-          </button>
+        <>
+          <div className={`nav-cluster ${menuOpen ? "nav-cluster-open" : ""}`}>
+            <button
+              aria-expanded={menuOpen}
+              aria-label="Menuyu ac veya kapat"
+              className="menu-toggle"
+              onClick={() => setMenuOpen((current) => !current)}
+              type="button"
+            >
+              {menuOpen ? "Kapat" : "Menu"}
+            </button>
 
-          {navItems.length ? (
-            <nav className="nav-links">
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  className={`nav-link ${pathname === item.href ? "nav-link-active" : ""}`}
-                  href={item.href}
-                >
-                  {item.label}
-                </Link>
-              ))}
+            {navItems.length ? (
+              <nav className="nav-links">
+                {navItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    className={`nav-link ${pathname === item.href ? "nav-link-active" : ""}`}
+                    href={item.href}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </nav>
+            ) : null}
+
+            {loggedIn ? <LogoutButton /> : null}
+          </div>
+
+          {mobilePrimaryNav.length ? (
+            <nav className="mobile-tabbar">
+              {mobilePrimaryNav.map((item) => {
+                const meta = getMobileNavMeta(item.href, item.label);
+
+                return (
+                  <Link
+                    key={item.href}
+                    className={`mobile-tab ${pathname === item.href ? "mobile-tab-active" : ""}`}
+                    href={item.href}
+                  >
+                    <span className="mobile-tab-icon" aria-hidden="true">
+                      {meta.icon}
+                    </span>
+                    <span className="mobile-tab-label">{meta.shortLabel}</span>
+                  </Link>
+                );
+              })}
             </nav>
           ) : null}
-
-          {loggedIn ? <LogoutButton /> : null}
-        </div>
+        </>
       ) : null}
     </header>
   );

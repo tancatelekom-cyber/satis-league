@@ -73,10 +73,17 @@ function toNumber(value: unknown) {
     return value;
   }
 
-  const normalized = String(value ?? "")
-    .replace(",", ".")
-    .replace(/[^\d.]/g, "")
-    .trim();
+  let normalized = String(value ?? "").replace(/\s+/g, "").trim();
+
+  if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(normalized)) {
+    normalized = normalized.replace(/\./g, "").replace(",", ".");
+  } else if (/^\d{1,3}(,\d{3})+(\.\d+)?$/.test(normalized)) {
+    normalized = normalized.replace(/,/g, "");
+  } else {
+    normalized = normalized.replace(",", ".");
+  }
+
+  normalized = normalized.replace(/[^\d.]/g, "");
 
   return normalized ? Number(normalized) : 0;
 }
@@ -289,8 +296,8 @@ function packageToTariff(pkg: TurkcellPackageSource): TariffUpsertPayload {
     category_name: inferCategoryName(item.title ?? "", item.selectedTags),
     line_type: "faturali",
     data_gb: benefits.dataGb,
-    minutes: benefits.minutes,
-    sms: benefits.sms,
+    minutes: Math.round(benefits.minutes),
+    sms: Math.round(benefits.sms),
     price: Number(item.price?.amountDouble ?? toNumber(item.price?.amount)),
     details: details || null,
     is_online_only: Boolean(item.price?.onlineExclusive),

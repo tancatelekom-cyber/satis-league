@@ -578,6 +578,17 @@ button {
   margin-bottom: 10px;
 }
 
+.page-actions-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 14px;
+}
+
+.export-link-button {
+  min-width: 160px;
+  text-align: center;
+}
+
 .ranking-summary-card {
   margin-bottom: 20px;
 }

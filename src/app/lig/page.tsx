@@ -397,6 +397,12 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
         Secili sezon: {activeSeason.name} | {activeSeason.start_date} - {activeSeason.end_date}
       </p>
 
+      <div className="page-actions-row">
+        <a className="button-secondary export-link-button" href={buildLeagueHref().replace("/lig?", "/lig/excel?")}>
+          Excel'e Indir
+        </a>
+      </div>
+
       <section className="guide-card game-brief-card">
         <h3>Sezon Secimi</h3>
         <div className="filter-chip-row">

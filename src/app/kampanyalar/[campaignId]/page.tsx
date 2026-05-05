@@ -118,6 +118,9 @@ export default async function CampaignDetailPage({
           </Link>
           <h1 className="page-title compact-page-title">{campaign.name}</h1>
         </div>
+        <a className="button-secondary export-link-button" href={`/kampanyalar/${campaign.id}/excel`}>
+          Excel'e Indir
+        </a>
       </div>
 
       {pageParams?.message ? (

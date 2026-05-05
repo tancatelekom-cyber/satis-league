@@ -3,6 +3,16 @@ import { TariffRecord } from "@/lib/types";
 
 const TURKCELL_TARIFF_URL = "https://www.turkcell.com.tr/paket-ve-tarifeler/faturali-hat";
 const TURKCELL_NEW_MEMBER_URL = "https://www.turkcell.com.tr/trc/turkcellli-olmak/paket-secimi";
+const TURKCELL_EXTRA_TARIFF_URLS = [
+  "https://www.turkcell.com.tr/paket-ve-tarifeler/yeni-musteri-paketleri/emek-5-gb",
+  "https://www.turkcell.com.tr/paket-ve-tarifeler/yeni-musteri-paketleri/emek-10-gb",
+  "https://www.turkcell.com.tr/paket-ve-tarifeler/yeni-musteri-paketleri/emek-20-gb",
+  "https://www.turkcell.com.tr/paket-ve-tarifeler/yeni-musteri-paketleri/emek-30-gb",
+  "https://www.turkcell.com.tr/paket-ve-tarifeler/yeni-musteri-paketleri/5g-emekli-5-gb",
+  "https://www.turkcell.com.tr/paket-ve-tarifeler/yeni-musteri-paketleri/5g-emekli-20-gb",
+  "https://www.turkcell.com.tr/kampanyalar/mobil-hat-data-hatti-kampanyalari/yeni-turkcell-musterisi/5g-emekli-10-gb",
+  "https://www.turkcell.com.tr/kampanyalar/mobil-hat-data-hatti-kampanyalari/yeni-turkcell-musterisi/5g-emekli-30-gb"
+];
 
 type TurkcellBenefit = {
   value?: string | number | null;
@@ -82,6 +92,38 @@ function collectPackageArrays(value: unknown, collected: TurkcellPackage[][] = [
   }
 
   Object.values(record).forEach((item) => collectPackageArrays(item, collected));
+  return collected;
+}
+
+function isPackageCandidate(value: unknown): value is TurkcellPackage {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const record = value as Record<string, unknown>;
+  return (
+    typeof record.title === "string" &&
+    typeof record.paymentType === "string" &&
+    "price" in record &&
+    ("cpcmTariffOfferId" in record || "benefits" in record)
+  );
+}
+
+function collectPackageObjects(value: unknown, collected: TurkcellPackage[] = []) {
+  if (!value || typeof value !== "object") {
+    return collected;
+  }
+
+  if (Array.isArray(value)) {
+    value.forEach((item) => collectPackageObjects(item, collected));
+    return collected;
+  }
+
+  if (isPackageCandidate(value)) {
+    collected.push(value);
+  }
+
+  Object.values(value as Record<string, unknown>).forEach((item) => collectPackageObjects(item, collected));
   return collected;
 }
 
@@ -225,6 +267,7 @@ async function fetchTurkcellPackagesFrom(url: string) {
 
   const nextData = JSON.parse(match[1]);
   const packageArrays = collectPackageArrays(nextData);
+  const packageObjects = collectPackageObjects(nextData);
   const uniqueMap = new Map<string, TurkcellPackageSource>();
 
   packageArrays.flat().forEach((pkg) => {
@@ -235,16 +278,26 @@ async function fetchTurkcellPackagesFrom(url: string) {
     uniqueMap.set(pkg.id, { package: pkg, sourceUrl: url });
   });
 
+  packageObjects.forEach((pkg) => {
+    const key = pkg.id || pkg.fullUrl || pkg.endpoint || pkg.title;
+    if (!key) {
+      return;
+    }
+
+    uniqueMap.set(key, { package: pkg, sourceUrl: url });
+  });
+
   return Array.from(uniqueMap.values()).filter((item) => isCorePostpaidTariff(item.package));
 }
 
 async function fetchTurkcellPackages() {
-  const [corePackages, newMemberPackages] = await Promise.all([
+  const [corePackages, newMemberPackages, ...extraPackages] = await Promise.all([
     fetchTurkcellPackagesFrom(TURKCELL_TARIFF_URL),
-    fetchTurkcellPackagesFrom(TURKCELL_NEW_MEMBER_URL)
+    fetchTurkcellPackagesFrom(TURKCELL_NEW_MEMBER_URL),
+    ...TURKCELL_EXTRA_TARIFF_URLS.map((url) => fetchTurkcellPackagesFrom(url))
   ]);
 
-  const combined = [...corePackages, ...newMemberPackages];
+  const combined = [...corePackages, ...newMemberPackages, ...extraPackages.flat()];
   const uniqueMap = new Map<string, TurkcellPackageSource>();
 
   combined.forEach((item) => {

@@ -47,7 +47,7 @@ export function isPlannedCampaign(startAt: string) {
 export function isRecentFinishedCampaign(endAt: string) {
   const now = Date.now();
   const end = new Date(endAt).getTime();
-  return now > end && now <= end + 12 * 60 * 60 * 1000;
+  return now > end && now <= end + 30 * 24 * 60 * 60 * 1000;
 }
 
 export function timeUntilLabel(startAt: string) {

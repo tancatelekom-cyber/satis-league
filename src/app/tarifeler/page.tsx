@@ -92,7 +92,6 @@ export default async function TariffsPage({ searchParams }: TariffsPageProps) {
               value={buildHref(selectedMode, selectedPreset, selectedBucket, search)}
               options={[
                 { value: buildHref(selectedMode, "all", "", search), label: "Tum Basliklar" },
-                { value: buildHref(selectedMode, "new-member", "", search), label: "Yeni Musteriye Ozel" },
                 { value: buildHref(selectedMode, "emekli", "", search), label: "Emekli" },
                 { value: buildHref(selectedMode, "emek", "", search), label: "Emek" },
                 { value: buildHref(selectedMode, "platinum", "", search), label: "Platinum" },

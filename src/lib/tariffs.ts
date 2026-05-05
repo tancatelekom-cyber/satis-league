@@ -52,7 +52,7 @@ function normalizeTariffText(tariff: TariffRecord) {
 export function getTariffPresetLabel(preset: TariffPreset) {
   switch (preset) {
     case "new-member":
-      return "Yeni Musteriye Ozel";
+      return "Tarife Isimleri";
     case "emekli":
       return "Emekli";
     case "emek":

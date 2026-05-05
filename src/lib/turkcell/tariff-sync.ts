@@ -132,6 +132,10 @@ function inferCategoryName(name: string, selectedTags?: Array<{ title?: string |
 
   const selectedTag = selectedTags?.find((tag) => tag?.title)?.title?.trim();
   if (selectedTag) {
+    const normalizedTag = normalizeText(selectedTag).toLocaleLowerCase("tr-TR");
+    if (/ilk turkcell|yeni turkcell/.test(normalizedTag)) {
+      return normalizeText(name);
+    }
     return normalizeText(selectedTag);
   }
 

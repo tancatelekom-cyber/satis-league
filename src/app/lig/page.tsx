@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { FilterSelectNav } from "@/components/ui/filter-select-nav";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -405,82 +404,69 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
         />
 
         <h3>Yil Secimi</h3>
-        <div className="filter-chip-row">
-          {yearOptions.map((year) => {
+        <FilterSelectNav
+          ariaLabel="Yil secimi"
+          value={buildLeagueHref({
+            year: effectiveYear,
+            month: monthOptions[0]?.value ?? `${effectiveYear}-01`,
+            quarter: quarterOptions[0]?.value ?? "1"
+          })}
+          options={yearOptions.map((year) => {
             const yearMonthOptions = buildMonthOptionsForYear(activeSeason.start_date, activeSeason.end_date, year);
             const yearQuarterOptions = buildQuarterOptionsForYear(activeSeason.start_date, activeSeason.end_date, year);
-            return (
-              <Link
-                key={year}
-                className={`filter-chip ${effectiveYear === year ? "active" : ""}`}
-                href={buildLeagueHref({
-                  year,
-                  month: yearMonthOptions[0]?.value ?? `${year}-01`,
-                  quarter: yearQuarterOptions[0]?.value ?? "1"
-                })}
-              >
-                {year}
-              </Link>
-            );
+
+            return {
+              value: buildLeagueHref({
+                year,
+                month: yearMonthOptions[0]?.value ?? `${year}-01`,
+                quarter: yearQuarterOptions[0]?.value ?? "1"
+              }),
+              label: year
+            };
           })}
-        </div>
+        />
 
         <h3>Donem Secimi</h3>
-        <div className="filter-chip-row">
-          {periodOptions.map((period) => (
-            <Link
-              key={period.value}
-              className={`filter-chip ${selectedPeriod === period.value ? "active" : ""}`}
-              href={buildLeagueHref({ period: period.value })}
-            >
-              {period.label}
-            </Link>
-          ))}
-        </div>
+        <FilterSelectNav
+          ariaLabel="Donem secimi"
+          value={buildLeagueHref({ period: selectedPeriod })}
+          options={periodOptions.map((period) => ({
+            value: buildLeagueHref({ period: period.value }),
+            label: period.label
+          }))}
+        />
 
         {selectedPeriod === "month" ? (
           <>
             <h3>Ay Secimi</h3>
-            <div className="filter-chip-row">
-              <Link
-                className="filter-chip"
-                href={buildLeagueHref({ period: "year" })}
-              >
-                Yilin Tumu
-              </Link>
-              {monthOptions.map((month) => (
-                <Link
-                  key={month.value}
-                  className={`filter-chip ${effectiveMonth === month.value ? "active" : ""}`}
-                  href={buildLeagueHref({ month: month.value })}
-                >
-                  {month.label}
-                </Link>
-              ))}
-            </div>
+            <FilterSelectNav
+              ariaLabel="Ay secimi"
+              value={buildLeagueHref({ month: effectiveMonth })}
+              options={[
+                { value: buildLeagueHref({ period: "year" }), label: "Yilin Tumu" },
+                ...monthOptions.map((month) => ({
+                  value: buildLeagueHref({ month: month.value }),
+                  label: month.label
+                }))
+              ]}
+            />
           </>
         ) : null}
 
         {selectedPeriod === "quarter" ? (
           <>
             <h3>Q Secimi</h3>
-            <div className="filter-chip-row">
-              <Link
-                className="filter-chip"
-                href={buildLeagueHref({ period: "year" })}
-              >
-                Tum Q'lar
-              </Link>
-              {quarterOptions.map((quarter) => (
-                <Link
-                  key={quarter.value}
-                  className={`filter-chip ${effectiveQuarter === quarter.value ? "active" : ""}`}
-                  href={buildLeagueHref({ quarter: quarter.value })}
-                >
-                  {quarter.label}
-                </Link>
-              ))}
-            </div>
+            <FilterSelectNav
+              ariaLabel="Q secimi"
+              value={buildLeagueHref({ quarter: effectiveQuarter })}
+              options={[
+                { value: buildLeagueHref({ period: "year" }), label: "Tum Q'lar" },
+                ...quarterOptions.map((quarter) => ({
+                  value: buildLeagueHref({ quarter: quarter.value }),
+                  label: quarter.label
+                }))
+              ]}
+            />
           </>
         ) : null}
 

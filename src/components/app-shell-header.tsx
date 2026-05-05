@@ -113,7 +113,6 @@ export function AppShellHeader() {
       { href: "/lig", label: "Yildizlar Kulubu" },
       { href: "/bildirimler", label: "Bildirimler" },
       { href: "/admin", label: "Admin" },
-      { href: "/kontrol-listesi", label: "Kontrol" },
       { href: "/hesabim", label: "Hesabim" }
     ];
   }, [loggedIn, profile, ready]);

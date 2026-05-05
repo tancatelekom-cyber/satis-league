@@ -52,6 +52,10 @@ export default async function RankingAdminPage({ searchParams }: RankingAdminPag
       </section>
 
       <section className="admin-quick-grid">
+        <a className="admin-quick-card" href="/admin/siralama/excel">
+          <strong>Excel'e Indir</strong>
+          <span>Tum kampanya ve sezon siralamalarini tek Excel dosyasi olarak indir.</span>
+        </a>
         <Link className="admin-quick-card" href="/lig">
           <strong>Sezon Ligi</strong>
           <span>Kullanicilarin gordugu siralama ve odul alanlarini ac.</span>

@@ -1535,6 +1535,12 @@ button {
   text-transform: uppercase;
 }
 
+.leaderboard-spotlight-date {
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
 .leaderboard-spotlight-name {
   font-size: clamp(1.6rem, 3vw, 2.4rem);
   line-height: 1.05;

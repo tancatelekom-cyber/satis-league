@@ -241,6 +241,9 @@ export default async function CampaignDetailPage({
                       {"\uD83C\uDFC6"}
                     </span>
                     <span className="leaderboard-spotlight-campaign">{campaign.name}</span>
+                    <span className="leaderboard-spotlight-date">
+                      {formatCampaignDateTime(campaign.start_at)} - {formatCampaignDateTime(campaign.end_at)}
+                    </span>
                     <strong className="leaderboard-spotlight-name">{row.label}</strong>
                     <div className="leaderboard-spotlight-score">
                       {row.score.toFixed(0)} {campaign.scoring === "points" ? "puan" : "adet"}

@@ -73,7 +73,7 @@ export default async function AdminTariffsPage({ searchParams }: AdminTariffsPag
       <section className="admin-card">
         <h3>Turkcell'den Otomatik Guncelle</h3>
         <p>
-          Online ya da dijitale ozel olmayan Turkcell faturali hat tarifelerini resmi sayfadan ceker,
+          Sadece online'a ozel olmayan Turkcell faturali hat tarifelerini resmi sayfadan ceker,
           mevcut kayitlari gunceller ve artik sitede olmayanlari pasife alir.
         </p>
         <form action={refreshTurkcellTariffsAction} className="action-row">

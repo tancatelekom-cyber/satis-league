@@ -1487,6 +1487,79 @@ button {
   background: linear-gradient(135deg, #ffe08a, #ffd166);
 }
 
+.leaderboard-row-clickable {
+  cursor: pointer;
+  list-style: none;
+}
+
+.leaderboard-row-clickable::-webkit-details-marker {
+  display: none;
+}
+
+.leaderboard-spotlight-card {
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 209, 102, 0.18);
+}
+
+.leaderboard-spotlight-card[open] {
+  border-color: rgba(255, 209, 102, 0.34);
+  background: linear-gradient(180deg, rgba(28, 42, 72, 0.96), rgba(12, 24, 46, 0.98));
+}
+
+.leaderboard-spotlight-visual {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 18px 18px 22px;
+  text-align: center;
+}
+
+.leaderboard-spotlight-cup {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 70px;
+  height: 70px;
+  border-radius: 999px;
+  font-size: 2rem;
+  background: radial-gradient(circle at top, #fff6cf, #ffd166 58%, #f6a531);
+  box-shadow: 0 16px 28px rgba(255, 209, 102, 0.18);
+}
+
+.leaderboard-spotlight-campaign {
+  color: #ffe08a;
+  font-size: 0.86rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.leaderboard-spotlight-name {
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  line-height: 1.05;
+}
+
+.leaderboard-spotlight-score {
+  padding: 12px 16px;
+  border-radius: 18px;
+  color: #09111f;
+  font-size: 1.15rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, rgba(88, 240, 196, 0.96), rgba(255, 209, 102, 0.96));
+}
+
+.leaderboard-spotlight-reward {
+  width: min(100%, 520px);
+  padding: 14px 18px;
+  border-radius: 18px;
+  color: #fff7d1;
+  font-size: 1.05rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, rgba(255, 209, 102, 0.28), rgba(255, 140, 66, 0.22));
+  border: 1px solid rgba(255, 209, 102, 0.26);
+}
+
 .leaderboard-reward {
   margin-top: 10px;
   padding: 12px 14px;

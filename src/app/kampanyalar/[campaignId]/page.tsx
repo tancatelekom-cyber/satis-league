@@ -133,9 +133,9 @@ export default async function CampaignDetailPage({
         <span className="mission-pill">Sira: {personal.rank ? `#${personal.rank}` : "Liste disi"}</span>
         <span className="mission-pill">Skor: {scoreLabel(personal.currentScore, campaign.scoring)}</span>
         <span className="mission-pill">Fark: {scoreLabel(personal.gap, campaign.scoring)}</span>
-          <span className="mission-pill">
-            {isActiveCampaign ? `Kalan: ${daysLeftLabel(campaign.end_at)}` : "Durum: Gecmis kampanya"}
-          </span>
+        <span className="mission-pill">
+          {isActiveCampaign ? `Kalan: ${daysLeftLabel(campaign.end_at)}` : "Durum: Gecmis kampanya"}
+        </span>
         <span className="mission-pill">
           {campaign.mode === "employee" ? "Calisan Bazli" : "Magaza Bazli"} |{" "}
           {campaign.scoring === "points" ? "Puan" : "Adet"}
@@ -206,32 +206,54 @@ export default async function CampaignDetailPage({
           <div className="leaderboard-list">
             {leaderboard.map((row, index) => {
               const rewardLabel = campaignRewardLabel(campaign, index);
+              const isLeader = index === 0;
+              const rowContent = (
+                <>
+                  <div className={`leaderboard-rank ${row.score <= 0 ? "leaderboard-rank-empty" : ""}`}>
+                    {index + 1}
+                  </div>
+                  <div>
+                    <h4>
+                      {row.label}
+                      {isLeader ? (
+                        <span aria-label="Lider kupasi" className="leaderboard-cup" title="Lider kupasi">
+                          {"\uD83C\uDFC6"}
+                        </span>
+                      ) : null}
+                    </h4>
+                    <p className="subtle">{row.badge ?? "Canli toplam"}</p>
+                    {rewardLabel ? <div className="leaderboard-reward">{rewardLabel}</div> : null}
+                  </div>
+                  <div className="score">
+                    <strong>{row.score.toFixed(0)}</strong>
+                    <span className="subtle">
+                      toplam {campaign.scoring === "points" ? "puan" : "adet"}
+                    </span>
+                  </div>
+                </>
+              );
 
-              return (
-              <div key={row.id} className="leaderboard-row">
-                <div className={`leaderboard-rank ${row.score <= 0 ? "leaderboard-rank-empty" : ""}`}>
-                  {index + 1}
+              return isLeader ? (
+                <details key={row.id} className="leaderboard-spotlight-card">
+                  <summary className="leaderboard-row leaderboard-row-clickable">{rowContent}</summary>
+                  <div className="leaderboard-spotlight-visual">
+                    <span className="leaderboard-spotlight-cup" aria-hidden="true">
+                      {"\uD83C\uDFC6"}
+                    </span>
+                    <span className="leaderboard-spotlight-campaign">{campaign.name}</span>
+                    <strong className="leaderboard-spotlight-name">{row.label}</strong>
+                    <div className="leaderboard-spotlight-score">
+                      {row.score.toFixed(0)} {campaign.scoring === "points" ? "puan" : "adet"}
+                    </div>
+                    {rewardLabel ? <div className="leaderboard-spotlight-reward">{rewardLabel}</div> : null}
+                  </div>
+                </details>
+              ) : (
+                <div key={row.id} className="leaderboard-row">
+                  {rowContent}
                 </div>
-                <div>
-                  <h4>
-                    {row.label}
-                    {index === 0 ? (
-                      <span aria-label="Lider kupasi" className="leaderboard-cup" title="Lider kupasi">
-                        🏆
-                      </span>
-                    ) : null}
-                  </h4>
-                  <p className="subtle">{row.badge ?? "Canli toplam"}</p>
-                  {rewardLabel ? <div className="leaderboard-reward">{rewardLabel}</div> : null}
-                </div>
-                <div className="score">
-                  <strong>{row.score.toFixed(0)}</strong>
-                  <span className="subtle">
-                    toplam {campaign.scoring === "points" ? "puan" : "adet"}
-                  </span>
-                </div>
-              </div>
-            )})}
+              );
+            })}
           </div>
         </section>
       ) : (

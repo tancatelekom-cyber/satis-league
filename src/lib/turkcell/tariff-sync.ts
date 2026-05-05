@@ -125,12 +125,15 @@ function isCorePostpaidTariff(pkg: TurkcellPackage) {
 }
 
 function inferCategoryName(name: string, selectedTags?: Array<{ title?: string | null }> | null) {
+  const lower = name.toLocaleLowerCase("tr-TR");
+
+  if (lower.includes("emekli")) return "Emekli";
+  if (/\bemek\b/.test(lower)) return "Emek";
+
   const selectedTag = selectedTags?.find((tag) => tag?.title)?.title?.trim();
   if (selectedTag) {
     return normalizeText(selectedTag);
   }
-
-  const lower = name.toLocaleLowerCase("tr-TR");
 
   if (lower.includes("platinum+ black")) return "Platinum+ Black";
   if (lower.includes("platinum+")) return "Platinum+";

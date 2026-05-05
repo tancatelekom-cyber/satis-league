@@ -36,6 +36,8 @@ export default async function TariffsPage({ searchParams }: TariffsPageProps) {
   const selectedMode = params?.mode === "minutes" || params?.mode === "name" ? params.mode : "gb";
   const selectedPreset: TariffPreset =
     params?.preset === "new-member" ||
+    params?.preset === "emekli" ||
+    params?.preset === "emek" ||
     params?.preset === "platinum" ||
     params?.preset === "gnc" ||
     params?.preset === "general-postpaid"
@@ -91,6 +93,8 @@ export default async function TariffsPage({ searchParams }: TariffsPageProps) {
               options={[
                 { value: buildHref(selectedMode, "all", "", search), label: "Tum Basliklar" },
                 { value: buildHref(selectedMode, "new-member", "", search), label: "Yeni Musteriye Ozel" },
+                { value: buildHref(selectedMode, "emekli", "", search), label: "Emekli" },
+                { value: buildHref(selectedMode, "emek", "", search), label: "Emek" },
                 { value: buildHref(selectedMode, "platinum", "", search), label: "Platinum" },
                 { value: buildHref(selectedMode, "gnc", "", search), label: "GNC" },
                 { value: buildHref(selectedMode, "general-postpaid", "", search), label: "Genel Faturali" }

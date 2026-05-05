@@ -53,6 +53,10 @@ export function getTariffPresetLabel(preset: TariffPreset) {
   switch (preset) {
     case "new-member":
       return "Yeni Musteriye Ozel";
+    case "emekli":
+      return "Emekli";
+    case "emek":
+      return "Emek";
     case "platinum":
       return "Platinum";
     case "gnc":
@@ -75,6 +79,14 @@ export function matchesTariffPreset(tariff: TariffRecord, preset: TariffPreset):
     return /ilk turkcell|yeni musteri|yeni turkcell/.test(haystack);
   }
 
+  if (preset === "emekli") {
+    return /emekli|altin yaslar/.test(haystack);
+  }
+
+  if (preset === "emek") {
+    return /\bemek\b|saglik calisani|ogretmen|ciftci|kamu tarifesi/.test(haystack) && !/emekli/.test(haystack);
+  }
+
   if (preset === "platinum") {
     return /platinum/.test(haystack);
   }
@@ -83,7 +95,13 @@ export function matchesTariffPreset(tariff: TariffRecord, preset: TariffPreset):
     return /gnc|gnç|genc|genclik/.test(haystack);
   }
 
-  return !matchesTariffPreset(tariff, "new-member") && !matchesTariffPreset(tariff, "platinum") && !matchesTariffPreset(tariff, "gnc");
+  return (
+    !matchesTariffPreset(tariff, "new-member") &&
+    !matchesTariffPreset(tariff, "emekli") &&
+    !matchesTariffPreset(tariff, "emek") &&
+    !matchesTariffPreset(tariff, "platinum") &&
+    !matchesTariffPreset(tariff, "gnc")
+  );
 }
 
 export function filterTariffs(

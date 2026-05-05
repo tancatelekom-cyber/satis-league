@@ -3,7 +3,14 @@ export type CampaignMode = "employee" | "store";
 export type ScoringType = "points" | "quantity";
 export type LeaguePeriod = "month" | "quarter" | "year";
 export type TariffCategoryMode = "gb" | "minutes" | "name";
-export type TariffPreset = "all" | "new-member" | "platinum" | "gnc" | "general-postpaid";
+export type TariffPreset =
+  | "all"
+  | "new-member"
+  | "emekli"
+  | "emek"
+  | "platinum"
+  | "gnc"
+  | "general-postpaid";
 
 export type CampaignProduct = {
   id: string;

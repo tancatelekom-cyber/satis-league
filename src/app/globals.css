@@ -767,6 +767,79 @@ button {
   margin-bottom: 22px;
 }
 
+.league-overview-card {
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+
+.league-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.league-mini-card {
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.league-mini-card span {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.league-mini-card strong {
+  display: block;
+  font-size: 0.98rem;
+  line-height: 1.2;
+}
+
+.league-mini-card-wide {
+  grid-column: span 2;
+}
+
+.league-overview-accordion-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.compact-detail-card {
+  padding: 12px 14px;
+}
+
+.compact-detail-card summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.compact-detail-card summary::-webkit-details-marker {
+  display: none;
+}
+
+.compact-detail-card summary span {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.compact-detail-card summary strong {
+  color: var(--text);
+  font-size: 0.95rem;
+  text-align: right;
+}
+
+.compact-detail-card[open] summary {
+  margin-bottom: 10px;
+}
+
 .admin-stack {
   display: grid;
   gap: 18px;
@@ -1243,6 +1316,11 @@ button {
 .profile-summary {
   display: grid;
   gap: 14px;
+}
+
+.compact-profile-summary,
+.compact-step-list {
+  gap: 10px;
 }
 
 .summary-row {
@@ -1895,6 +1973,15 @@ button {
 
   .compact-sale-input {
     width: 100%;
+  }
+
+  .league-overview-grid,
+  .league-overview-accordion-row {
+    grid-template-columns: 1fr;
+  }
+
+  .league-mini-card-wide {
+    grid-column: auto;
   }
 
   .repeater-actions {

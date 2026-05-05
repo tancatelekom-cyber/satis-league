@@ -479,43 +479,41 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
         </div>
       </section>
 
-      <section className="momentum-grid">
-        <article className="guide-card">
-          <h3>Gosterilen Donem</h3>
-          <p>{rawRange.label}</p>
-          <div className="mission-pills">
-            <span className="mission-pill">
+      <section className="league-overview-card guide-card">
+        <div className="league-overview-grid">
+          <div className="league-mini-card">
+            <span>Donem</span>
+            <strong>{rawRange.label}</strong>
+          </div>
+          <div className="league-mini-card">
+            <span>Aralik</span>
+            <strong>
               {clampedStart} - {clampedEnd}
-            </span>
+            </strong>
           </div>
-        </article>
-
-        <article className="guide-card">
-          <h3>Donem Ozeti</h3>
-          <div className="profile-summary">
-            <div className="summary-card">
-              <span>Kayit</span>
-              <strong>{filteredSeasonSales.length}</strong>
-            </div>
-            <div className="summary-card">
-              <span>Toplam Puan</span>
-              <strong>{filteredTotalScore.toFixed(0)}</strong>
-            </div>
-            <div className="summary-card">
-              <span>Lider</span>
-              <strong>{champion?.label ?? "-"}</strong>
-            </div>
+          <div className="league-mini-card">
+            <span>Kayit</span>
+            <strong>{filteredSeasonSales.length}</strong>
           </div>
-        </article>
+          <div className="league-mini-card">
+            <span>Toplam</span>
+            <strong>{filteredTotalScore.toFixed(0)}</strong>
+          </div>
+          <div className="league-mini-card league-mini-card-wide">
+            <span>Lider</span>
+            <strong>{champion?.label ?? "-"}</strong>
+          </div>
+        </div>
       </section>
 
-      <section className="campaign-layout">
-        <article className="leaderboard-card">
-          <h3>
-            {periodOptions.find((option) => option.value === selectedPeriod)?.label} Birincisi
-          </h3>
+      <section className="league-overview-accordion-row">
+        <details className="leaderboard-card compact-detail-card">
+          <summary>
+            <span>{periodOptions.find((option) => option.value === selectedPeriod)?.label} Birincisi</span>
+            <strong>{champion?.label ?? "-"}</strong>
+          </summary>
           {champion ? (
-            <div className="profile-summary">
+            <div className="profile-summary compact-profile-summary">
               <div className="summary-row">
                 <span>Kazanan</span>
                 <strong>{champion.label}</strong>
@@ -532,11 +530,14 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
           ) : (
             <p>Bu donemde henuz sezon girisi yok.</p>
           )}
-        </article>
+        </details>
 
-        <article className="leaderboard-card">
-          <h3>Odul Vitrini</h3>
-          <div className="step-list">
+        <details className="leaderboard-card compact-detail-card">
+          <summary>
+            <span>Odul Vitrini</span>
+            <strong>{activeSeason.reward_first ?? activeSeason.reward_title ?? "Detay"}</strong>
+          </summary>
+          <div className="step-list compact-step-list">
             <div className="step-item">
               <strong>{activeSeason.reward_title ?? "Odul tanimi bekleniyor"}</strong>
               <span>{activeSeason.reward_details ?? "Bu sezon icin odul aciklamasi girilmedi."}</span>
@@ -554,7 +555,7 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
               <span>{activeSeason.reward_third ?? "Tanimlanmadi"}</span>
             </div>
           </div>
-        </article>
+        </details>
       </section>
 
       <section className="campaign-layout">

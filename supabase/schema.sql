@@ -221,6 +221,26 @@ create table if not exists public.notifications (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.tariffs (
+  id uuid primary key default gen_random_uuid(),
+  provider text not null default 'Turkcell',
+  source_url text,
+  name text not null,
+  category_name text not null default 'Genel',
+  line_type text not null default 'faturali',
+  data_gb numeric(10,2) not null default 0,
+  minutes integer not null default 0,
+  sms integer not null default 0,
+  price numeric(10,2) not null default 0,
+  details text,
+  is_online_only boolean not null default false,
+  is_digital_only boolean not null default false,
+  is_active boolean not null default true,
+  scraped_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 insert into public.stores (name, city, base_multiplier)
 values
   ('Bakirkoy AVM', 'Istanbul', 1.00),

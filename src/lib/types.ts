@@ -2,6 +2,7 @@ export type UserRole = "employee" | "manager" | "management" | "admin";
 export type CampaignMode = "employee" | "store";
 export type ScoringType = "points" | "quantity";
 export type LeaguePeriod = "month" | "quarter" | "year";
+export type TariffCategoryMode = "gb" | "minutes" | "name";
 
 export type CampaignProduct = {
   id: string;
@@ -244,4 +245,24 @@ export type SeasonSalesEntryRecord = {
   score: number;
   note: string | null;
   created_at: string;
+};
+
+export type TariffRecord = {
+  id: string;
+  provider: string;
+  source_url: string | null;
+  name: string;
+  category_name: string;
+  line_type: string;
+  data_gb: number;
+  minutes: number;
+  sms: number;
+  price: number;
+  details: string | null;
+  is_online_only: boolean;
+  is_digital_only: boolean;
+  is_active: boolean;
+  scraped_at: string | null;
+  created_at: string;
+  updated_at: string;
 };

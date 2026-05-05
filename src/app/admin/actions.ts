@@ -11,6 +11,7 @@ const allowedAdminRedirects = new Set([
   "/admin/sezonlar",
   "/admin/sezon-satislari",
   "/admin/kampanyalar",
+  "/admin/tarifeler",
   "/admin/magazalar",
   "/admin/onaylar",
   "/admin/siralama"
@@ -1692,4 +1693,93 @@ export async function deleteCampaignSaleAction(formData: FormData) {
 
   refreshCampaignPages();
   redirectWithMessage("Kampanya satis kaydi silindi.", "success", redirectTo);
+}
+
+function parseTariffPayload(formData: FormData) {
+  return {
+    provider: String(formData.get("provider") ?? "Turkcell").trim() || "Turkcell",
+    source_url: String(formData.get("source_url") ?? "").trim() || null,
+    name: String(formData.get("name") ?? "").trim(),
+    category_name: String(formData.get("category_name") ?? "Genel").trim() || "Genel",
+    line_type: String(formData.get("line_type") ?? "faturali").trim() || "faturali",
+    data_gb: Number(String(formData.get("data_gb") ?? "0").trim() || "0"),
+    minutes: Number(String(formData.get("minutes") ?? "0").trim() || "0"),
+    sms: Number(String(formData.get("sms") ?? "0").trim() || "0"),
+    price: Number(String(formData.get("price") ?? "0").trim() || "0"),
+    details: String(formData.get("details") ?? "").trim() || null,
+    is_online_only: String(formData.get("is_online_only") ?? "") === "on",
+    is_digital_only: String(formData.get("is_digital_only") ?? "") === "on",
+    is_active: String(formData.get("is_active") ?? "on") === "on",
+    scraped_at: String(formData.get("scraped_at") ?? "").trim() || null
+  };
+}
+
+export async function createTariffAction(formData: FormData) {
+  await requireAdminAccess();
+  const redirectTo = getRedirectTo(formData);
+  const supabase = createAdminClient();
+  const payload = parseTariffPayload(formData);
+
+  if (!payload.name) {
+    redirectWithMessage("Tarife adi zorunlu.", "error", redirectTo);
+  }
+
+  const { error } = await supabase.from("tariffs").insert(payload);
+
+  if (error) {
+    redirectWithMessage(`Tarife eklenemedi: ${error.message}`, "error", redirectTo);
+  }
+
+  revalidatePath("/tarifeler");
+  revalidatePath("/admin/tarifeler");
+  redirectWithMessage("Tarife eklendi.", "success", redirectTo);
+}
+
+export async function updateTariffAction(formData: FormData) {
+  await requireAdminAccess();
+  const redirectTo = getRedirectTo(formData);
+  const supabase = createAdminClient();
+  const tariffId = String(formData.get("tariffId") ?? "").trim();
+  const payload = parseTariffPayload(formData);
+
+  if (!tariffId || !payload.name) {
+    redirectWithMessage("Tarife guncellemek icin kayit ve ad zorunlu.", "error", redirectTo);
+  }
+
+  const { error } = await supabase
+    .from("tariffs")
+    .update({
+      ...payload,
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", tariffId);
+
+  if (error) {
+    redirectWithMessage(`Tarife guncellenemedi: ${error.message}`, "error", redirectTo);
+  }
+
+  revalidatePath("/tarifeler");
+  revalidatePath("/admin/tarifeler");
+  redirectWithMessage("Tarife guncellendi.", "success", redirectTo);
+}
+
+export async function deleteTariffAction(formData: FormData) {
+  await requireAdminAccess();
+  const redirectTo = getRedirectTo(formData);
+  const supabase = createAdminClient();
+  const tariffId = String(formData.get("tariffId") ?? "").trim();
+
+  if (!tariffId) {
+    redirectWithMessage("Silinecek tarife secilmedi.", "error", redirectTo);
+  }
+
+  const { error } = await supabase.from("tariffs").delete().eq("id", tariffId);
+
+  if (error) {
+    redirectWithMessage(`Tarife silinemedi: ${error.message}`, "error", redirectTo);
+  }
+
+  revalidatePath("/tarifeler");
+  revalidatePath("/admin/tarifeler");
+  redirectWithMessage("Tarife silindi.", "success", redirectTo);
 }

@@ -21,10 +21,12 @@ function getMobileNavMeta(href: string, label: string) {
   switch (href) {
     case "/kampanyalar":
       return { icon: "◉", shortLabel: "Bugun" };
+    case "/tarifeler":
+      return { icon: "◈", shortLabel: "Tarife" };
     case "/lig":
       return { icon: "★", shortLabel: "Yildiz" };
     case "/bildirimler":
-      return { icon: "◌", shortLabel: "Bildirim" };
+      return { icon: "◎", shortLabel: "Bildirim" };
     case "/admin":
       return { icon: "▣", shortLabel: "Admin" };
     case "/hesabim":
@@ -108,31 +110,26 @@ export function AppShellHeader() {
 
     const commonApproved: NavItem[] = [
       { href: "/kampanyalar", label: "Gunluk Kampanyalar" },
+      { href: "/tarifeler", label: "Tarifeler" },
       { href: "/bildirimler", label: "Bildirimler" },
       { href: "/lig", label: "Yildizlar Kulubu" },
       { href: "/hesabim", label: "Hesabim" }
     ];
 
-    if (profile.role === "employee") {
-      return commonApproved;
-    }
-
-    if (profile.role === "manager") {
-      return commonApproved;
-    }
-
-    if (profile.role === "management") {
+    if (profile.role === "employee" || profile.role === "manager" || profile.role === "management") {
       return commonApproved;
     }
 
     return [
       { href: "/kampanyalar", label: "Gunluk Kampanyalar" },
+      { href: "/tarifeler", label: "Tarifeler" },
       { href: "/lig", label: "Yildizlar Kulubu" },
       { href: "/bildirimler", label: "Bildirimler" },
       { href: "/admin", label: "Admin" },
       { href: "/hesabim", label: "Hesabim" }
     ];
   }, [loggedIn, profile, ready]);
+
   const mobilePrimaryNav = useMemo(() => navItems.slice(0, 4), [navItems]);
 
   return (
@@ -186,7 +183,7 @@ export function AppShellHeader() {
                     className={`mobile-tab ${pathname === item.href ? "mobile-tab-active" : ""}`}
                     href={item.href}
                   >
-                    <span className="mobile-tab-icon" aria-hidden="true">
+                    <span aria-hidden="true" className="mobile-tab-icon">
                       {meta.icon}
                     </span>
                     <span className="mobile-tab-label">{meta.shortLabel}</span>

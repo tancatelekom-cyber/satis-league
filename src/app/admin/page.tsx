@@ -81,6 +81,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           <strong>Canli Kampanyalar</strong>
           <span>Kampanya olustur, odul ekle, sonlandir veya sil.</span>
         </a>
+        <a className="admin-quick-card" href="/admin/tarifeler">
+          <strong>Tarifeler</strong>
+          <span>Turkcell tarifelerini ekle, duzenle ve kategorilere ayir.</span>
+        </a>
         <a className="admin-quick-card" href="/admin/magazalar">
           <strong>Magazalar</strong>
           <span>Kayit ekraninda gorunen magazalari burada yonet.</span>

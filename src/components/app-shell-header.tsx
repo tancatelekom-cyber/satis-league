@@ -40,7 +40,7 @@ export function AppShellHeader() {
       <header className="topbar topbar-app">
         <Link className="brand" href="/" onClick={() => setMenuOpen(false)}>
           <span className="brand-badge">T+</span>
-          <span>TANCA SUPER LIG</span>
+          <span>TANCA+</span>
         </Link>
 
         <div className={`nav-cluster ${menuOpen ? "nav-cluster-open" : ""}`}>
@@ -80,4 +80,3 @@ export function AppShellHeader() {
     </>
   );
 }
-

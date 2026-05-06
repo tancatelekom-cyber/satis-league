@@ -13,7 +13,6 @@ type SeasonSaleRow = {
 type HomeLeaderCard = {
   seasonId: string;
   seasonName: string;
-  seasonMode: "employee" | "store";
   winnerName: string;
   score: number;
   monthLabel: string;
@@ -103,7 +102,6 @@ export default async function HomePage() {
       return {
         seasonId: season.id,
         seasonName: season.name,
-        seasonMode: season.mode,
         winnerName: "Bu ay sezon aktif degil",
         score: 0,
         monthLabel,
@@ -139,7 +137,6 @@ export default async function HomePage() {
       return {
         seasonId: season.id,
         seasonName: season.name,
-        seasonMode: season.mode,
         winnerName: winner && winner.score > 0 ? winner.label : "Henuz satis yok",
         score: winner?.score ?? 0,
         monthLabel,
@@ -161,7 +158,6 @@ export default async function HomePage() {
     return {
       seasonId: season.id,
       seasonName: season.name,
-      seasonMode: season.mode,
       winnerName: winner && winner.score > 0 ? winner.label : "Henuz satis yok",
       score: winner?.score ?? 0,
       monthLabel,
@@ -195,9 +191,6 @@ export default async function HomePage() {
                   <span className="home-leader-season">{card.seasonName}</span>
                   <strong>{card.monthLabel}</strong>
                 </div>
-                <span className={`home-leader-mode ${card.seasonMode === "store" ? "home-leader-mode-store" : ""}`}>
-                  {card.seasonMode === "store" ? "Magaza" : "Calisan"}
-                </span>
               </div>
 
               <div className="home-leader-body">
@@ -210,8 +203,6 @@ export default async function HomePage() {
                   <strong className="home-leader-name">{card.winnerName}</strong>
                   <span className="home-leader-score">{card.score.toLocaleString("tr-TR")} toplam skor</span>
                 </div>
-
-                <span className="home-leader-open">Sezonu Ac</span>
               </div>
             </Link>
           ))

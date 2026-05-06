@@ -317,13 +317,13 @@ button {
 
 .home-leader-stack {
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .home-leader-card {
   border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: 22px;
-  padding: 12px 14px;
+  border-radius: 20px;
+  padding: 10px 12px;
   background:
     radial-gradient(circle at top right, rgba(255, 209, 102, 0.14), transparent 26%),
     linear-gradient(135deg, rgba(8, 18, 34, 0.98), rgba(15, 29, 58, 0.96));
@@ -350,13 +350,13 @@ button {
 .home-leader-head strong {
   display: block;
   margin-top: 2px;
-  font-size: 0.9rem;
+  font-size: 0.84rem;
 }
 
 .home-leader-season {
   display: block;
   color: var(--muted);
-  font-size: 0.74rem;
+  font-size: 0.7rem;
   letter-spacing: 0.03em;
   text-transform: uppercase;
 }
@@ -364,42 +364,42 @@ button {
 .home-leader-month {
   display: inline-flex;
   align-items: center;
-  padding: 5px 9px;
+  padding: 4px 8px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.06);
   color: var(--text);
-  font-size: 0.76rem;
+  font-size: 0.72rem;
   font-weight: 800;
 }
 
 .home-leader-body {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 10px;
+  gap: 8px;
   align-items: center;
-  margin-top: 10px;
+  margin-top: 8px;
 }
 
 .home-leader-trophy {
   display: grid;
   justify-items: center;
   gap: 4px;
-  min-width: 50px;
-  padding: 7px 6px;
-  border-radius: 16px;
+  min-width: 46px;
+  padding: 6px 5px;
+  border-radius: 14px;
   background: linear-gradient(180deg, rgba(255, 209, 102, 0.22), rgba(88, 240, 196, 0.16));
   border: 1px solid rgba(255, 255, 255, 0.14);
 }
 
 .home-leader-trophy-rank {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 900;
   color: #09111f;
 }
 
 .home-leader-trophy-icon {
-  font-size: 1.15rem;
+  font-size: 1rem;
   line-height: 1;
 }
 
@@ -409,13 +409,13 @@ button {
 }
 
 .home-leader-name {
-  font-size: clamp(0.96rem, 2.3vw, 1.1rem);
+  font-size: clamp(0.9rem, 2.1vw, 1rem);
   line-height: 1.05;
 }
 
 .home-leader-score {
   color: var(--muted);
-  font-size: 0.84rem;
+  font-size: 0.78rem;
 }
 
 .hero-card,
@@ -2440,8 +2440,8 @@ button {
   }
 
   .home-leader-card {
-    padding: 11px 12px;
-    border-radius: 18px;
+    padding: 10px 11px;
+    border-radius: 16px;
   }
 
   .home-leader-head,
@@ -2456,7 +2456,7 @@ button {
 
   .home-leader-body {
     margin-top: 8px;
-    gap: 8px;
+    gap: 7px;
   }
 
   .home-leader-trophy {
@@ -2465,7 +2465,7 @@ button {
     align-items: center;
     min-width: 0;
     width: fit-content;
-    padding: 7px 9px;
+    padding: 6px 8px;
   }
 
   .nav-cluster-open .nav-links {

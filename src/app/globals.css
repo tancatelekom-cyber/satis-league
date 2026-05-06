@@ -139,6 +139,8 @@ button {
   gap: 12px;
   font-weight: 700;
   letter-spacing: 0.03em;
+  color: #f7faff;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.22);
 }
 
 .brand-badge {
@@ -228,6 +230,7 @@ button {
   background: var(--card);
   box-shadow: var(--shadow);
   padding: 14px 14px 12px;
+  color: #f5f8ff;
 }
 
 .device-card-top {
@@ -241,23 +244,26 @@ button {
   display: block;
   font-size: 1.05rem;
   letter-spacing: 0.01em;
+  color: #f8fbff;
 }
 
 .device-card-meta {
   display: block;
   margin-top: 4px;
-  color: var(--muted);
+  color: #d4e2f6;
   font-size: 0.92rem;
 }
 
 .device-card-total {
   text-align: right;
+  color: #eff6ff;
 }
 
 .device-card-total strong {
   display: block;
   margin-top: 2px;
   font-size: 1.05rem;
+  color: #fefefe;
 }
 
 .device-card-grid {
@@ -323,13 +329,19 @@ button {
   padding: 10px 12px;
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.08);
+  color: #dbe7f8;
+}
+
+.device-card-kv span {
+  color: #d7e3f5;
 }
 
 .device-card-kv strong {
   display: block;
   margin-top: 4px;
   font-size: 1.02rem;
+  color: #ffffff;
 }
 
 .mobile-tabbar {
@@ -2470,12 +2482,13 @@ textarea::placeholder {
     gap: 10px;
   }
 
-  .brand {
+.brand {
     gap: 10px;
     font-size: 0.82rem;
     line-height: 1;
     letter-spacing: 0.01em;
     white-space: nowrap;
+    color: #f7faff;
   }
 
   .brand-badge {

@@ -374,10 +374,12 @@ button {
     radial-gradient(circle at top right, rgba(255, 209, 102, 0.14), transparent 26%),
     linear-gradient(135deg, rgba(8, 18, 34, 0.98), rgba(15, 29, 58, 0.96));
   box-shadow: var(--shadow);
+  color: #f7fbff;
 }
 
 .home-leader-card-link {
   display: block;
+  color: inherit;
   transition: transform 0.2s ease, border-color 0.2s ease;
 }
 
@@ -397,11 +399,12 @@ button {
   display: block;
   margin-top: 2px;
   font-size: 0.84rem;
+  color: #f0f7ff;
 }
 
 .home-leader-season {
   display: block;
-  color: var(--muted);
+  color: #d2e1f6;
   font-size: 0.7rem;
   letter-spacing: 0.03em;
   text-transform: uppercase;
@@ -457,11 +460,17 @@ button {
 .home-leader-name {
   font-size: clamp(0.9rem, 2.1vw, 1rem);
   line-height: 1.05;
+  color: #ffffff;
 }
 
 .home-leader-score {
-  color: var(--muted);
+  color: #e1ebf9;
   font-size: 0.78rem;
+}
+
+.home-leader-card .page-subtitle {
+  color: #dbe7f8;
+  margin-bottom: 0;
 }
 
 .hero-card,

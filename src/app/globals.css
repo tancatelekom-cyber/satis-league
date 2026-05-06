@@ -39,11 +39,12 @@ body {
   position: relative;
   margin: 0;
   font-family: Arial, Helvetica, sans-serif;
-  color: var(--text);
+  color: #10203b;
   background:
-    radial-gradient(circle at 18% 14%, rgba(47, 88, 168, 0.12), transparent 22%),
-    radial-gradient(circle at 84% 26%, rgba(255, 210, 58, 0.12), transparent 20%),
-    linear-gradient(180deg, #f8f5ef 0%, #f5f1e8 100%);
+    radial-gradient(circle at 16% 18%, rgba(120, 196, 255, 0.2), transparent 20%),
+    radial-gradient(circle at 82% 24%, rgba(255, 223, 122, 0.18), transparent 18%),
+    radial-gradient(circle at 50% 78%, rgba(159, 228, 208, 0.18), transparent 24%),
+    linear-gradient(180deg, #fbfcff 0%, #f4f8ff 34%, #fffdf8 68%, #f7fbff 100%);
 }
 
 body::before,
@@ -58,16 +59,24 @@ body::after {
 
 body::before {
   top: 0;
-  height: 112px;
+  height: 280px;
   background:
-    linear-gradient(180deg, rgba(36, 78, 161, 0.98) 0%, rgba(56, 99, 189, 0.96) 72%, rgba(56, 99, 189, 0) 100%);
+    radial-gradient(56% 120% at 8% 0%, rgba(93, 138, 226, 0.34) 0%, rgba(93, 138, 226, 0.18) 40%, transparent 72%),
+    radial-gradient(52% 120% at 84% 6%, rgba(104, 214, 197, 0.22) 0%, rgba(104, 214, 197, 0.12) 42%, transparent 74%),
+    radial-gradient(44% 90% at 50% 100%, rgba(255, 222, 127, 0.22) 0%, rgba(255, 222, 127, 0.08) 42%, transparent 76%);
+  opacity: 0.95;
+  filter: blur(8px);
 }
 
 body::after {
   bottom: 0;
-  height: 108px;
+  height: 240px;
   background:
-    linear-gradient(0deg, rgba(255, 198, 24, 0.98) 0%, rgba(255, 214, 72, 0.96) 68%, rgba(255, 214, 72, 0) 100%);
+    radial-gradient(62% 120% at 18% 100%, rgba(255, 210, 94, 0.24) 0%, rgba(255, 210, 94, 0.12) 44%, transparent 72%),
+    radial-gradient(56% 120% at 82% 100%, rgba(102, 162, 255, 0.2) 0%, rgba(102, 162, 255, 0.1) 42%, transparent 74%),
+    radial-gradient(46% 90% at 50% 0%, rgba(120, 223, 197, 0.16) 0%, rgba(120, 223, 197, 0.08) 38%, transparent 72%);
+  opacity: 0.92;
+  filter: blur(10px);
 }
 
 a {

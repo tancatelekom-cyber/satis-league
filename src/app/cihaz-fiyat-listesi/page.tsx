@@ -140,6 +140,46 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
         ) : null}
       </section>
 
+      <section className="device-cards" aria-label="Cihaz kartlari">
+        {filteredRows.length === 0 ? (
+          <div className="device-empty">
+            {fetchError ? "Cihaz listesi su an okunamiyor." : "Seciminize uygun cihaz bulunamadi."}
+          </div>
+        ) : (
+          filteredRows.map((item) => (
+            <article key={item.id} className="device-card">
+              <div className="device-card-top">
+                <div className="device-card-title">
+                  <strong>{item.productName}</strong>
+                  <span className="device-card-meta">
+                    {item.brand} {item.category ? `• ${item.category}` : ""}
+                  </span>
+                </div>
+                <div className="device-card-total">
+                  <span className="subtle">Toplam</span>
+                  <strong>{formatCurrency(item.totalPayable)}</strong>
+                </div>
+              </div>
+
+              <div className="device-card-grid">
+                <div className="device-card-kv">
+                  <span className="subtle">Pesine Kontrat</span>
+                  <strong>{formatCurrency(item.contractCashPrice)}</strong>
+                </div>
+                <div className="device-card-kv">
+                  <span className="subtle">Taksit</span>
+                  <strong>{item.installmentCount > 0 ? `${item.installmentCount} Ay` : "-"}</strong>
+                </div>
+                <div className="device-card-kv device-card-kv-wide">
+                  <span className="subtle">Aylik</span>
+                  <strong>{isCashContractRow(item) ? "Pesin/Kontrat" : formatCurrency(item.monthlyInstallment)}</strong>
+                </div>
+              </div>
+            </article>
+          ))
+        )}
+      </section>
+
       <section className="season-entry-table-wrap">
         <table className="season-entry-table device-price-table">
           <thead>

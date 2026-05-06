@@ -82,9 +82,6 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
   return (
     <main>
       <h1 className="page-title">Cihaz Fiyat Listesi</h1>
-      <p className="page-subtitle">
-        Google Sheet uzerinden canli okunan cihaz listesini kategori, marka ve urune gore filtreleyin.
-      </p>
 
       <section className="guide-card game-brief-card">
         <div className="league-filter-grid">

@@ -3,7 +3,6 @@ import { FilterSelectNav } from "@/components/ui/filter-select-nav";
 import { createClient } from "@/lib/supabase/server";
 import {
   buildDistinctOptions,
-  DEVICE_SHEET_URL,
   fetchDevicePriceRows
 } from "@/lib/device-price-list";
 
@@ -133,11 +132,6 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
               ]}
             />
           </div>
-        </div>
-
-        <div className="tariff-active-preset">
-          <strong>Canli Google Sheet Baglantisi</strong>
-          <span>{DEVICE_SHEET_URL}</span>
         </div>
 
         {fetchError ? (

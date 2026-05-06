@@ -106,7 +106,9 @@ export async function fetchDevicePriceRows() {
     .slice(1)
     .map((row, index): DevicePriceRow | null => {
       const category = normalizeText(row[0] ?? "");
-      const brand = normalizeText(row[1] ?? "");
+      // Sheet mapping (0-indexed):
+      // A: kategori, C: marka, E: urun adi, H: taksit sayisi, J: aylik taksit, N: pesin/kontrat tutari
+      const brand = normalizeText(row[2] ?? "");
       const productName = normalizeText(row[4] ?? "");
       const installmentCount = Math.round(parseLocalizedNumber(row[7] ?? ""));
       const monthlyInstallment = parseLocalizedNumber(row[9] ?? "");

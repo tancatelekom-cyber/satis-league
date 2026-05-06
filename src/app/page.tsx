@@ -171,8 +171,7 @@ export default async function HomePage() {
     <main>
       <section className="hero home-leaders-hero">
         <div className="hero-copy">
-          <h1>TANCA+</h1>
-          <p className="page-subtitle">Bu ayin sezon liderleri</p>
+          <h1>AYIN SAMPIONLARI</h1>
         </div>
       </section>
 

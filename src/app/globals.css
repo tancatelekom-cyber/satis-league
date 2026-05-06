@@ -465,6 +465,7 @@ button {
   background: var(--card);
   box-shadow: var(--shadow);
   animation: fadeUp 0.55s ease both;
+  color: #f5f8fe;
 }
 
 .hero-copy h1 {
@@ -616,8 +617,31 @@ button {
 .admin-card p,
 .leaderboard-card p,
 .guide-card p {
-  color: var(--muted);
+  color: #d1e0f6;
   line-height: 1.7;
+}
+
+.metric-card span,
+.guide-card span,
+.home-leader-season,
+.home-leader-score,
+.league-mini-card span,
+.compact-detail-card summary span,
+.admin-shortcut-card span,
+.admin-overview-card span,
+.admin-quick-card span,
+.admin-overview-card p,
+.player-spotlight-copy p,
+.mission-card p,
+.spotlight-stat span,
+.battle-stat-card span,
+.battle-stat-card p,
+.repeater-actions span,
+.summary-row span,
+.notification-item p,
+.mission-pill,
+.quick-add-chip {
+  color: #cfe0f8;
 }
 
 .page-title {
@@ -1302,6 +1326,7 @@ textarea::placeholder {
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.04);
+  color: #f5f8fe;
 }
 
 .admin-shortcut-card strong,
@@ -1703,8 +1728,8 @@ textarea::placeholder {
 .inline-feedback {
   padding: 12px 14px;
   border-radius: 14px;
-  color: #b5ffec;
-  background: rgba(88, 240, 196, 0.12);
+  color: #0f3b33;
+  background: rgba(153, 248, 222, 0.55);
 }
 
 .message-box {
@@ -1714,13 +1739,13 @@ textarea::placeholder {
 }
 
 .error-box {
-  background: rgba(255, 107, 107, 0.12);
-  color: #ffc0c0;
+  background: rgba(255, 196, 196, 0.72);
+  color: #6e1f1f;
 }
 
 .success-box {
-  background: rgba(88, 240, 196, 0.12);
-  color: #b5ffec;
+  background: rgba(172, 248, 224, 0.72);
+  color: #14483d;
 }
 
 .profile-summary {

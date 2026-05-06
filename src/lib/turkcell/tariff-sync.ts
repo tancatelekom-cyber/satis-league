@@ -144,8 +144,15 @@ function collectPackageObjects(value: unknown, collected: TurkcellPackage[] = []
 }
 
 function isDigitalOnly(pkg: TurkcellPackage) {
-  const text = `${pkg.title ?? ""} ${pkg.shortDescription ?? ""}`.toLocaleLowerCase("tr-TR");
-  return /online.?a ozel|online ozel|dijital.?e ozel|dijital ozel|sadece dijital|sadece online/.test(text);
+  const selectedTagText = (pkg.selectedTags ?? [])
+    .map((tag) => normalizeText(tag?.title ?? ""))
+    .join(" ")
+    .toLocaleLowerCase("tr-TR");
+  const text = `${pkg.title ?? ""} ${pkg.shortDescription ?? ""} ${selectedTagText}`.toLocaleLowerCase("tr-TR");
+
+  return /online.?a ozel|online ozel|online.?ozel|dijital.?e ozel|dijital ozel|dijital.?ozel|sadece dijital|sadece online|web.?e ozel|uygulama.?ya ozel/.test(
+    text
+  );
 }
 
 function isCorePostpaidTariff(pkg: TurkcellPackage) {
@@ -160,6 +167,10 @@ function isCorePostpaidTariff(pkg: TurkcellPackage) {
   }
 
   if (pkg.price?.onlineExclusive) {
+    return false;
+  }
+
+  if (isDigitalOnly(pkg)) {
     return false;
   }
 
@@ -300,7 +311,7 @@ function packageToTariff(pkg: TurkcellPackageSource): TariffUpsertPayload {
     sms: Math.round(benefits.sms),
     price: Number(item.price?.amountDouble ?? toNumber(item.price?.amount)),
     details: details || null,
-    is_online_only: Boolean(item.price?.onlineExclusive),
+    is_online_only: Boolean(item.price?.onlineExclusive) || isDigitalOnly(item),
     is_digital_only: isDigitalOnly(item),
     is_active: true,
     scraped_at: now,

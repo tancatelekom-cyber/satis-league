@@ -39,17 +39,6 @@ function isCashContractRow(item: { monthlyInstallment: number; installmentCount:
   return item.monthlyInstallment <= 0 || item.installmentCount <= 0;
 }
 
-function formatInstallmentDetail(installmentCount: number, monthlyInstallment: number) {
-  if (!installmentCount || installmentCount <= 0 || !monthlyInstallment || monthlyInstallment <= 0) {
-    return "-";
-  }
-
-  return `${installmentCount} Ay x ${monthlyInstallment.toLocaleString("tr-TR", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  })} TL`;
-}
-
 export default async function DevicePriceListPage({ searchParams }: DevicePriceListPageProps) {
   const params = searchParams ? await searchParams : undefined;
   const selectedCategory = String(params?.category ?? "").trim();
@@ -154,13 +143,11 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
         ) : null}
       </section>
 
-      {singleItem ? (
+      {singleItem && isSingleCashContract ? (
         <section className="device-product-topline" aria-label="Urun ozeti">
           <strong>{singleItem.productName}</strong>
           <span className="device-product-topline-pill">
-            {isSingleCashContract
-              ? `Pesine Kontrat: ${formatCurrency(singleItem.contractCashPrice ?? singleItem.totalPayable)}`
-              : `${singleItem.installmentCount} Ay x ${formatCurrency(singleItem.monthlyInstallment)}`}
+            Pesine Kontrat: {formatCurrency(singleItem.contractCashPrice ?? singleItem.totalPayable)}
           </span>
         </section>
       ) : null}
@@ -196,14 +183,16 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
               {!isCashContractRow(item) ? (
                 <div className="device-card-grid">
                   <div className="device-card-kv">
-                    <span className="subtle">Taksit</span>
+                    <span className="subtle">Taksit Sayisi</span>
                     <strong>{item.installmentCount > 0 ? `${item.installmentCount} Ay` : "-"}</strong>
                   </div>
-                  <div className="device-card-kv device-card-kv-wide">
-                    <span className="subtle">Detay</span>
-                    <strong>
-                      {formatInstallmentDetail(item.installmentCount, item.monthlyInstallment)}
-                    </strong>
+                  <div className="device-card-kv">
+                    <span className="subtle">Taksit Tutari</span>
+                    <strong>{formatCurrency(item.monthlyInstallment)}</strong>
+                  </div>
+                  <div className="device-card-kv">
+                    <span className="subtle">Toplam Tutar</span>
+                    <strong>{formatCurrency(item.totalPayable)}</strong>
                   </div>
                 </div>
               ) : null}

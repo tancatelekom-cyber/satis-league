@@ -2,6 +2,8 @@ import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { SeasonRecord } from "@/lib/types";
 
+export const dynamic = "force-dynamic";
+
 type SeasonSaleRow = {
   season_id: string;
   target_profile_id: string | null;

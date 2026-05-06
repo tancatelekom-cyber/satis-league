@@ -1224,7 +1224,7 @@ export async function updateApprovalAction(formData: FormData) {
       approval === "approved"
         ? "Admin kaydinizi onayladi. Artik kampanyalara girip skor toplayabilirsiniz."
         : "Kayit talebiniz admin tarafinda reddedildi. Gerekirse yeni kayit acabilirsiniz.",
-    linkPath: approval === "approved" ? "/kampanyalar" : "/hesabim",
+    linkPath: approval === "approved" ? "/" : "/hesabim",
     level: approval === "approved" ? "success" : "warning",
     profileIds: [profileId]
   });

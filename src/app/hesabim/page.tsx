@@ -113,8 +113,8 @@ export default async function AccountPage() {
 
           {profile?.approval === "approved" ? (
             <div className="action-row">
-              <Link className="button-primary" href="/kampanyalar">
-                Kampanya Ekranina Git
+              <Link className="button-primary" href="/">
+                Ana Ekrana Git
               </Link>
             </div>
           ) : null}

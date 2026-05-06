@@ -94,9 +94,9 @@ button {
   padding: 14px 16px;
   margin-top: 14px;
   border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--text);
+  border: 1px solid rgba(16, 32, 59, 0.12);
+  background: rgba(255, 255, 255, 0.72);
+  color: #10203b;
 }
 
 .notice strong {
@@ -105,7 +105,7 @@ button {
 }
 
 .notice span {
-  color: var(--muted);
+  color: #556985;
   font-size: 0.95rem;
 }
 
@@ -217,9 +217,9 @@ button {
 .device-empty {
   padding: 14px 16px;
   border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--muted);
+  border: 1px solid rgba(16, 32, 59, 0.12);
+  background: rgba(255, 255, 255, 0.72);
+  color: #556985;
 }
 
 .device-card {
@@ -650,34 +650,36 @@ button {
 
 .season-entry-chip {
   padding: 16px 18px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(16, 32, 59, 0.12);
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.72);
 }
 
 .season-entry-chip span {
   display: block;
   margin-bottom: 6px;
-  color: var(--muted);
+  color: #556985;
   font-size: 0.9rem;
 }
 
 .season-entry-chip strong {
   display: block;
   font-size: 1.05rem;
+  color: #10203b;
 }
 
 .season-entry-tip {
   margin-top: -2px;
   margin-bottom: 18px;
-  color: var(--muted);
+  color: #556985;
 }
 
 .season-entry-table-wrap {
   overflow-x: auto;
   margin-top: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(16, 32, 59, 0.12);
   border-radius: 20px;
+  background: rgba(255, 255, 255, 0.72);
 }
 
 .season-entry-table {
@@ -694,9 +696,10 @@ button {
 }
 
 .season-entry-table th {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(224, 232, 244, 0.88);
   text-align: left;
   font-size: 0.92rem;
+  color: #10203b;
 }
 
 .season-entry-table th span,
@@ -708,7 +711,7 @@ button {
 .season-entry-table td small {
   display: block;
   margin-top: 4px;
-  color: var(--muted);
+  color: #5b6f8a;
 }
 
 .season-entry-row-form {
@@ -729,7 +732,7 @@ button {
 
 .season-entry-cell span {
   font-size: 0.78rem;
-  color: var(--muted);
+  color: #5b6f8a;
 }
 
 .season-entry-cell input {
@@ -804,7 +807,7 @@ button {
 .league-filter-label {
   display: block;
   margin: 0;
-  color: var(--text);
+  color: #10203b;
   font-size: 0.95rem;
   font-weight: 800;
 }
@@ -850,13 +853,24 @@ button {
 }
 
 .tariff-active-preset strong {
-  color: #dffdf6;
+  color: #10203b;
   font-size: 0.95rem;
 }
 
 .tariff-active-preset span {
-  color: var(--muted);
+  color: #556985;
   font-size: 0.88rem;
+}
+
+input,
+select,
+textarea {
+  color: #10203b;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #70839d;
 }
 
 .campaign-directory-card {

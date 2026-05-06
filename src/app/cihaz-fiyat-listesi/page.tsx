@@ -61,7 +61,14 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
     redirect("/hesabim");
   }
 
-  const allRows = await fetchDevicePriceRows();
+  let allRows = [] as Awaited<ReturnType<typeof fetchDevicePriceRows>>;
+  let fetchError = "";
+  try {
+    allRows = await fetchDevicePriceRows();
+  } catch (error) {
+    fetchError = error instanceof Error ? error.message : "Cihaz listesi okunamadi.";
+    allRows = [];
+  }
   const categoryOptions = buildDistinctOptions(allRows.map((item) => item.category));
   const categoryRows = selectedCategory ? allRows.filter((item) => item.category === selectedCategory) : allRows;
   const brandOptions = buildDistinctOptions(categoryRows.map((item) => item.brand));
@@ -132,6 +139,14 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
           <strong>Canli Google Sheet Baglantisi</strong>
           <span>{DEVICE_SHEET_URL}</span>
         </div>
+
+        {fetchError ? (
+          <div className="notice danger" role="alert">
+            <strong>Cihaz listesi okunamadi.</strong>
+            <span>{fetchError}</span>
+            <span>Biraz sonra tekrar deneyin. Sorun devam ederse Sheet erisimini kontrol edin.</span>
+          </div>
+        ) : null}
       </section>
 
       <section className="season-entry-table-wrap">
@@ -151,7 +166,7 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
             {filteredRows.length === 0 ? (
               <tr>
                 <td className="device-empty-row" colSpan={7}>
-                  Seciminize uygun cihaz bulunamadi.
+                  {fetchError ? "Cihaz listesi su an okunamiyor." : "Seciminize uygun cihaz bulunamadi."}
                 </td>
               </tr>
             ) : (

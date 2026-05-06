@@ -82,6 +82,10 @@ export async function fetchDevicePriceRows() {
     next: {
       // Google Sheet is public and updated occasionally; keep a 24h cache to reduce load.
       revalidate: 60 * 60 * 24
+    },
+    headers: {
+      // Helps some CDNs return the CSV instead of an HTML consent page.
+      accept: "text/csv, text/plain, */*"
     }
   });
 

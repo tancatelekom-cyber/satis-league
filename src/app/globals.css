@@ -54,6 +54,32 @@ button {
   font: inherit;
 }
 
+.notice {
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px;
+  margin-top: 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+}
+
+.notice strong {
+  font-weight: 900;
+  letter-spacing: 0.01em;
+}
+
+.notice span {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.notice.danger {
+  border-color: rgba(255, 107, 107, 0.38);
+  background: linear-gradient(135deg, rgba(255, 107, 107, 0.14), rgba(255, 255, 255, 0.04));
+}
+
 .page-shell {
   width: min(1160px, calc(100% - 32px));
   margin: 0 auto;

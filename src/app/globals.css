@@ -2331,7 +2331,20 @@ button {
     top: calc(100% + 10px);
     right: 0;
     min-width: 210px;
+    padding: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 20px;
+    background: rgba(5, 12, 24, 0.98);
+    backdrop-filter: blur(24px);
     box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+  }
+
+  .nav-cluster-open .nav-link {
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .nav-cluster-open .nav-link-active {
+    background: linear-gradient(180deg, rgba(88, 240, 196, 0.18), rgba(88, 240, 196, 0.1));
   }
 
   .device-cards {

@@ -10,9 +10,13 @@ export type DevicePriceRow = {
 };
 
 const DEVICE_SHEET_ID = "1ya4e8B6MkdcL4CqPaMwwxIXVIPD9CEFjN9Jtlyf70hI";
-const DEVICE_SHEET_GID = "0";
+const DEVICE_SHEET_NAME = "Sayfa1";
 
-export const DEVICE_SHEET_URL = `https://docs.google.com/spreadsheets/d/${DEVICE_SHEET_ID}/export?format=csv&gid=${DEVICE_SHEET_GID}`;
+// Prefer sheet name over gid to reduce mismatch issues when tabs are reordered/duplicated.
+// gviz endpoint is also more reliable for public sheets on some deployments.
+export const DEVICE_SHEET_URL = `https://docs.google.com/spreadsheets/d/${DEVICE_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(
+  DEVICE_SHEET_NAME
+)}`;
 
 function parseCsv(text: string) {
   const rows: string[][] = [];
@@ -85,7 +89,9 @@ export async function fetchDevicePriceRows() {
     },
     headers: {
       // Helps some CDNs return the CSV instead of an HTML consent page.
-      accept: "text/csv, text/plain, */*"
+      accept: "text/csv, text/plain, */*",
+      // Some hosts return 401/403 unless a UA is present.
+      "user-agent": "Mozilla/5.0 (compatible; TancaSuperLigBot/1.0; +https://vercel.app)"
     }
   });
 

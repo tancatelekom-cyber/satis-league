@@ -90,6 +90,8 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
     ? brandRows.filter((item) => item.productName === effectiveProduct)
     : brandRows;
   const isSingleProductView = Boolean(effectiveProduct);
+  const singleItem = isSingleProductView && filteredRows.length > 0 ? filteredRows[0] : null;
+  const isSingleCashContract = singleItem ? isCashContractRow(singleItem) : false;
 
   return (
     <main>
@@ -103,9 +105,9 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
               ariaLabel="Cihaz kategori secimi"
               value={buildHref(selectedCategory, effectiveBrand, effectiveProduct)}
               options={[
-                { value: buildHref("", "", ""), label: "Tum Kategoriler" },
+                { value: buildHref("", selectedBrand, selectedProduct), label: "Tum Kategoriler" },
                 ...categoryOptions.map((category) => ({
-                  value: buildHref(category, "", ""),
+                  value: buildHref(category, selectedBrand, selectedProduct),
                   label: category
                 }))
               ]}
@@ -118,9 +120,9 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
               ariaLabel="Cihaz marka secimi"
               value={buildHref(selectedCategory, effectiveBrand, effectiveProduct)}
               options={[
-                { value: buildHref(selectedCategory, "", ""), label: "Tum Markalar" },
+                { value: buildHref(selectedCategory, "", selectedProduct), label: "Tum Markalar" },
                 ...brandOptions.map((brand) => ({
-                  value: buildHref(selectedCategory, brand, ""),
+                  value: buildHref(selectedCategory, brand, selectedProduct),
                   label: brand
                 }))
               ]}
@@ -152,11 +154,13 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
         ) : null}
       </section>
 
-      {isSingleProductView && filteredRows.length > 0 ? (
+      {singleItem ? (
         <section className="device-product-topline" aria-label="Urun ozeti">
-          <strong>{filteredRows[0].productName}</strong>
+          <strong>{singleItem.productName}</strong>
           <span className="device-product-topline-pill">
-            Pesine Kontrat: {formatCurrency(filteredRows[0].contractCashPrice ?? filteredRows[0].totalPayable)}
+            {isSingleCashContract
+              ? `Pesine Kontrat: ${formatCurrency(singleItem.contractCashPrice ?? singleItem.totalPayable)}`
+              : `${singleItem.installmentCount} Ay x ${formatCurrency(singleItem.monthlyInstallment)}`}
           </span>
         </section>
       ) : null}
@@ -182,14 +186,14 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
                 </div>
               </div>
 
-              {!isSingleProductView && item.contractCashPrice ? (
+              {item.contractCashPrice ? (
                 <div className="device-contract-pill">
                   <span>Pesine Kontrat</span>
                   <strong>{formatCurrency(item.contractCashPrice)}</strong>
                 </div>
               ) : null}
 
-              {!isSingleProductView ? (
+              {!isCashContractRow(item) ? (
                 <div className="device-card-grid">
                   <div className="device-card-kv">
                     <span className="subtle">Taksit</span>
@@ -198,9 +202,7 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
                   <div className="device-card-kv device-card-kv-wide">
                     <span className="subtle">Detay</span>
                     <strong>
-                      {isCashContractRow(item)
-                        ? "Pesin/Kontrat"
-                        : formatInstallmentDetail(item.installmentCount, item.monthlyInstallment)}
+                      {formatInstallmentDetail(item.installmentCount, item.monthlyInstallment)}
                     </strong>
                   </div>
                 </div>

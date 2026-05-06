@@ -36,13 +36,38 @@ html {
 }
 
 body {
+  position: relative;
   margin: 0;
   font-family: Arial, Helvetica, sans-serif;
   color: var(--text);
   background:
-    radial-gradient(circle at top left, rgba(88, 240, 196, 0.16), transparent 28%),
-    radial-gradient(circle at top right, rgba(255, 209, 102, 0.14), transparent 24%),
-    linear-gradient(180deg, #09111f 0%, #0e1830 100%);
+    radial-gradient(circle at 18% 14%, rgba(47, 88, 168, 0.12), transparent 22%),
+    radial-gradient(circle at 84% 26%, rgba(255, 210, 58, 0.12), transparent 20%),
+    linear-gradient(180deg, #f8f5ef 0%, #f5f1e8 100%);
+}
+
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  left: 0;
+  width: 100%;
+  pointer-events: none;
+  z-index: -1;
+}
+
+body::before {
+  top: 0;
+  height: 112px;
+  background:
+    linear-gradient(180deg, rgba(36, 78, 161, 0.98) 0%, rgba(56, 99, 189, 0.96) 72%, rgba(56, 99, 189, 0) 100%);
+}
+
+body::after {
+  bottom: 0;
+  height: 108px;
+  background:
+    linear-gradient(0deg, rgba(255, 198, 24, 0.98) 0%, rgba(255, 214, 72, 0.96) 68%, rgba(255, 214, 72, 0) 100%);
 }
 
 a {
@@ -437,11 +462,12 @@ button {
   margin: 0 0 16px;
   font-size: clamp(2.4rem, 5vw, 4.8rem);
   line-height: 0.95;
+  color: #10203b;
 }
 
 .hero-copy p {
   max-width: 62ch;
-  color: var(--muted);
+  color: #4d607d;
   font-size: 1.05rem;
   line-height: 1.7;
 }
@@ -531,11 +557,12 @@ button {
 .section-title h2 {
   margin: 0;
   font-size: clamp(1.6rem, 2vw, 2.2rem);
+  color: #10203b;
 }
 
 .section-title p {
   margin: 0;
-  color: var(--muted);
+  color: #536785;
 }
 
 .metrics-grid {
@@ -587,11 +614,12 @@ button {
 .page-title {
   margin: 28px 0 10px;
   font-size: clamp(2rem, 4vw, 3rem);
+  color: #10203b;
 }
 
 .page-subtitle {
   margin: 0 0 26px;
-  color: var(--muted);
+  color: #526684;
   max-width: 70ch;
 }
 

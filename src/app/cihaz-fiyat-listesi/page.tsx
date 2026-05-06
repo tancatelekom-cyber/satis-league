@@ -39,6 +39,17 @@ function isCashContractRow(item: { monthlyInstallment: number; installmentCount:
   return item.monthlyInstallment <= 0 || item.installmentCount <= 0;
 }
 
+function formatInstallmentDetail(installmentCount: number, monthlyInstallment: number) {
+  if (!installmentCount || installmentCount <= 0 || !monthlyInstallment || monthlyInstallment <= 0) {
+    return "-";
+  }
+
+  return `${installmentCount} Ay x ${monthlyInstallment.toLocaleString("tr-TR", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  })} TL`;
+}
+
 export default async function DevicePriceListPage({ searchParams }: DevicePriceListPageProps) {
   const params = searchParams ? await searchParams : undefined;
   const selectedCategory = String(params?.category ?? "").trim();
@@ -161,18 +172,25 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
                 </div>
               </div>
 
-              <div className="device-card-grid">
-                <div className="device-card-kv">
-                  <span className="subtle">Pesine Kontrat</span>
+              {item.contractCashPrice ? (
+                <div className="device-contract-pill">
+                  <span>Pesine Kontrat</span>
                   <strong>{formatCurrency(item.contractCashPrice)}</strong>
                 </div>
+              ) : null}
+
+              <div className="device-card-grid">
                 <div className="device-card-kv">
                   <span className="subtle">Taksit</span>
                   <strong>{item.installmentCount > 0 ? `${item.installmentCount} Ay` : "-"}</strong>
                 </div>
                 <div className="device-card-kv device-card-kv-wide">
-                  <span className="subtle">Aylik</span>
-                  <strong>{isCashContractRow(item) ? "Pesin/Kontrat" : formatCurrency(item.monthlyInstallment)}</strong>
+                  <span className="subtle">Detay</span>
+                  <strong>
+                    {isCashContractRow(item)
+                      ? "Pesin/Kontrat"
+                      : formatInstallmentDetail(item.installmentCount, item.monthlyInstallment)}
+                  </strong>
                 </div>
               </div>
             </article>

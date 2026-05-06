@@ -233,6 +233,28 @@ button {
   margin-top: 12px;
 }
 
+.device-contract-pill {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 209, 102, 0.22);
+  background: linear-gradient(135deg, rgba(255, 209, 102, 0.22), rgba(88, 240, 196, 0.08));
+}
+
+.device-contract-pill span {
+  color: var(--text);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.device-contract-pill strong {
+  font-size: 1.05rem;
+}
+
 .device-card-kv {
   padding: 10px 12px;
   border-radius: 18px;

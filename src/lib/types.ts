@@ -90,6 +90,20 @@ export type AdminPendingProfile = {
   } | null;
 };
 
+export type AdminManagedProfile = {
+  id: string;
+  full_name: string;
+  email: string;
+  phone: string | null;
+  role: UserRole;
+  approval: "pending" | "approved" | "rejected";
+  created_at: string;
+  is_on_leave: boolean;
+  store: {
+    name: string;
+  } | null;
+};
+
 export type AdminSeason = {
   id: string;
   name: string;

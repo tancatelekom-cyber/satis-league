@@ -85,6 +85,54 @@ export default async function ApprovalAdminPage({ searchParams }: ApprovalAdminP
             )}
           </div>
         </article>
+
+        <article className="admin-card">
+          <h3>Aktif ve Pasif Kullanicilar</h3>
+          <div className="approval-list">
+            {data.managedProfileRows.length === 0 ? (
+              <div className="step-item">
+                <strong>Kullanici bulunamadi</strong>
+                <span>Onaylanan veya pasife alinan kullanicilar burada listelenir.</span>
+              </div>
+            ) : (
+              data.managedProfileRows.map((profile) => (
+                <div key={profile.id} className="approval-row">
+                  <div>
+                    <h4>{profile.full_name}</h4>
+                    <p>
+                      {profile.store?.name ?? "Magaza yok"} | {profile.phone ?? "-"}
+                    </p>
+                    <p className="subtle">
+                      Rol: {roleLabels[profile.role]} | Mail: {profile.email}
+                    </p>
+                    <p className="subtle">
+                      Durum: {profile.approval === "approved" ? "Aktif" : "Pasif"}
+                      {profile.is_on_leave ? " | Izinli" : ""}
+                    </p>
+                  </div>
+
+                  <div className="action-row">
+                    <form action={updateApprovalAction}>
+                      <input name="redirectTo" type="hidden" value="/admin/onaylar" />
+                      <input name="profileId" type="hidden" value={profile.id} />
+                      <input
+                        name="approval"
+                        type="hidden"
+                        value={profile.approval === "approved" ? "rejected" : "approved"}
+                      />
+                      <button
+                        className={`tiny-button ${profile.approval === "approved" ? "" : "approve"}`}
+                        type="submit"
+                      >
+                        {profile.approval === "approved" ? "Pasife Al" : "Tekrar Aktif Et"}
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </article>
       </section>
     </main>
   );

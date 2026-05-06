@@ -1205,6 +1205,12 @@ export async function updateApprovalAction(formData: FormData) {
   const profileId = String(formData.get("profileId") ?? "");
   const approval = String(formData.get("approval") ?? "pending");
 
+  const { data: currentProfile } = await supabase
+    .from("profiles")
+    .select("approval, full_name")
+    .eq("id", profileId)
+    .single();
+
   const { error } = await supabase
     .from("profiles")
     .update({ approval })
@@ -1217,20 +1223,29 @@ export async function updateApprovalAction(formData: FormData) {
   revalidatePath("/admin");
   revalidatePath("/hesabim");
   revalidatePath("/bildirimler");
+  revalidatePath("/");
+  revalidatePath("/kampanyalar");
+  revalidatePath("/lig");
+
+  const wasApproved = currentProfile?.approval === "approved";
+  const isApproved = approval === "approved";
+  const isPassiveChange = wasApproved && approval === "rejected";
 
   await broadcastNotification({
-    title: approval === "approved" ? "Hesabiniz aktif edildi" : "Kayit durumunuz guncellendi",
+    title: isApproved ? "Hesabiniz aktif edildi" : isPassiveChange ? "Hesabiniz pasife alindi" : "Kayit durumunuz guncellendi",
     body:
-      approval === "approved"
+      isApproved
         ? "Admin kaydinizi onayladi. Artik kampanyalara girip skor toplayabilirsiniz."
-        : "Kayit talebiniz admin tarafinda reddedildi. Gerekirse yeni kayit acabilirsiniz.",
-    linkPath: approval === "approved" ? "/" : "/hesabim",
-    level: approval === "approved" ? "success" : "warning",
+        : isPassiveChange
+          ? "Hesabiniz pasife alindi. Sisteme girisiniz sinirlandirildi."
+          : "Kayit talebiniz admin tarafinda reddedildi. Gerekirse yeni kayit acabilirsiniz.",
+    linkPath: isApproved ? "/" : "/hesabim",
+    level: isApproved ? "success" : "warning",
     profileIds: [profileId]
   });
 
   redirectWithMessage(
-    approval === "approved" ? "Kullanici onaylandi." : "Kullanici reddedildi."
+    isApproved ? "Kullanici aktif edildi." : isPassiveChange ? "Kullanici pasife alindi." : "Kullanici reddedildi."
   , "success", redirectTo);
 }
 

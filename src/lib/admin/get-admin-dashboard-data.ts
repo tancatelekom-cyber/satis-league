@@ -2,6 +2,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import {
   AdminCampaign,
   AdminCampaignSaleRecord,
+  AdminManagedProfile,
   AdminPendingProfile,
   AdminSeason,
   AdminStore,
@@ -84,7 +85,7 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
   const saleCategory = String(params.saleCategory ?? "").trim();
   const supabase = createAdminClient();
 
-  const [{ data: stores }, { data: pendingProfiles }, { data: campaigns }, { data: seasons }] =
+  const [{ data: stores }, { data: pendingProfiles }, { data: managedProfiles }, { data: campaigns }, { data: seasons }] =
     await Promise.all([
       supabase.from("stores").select("id, name, city, base_multiplier, is_active").order("name"),
       supabase
@@ -104,6 +105,24 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
         .eq("approval", "pending")
         .order("created_at", { ascending: false }),
       supabase
+        .from("profiles")
+        .select(
+          `
+            id,
+            full_name,
+            email,
+            phone,
+            role,
+            approval,
+            is_on_leave,
+            created_at,
+            store:stores(name)
+          `
+        )
+        .in("approval", ["approved", "rejected"])
+        .neq("role", "admin")
+        .order("full_name", { ascending: true }),
+      supabase
         .from("campaigns")
         .select(
           "id, name, description, mode, scoring, start_date, end_date, start_at, end_at, reward_title, reward_details, reward_first, reward_second, reward_third, is_active, created_at"
@@ -120,6 +139,7 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
 
   const storeRows = (stores as AdminStore[] | null) ?? [];
   const approvalRows = (pendingProfiles as AdminPendingProfile[] | null) ?? [];
+  const managedProfileRows = (managedProfiles as AdminManagedProfile[] | null) ?? [];
   const campaignRows = (campaigns as AdminCampaign[] | null) ?? [];
   const seasonRows = (seasons as AdminSeason[] | null) ?? [];
   const campaignIds = campaignRows.map((campaign) => campaign.id);
@@ -328,6 +348,7 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
   return {
     storeRows,
     approvalRows,
+    managedProfileRows,
     campaignRows,
     seasonRows,
     productRows: (campaignProducts as CampaignProductRecord[] | null) ?? [],

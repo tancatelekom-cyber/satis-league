@@ -89,6 +89,7 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
   const filteredRows = effectiveProduct
     ? brandRows.filter((item) => item.productName === effectiveProduct)
     : brandRows;
+  const isSingleProductView = Boolean(effectiveProduct);
 
   return (
     <main>
@@ -151,6 +152,15 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
         ) : null}
       </section>
 
+      {isSingleProductView && filteredRows.length > 0 ? (
+        <section className="device-product-topline" aria-label="Urun ozeti">
+          <strong>{filteredRows[0].productName}</strong>
+          <span className="device-product-topline-pill">
+            Pesine Kontrat: {formatCurrency(filteredRows[0].contractCashPrice ?? filteredRows[0].totalPayable)}
+          </span>
+        </section>
+      ) : null}
+
       <section className="device-cards" aria-label="Cihaz kartlari">
         {filteredRows.length === 0 ? (
           <div className="device-empty">
@@ -172,27 +182,29 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
                 </div>
               </div>
 
-              {item.contractCashPrice ? (
+              {!isSingleProductView && item.contractCashPrice ? (
                 <div className="device-contract-pill">
                   <span>Pesine Kontrat</span>
                   <strong>{formatCurrency(item.contractCashPrice)}</strong>
                 </div>
               ) : null}
 
-              <div className="device-card-grid">
-                <div className="device-card-kv">
-                  <span className="subtle">Taksit</span>
-                  <strong>{item.installmentCount > 0 ? `${item.installmentCount} Ay` : "-"}</strong>
+              {!isSingleProductView ? (
+                <div className="device-card-grid">
+                  <div className="device-card-kv">
+                    <span className="subtle">Taksit</span>
+                    <strong>{item.installmentCount > 0 ? `${item.installmentCount} Ay` : "-"}</strong>
+                  </div>
+                  <div className="device-card-kv device-card-kv-wide">
+                    <span className="subtle">Detay</span>
+                    <strong>
+                      {isCashContractRow(item)
+                        ? "Pesin/Kontrat"
+                        : formatInstallmentDetail(item.installmentCount, item.monthlyInstallment)}
+                    </strong>
+                  </div>
                 </div>
-                <div className="device-card-kv device-card-kv-wide">
-                  <span className="subtle">Detay</span>
-                  <strong>
-                    {isCashContractRow(item)
-                      ? "Pesin/Kontrat"
-                      : formatInstallmentDetail(item.installmentCount, item.monthlyInstallment)}
-                  </strong>
-                </div>
-              </div>
+              ) : null}
             </article>
           ))
         )}

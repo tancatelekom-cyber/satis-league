@@ -233,6 +233,36 @@ button {
   margin-top: 12px;
 }
 
+.device-product-topline {
+  display: none;
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.device-product-topline strong {
+  font-size: 1.02rem;
+  letter-spacing: 0.01em;
+}
+
+.device-product-topline-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 209, 102, 0.22);
+  background: linear-gradient(135deg, rgba(255, 209, 102, 0.22), rgba(88, 240, 196, 0.08));
+  font-weight: 900;
+  color: var(--text);
+  white-space: nowrap;
+}
+
 .device-contract-pill {
   display: flex;
   align-items: center;
@@ -2272,6 +2302,10 @@ button {
 
   .device-cards {
     display: grid;
+  }
+
+  .device-product-topline {
+    display: flex;
   }
 
   .device-price-table,

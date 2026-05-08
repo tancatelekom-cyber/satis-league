@@ -59,44 +59,61 @@ function withBadges(rows: LeaderboardRow[]) {
   }));
 }
 
+function buildScoreMaps(saleRows: SalesEntryRecord[]) {
+  const employeeScores = new Map<string, Map<string, number>>();
+  const storeScores = new Map<string, Map<string, number>>();
+
+  saleRows.forEach((entry) => {
+    const score = Number(entry.weighted_score ?? 0);
+
+    if (entry.target_profile_id) {
+      const byCampaign = employeeScores.get(entry.campaign_id) ?? new Map<string, number>();
+      byCampaign.set(entry.target_profile_id, (byCampaign.get(entry.target_profile_id) ?? 0) + score);
+      employeeScores.set(entry.campaign_id, byCampaign);
+    }
+
+    if (entry.target_store_id) {
+      const byCampaign = storeScores.get(entry.campaign_id) ?? new Map<string, number>();
+      byCampaign.set(entry.target_store_id, (byCampaign.get(entry.target_store_id) ?? 0) + score);
+      storeScores.set(entry.campaign_id, byCampaign);
+    }
+  });
+
+  return { employeeScores, storeScores };
+}
+
 function buildLeaderboard(
   campaign: CampaignPageCampaign,
   approvedPeople: ApprovedProfileRecord[],
-  saleRows: SalesEntryRecord[],
-  storeRows: ActiveStoreRecord[]
+  storeRows: ActiveStoreRecord[],
+  scoreMaps: ReturnType<typeof buildScoreMaps>
 ): LeaderboardRow[] {
   if (campaign.mode === "employee") {
+    const campaignScores = scoreMaps.employeeScores.get(campaign.id) ?? new Map<string, number>();
+
     return withBadges(
       approvedPeople
         .filter((person) => !person.is_on_leave && person.role === "employee")
         .map((person) => {
-          const total = saleRows
-            .filter(
-              (entry) => entry.campaign_id === campaign.id && entry.target_profile_id === person.id
-            )
-            .reduce((sum, entry) => sum + Number(entry.weighted_score ?? 0), 0);
-
           return {
             id: person.id,
             label: person.full_name,
-            score: total
+            score: campaignScores.get(person.id) ?? 0
           };
         })
         .sort((a, b) => b.score - a.score)
     );
   }
 
+  const campaignScores = scoreMaps.storeScores.get(campaign.id) ?? new Map<string, number>();
+
   return withBadges(
     storeRows
       .map((store) => {
-        const total = saleRows
-          .filter((entry) => entry.campaign_id === campaign.id && entry.target_store_id === store.id)
-          .reduce((sum, entry) => sum + Number(entry.weighted_score ?? 0), 0);
-
         return {
           id: store.id,
           label: store.name,
-          score: total
+          score: campaignScores.get(store.id) ?? 0
         };
       })
       .sort((a, b) => b.score - a.score)
@@ -131,7 +148,7 @@ function buildPersonalStats(
 export async function getCampaignDashboardData(userId: string): Promise<UserCampaignDashboardData | null> {
   noStore();
   const admin = createAdminClient();
-  const [{ data: profileData }, { data: campaigns }, { data: salesEntries }, { data: approvedProfiles }, { data: activeStores }] =
+  const [{ data: profileData }, { data: campaigns }, { data: approvedProfiles }, { data: activeStores }] =
     await Promise.all([
       admin
         .from("profiles")
@@ -156,9 +173,6 @@ export async function getCampaignDashboardData(userId: string): Promise<UserCamp
         .eq("is_active", true)
         .order("created_at", { ascending: false }),
       admin
-        .from("sales_entries")
-        .select("campaign_id, target_profile_id, target_store_id, weighted_score, quantity, created_at"),
-      admin
         .from("profiles")
         .select("id, full_name, role, store_id, approval, is_on_leave")
         .eq("approval", "approved"),
@@ -179,18 +193,25 @@ export async function getCampaignDashboardData(userId: string): Promise<UserCamp
   );
 
   const campaignIds = allCampaignRows.map((campaign) => campaign.id);
-  const { data: products } = campaignIds.length
-    ? await admin
-        .from("campaign_products")
-        .select("id, campaign_id, name, unit_label, base_points, sort_order")
-        .in("campaign_id", campaignIds)
-        .order("sort_order")
-    : { data: [] as CampaignProductRecord[] };
+  const [{ data: products }, { data: salesEntries }] = campaignIds.length
+    ? await Promise.all([
+        admin
+          .from("campaign_products")
+          .select("id, campaign_id, name, unit_label, base_points, sort_order")
+          .in("campaign_id", campaignIds)
+          .order("sort_order"),
+        admin
+          .from("sales_entries")
+          .select("campaign_id, target_profile_id, target_store_id, weighted_score, quantity, created_at")
+          .in("campaign_id", campaignIds)
+      ])
+    : [{ data: [] as CampaignProductRecord[] }, { data: [] as SalesEntryRecord[] }];
 
   const productRows = (products as CampaignProductRecord[] | null) ?? [];
   const approvedPeople = (approvedProfiles as ApprovedProfileRecord[] | null) ?? [];
   const saleRows = (salesEntries as SalesEntryRecord[] | null) ?? [];
   const storeRows = (activeStores as ActiveStoreRecord[] | null) ?? [];
+  const scoreMaps = buildScoreMaps(saleRows);
   const teamProfiles =
     profile.role === "manager"
       ? approvedPeople
@@ -217,7 +238,7 @@ export async function getCampaignDashboardData(userId: string): Promise<UserCamp
   );
 
   const activeLeaderboards = activeCampaigns.map((campaign) => {
-    const leaderboard = buildLeaderboard(campaign, approvedPeople, saleRows, storeRows);
+    const leaderboard = buildLeaderboard(campaign, approvedPeople, storeRows, scoreMaps);
     return {
       campaign,
       leaderboard,
@@ -226,7 +247,7 @@ export async function getCampaignDashboardData(userId: string): Promise<UserCamp
   });
 
   const finishedLeaderboards = finishedCampaigns.map((campaign) => {
-    const leaderboard = buildLeaderboard(campaign, approvedPeople, saleRows, storeRows);
+    const leaderboard = buildLeaderboard(campaign, approvedPeople, storeRows, scoreMaps);
     return {
       campaign,
       leaderboard,

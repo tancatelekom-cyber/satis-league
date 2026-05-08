@@ -20,6 +20,11 @@ type SaleRow = {
   entry_date: string;
 };
 
+type ScoreMaps = {
+  employeeScores: Map<string, Map<string, number>>;
+  storeScores: Map<string, Map<string, number>>;
+};
+
 type LeaguePageProps = {
   searchParams?: Promise<{
     seasonId?: string;
@@ -158,6 +163,29 @@ function clampDate(value: string, min: string, max: string) {
   return value;
 }
 
+function buildSeasonScoreMaps(rows: SaleRow[]) {
+  const employeeScores = new Map<string, Map<string, number>>();
+  const storeScores = new Map<string, Map<string, number>>();
+
+  rows.forEach((row) => {
+    const score = Number(row.score ?? 0);
+
+    if (row.target_profile_id) {
+      const bySeason = employeeScores.get(row.season_id) ?? new Map<string, number>();
+      bySeason.set(row.target_profile_id, (bySeason.get(row.target_profile_id) ?? 0) + score);
+      employeeScores.set(row.season_id, bySeason);
+    }
+
+    if (row.target_store_id) {
+      const bySeason = storeScores.get(row.season_id) ?? new Map<string, number>();
+      bySeason.set(row.target_store_id, (bySeason.get(row.target_store_id) ?? 0) + score);
+      storeScores.set(row.season_id, bySeason);
+    }
+  });
+
+  return { employeeScores, storeScores };
+}
+
 export default async function LeaguePage({ searchParams }: LeaguePageProps) {
   const params = searchParams ? await searchParams : undefined;
   const supabase = await createClient();
@@ -221,8 +249,16 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
       ? currentQuarter
       : (quarterOptions[0]?.value ?? "1");
 
-  const seasonIds = seasonRows.map((season) => season.id);
-  const [{ data: profiles }, { data: stores }, { data: seasonProducts }, { data: seasonSales }] =
+  const today = new Date();
+  const rawRange = getPeriodRange(selectedPeriod, effectiveYear, effectiveMonth, effectiveQuarter);
+  const clampedStart = clampDate(toDateString(rawRange.start), activeSeason.start_date, activeSeason.end_date);
+  const clampedEnd = clampDate(toDateString(rawRange.end), activeSeason.start_date, activeSeason.end_date);
+  const completedSeasonRows = seasonRows
+    .filter((season) => season.id !== activeSeason.id && season.end_date < toDateString(today))
+    .slice(0, 6);
+  const completedSeasonIds = completedSeasonRows.map((season) => season.id);
+
+  const [{ data: profiles }, { data: stores }, { data: seasonProducts }, activeSeasonSalesResult, completedSeasonSalesResult] =
     await Promise.all([
       admin
         .from("profiles")
@@ -234,12 +270,18 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
         .select("id, season_id, name, category_name, unit_label, base_points, sort_order")
         .eq("season_id", activeSeason.id)
         .order("sort_order"),
-      seasonIds.length > 0
+      admin
+        .from("season_sales_entries")
+        .select("season_id, product_id, target_profile_id, target_store_id, score, entry_date")
+        .eq("season_id", activeSeason.id)
+        .gte("entry_date", clampedStart)
+        .lte("entry_date", clampedEnd),
+      completedSeasonIds.length > 0
         ? admin
             .from("season_sales_entries")
             .select("season_id, product_id, target_profile_id, target_store_id, score, entry_date")
-            .in("season_id", seasonIds)
-        : Promise.resolve({ data: [] })
+            .in("season_id", completedSeasonIds)
+        : Promise.resolve({ data: [] as SaleRow[] })
     ]);
 
   const profileRows =
@@ -262,68 +304,47 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
       base_points: number | string;
       sort_order: number;
     }> | null) ?? [];
-  const saleRows = (seasonSales as SaleRow[] | null) ?? [];
+  const filteredSeasonSales = (activeSeasonSalesResult.data as SaleRow[] | null) ?? [];
+  const completedSeasonSales = (completedSeasonSalesResult.data as SaleRow[] | null) ?? [];
+  const activeScoreMaps = buildSeasonScoreMaps(filteredSeasonSales);
+  const completedScoreMaps = buildSeasonScoreMaps(completedSeasonSales);
 
-  const today = new Date();
-  const rawRange = getPeriodRange(selectedPeriod, effectiveYear, effectiveMonth, effectiveQuarter);
-  const clampedStart = clampDate(toDateString(rawRange.start), activeSeason.start_date, activeSeason.end_date);
-  const clampedEnd = clampDate(toDateString(rawRange.end), activeSeason.start_date, activeSeason.end_date);
-  const activeSeasonSales = saleRows.filter((sale) => sale.season_id === activeSeason.id);
-  const filteredSeasonSales = activeSeasonSales.filter((sale) => {
-    const saleDate = sale.entry_date;
+  function buildEmployeeLeague(seasonId: string, scoreMaps: ScoreMaps): LeagueRow[] {
+    const seasonScores = scoreMaps.employeeScores.get(seasonId) ?? new Map<string, number>();
 
-    if (saleDate < clampedStart || saleDate > clampedEnd) {
-      return false;
-    }
-
-    return true;
-  });
-
-  function buildEmployeeLeague(seasonId: string, sourceRows: SaleRow[]): LeagueRow[] {
     return profileRows
       .map((profile) => ({
         id: profile.id,
         label: profile.full_name,
         storeName: profile.store?.name ?? "Magaza yok",
-        score: sourceRows
-          .filter((entry) => entry.season_id === seasonId && entry.target_profile_id === profile.id)
-          .reduce((sum, entry) => sum + Number(entry.score ?? 0), 0)
+        score: seasonScores.get(profile.id) ?? 0
       }))
       .sort((a, b) => b.score - a.score);
   }
 
-  function buildStoreLeague(seasonId: string, sourceRows: SaleRow[]): LeagueRow[] {
+  function buildStoreLeague(seasonId: string, scoreMaps: ScoreMaps): LeagueRow[] {
     const profileStoreMap = new Map(
       profileRows.map((profile) => [profile.id, profile.store_id ?? profile.store?.id ?? null])
     );
+    const seasonStoreScores = scoreMaps.storeScores.get(seasonId) ?? new Map<string, number>();
+    const seasonEmployeeScores = scoreMaps.employeeScores.get(seasonId) ?? new Map<string, number>();
 
     return storeRows
       .map((store) => ({
         id: store.id,
         label: store.name,
-        score: sourceRows
-          .filter((entry) => {
-            if (entry.season_id !== seasonId) {
-              return false;
-            }
-
-            if (entry.target_store_id === store.id) {
-              return true;
-            }
-
-            const profileStoreId = entry.target_profile_id
-              ? profileStoreMap.get(entry.target_profile_id) ?? null
-              : null;
-
-            return profileStoreId === store.id;
-          })
-          .reduce((sum, entry) => sum + Number(entry.score ?? 0), 0)
+        score:
+          (seasonStoreScores.get(store.id) ?? 0) +
+          profileRows.reduce((sum, profile) => {
+            const profileStoreId = profileStoreMap.get(profile.id) ?? null;
+            return profileStoreId === store.id ? sum + (seasonEmployeeScores.get(profile.id) ?? 0) : sum;
+          }, 0)
       }))
       .sort((a, b) => b.score - a.score);
   }
 
-  const activeEmployeeLeague = buildEmployeeLeague(activeSeason.id, filteredSeasonSales);
-  const activeStoreLeague = buildStoreLeague(activeSeason.id, filteredSeasonSales);
+  const activeEmployeeLeague = buildEmployeeLeague(activeSeason.id, activeScoreMaps);
+  const activeStoreLeague = buildStoreLeague(activeSeason.id, activeScoreMaps);
   const primaryLeague =
     activeSeason.mode === "employee" ? activeEmployeeLeague : activeStoreLeague;
   const secondaryLeague =
@@ -333,22 +354,19 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
     (sum, row) => sum + Number(row.score ?? 0),
     0
   );
-  const completedSeasons = seasonRows
-    .filter((season) => season.id !== activeSeason.id && season.end_date < toDateString(today))
+  const completedSeasons = completedSeasonRows
     .map((season) => {
-      const seasonSourceRows = saleRows.filter((row) => row.season_id === season.id);
       const winnerLeague =
         season.mode === "employee"
-          ? buildEmployeeLeague(season.id, seasonSourceRows)
-          : buildStoreLeague(season.id, seasonSourceRows);
+          ? buildEmployeeLeague(season.id, completedScoreMaps)
+          : buildStoreLeague(season.id, completedScoreMaps);
 
       return {
         ...season,
         champion: winnerLeague[0] ?? null
       };
     })
-    .filter((season) => season.champion)
-    .slice(0, 6);
+    .filter((season) => season.champion);
 
   const buildLeagueHref = (overrides?: Partial<{
     seasonId: string;

@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
-import { createClient } from "@/lib/supabase/browser";
+import { useMemo, useState } from "react";
 
 type NavItem = {
   href: string;
@@ -26,50 +25,14 @@ function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function AppShellHeader() {
+type AppShellHeaderProps = {
+  initialIsAdmin?: boolean;
+};
+
+export function AppShellHeader({ initialIsAdmin = false }: AppShellHeaderProps) {
   const pathname = usePathname() ?? "/";
   const [menuOpen, setMenuOpen] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  useEffect(() => {
-    let active = true;
-
-    async function loadRole() {
-      try {
-        const supabase = createClient();
-        const {
-          data: { user }
-        } = await supabase.auth.getUser();
-
-        if (!user || !active) {
-          if (active) {
-            setIsAdmin(false);
-          }
-          return;
-        }
-
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role, approval")
-          .eq("id", user.id)
-          .single();
-
-        if (active) {
-          setIsAdmin(profile?.role === "admin" && profile?.approval === "approved");
-        }
-      } catch {
-        if (active) {
-          setIsAdmin(false);
-        }
-      }
-    }
-
-    loadRole();
-
-    return () => {
-      active = false;
-    };
-  }, []);
+  const isAdmin = initialIsAdmin;
 
   const navItems = useMemo(
     () =>

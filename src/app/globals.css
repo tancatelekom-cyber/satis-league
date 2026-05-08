@@ -498,11 +498,11 @@ button {
   border-radius: 14px;
   border: 1px solid rgba(255, 209, 102, 0.34);
   background: linear-gradient(135deg, #fff1a8, #ffd166);
-  color: #0b6b70;
-  text-shadow: none;
+  color: #045c60;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.18);
   font-size: 1.34rem;
   line-height: 1;
-  font-weight: 900;
+  font-weight: 950;
   white-space: nowrap;
   justify-self: end;
   margin-left: 0;

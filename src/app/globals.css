@@ -361,18 +361,26 @@ button {
 
 .home-leaders-hero {
   grid-template-columns: 1fr;
-  padding-bottom: 10px;
+  padding: 18px 0 6px;
+}
+
+.home-leaders-title {
+  margin: 0;
+  font-size: clamp(2rem, 4.6vw, 3.2rem) !important;
+  line-height: 0.96;
+  letter-spacing: -0.04em;
+  text-transform: none;
 }
 
 .home-leader-stack {
   display: grid;
-  gap: 8px;
+  gap: 10px;
 }
 
 .home-leader-card {
   border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: 20px;
-  padding: 10px 12px;
+  border-radius: 18px;
+  padding: 10px 14px;
   background:
     radial-gradient(circle at top right, rgba(255, 209, 102, 0.14), transparent 26%),
     linear-gradient(135deg, rgba(5, 79, 84, 0.98), rgba(7, 106, 113, 0.96));
@@ -393,22 +401,23 @@ button {
 
 .home-leader-head {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 8px;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
 }
 
 .home-leader-head strong {
-  display: block;
-  margin-top: 2px;
-  font-size: 0.84rem;
+  display: inline-block;
+  margin-top: 0;
+  font-size: 0.78rem;
   color: #f0f7ff;
+  font-weight: 700;
 }
 
 .home-leader-season {
-  display: block;
+  display: inline-block;
   color: #d2e1f6;
-  font-size: 0.7rem;
+  font-size: 0.82rem;
   letter-spacing: 0.03em;
   text-transform: uppercase;
 }
@@ -416,59 +425,69 @@ button {
 .home-leader-month {
   display: inline-flex;
   align-items: center;
-  padding: 4px 8px;
+  margin-left: auto;
+  padding: 3px 8px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: var(--surface-mid);
   color: var(--text);
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 800;
 }
 
 .home-leader-body {
   display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 8px;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
   align-items: center;
-  margin-top: 8px;
+  margin-top: 10px;
 }
 
 .home-leader-trophy {
   display: grid;
   justify-items: center;
-  gap: 4px;
-  min-width: 46px;
-  padding: 6px 5px;
-  border-radius: 14px;
+  gap: 2px;
+  min-width: 40px;
+  padding: 5px 5px;
+  border-radius: 12px;
   background: linear-gradient(180deg, rgba(255, 209, 102, 0.22), rgba(88, 240, 196, 0.16));
   border: 1px solid rgba(255, 255, 255, 0.14);
 }
 
 .home-leader-trophy-rank {
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-weight: 900;
   color: #09111f;
 }
 
 .home-leader-trophy-icon {
-  font-size: 1rem;
+  font-size: 0.88rem;
   line-height: 1;
 }
 
 .home-leader-content {
   display: grid;
-  gap: 2px;
+  gap: 1px;
 }
 
 .home-leader-name {
-  font-size: clamp(0.9rem, 2.1vw, 1rem);
-  line-height: 1.05;
+  font-size: clamp(0.94rem, 1.6vw, 1.06rem);
+  line-height: 1.04;
   color: #ffffff;
 }
 
+.home-leader-score-label {
+  color: #d2e1f6;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 .home-leader-score {
-  color: #e1ebf9;
-  font-size: 0.78rem;
+  color: #ffffff;
+  font-size: 0.94rem;
+  font-weight: 800;
+  white-space: nowrap;
 }
 
 .home-leader-card .page-subtitle {
@@ -2471,7 +2490,7 @@ textarea::placeholder {
 
   .home-leaders-hero {
     padding-top: 20px;
-    padding-bottom: 6px;
+    padding-bottom: 4px;
   }
 
   .hero-grid {
@@ -2541,32 +2560,53 @@ textarea::placeholder {
   }
 
   .home-leader-card {
-    padding: 10px 11px;
+    padding: 10px 12px;
     border-radius: 16px;
   }
 
-  .home-leader-head,
-  .home-leader-body {
-    grid-template-columns: 1fr;
-    display: grid;
+  .home-leader-trophy {
+    min-width: 38px;
+    padding: 5px 4px;
+  }
+
+  .home-leaders-title {
+    font-size: clamp(1.8rem, 10vw, 2.45rem) !important;
+    letter-spacing: -0.05em;
   }
 
   .home-leader-head {
-    gap: 10px;
+    gap: 8px;
+  }
+
+  .home-leader-season {
+    font-size: 0.74rem;
+  }
+
+  .home-leader-head strong {
+    font-size: 0.72rem;
+  }
+
+  .home-leader-month {
+    padding: 3px 7px;
+    font-size: 0.62rem;
   }
 
   .home-leader-body {
+    grid-template-columns: 38px minmax(0, 1fr) auto;
+    gap: 8px;
     margin-top: 8px;
-    gap: 7px;
   }
 
-  .home-leader-trophy {
-    grid-template-columns: auto auto;
-    justify-content: flex-start;
-    align-items: center;
-    min-width: 0;
-    width: fit-content;
-    padding: 6px 8px;
+  .home-leader-name {
+    font-size: 0.92rem;
+  }
+
+  .home-leader-score-label {
+    font-size: 0.64rem;
+  }
+
+  .home-leader-score {
+    font-size: 0.82rem;
   }
 
   .nav-cluster-open .nav-links {

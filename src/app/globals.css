@@ -933,18 +933,82 @@ button {
   margin-top: 12px;
   padding: 12px 14px;
   border-radius: 16px;
-  border: 1px solid rgba(88, 240, 196, 0.2);
-  background: rgba(88, 240, 196, 0.08);
+  border: 1px solid rgba(4, 92, 96, 0.16);
+  background: rgba(255, 255, 255, 0.42);
 }
 
 .tariff-active-preset strong {
-  color: #10203b;
+  color: #103051;
   font-size: 0.95rem;
 }
 
 .tariff-active-preset span {
-  color: #556985;
+  color: #36506f;
   font-size: 0.88rem;
+}
+
+.tariff-search-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  margin-top: 14px;
+  align-items: center;
+}
+
+.tariff-card {
+  display: grid;
+  gap: 14px;
+  padding: 18px 20px;
+  border: 1px solid rgba(4, 92, 96, 0.14);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 14px 28px rgba(8, 22, 40, 0.08);
+}
+
+.tariff-card-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.tariff-card-head strong {
+  color: #10203b;
+  font-size: 1.12rem;
+  line-height: 1.18;
+}
+
+.tariff-card-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.tariff-stat {
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: rgba(4, 92, 96, 0.08);
+  border: 1px solid rgba(4, 92, 96, 0.12);
+}
+
+.tariff-stat span {
+  display: block;
+  margin-bottom: 5px;
+  color: #4f6480;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.tariff-stat strong {
+  display: block;
+  color: #10203b;
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+.tariff-card .subtle {
+  color: #60748f;
+  line-height: 1.58;
 }
 
 input,
@@ -2089,8 +2153,8 @@ textarea::placeholder {
   margin-top: 6px;
   padding: 6px 10px;
   border-radius: 999px;
-  background: rgba(255, 209, 102, 0.14);
-  color: var(--accent-strong);
+  background: rgba(255, 209, 102, 0.22);
+  color: #9a6b00;
   font-size: 0.84rem;
   font-weight: 700;
 }
@@ -2575,6 +2639,27 @@ textarea::placeholder {
     text-align: center;
     color: var(--text);
     background: rgba(255, 255, 255, 0.08);
+  }
+
+  .tariff-search-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .tariff-card {
+    padding: 16px 16px 18px;
+    gap: 12px;
+  }
+
+  .tariff-card-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .tariff-card-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
   }
 
   .home-leader-card {

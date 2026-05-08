@@ -2,6 +2,13 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabasePublicEnv } from "@/lib/supabase/config";
 
+const PUBLIC_ROUTES = new Set([
+  "/giris",
+  "/kayit",
+  "/sifremi-unuttum",
+  "/sifre-yenile"
+]);
+
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({
     request
@@ -39,7 +46,28 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  await supabase.auth.getUser();
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+
+  const pathname = request.nextUrl.pathname;
+  const isPublicRoute = PUBLIC_ROUTES.has(pathname);
+
+  if (!user && !isPublicRoute) {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = "/giris";
+    if (pathname !== "/") {
+      redirectUrl.searchParams.set("next", pathname);
+    }
+    return NextResponse.redirect(redirectUrl);
+  }
+
+  if (user && isPublicRoute && pathname !== "/sifre-yenile") {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = "/";
+    redirectUrl.search = "";
+    return NextResponse.redirect(redirectUrl);
+  }
 
   return response;
 }

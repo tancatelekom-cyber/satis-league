@@ -560,7 +560,9 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
 
       <section className="campaign-layout">
         <article className="leaderboard-card">
-          <h3>{activeSeason.mode === "employee" ? "Calisan Siralamasi" : "Magaza Siralamasi"}</h3>
+          <h3>
+            {activeSeason.mode === "employee" ? "Calisan Siralamasi" : "Magaza Siralamasi"} - {activeSeason.name}
+          </h3>
           <div className="leaderboard-list">
             {primaryLeague.map((row, index) => (
               <div key={row.id} className="leaderboard-row">

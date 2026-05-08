@@ -1705,8 +1705,9 @@ textarea::placeholder {
 .auth-card {
   border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: var(--radius);
-  background: linear-gradient(180deg, rgba(14, 31, 58, 0.92), rgba(8, 18, 36, 0.82));
+  background: linear-gradient(180deg, rgba(31, 54, 91, 0.96), rgba(23, 43, 74, 0.94));
   box-shadow: var(--shadow);
+  color: #f6f9ff;
 }
 
 .campaign-header {
@@ -1723,6 +1724,12 @@ textarea::placeholder {
 
 .auth-header h2 {
   margin: 14px 0 10px;
+  color: #ffffff;
+}
+
+.auth-header p {
+  color: #d7e4f7;
+  line-height: 1.6;
 }
 
 .auth-grid {
@@ -1741,34 +1748,44 @@ textarea::placeholder {
 }
 
 .field span {
-  color: var(--muted);
+  color: #e3ecf9;
   font-size: 0.95rem;
+  font-weight: 700;
 }
 
 .field input,
 .field select {
   width: 100%;
   padding: 14px 16px;
-  color: var(--text);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #f7fbff;
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 16px;
   outline: none;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .text-area {
   width: 100%;
   padding: 14px 16px;
-  color: var(--text);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #f7fbff;
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 16px;
   outline: none;
   resize: vertical;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .field input::placeholder {
-  color: #7f91aa;
+  color: #bfd0e6;
+}
+
+.auth-card .button-secondary {
+  color: #eff6ff;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.auth-card .button-secondary:hover {
+  background: rgba(255, 255, 255, 0.18);
 }
 
 .auth-actions {

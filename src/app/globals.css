@@ -441,8 +441,8 @@ button {
 
 .home-leader-body {
   display: grid;
-  grid-template-columns: auto minmax(0, auto) auto;
-  justify-content: start;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  justify-content: stretch;
   gap: 9px;
   align-items: center;
   margin-top: 8px;
@@ -498,12 +498,14 @@ button {
   border-radius: 14px;
   border: 1px solid rgba(255, 209, 102, 0.34);
   background: linear-gradient(135deg, #fff1a8, #ffd166);
-  color: #0d223d;
+  color: #103051;
+  text-shadow: none;
   font-size: 1.34rem;
   line-height: 1;
   font-weight: 900;
   white-space: nowrap;
-  margin-left: 10px;
+  justify-self: end;
+  margin-left: 0;
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
 }
 
@@ -2612,7 +2614,7 @@ textarea::placeholder {
   }
 
   .home-leader-body {
-    grid-template-columns: 38px minmax(0, auto) auto;
+    grid-template-columns: 38px minmax(0, 1fr) auto;
     gap: 7px;
     margin-top: 7px;
   }

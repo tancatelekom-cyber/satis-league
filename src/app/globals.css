@@ -375,12 +375,16 @@ button {
 .home-leader-stack {
   display: grid;
   gap: 10px;
+  justify-items: start;
 }
 
 .home-leader-card {
   border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 18px;
   padding: 9px 14px;
+  width: fit-content;
+  min-width: min(100%, 420px);
+  max-width: min(100%, 640px);
   background:
     radial-gradient(circle at top right, rgba(255, 209, 102, 0.14), transparent 26%),
     linear-gradient(135deg, rgba(5, 79, 84, 0.98), rgba(7, 106, 113, 0.96));
@@ -389,7 +393,7 @@ button {
 }
 
 .home-leader-card-link {
-  display: block;
+  display: inline-block;
   color: inherit;
   transition: transform 0.2s ease, border-color 0.2s ease;
 }
@@ -2565,6 +2569,9 @@ textarea::placeholder {
   .home-leader-card {
     padding: 9px 12px;
     border-radius: 16px;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
   }
 
   .home-leader-trophy {

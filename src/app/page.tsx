@@ -205,7 +205,7 @@ export default async function HomePage() {
                   <span className="home-leader-score-label">Ayin lideri</span>
                 </div>
 
-                <strong className="home-leader-score">{card.score.toLocaleString("tr-TR")} skor</strong>
+                <strong className="home-leader-score">{card.score.toLocaleString("tr-TR")}</strong>
               </div>
             </Link>
           ))

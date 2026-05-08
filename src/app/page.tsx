@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { requireUser } from "@/lib/auth/require-user";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { SeasonRecord } from "@/lib/types";
 
@@ -55,6 +56,8 @@ function buildMonthHref(seasonId: string, monthKey: string) {
 }
 
 export default async function HomePage() {
+  await requireUser();
+
   const admin = createAdminClient();
   const now = new Date();
   const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;

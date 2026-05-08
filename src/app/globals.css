@@ -933,17 +933,17 @@ button {
   margin-top: 12px;
   padding: 12px 14px;
   border-radius: 16px;
-  border: 1px solid rgba(4, 92, 96, 0.16);
-  background: rgba(255, 255, 255, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(4, 52, 56, 0.18);
 }
 
 .tariff-active-preset strong {
-  color: #103051;
+  color: #f7fbff;
   font-size: 0.95rem;
 }
 
 .tariff-active-preset span {
-  color: #36506f;
+  color: #e2eefb;
   font-size: 0.88rem;
 }
 
@@ -1009,6 +1009,20 @@ button {
 .tariff-card .subtle {
   color: #60748f;
   line-height: 1.58;
+}
+
+.tariff-detail-card .step-item {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(16, 32, 59, 0.1);
+}
+
+.tariff-detail-card .step-item strong {
+  color: #10203b;
+}
+
+.tariff-detail-card .step-item span {
+  color: #4a5f7b;
+  line-height: 1.7;
 }
 
 input,
@@ -1724,11 +1738,12 @@ textarea::placeholder {
 
 .auth-header h2 {
   margin: 14px 0 10px;
-  color: #ffffff;
+  color: #ffffff !important;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.22);
 }
 
 .auth-header p {
-  color: #d7e4f7;
+  color: #dfe9f8 !important;
   line-height: 1.6;
 }
 
@@ -1748,7 +1763,7 @@ textarea::placeholder {
 }
 
 .field span {
-  color: #e3ecf9;
+  color: #edf4ff !important;
   font-size: 0.95rem;
   font-weight: 700;
 }
@@ -1757,31 +1772,31 @@ textarea::placeholder {
 .field select {
   width: 100%;
   padding: 14px 16px;
-  color: #f7fbff;
+  color: #f7fbff !important;
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 16px;
   outline: none;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.11);
 }
 
 .text-area {
   width: 100%;
   padding: 14px 16px;
-  color: #f7fbff;
+  color: #f7fbff !important;
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 16px;
   outline: none;
   resize: vertical;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.11);
 }
 
 .field input::placeholder {
-  color: #bfd0e6;
+  color: #cdd9eb !important;
 }
 
 .auth-card .button-secondary {
-  color: #eff6ff;
-  background: rgba(255, 255, 255, 0.12);
+  color: #eff6ff !important;
+  background: rgba(255, 255, 255, 0.16);
 }
 
 .auth-card .button-secondary:hover {

@@ -199,18 +199,21 @@ button {
 .nav-link {
   padding: 8px 12px;
   border-radius: 999px;
-  color: var(--muted);
+  color: #dce9f8;
   font-size: 0.95rem;
+  font-weight: 700;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.18);
 }
 
 .nav-link:hover {
-  background: var(--surface-soft);
-  color: var(--text);
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
 }
 
 .nav-link-active {
-  color: var(--text);
-  background: var(--surface-mid);
+  color: #ffffff;
+  background: rgba(88, 240, 196, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .device-cards {
@@ -1067,7 +1070,7 @@ textarea::placeholder {
 .campaign-directory-head span,
 .campaign-directory-meta span,
 .back-link {
-  color: var(--muted);
+  color: #38506f;
 }
 
 .campaign-directory-meta {
@@ -1129,6 +1132,16 @@ textarea::placeholder {
 .back-link {
   display: inline-flex;
   margin-bottom: 10px;
+  font-weight: 800;
+  color: #234d73;
+}
+
+.detail-page-head .button-secondary,
+.export-link-button {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, rgba(4, 92, 96, 0.92), rgba(7, 120, 127, 0.9));
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 12px 26px rgba(4, 52, 56, 0.18);
 }
 
 .page-actions-row {
@@ -1161,14 +1174,16 @@ textarea::placeholder {
 .detail-switch-card {
   display: block;
   padding: 16px 18px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(4, 92, 96, 0.2);
   border-radius: 18px;
-  background: var(--surface-soft);
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 12px 26px rgba(8, 22, 40, 0.08);
 }
 
 .detail-switch-card strong {
   display: block;
   margin-bottom: 6px;
+  color: #10203b;
 }
 
 .compact-switch-card {
@@ -1183,7 +1198,7 @@ textarea::placeholder {
 }
 
 .detail-switch-card span {
-  color: var(--muted);
+  color: #556985;
   line-height: 1.5;
 }
 
@@ -1707,8 +1722,10 @@ textarea::placeholder {
 .quick-add-chip {
   padding: 8px 12px;
   border-radius: 999px;
-  color: var(--text);
-  background: rgba(255, 255, 255, 0.08);
+  color: #f7fbff;
+  background: linear-gradient(135deg, rgba(4, 92, 96, 0.92), rgba(7, 120, 127, 0.88));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 10px 22px rgba(4, 52, 56, 0.12);
 }
 
 .quick-add-chip {

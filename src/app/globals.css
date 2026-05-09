@@ -2478,6 +2478,16 @@ textarea::placeholder {
   margin-top: 14px;
 }
 
+.campaign-product-summary-row {
+  align-items: flex-start;
+}
+
+.campaign-product-summary-values {
+  text-align: right;
+  color: #d5e7fb !important;
+  line-height: 1.45;
+}
+
 .live-sale-list {
   display: grid;
   gap: 10px;

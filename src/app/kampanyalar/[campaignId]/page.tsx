@@ -114,7 +114,7 @@ export default async function CampaignDetailPage({
       : [];
   const targetStoreIds = campaign.mode === "store" && dashboard.profile.store_id ? [dashboard.profile.store_id] : [];
   const initialQuantityMap: Record<string, number> = {};
-  const campaignProductTotals = new Map<string, number>();
+  const participantProductTotals = new Map<string, Map<string, number>>();
 
   const { data: allCampaignEntries } = await admin
     .from("sales_entries")
@@ -127,10 +127,15 @@ export default async function CampaignDetailPage({
     target_store_id: string | null;
     quantity: number;
   }> | null) ?? []).forEach((entry) => {
-    campaignProductTotals.set(
-      entry.product_id,
-      Number(campaignProductTotals.get(entry.product_id) ?? 0) + Number(entry.quantity ?? 0)
-    );
+    const participantId = campaign.mode === "employee" ? entry.target_profile_id : entry.target_store_id;
+    if (participantId) {
+      const productTotals = participantProductTotals.get(participantId) ?? new Map<string, number>();
+      productTotals.set(
+        entry.product_id,
+        Number(productTotals.get(entry.product_id) ?? 0) + Number(entry.quantity ?? 0)
+      );
+      participantProductTotals.set(participantId, productTotals);
+    }
 
     if (
       isActiveCampaign &&
@@ -148,18 +153,24 @@ export default async function CampaignDetailPage({
     }
   });
 
-  const campaignProductSummaryRows = campaign.products.map((product) => ({
-    id: product.id,
-    name: product.name,
-    unitLabel: product.unit_label,
-    total: Number(campaignProductTotals.get(product.id) ?? 0)
-  }));
+  const participantSummaryRows = leaderboard.map((row) => {
+    const productTotals = participantProductTotals.get(row.id) ?? new Map<string, number>();
+    const summaryText = campaign.products
+      .map((product) => ({
+        name: product.name,
+        total: Number(productTotals.get(product.id) ?? 0),
+        unitLabel: product.unit_label
+      }))
+      .filter((product) => product.total > 0)
+      .map((product) => `${product.name}: ${product.total} ${product.unitLabel}`)
+      .join(" | ");
 
-  if (campaignProductSummaryRows.length === 0) {
-    campaign.products.forEach((product) => {
-      campaignProductTotals.set(product.id, 0);
-    });
-  }
+    return {
+      id: row.id,
+      label: row.label,
+      summaryText: summaryText || "Kayit yok"
+    };
+  });
   const menuItems = [
     {
       href: `/kampanyalar/${campaign.id}?view=leaderboard`,
@@ -346,22 +357,35 @@ export default async function CampaignDetailPage({
             })}
           </div>
 
-          <section className="live-sale-summary campaign-product-summary" aria-label="Kampanya urun bazli adetleri">
+          <section
+            className="live-sale-summary campaign-product-summary"
+            aria-label="Kampanya bazli urun ozetleri"
+          >
             <div className="live-sale-summary-head">
-              <strong>Urun Bazli Adetler</strong>
-              <span>Bu kampanyada urunlerin toplam adetleri</span>
+              <strong>
+                {campaign.mode === "employee" ? "Calisan Bazli Urun Ozetleri" : "Magaza Bazli Urun Ozetleri"}
+              </strong>
+              <span>
+                {campaign.mode === "employee"
+                  ? "Her calisan icin urun adetlerinin ozet gorunumu"
+                  : "Her magaza icin urun adetlerinin ozet gorunumu"}
+              </span>
             </div>
-            <div className="live-sale-summary-table" role="table" aria-label="Kampanya urun bazli adet tablosu">
+            <div
+              className="live-sale-summary-table"
+              role="table"
+              aria-label="Kampanya bazli urun ozet tablosu"
+            >
               <div className="live-sale-summary-row live-sale-summary-header" role="row">
-                <span role="columnheader">Urun</span>
-                <span role="columnheader">Toplam</span>
+                <span role="columnheader">{campaign.mode === "employee" ? "Calisan" : "Magaza"}</span>
+                <span role="columnheader">Urun Adetleri</span>
               </div>
-              {campaignProductSummaryRows.map((product) => (
-                <div key={`campaign-total-${product.id}`} className="live-sale-summary-row" role="row">
-                  <span role="cell">{product.name}</span>
-                  <strong role="cell">
-                    {product.total} {product.unitLabel}
-                  </strong>
+              {participantSummaryRows.map((row) => (
+                <div key={`campaign-summary-${row.id}`} className="live-sale-summary-row campaign-product-summary-row" role="row">
+                  <span role="cell">{row.label}</span>
+                  <span className="campaign-product-summary-values" role="cell">
+                    {row.summaryText}
+                  </span>
                 </div>
               ))}
             </div>

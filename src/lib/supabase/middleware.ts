@@ -6,7 +6,8 @@ const PUBLIC_ROUTES = new Set([
   "/giris",
   "/kayit",
   "/sifremi-unuttum",
-  "/sifre-yenile"
+  "/sifre-yenile",
+  "/api/auth/confirm-session"
 ]);
 const APP_SESSION_COOKIE = "tanca_session";
 

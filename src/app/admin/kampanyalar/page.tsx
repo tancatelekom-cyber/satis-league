@@ -122,14 +122,21 @@ export default async function CampaignAdminPage({ searchParams }: CampaignAdminP
                 <span>Odul Detayi</span>
                 <input name="rewardDetails" placeholder="Ornek: Prim, hediye ceki ve kutlama duyurusu" />
               </label>
-              <label className="field">
-                <span>Odul Esigi</span>
-                <input
-                  name="rewardThresholdValue"
-                  placeholder="Ornek: 50"
-                  type="number"
-                />
-              </label>
+            </div>
+
+            <label className="field">
+              <span>Odul Limiti (Puan / Adet)</span>
+              <input
+                name="rewardThresholdValue"
+                placeholder="Ornek: 50"
+                type="number"
+              />
+              <small className="subtle">
+                Bu limite ulasilmadan siralamada odul yazisi gorunmez. Limit asildiginda odul otomatik acilir.
+              </small>
+            </label>
+
+            <div className="auth-grid">
               <label className="field">
                 <span>1. Sira Odulu</span>
                 <input name="rewardFirst" placeholder="Ornek: 10.000 TL prim" />
@@ -353,14 +360,21 @@ export default async function CampaignAdminPage({ searchParams }: CampaignAdminP
                           <span>Odul Detayi</span>
                           <input defaultValue={campaign.reward_details ?? ""} name="rewardDetails" />
                         </label>
-                        <label className="field compact">
-                          <span>Odul Esigi</span>
-                          <input
-                            defaultValue={campaign.reward_threshold_value ?? ""}
-                            name="rewardThresholdValue"
-                            type="number"
-                          />
-                        </label>
+                      </div>
+
+                      <label className="field compact">
+                        <span>Odul Limiti (Puan / Adet)</span>
+                        <input
+                          defaultValue={campaign.reward_threshold_value ?? ""}
+                          name="rewardThresholdValue"
+                          type="number"
+                        />
+                        <small className="subtle">
+                          Limit asilmadan odul gorunmez. Asildiginda odul siralamada otomatik gorunur.
+                        </small>
+                      </label>
+
+                      <div className="auth-grid">
                         <label className="field compact">
                           <span>1. Sira Odulu</span>
                           <input defaultValue={campaign.reward_first ?? ""} name="rewardFirst" />

@@ -2397,6 +2397,73 @@ textarea::placeholder {
   margin-bottom: 4px;
 }
 
+.live-sale-summary {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(88, 240, 196, 0.16);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.live-sale-summary-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.live-sale-summary-head strong {
+  color: #ffffff;
+  font-size: 1rem;
+}
+
+.live-sale-summary-head span {
+  color: #d5e7fb;
+  font-size: 0.82rem;
+}
+
+.live-sale-summary-table {
+  display: grid;
+  gap: 8px;
+}
+
+.live-sale-summary-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.live-sale-summary-header {
+  padding: 0 2px 2px;
+  border-radius: 0;
+  background: transparent;
+}
+
+.live-sale-summary-header span {
+  color: #b9d3ee;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.live-sale-summary-row span {
+  min-width: 0;
+  color: #ffffff;
+  font-size: 0.92rem;
+}
+
+.live-sale-summary-row strong {
+  color: #7df5d2;
+  font-size: 1rem;
+  font-weight: 900;
+}
+
 .live-sale-list {
   display: grid;
   gap: 10px;
@@ -2995,6 +3062,16 @@ textarea::placeholder {
   .live-sale-row {
     grid-template-columns: 1fr;
     align-items: stretch;
+  }
+
+  .live-sale-summary {
+    padding: 12px;
+  }
+
+  .live-sale-summary-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
   }
 
   .live-sale-controls {

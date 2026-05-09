@@ -55,6 +55,15 @@ export function SaleEntryCard({
   const timeoutRefs = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   const currentTargetId = campaignMode === "employee" ? selectedProfileId : defaultStoreId;
+  const selectedProfileName =
+    campaignMode === "employee"
+      ? teamProfiles.find((person) => person.id === selectedProfileId)?.full_name ?? "Secili personel"
+      : null;
+  const summaryTitle = campaignMode === "employee" ? "Kullanici Urun Toplamlari" : "Magaza Urun Toplamlari";
+  const summaryHint =
+    campaignMode === "employee"
+      ? `${selectedProfileName ?? "Secili personel"} icin anlik toplam adetler`
+      : "Secili magazanin anlik urun toplamlari";
 
   const currentEntries = useMemo(
     () =>
@@ -190,8 +199,27 @@ export function SaleEntryCard({
         </label>
       ) : null}
 
+      <section className="live-sale-summary" aria-label={summaryTitle}>
+        <div className="live-sale-summary-head">
+          <strong>{summaryTitle}</strong>
+          <span>{summaryHint}</span>
+        </div>
+        <div className="live-sale-summary-table" role="table" aria-label={summaryTitle}>
+          <div className="live-sale-summary-row live-sale-summary-header" role="row">
+            <span role="columnheader">Urun</span>
+            <span role="columnheader">Toplam</span>
+          </div>
+          {currentEntries.map(({ product, value }) => (
+            <div key={`summary-${product.id}`} className="live-sale-summary-row" role="row">
+              <span role="cell">{product.name}</span>
+              <strong role="cell">{Number(value || 0)}</strong>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <div className="live-sale-list">
-        {currentEntries.map(({ product, key, value, state, error }) => (
+        {currentEntries.map(({ product, value, state, error }) => (
           <article key={product.id} className="live-sale-row">
             <div className="live-sale-copy">
               <strong>{product.name}</strong>

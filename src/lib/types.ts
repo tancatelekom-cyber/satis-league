@@ -154,6 +154,7 @@ export type AdminCampaign = {
   end_at: string;
   reward_title: string | null;
   reward_details: string | null;
+  reward_threshold_value: number | null;
   reward_first: string | null;
   reward_second: string | null;
   reward_third: string | null;
@@ -229,6 +230,7 @@ export type CampaignPageCampaign = {
   end_at: string;
   reward_title: string | null;
   reward_details: string | null;
+  reward_threshold_value: number | null;
   reward_first: string | null;
   reward_second: string | null;
   reward_third: string | null;

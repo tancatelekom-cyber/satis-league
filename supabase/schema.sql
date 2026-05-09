@@ -143,6 +143,7 @@ alter table public.campaigns
   add column if not exists end_at timestamptz,
   add column if not exists reward_title text,
   add column if not exists reward_details text,
+  add column if not exists reward_threshold_value numeric(10,2),
   add column if not exists reward_first text,
   add column if not exists reward_second text,
   add column if not exists reward_third text;

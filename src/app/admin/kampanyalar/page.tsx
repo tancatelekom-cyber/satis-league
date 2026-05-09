@@ -123,6 +123,14 @@ export default async function CampaignAdminPage({ searchParams }: CampaignAdminP
                 <input name="rewardDetails" placeholder="Ornek: Prim, hediye ceki ve kutlama duyurusu" />
               </label>
               <label className="field">
+                <span>Odul Esigi</span>
+                <input
+                  name="rewardThresholdValue"
+                  placeholder="Ornek: 50"
+                  type="number"
+                />
+              </label>
+              <label className="field">
                 <span>1. Sira Odulu</span>
                 <input name="rewardFirst" placeholder="Ornek: 10.000 TL prim" />
               </label>
@@ -211,6 +219,14 @@ export default async function CampaignAdminPage({ searchParams }: CampaignAdminP
                         .filter((item) => item.campaign_id === campaign.id)
                         .map((item) => `${item.store?.name ?? "Magaza"} x${item.multiplier}`)
                         .join(", ") || "Varsayilan 1.00"}
+                    </p>
+                    <p className="subtle">
+                      Odul esigi:{" "}
+                      {campaign.reward_threshold_value
+                        ? `${Number(campaign.reward_threshold_value).toFixed(0)} ${
+                            campaign.scoring === "points" ? "puan" : "adet"
+                          }`
+                        : "Yok"}
                     </p>
                     <p className="subtle">
                       Giris yetkisi olanlar:{" "}
@@ -336,6 +352,14 @@ export default async function CampaignAdminPage({ searchParams }: CampaignAdminP
                         <label className="field compact">
                           <span>Odul Detayi</span>
                           <input defaultValue={campaign.reward_details ?? ""} name="rewardDetails" />
+                        </label>
+                        <label className="field compact">
+                          <span>Odul Esigi</span>
+                          <input
+                            defaultValue={campaign.reward_threshold_value ?? ""}
+                            name="rewardThresholdValue"
+                            type="number"
+                          />
                         </label>
                         <label className="field compact">
                           <span>1. Sira Odulu</span>

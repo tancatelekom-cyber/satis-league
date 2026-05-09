@@ -169,7 +169,7 @@ export async function getCampaignDashboardData(userId: string): Promise<UserCamp
         .single(),
       admin
         .from("campaigns")
-        .select("id, name, description, mode, scoring, start_date, end_date, start_at, end_at, reward_title, reward_details, reward_first, reward_second, reward_third, is_active")
+        .select("id, name, description, mode, scoring, start_date, end_date, start_at, end_at, reward_title, reward_details, reward_threshold_value, reward_first, reward_second, reward_third, is_active")
         .eq("is_active", true)
         .order("created_at", { ascending: false }),
       admin
@@ -193,7 +193,7 @@ export async function getCampaignDashboardData(userId: string): Promise<UserCamp
   );
 
   const campaignIds = allCampaignRows.map((campaign) => campaign.id);
-  const [{ data: products }, { data: salesEntries }] = campaignIds.length
+  const [{ data: products }, { data: salesEntries }, { data: entryPermissions }] = campaignIds.length
     ? await Promise.all([
         admin
           .from("campaign_products")
@@ -203,15 +203,31 @@ export async function getCampaignDashboardData(userId: string): Promise<UserCamp
         admin
           .from("sales_entries")
           .select("campaign_id, target_profile_id, target_store_id, weighted_score, quantity, created_at")
+          .in("campaign_id", campaignIds),
+        admin
+          .from("campaign_entry_permissions")
+          .select("campaign_id, profile_id")
           .in("campaign_id", campaignIds)
       ])
-    : [{ data: [] as CampaignProductRecord[] }, { data: [] as SalesEntryRecord[] }];
+    : [
+        { data: [] as CampaignProductRecord[] },
+        { data: [] as SalesEntryRecord[] },
+        { data: [] as Array<{ campaign_id: string; profile_id: string }> }
+      ];
 
   const productRows = (products as CampaignProductRecord[] | null) ?? [];
   const approvedPeople = (approvedProfiles as ApprovedProfileRecord[] | null) ?? [];
   const saleRows = (salesEntries as SalesEntryRecord[] | null) ?? [];
+  const permissionRows = ((entryPermissions as Array<{ campaign_id: string; profile_id: string }> | null) ?? []);
   const storeRows = (activeStores as ActiveStoreRecord[] | null) ?? [];
   const scoreMaps = buildScoreMaps(saleRows);
+  const permissionMap = new Map<string, Set<string>>();
+
+  permissionRows.forEach((row) => {
+    const existing = permissionMap.get(row.campaign_id) ?? new Set<string>();
+    existing.add(row.profile_id);
+    permissionMap.set(row.campaign_id, existing);
+  });
   const teamProfiles =
     profile.role === "manager"
       ? approvedPeople
@@ -226,7 +242,10 @@ export async function getCampaignDashboardData(userId: string): Promise<UserCamp
 
   const campaignCards = allCampaignRows.map((campaign) => ({
     ...campaign,
-    products: productRows.filter((product) => product.campaign_id === campaign.id)
+    products: productRows.filter((product) => product.campaign_id === campaign.id),
+    can_submit:
+      (permissionMap.get(campaign.id)?.size ?? 0) === 0 ||
+      permissionMap.get(campaign.id)?.has(profile.id) === true
   }));
 
   const plannedCampaigns = campaignCards.filter((campaign) => isPlannedCampaign(campaign.start_at));

@@ -126,7 +126,7 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
       supabase
         .from("campaigns")
         .select(
-          "id, name, description, mode, scoring, start_date, end_date, start_at, end_at, reward_title, reward_details, reward_first, reward_second, reward_third, is_active, created_at"
+          "id, name, description, mode, scoring, start_date, end_date, start_at, end_at, reward_title, reward_details, reward_threshold_value, reward_first, reward_second, reward_third, is_active, created_at"
         )
         .order("created_at", { ascending: false })
         .limit(6),

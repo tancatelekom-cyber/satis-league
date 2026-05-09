@@ -382,11 +382,13 @@ export async function createSeasonAction(formData: FormData) {
   const scoring = String(formData.get("scoring") ?? "points");
   const rewardTitle = String(formData.get("rewardTitle") ?? "").trim();
   const rewardDetails = String(formData.get("rewardDetails") ?? "").trim();
+  const rewardThresholdValueRaw = String(formData.get("rewardThresholdValue") ?? "").trim();
   const rewardFirst = String(formData.get("rewardFirst") ?? "").trim();
   const rewardSecond = String(formData.get("rewardSecond") ?? "").trim();
   const rewardThird = String(formData.get("rewardThird") ?? "").trim();
   const isActive = String(formData.get("isActive") ?? "") === "on";
   let storeMultipliers: Array<{ store_id: string; multiplier: number }> = [];
+  const rewardThresholdValue = rewardThresholdValueRaw ? Number(rewardThresholdValueRaw) : null;
 
   if (!name || !startDate || !endDate) {
     redirectWithMessage("Sezon icin ad, baslangic ve bitis tarihleri zorunlu.", "error", redirectTo);
@@ -1297,6 +1299,10 @@ export async function createCampaignAction(formData: FormData) {
     redirectWithMessage("Bitis zamani baslangic zamanindan sonra olmali.", "error", redirectTo);
   }
 
+  if (rewardThresholdValueRaw && (!Number.isFinite(rewardThresholdValue) || Number(rewardThresholdValue) <= 0)) {
+    redirectWithMessage("Odul esigi sifirdan buyuk bir adet veya puan olmali.", "error", redirectTo);
+  }
+
   try {
     storeMultipliers = await parseStoreMultipliers(storeMultipliersText);
   } catch (error) {
@@ -1316,6 +1322,7 @@ export async function createCampaignAction(formData: FormData) {
       end_at: endAt,
       reward_title: rewardTitle || null,
       reward_details: rewardDetails || null,
+      reward_threshold_value: rewardThresholdValue,
       reward_first: rewardFirst || null,
       reward_second: rewardSecond || null,
       reward_third: rewardThird || null,
@@ -1402,6 +1409,7 @@ export async function updateCampaignAction(formData: FormData) {
   const endAtInput = String(formData.get("endAt") ?? "").trim();
   const rewardTitle = String(formData.get("rewardTitle") ?? "").trim();
   const rewardDetails = String(formData.get("rewardDetails") ?? "").trim();
+  const rewardThresholdValueRaw = String(formData.get("rewardThresholdValue") ?? "").trim();
   const rewardFirst = String(formData.get("rewardFirst") ?? "").trim();
   const rewardSecond = String(formData.get("rewardSecond") ?? "").trim();
   const rewardThird = String(formData.get("rewardThird") ?? "").trim();
@@ -1412,6 +1420,7 @@ export async function updateCampaignAction(formData: FormData) {
   const startDate = startAtInput.slice(0, 10);
   const endDate = endAtInput.slice(0, 10);
   let storeMultipliers: Array<{ store_id: string; multiplier: number }> = [];
+  const rewardThresholdValue = rewardThresholdValueRaw ? Number(rewardThresholdValueRaw) : null;
 
   if (!campaignId || !name || !startAt || !endAt) {
     redirectWithMessage("Kampanya guncelleme icin gerekli alanlar eksik.", "error", redirectTo);
@@ -1419,6 +1428,10 @@ export async function updateCampaignAction(formData: FormData) {
 
   if (new Date(startAt).getTime() >= new Date(endAt).getTime()) {
     redirectWithMessage("Bitis zamani baslangic zamanindan sonra olmali.", "error", redirectTo);
+  }
+
+  if (rewardThresholdValueRaw && (!Number.isFinite(rewardThresholdValue) || Number(rewardThresholdValue) <= 0)) {
+    redirectWithMessage("Odul esigi sifirdan buyuk bir adet veya puan olmali.", "error", redirectTo);
   }
 
   try {
@@ -1440,6 +1453,7 @@ export async function updateCampaignAction(formData: FormData) {
       end_at: endAt,
       reward_title: rewardTitle || null,
       reward_details: rewardDetails || null,
+      reward_threshold_value: rewardThresholdValue,
       reward_first: rewardFirst || null,
       reward_second: rewardSecond || null,
       reward_third: rewardThird || null

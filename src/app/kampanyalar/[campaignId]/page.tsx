@@ -25,22 +25,33 @@ function scoreLabel(value: number, scoring: "points" | "quantity") {
 
 function campaignRewardLabel(
   campaign: {
+    reward_title?: string | null;
+    reward_details?: string | null;
+    reward_threshold_value?: number | null;
     reward_first?: string | null;
     reward_second?: string | null;
     reward_third?: string | null;
   },
-  index: number
+  index: number,
+  score: number
 ) {
+  const threshold = Number(campaign.reward_threshold_value ?? 0);
+  const reachedThreshold = threshold > 0 && score >= threshold;
+
+  if (reachedThreshold) {
+    return campaign.reward_title?.trim() || campaign.reward_details?.trim() || "Odul hak edildi";
+  }
+
   if (index === 0) {
-    return campaign.reward_first?.trim() || null;
+    return threshold > 0 ? null : campaign.reward_first?.trim() || null;
   }
 
   if (index === 1) {
-    return campaign.reward_second?.trim() || null;
+    return threshold > 0 ? null : campaign.reward_second?.trim() || null;
   }
 
   if (index === 2) {
-    return campaign.reward_third?.trim() || null;
+    return threshold > 0 ? null : campaign.reward_third?.trim() || null;
   }
 
   return null;
@@ -229,6 +240,16 @@ export default async function CampaignDetailPage({
               <span>{campaign.reward_details ?? "Odul detayi tanimlanmadi"}</span>
             </div>
             <div className="step-item">
+              <strong>Odul Esigi</strong>
+              <span>
+                {campaign.reward_threshold_value
+                  ? `${Number(campaign.reward_threshold_value).toFixed(0)} ${
+                      campaign.scoring === "points" ? "puan" : "adet"
+                    }`
+                  : "Odul esigi tanimlanmadi"}
+              </span>
+            </div>
+            <div className="step-item">
               <strong>Podyum Odulleri</strong>
               <span>
                 1. Sira: {campaign.reward_first ?? "Tanimlanmadi"} | 2. Sira:{" "}
@@ -255,7 +276,7 @@ export default async function CampaignDetailPage({
           ) : null}
           <div className="leaderboard-list">
             {leaderboard.map((row, index) => {
-              const rewardLabel = campaignRewardLabel(campaign, index);
+              const rewardLabel = campaignRewardLabel(campaign, index, row.score);
               const isLeader = index === 0;
               const rowContent = (
                 <>

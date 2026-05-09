@@ -114,34 +114,50 @@ export default async function CampaignDetailPage({
       : [];
   const targetStoreIds = campaign.mode === "store" && dashboard.profile.store_id ? [dashboard.profile.store_id] : [];
   const initialQuantityMap: Record<string, number> = {};
+  const campaignProductTotals = new Map<string, number>();
 
-  if (
-    isActiveCampaign &&
-    canSubmitToCampaign &&
-    ((campaign.mode === "employee" && targetProfileIds.length > 0) ||
-      (campaign.mode === "store" && targetStoreIds.length > 0))
-  ) {
-    let quantityQuery = admin
-      .from("sales_entries")
-      .select("product_id, target_profile_id, target_store_id, quantity")
-      .eq("campaign_id", campaign.id);
+  const { data: allCampaignEntries } = await admin
+    .from("sales_entries")
+    .select("product_id, target_profile_id, target_store_id, quantity")
+    .eq("campaign_id", campaign.id);
 
-    quantityQuery =
-      campaign.mode === "employee" && targetProfileIds.length > 0
-        ? quantityQuery.in("target_profile_id", targetProfileIds)
-        : quantityQuery.in("target_store_id", targetStoreIds);
+  ((allCampaignEntries as Array<{
+    product_id: string;
+    target_profile_id: string | null;
+    target_store_id: string | null;
+    quantity: number;
+  }> | null) ?? []).forEach((entry) => {
+    campaignProductTotals.set(
+      entry.product_id,
+      Number(campaignProductTotals.get(entry.product_id) ?? 0) + Number(entry.quantity ?? 0)
+    );
 
-    const { data: currentEntries } = await quantityQuery;
-
-    ((currentEntries as Array<{
-      product_id: string;
-      target_profile_id: string | null;
-      target_store_id: string | null;
-      quantity: number;
-    }> | null) ?? []).forEach((entry) => {
+    if (
+      isActiveCampaign &&
+      canSubmitToCampaign &&
+      ((campaign.mode === "employee" &&
+        entry.target_profile_id &&
+        targetProfileIds.includes(entry.target_profile_id)) ||
+        (campaign.mode === "store" &&
+          entry.target_store_id &&
+          targetStoreIds.includes(entry.target_store_id)))
+    ) {
       const targetId = campaign.mode === "employee" ? entry.target_profile_id : entry.target_store_id;
       const key = `${targetId ?? "none"}__${entry.product_id}`;
       initialQuantityMap[key] = Number(initialQuantityMap[key] ?? 0) + Number(entry.quantity ?? 0);
+    }
+  });
+
+  const campaignProductSummaryRows = campaign.products.map((product) => ({
+    id: product.id,
+    name: product.name,
+    unitLabel: product.unit_label,
+    total: Number(campaignProductTotals.get(product.id) ?? 0)
+  }));
+
+  if (campaignProductSummaryRows.length === 0) {
+    campaign.products.forEach((product) => {
+      campaignProductTotals.set(product.id, 0);
     });
   }
   const menuItems = [
@@ -329,6 +345,27 @@ export default async function CampaignDetailPage({
               );
             })}
           </div>
+
+          <section className="live-sale-summary campaign-product-summary" aria-label="Kampanya urun bazli adetleri">
+            <div className="live-sale-summary-head">
+              <strong>Urun Bazli Adetler</strong>
+              <span>Bu kampanyada urunlerin toplam adetleri</span>
+            </div>
+            <div className="live-sale-summary-table" role="table" aria-label="Kampanya urun bazli adet tablosu">
+              <div className="live-sale-summary-row live-sale-summary-header" role="row">
+                <span role="columnheader">Urun</span>
+                <span role="columnheader">Toplam</span>
+              </div>
+              {campaignProductSummaryRows.map((product) => (
+                <div key={`campaign-total-${product.id}`} className="live-sale-summary-row" role="row">
+                  <span role="cell">{product.name}</span>
+                  <strong role="cell">
+                    {product.total} {product.unitLabel}
+                  </strong>
+                </div>
+              ))}
+            </div>
+          </section>
         </section>
       ) : (
         <section className="guide-card">

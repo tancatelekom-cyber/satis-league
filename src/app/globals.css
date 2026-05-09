@@ -2474,6 +2474,10 @@ textarea::placeholder {
   font-weight: 900;
 }
 
+.campaign-product-summary {
+  margin-top: 14px;
+}
+
 .live-sale-list {
   display: grid;
   gap: 10px;

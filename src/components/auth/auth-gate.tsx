@@ -42,11 +42,6 @@ export function AuthGate({
           return;
         }
 
-        if (user && isPublicRoute && pathname !== "/sifre-yenile") {
-          router.replace("/");
-          return;
-        }
-
         setIsAllowed(true);
       } catch {
         if (!cancelled) {

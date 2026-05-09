@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { AuthGate } from "@/components/auth/auth-gate";
 import { AppShellHeader } from "@/components/app-shell-header";
 import { createClient } from "@/lib/supabase/server";
 import "./globals.css";
@@ -40,7 +41,7 @@ export default async function RootLayout({
         <div className="page-shell">
           <AppShellHeader initialIsAdmin={isAdmin} />
 
-          {children}
+          <AuthGate>{children}</AuthGate>
         </div>
       </body>
     </html>

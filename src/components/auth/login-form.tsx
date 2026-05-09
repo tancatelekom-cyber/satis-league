@@ -42,6 +42,17 @@ export function LoginForm({ message }: LoginFormProps) {
       return;
     }
 
+    const confirmResponse = await fetch("/api/auth/confirm-session", {
+      method: "POST"
+    });
+
+    if (!confirmResponse.ok) {
+      setError("Oturum acildi ama uygulama guvenlik kontrolu tamamlanamadi. Tekrar deneyin.");
+      await supabase.auth.signOut();
+      setSubmitting(false);
+      return;
+    }
+
     router.push("/");
     router.refresh();
   }

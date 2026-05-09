@@ -8,6 +8,7 @@ const PUBLIC_ROUTES = new Set([
   "/sifremi-unuttum",
   "/sifre-yenile"
 ]);
+const APP_SESSION_COOKIE = "tanca_session";
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({
@@ -52,8 +53,9 @@ export async function updateSession(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
   const isPublicRoute = PUBLIC_ROUTES.has(pathname);
+  const hasAppSession = request.cookies.get(APP_SESSION_COOKIE)?.value === "active";
 
-  if (!user && !isPublicRoute) {
+  if ((!user || !hasAppSession) && !isPublicRoute) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/giris";
     if (pathname !== "/") {
@@ -62,7 +64,7 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  if (user && isPublicRoute && pathname !== "/sifre-yenile") {
+  if (user && hasAppSession && isPublicRoute && pathname !== "/sifre-yenile") {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/";
     redirectUrl.search = "";

@@ -1274,6 +1274,7 @@ export async function createCampaignAction(formData: FormData) {
   const endAtInput = String(formData.get("endAt") ?? "").trim();
   const rewardTitle = String(formData.get("rewardTitle") ?? "").trim();
   const rewardDetails = String(formData.get("rewardDetails") ?? "").trim();
+  const rewardThresholdValueRaw = String(formData.get("rewardThresholdValue") ?? "").trim();
   const rewardFirst = String(formData.get("rewardFirst") ?? "").trim();
   const rewardSecond = String(formData.get("rewardSecond") ?? "").trim();
   const rewardThird = String(formData.get("rewardThird") ?? "").trim();
@@ -1286,6 +1287,7 @@ export async function createCampaignAction(formData: FormData) {
   const startDate = startAtInput.slice(0, 10);
   const endDate = endAtInput.slice(0, 10);
   let storeMultipliers: Array<{ store_id: string; multiplier: number }> = [];
+  const rewardThresholdValue = rewardThresholdValueRaw ? Number(rewardThresholdValueRaw) : null;
 
   if (!name || !startAt || !endAt) {
     redirectWithMessage("Kampanya icin ad, baslangic ve bitis zamani zorunlu.", "error", redirectTo);

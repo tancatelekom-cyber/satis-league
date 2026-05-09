@@ -146,7 +146,13 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
   const campaignIds = campaignRows.map((campaign) => campaign.id);
   const seasonIds = seasonRows.map((season) => season.id);
 
-  const [{ data: campaignProducts }, { data: campaignStoreMultipliers }, { data: campaignEntryPermissions }, { data: campaignSales }] = campaignIds.length
+  const [
+    { data: campaignProducts },
+    { data: campaignStoreMultipliers },
+    { data: campaignEntryPermissions },
+    { data: campaignSales },
+    { data: campaignLiveEntries }
+  ] = campaignIds.length
     ? await Promise.all([
         supabase
           .from("campaign_products")
@@ -198,13 +204,26 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
           )
           .in("campaign_id", campaignIds)
           .order("created_at", { ascending: false })
-          .limit(200)
+          .limit(200),
+        supabase
+          .from("sales_entries")
+          .select("campaign_id, product_id, target_profile_id, target_store_id, quantity")
+          .in("campaign_id", campaignIds)
       ])
     : [
         { data: [] as CampaignProductRecord[] },
         { data: [] as CampaignStoreMultiplierRecord[] },
         { data: [] as CampaignEntryPermissionRecord[] },
-        { data: [] as AdminCampaignSaleRecord[] }
+        { data: [] as AdminCampaignSaleRecord[] },
+        {
+          data: [] as Array<{
+            campaign_id: string;
+            product_id: string;
+            target_profile_id: string | null;
+            target_store_id: string | null;
+            quantity: number;
+          }>
+        }
       ];
 
   const [{ data: seasonProducts }, { data: seasonStoreMultipliers }] = seasonIds.length
@@ -251,6 +270,18 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
       full_name: profile.full_name,
       role: profile.role
     }));
+  const campaignLiveQuantityMap = Object.fromEntries(
+    (((campaignLiveEntries as Array<{
+      campaign_id: string;
+      product_id: string;
+      target_profile_id: string | null;
+      target_store_id: string | null;
+      quantity: number;
+    }> | null) ?? [])).map((entry) => [
+      `${entry.campaign_id}__${entry.target_profile_id ?? entry.target_store_id ?? "none"}__${entry.product_id}`,
+      Number(entry.quantity ?? 0)
+    ])
+  );
 
   const activeSeason =
     seasonRows.find((season) => season.id === seasonId) ??
@@ -375,6 +406,7 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
     multiplierRows: (campaignStoreMultipliers as CampaignStoreMultiplierRecord[] | null) ?? [],
     campaignEntryPermissionRows: (campaignEntryPermissions as CampaignEntryPermissionRecord[] | null) ?? [],
     campaignSales: (campaignSales as AdminCampaignSaleRecord[] | null) ?? [],
+    campaignLiveQuantityMap,
     seasonProductRows: (seasonProducts as SeasonProductRecord[] | null) ?? [],
     seasonMultiplierRows: (seasonStoreMultipliers as SeasonStoreMultiplierRecord[] | null) ?? [],
     approvedProfilesForSeason: activeEmployeeTargets,

@@ -1,5 +1,4 @@
 import {
-  createCampaignSaleByAdminAction,
   createCampaignAction,
   deleteCampaignSaleAction,
   deleteCampaignAction,
@@ -168,11 +167,11 @@ export default async function CampaignAdminPage({ searchParams }: CampaignAdminP
           </p>
 
           <AdminCampaignSaleForm
-            action={createCampaignSaleByAdminAction}
             campaigns={data.campaignRows.map((campaign) => ({
               id: campaign.id,
               name: campaign.name,
               mode: campaign.mode,
+              scoring: campaign.scoring,
               products: data.productRows
                 .filter((product) => product.campaign_id === campaign.id)
                 .map((product) => ({
@@ -190,6 +189,7 @@ export default async function CampaignAdminPage({ searchParams }: CampaignAdminP
               id: store.id,
               name: store.name
             }))}
+            initialQuantities={data.campaignLiveQuantityMap}
           />
         </article>
 

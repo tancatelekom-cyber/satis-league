@@ -2388,6 +2388,91 @@ textarea::placeholder {
   margin-top: 14px;
 }
 
+.live-sale-entry-shell {
+  display: grid;
+  gap: 12px;
+}
+
+.live-sale-target-select {
+  margin-bottom: 4px;
+}
+
+.live-sale-list {
+  display: grid;
+  gap: 10px;
+}
+
+.live-sale-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.live-sale-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.live-sale-copy strong {
+  color: #ffffff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.live-sale-copy span {
+  color: #d5e7fb;
+  font-size: 0.84rem;
+  line-height: 1.35;
+}
+
+.live-sale-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.live-sale-button {
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 12px;
+  cursor: pointer;
+  color: #09111f;
+  font-size: 1.2rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, var(--accent), #7df5d2);
+}
+
+.live-sale-input {
+  width: 82px;
+  min-height: 38px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.live-sale-input::-webkit-outer-spin-button,
+.live-sale-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.live-sale-input[type="number"] {
+  -moz-appearance: textfield;
+}
+
 .campaign-sales-admin {
   display: grid;
   gap: 10px;
@@ -2905,6 +2990,19 @@ textarea::placeholder {
   .compact-sale-form {
     display: grid;
     grid-template-columns: 1fr;
+  }
+
+  .live-sale-row {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .live-sale-controls {
+    justify-content: flex-end;
+  }
+
+  .live-sale-input {
+    width: 88px;
   }
 
   .compact-sale-actions {

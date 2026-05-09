@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { SaleEntryCard } from "@/components/campaign/sale-entry-card";
 import { daysLeftLabel, formatCampaignDateTime, isSalesWindowOpen } from "@/lib/campaign-utils";
 import { getCampaignDashboardData } from "@/lib/campaign/get-campaign-dashboard-data";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -89,6 +90,49 @@ export default async function CampaignDetailPage({
   const { campaign, leaderboard, personal } = campaignItem;
   const isActiveCampaign = isSalesWindowOpen(campaign.start_at, campaign.end_at);
   const canSubmitToCampaign = campaign.can_submit !== false;
+  const admin = createAdminClient();
+  const defaultProfileId =
+    dashboard.profile.role === "manager" && dashboard.teamProfiles.length > 0
+      ? dashboard.teamProfiles[0].id
+      : dashboard.profile.id;
+  const targetProfileIds =
+    campaign.mode === "employee"
+      ? dashboard.profile.role === "manager"
+        ? dashboard.teamProfiles.map((person) => person.id)
+        : [dashboard.profile.id]
+      : [];
+  const targetStoreIds = campaign.mode === "store" && dashboard.profile.store_id ? [dashboard.profile.store_id] : [];
+  const initialQuantityMap: Record<string, number> = {};
+
+  if (
+    isActiveCampaign &&
+    canSubmitToCampaign &&
+    ((campaign.mode === "employee" && targetProfileIds.length > 0) ||
+      (campaign.mode === "store" && targetStoreIds.length > 0))
+  ) {
+    let quantityQuery = admin
+      .from("sales_entries")
+      .select("product_id, target_profile_id, target_store_id, quantity")
+      .eq("campaign_id", campaign.id);
+
+    quantityQuery =
+      campaign.mode === "employee" && targetProfileIds.length > 0
+        ? quantityQuery.in("target_profile_id", targetProfileIds)
+        : quantityQuery.in("target_store_id", targetStoreIds);
+
+    const { data: currentEntries } = await quantityQuery;
+
+    ((currentEntries as Array<{
+      product_id: string;
+      target_profile_id: string | null;
+      target_store_id: string | null;
+      quantity: number;
+    }> | null) ?? []).forEach((entry) => {
+      const targetId = campaign.mode === "employee" ? entry.target_profile_id : entry.target_store_id;
+      const key = `${targetId ?? "none"}__${entry.product_id}`;
+      initialQuantityMap[key] = Number(initialQuantityMap[key] ?? 0) + Number(entry.quantity ?? 0);
+    });
+  }
   const menuItems = [
     {
       href: `/kampanyalar/${campaign.id}?view=leaderboard`,
@@ -275,24 +319,17 @@ export default async function CampaignDetailPage({
           </div>
 
           <div className="product-list">
-            {campaign.products.map((product) => (
-              <SaleEntryCard
-                key={product.id}
-                campaignId={campaign.id}
-                campaignMode={campaign.mode}
-                defaultProfileId={
-                  dashboard.profile.role === "manager" && dashboard.teamProfiles.length > 0
-                    ? dashboard.teamProfiles[0].id
-                    : dashboard.profile.id
-                }
-                defaultStoreId={dashboard.profile.store_id ?? null}
-                isManager={dashboard.profile.role === "manager"}
-                product={product}
-                scoring={campaign.scoring}
-                teamProfiles={dashboard.teamProfiles}
-                redirectTo={`/kampanyalar/${campaign.id}?view=sales`}
-              />
-            ))}
+            <SaleEntryCard
+              campaignId={campaign.id}
+              campaignMode={campaign.mode}
+              defaultProfileId={defaultProfileId}
+              defaultStoreId={dashboard.profile.store_id ?? null}
+              initialQuantities={initialQuantityMap}
+              isManager={dashboard.profile.role === "manager"}
+              products={campaign.products}
+              scoring={campaign.scoring}
+              teamProfiles={dashboard.teamProfiles}
+            />
           </div>
         </section>
       )}

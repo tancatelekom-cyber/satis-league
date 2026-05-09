@@ -686,6 +686,16 @@ button {
   line-height: 1.7;
 }
 
+.home-live-campaign-card .section-title h2 {
+  color: #f8fcff;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.22);
+}
+
+.home-live-campaign-card .section-title p {
+  color: #e8f5ff;
+  font-weight: 600;
+}
+
 .metric-card span,
 .guide-card span,
 .home-leader-season,

@@ -193,7 +193,7 @@ export default async function HomePage() {
             </div>
           </section>
 
-          <section className="guide-card">
+          <section className="guide-card home-live-campaign-card">
             <div className="section-title compact-title">
               <div>
                 <h2>Canli Kampanya Siralamasi</h2>

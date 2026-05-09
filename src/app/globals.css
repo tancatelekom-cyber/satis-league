@@ -1477,10 +1477,11 @@ textarea::placeholder {
 .admin-quick-card {
   display: block;
   padding: 18px 20px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(4, 92, 96, 0.14);
   border-radius: 20px;
-  background: var(--surface-soft);
-  color: #f5f8fe;
+  background: rgba(255, 255, 255, 0.72);
+  color: #10203b;
+  box-shadow: 0 12px 26px rgba(8, 22, 40, 0.08);
 }
 
 .admin-shortcut-card strong,
@@ -1488,18 +1489,25 @@ textarea::placeholder {
 .admin-quick-card strong {
   display: block;
   margin-bottom: 6px;
+  color: #10203b;
 }
 
 .admin-shortcut-card span,
 .admin-overview-card span,
 .admin-quick-card span,
 .admin-overview-card p {
-  color: var(--muted);
+  color: #5d7290;
 }
 
 .admin-shortcut-card-active {
-  border-color: rgba(88, 240, 196, 0.32);
-  background: rgba(88, 240, 196, 0.1);
+  border-color: rgba(4, 92, 96, 0.22);
+  background: linear-gradient(135deg, rgba(4, 92, 96, 0.86), rgba(7, 120, 127, 0.82));
+  color: #ffffff;
+}
+
+.admin-shortcut-card-active strong,
+.admin-shortcut-card-active span {
+  color: #ffffff;
 }
 
 .admin-overview-card strong {

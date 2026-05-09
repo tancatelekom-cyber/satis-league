@@ -2478,14 +2478,60 @@ textarea::placeholder {
   margin-top: 14px;
 }
 
-.campaign-product-summary-row {
-  align-items: flex-start;
+.campaign-matrix-wrap {
+  overflow-x: auto;
 }
 
-.campaign-product-summary-values {
-  text-align: right;
-  color: #d5e7fb !important;
-  line-height: 1.45;
+.campaign-matrix-table {
+  min-width: 720px;
+  width: 100%;
+  border-collapse: collapse;
+  overflow: hidden;
+  border-radius: 16px;
+}
+
+.campaign-matrix-table thead th {
+  padding: 10px 12px;
+  border: 1px solid rgba(88, 240, 196, 0.18);
+  background: rgba(255, 222, 149, 0.92);
+  color: #082242;
+  font-size: 0.86rem;
+  font-weight: 900;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.campaign-matrix-table thead th:first-child {
+  text-align: left;
+}
+
+.campaign-matrix-table tbody th,
+.campaign-matrix-table tbody td {
+  padding: 10px 12px;
+  border: 1px solid rgba(88, 240, 196, 0.18);
+  font-size: 0.95rem;
+}
+
+.campaign-matrix-table tbody th {
+  min-width: 170px;
+  background: rgba(255, 239, 197, 0.92);
+  color: #082242;
+  font-weight: 800;
+  text-align: left;
+}
+
+.campaign-matrix-table tbody td {
+  min-width: 88px;
+  background: rgba(255, 255, 255, 0.82);
+  color: #0f2744;
+  font-weight: 700;
+  text-align: center;
+}
+
+.campaign-matrix-table tbody td.campaign-matrix-total {
+  background: rgba(255, 244, 213, 0.98);
+  color: #0b6b6e;
+  font-weight: 900;
 }
 
 .live-sale-list {

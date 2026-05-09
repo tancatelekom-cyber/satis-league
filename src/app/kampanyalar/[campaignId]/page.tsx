@@ -153,22 +153,20 @@ export default async function CampaignDetailPage({
     }
   });
 
-  const participantSummaryRows = leaderboard.map((row) => {
-    const productTotals = participantProductTotals.get(row.id) ?? new Map<string, number>();
-    const summaryText = campaign.products
-      .map((product) => ({
-        name: product.name,
-        total: Number(productTotals.get(product.id) ?? 0),
-        unitLabel: product.unit_label
-      }))
-      .filter((product) => product.total > 0)
-      .map((product) => `${product.name}: ${product.total} ${product.unitLabel}`)
-      .join(" | ");
+  const participantSummaryColumns = leaderboard.map((row) => ({
+    id: row.id,
+    label: row.label
+  }));
+  const productSummaryMatrix = campaign.products.map((product) => {
+    const participantCells = participantSummaryColumns.map((participant) =>
+      Number(participantProductTotals.get(participant.id)?.get(product.id) ?? 0)
+    );
 
     return {
-      id: row.id,
-      label: row.label,
-      summaryText: summaryText || "Kayit yok"
+      id: product.id,
+      name: product.name,
+      participantCells,
+      total: participantCells.reduce((sum, value) => sum + value, 0)
     };
   });
   const menuItems = [
@@ -371,23 +369,31 @@ export default async function CampaignDetailPage({
                   : "Her magaza icin urun adetlerinin ozet gorunumu"}
               </span>
             </div>
-            <div
-              className="live-sale-summary-table"
-              role="table"
-              aria-label="Kampanya bazli urun ozet tablosu"
-            >
-              <div className="live-sale-summary-row live-sale-summary-header" role="row">
-                <span role="columnheader">{campaign.mode === "employee" ? "Calisan" : "Magaza"}</span>
-                <span role="columnheader">Urun Adetleri</span>
-              </div>
-              {participantSummaryRows.map((row) => (
-                <div key={`campaign-summary-${row.id}`} className="live-sale-summary-row campaign-product-summary-row" role="row">
-                  <span role="cell">{row.label}</span>
-                  <span className="campaign-product-summary-values" role="cell">
-                    {row.summaryText}
-                  </span>
-                </div>
-              ))}
+            <div className="campaign-matrix-wrap">
+              <table className="campaign-matrix-table">
+                <thead>
+                  <tr>
+                    <th>Urun</th>
+                    {participantSummaryColumns.map((participant) => (
+                      <th key={`matrix-head-${participant.id}`}>{participant.label}</th>
+                    ))}
+                    <th>Toplam</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {productSummaryMatrix.map((product) => (
+                    <tr key={`matrix-row-${product.id}`}>
+                      <th>{product.name}</th>
+                      {product.participantCells.map((value, index) => (
+                        <td key={`matrix-cell-${product.id}-${participantSummaryColumns[index]?.id ?? index}`}>
+                          {value > 0 ? value : ""}
+                        </td>
+                      ))}
+                      <td className="campaign-matrix-total">{product.total}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </section>
         </section>

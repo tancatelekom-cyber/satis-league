@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth/require-user";
+import { getCampaignDashboardData } from "@/lib/campaign/get-campaign-dashboard-data";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { SeasonRecord } from "@/lib/types";
 
@@ -56,7 +57,7 @@ function buildMonthHref(seasonId: string, monthKey: string) {
 }
 
 export default async function HomePage() {
-  await requireUser();
+  const user = await requireUser();
 
   const admin = createAdminClient();
   const now = new Date();
@@ -64,6 +65,16 @@ export default async function HomePage() {
   const monthLabel = `${MONTH_LABELS[now.getMonth()]} ${now.getFullYear()}`;
   const monthStart = toDateString(new Date(now.getFullYear(), now.getMonth(), 1));
   const monthEnd = toDateString(new Date(now.getFullYear(), now.getMonth() + 1, 0));
+
+  const campaignDashboard = await getCampaignDashboardData(user.id);
+  const liveCampaignLeaderboard =
+    campaignDashboard?.profile.approval === "approved"
+      ? campaignDashboard.activeLeaderboards.find(
+          (item) =>
+            new Date(item.campaign.start_at).getTime() <= now.getTime() &&
+            new Date(item.campaign.end_at).getTime() >= now.getTime()
+        ) ?? null
+      : null;
 
   const [{ data: seasons }, { data: profiles }, { data: stores }, { data: seasonSales }] = await Promise.all([
     admin
@@ -95,8 +106,6 @@ export default async function HomePage() {
   const storeRows = (stores as Array<{ id: string; name: string }> | null) ?? [];
   const saleRows = (seasonSales as SeasonSaleRow[] | null) ?? [];
 
-  const profileMap = new Map(employeeProfiles.map((profile) => [profile.id, profile.full_name]));
-  const storeMap = new Map(storeRows.map((store) => [store.id, store.name]));
   const profileStoreMap = new Map(employeeProfiles.map((profile) => [profile.id, profile.store_id]));
 
   const leaderCards: HomeLeaderCard[] = seasonRows.map((season) => {
@@ -172,48 +181,109 @@ export default async function HomePage() {
 
   return (
     <main>
-      <section className="hero home-leaders-hero">
-        <div className="hero-copy">
-          <h1 className="home-leaders-title">Ayin Yildizlari</h1>
-        </div>
-      </section>
-
-      <section className="home-leader-stack">
-        {leaderCards.length === 0 ? (
-          <article className="home-leader-card">
-            <div className="home-leader-head">
-              <strong>Sezon bulunamadi</strong>
-              <span className="home-leader-month">{monthLabel}</span>
+      {liveCampaignLeaderboard ? (
+        <>
+          <section className="hero home-leaders-hero">
+            <div className="hero-copy">
+              <h1 className="home-leaders-title">{liveCampaignLeaderboard.campaign.name}</h1>
+              <p>
+                Su anda canli olan kampanyanin anlik siralamasi asagida. Tum detay icin kampanyayi
+                acabilirsiniz.
+              </p>
             </div>
-            <p className="page-subtitle">Admin panelinden aktif sezon tanimlandiginda burada liderler gorunecek.</p>
-          </article>
-        ) : (
-          leaderCards.map((card) => (
-            <Link key={card.seasonId} className="home-leader-card home-leader-card-link" href={card.href}>
-              <div className="home-leader-head">
-                <div>
-                  <span className="home-leader-season">{card.seasonName}</span>
-                  <strong>{card.monthLabel}</strong>
-                </div>
+          </section>
+
+          <section className="guide-card">
+            <div className="section-title compact-title">
+              <div>
+                <h2>Canli Kampanya Siralamasi</h2>
+                <p>
+                  {liveCampaignLeaderboard.campaign.mode === "employee" ? "Calisan bazli" : "Magaza bazli"}{" "}
+                  | {liveCampaignLeaderboard.campaign.scoring === "points" ? "Puan" : "Adet"}
+                </p>
               </div>
+              <Link
+                className="button-secondary"
+                href={`/kampanyalar/${liveCampaignLeaderboard.campaign.id}?view=leaderboard`}
+              >
+                Kampanyayi Ac
+              </Link>
+            </div>
 
-              <div className="home-leader-body">
-                <div className="home-leader-trophy" aria-hidden="true">
-                  <span className="home-leader-trophy-rank">1</span>
-                  <span className="home-leader-trophy-icon">🏆</span>
+            <div className="leaderboard-list">
+              {liveCampaignLeaderboard.leaderboard.slice(0, 5).map((row, index) => (
+                <div key={row.id} className="leaderboard-row">
+                  <div className={`leaderboard-rank ${row.score <= 0 ? "leaderboard-rank-empty" : ""}`}>
+                    {index + 1}
+                  </div>
+
+                  <div>
+                    <h4>
+                      {row.label}
+                      {index === 0 ? (
+                        <span aria-label="Lider kupasi" className="leaderboard-cup" title="Lider kupasi">
+                          Kupa
+                        </span>
+                      ) : null}
+                    </h4>
+                    <p>{row.badge ?? "Siralamada"}</p>
+                  </div>
+
+                  <strong>
+                    {row.score.toLocaleString("tr-TR")}{" "}
+                    {liveCampaignLeaderboard.campaign.scoring === "points" ? "puan" : "adet"}
+                  </strong>
                 </div>
+              ))}
+            </div>
+          </section>
+        </>
+      ) : (
+        <>
+          <section className="hero home-leaders-hero">
+            <div className="hero-copy">
+              <h1 className="home-leaders-title">Ayin Yildizlari</h1>
+            </div>
+          </section>
 
-                <div className="home-leader-content">
-                  <strong className="home-leader-name">{card.winnerName}</strong>
-                  <span className="home-leader-score-label">Ayin lideri</span>
+          <section className="home-leader-stack">
+            {leaderCards.length === 0 ? (
+              <article className="home-leader-card">
+                <div className="home-leader-head">
+                  <strong>Sezon bulunamadi</strong>
+                  <span className="home-leader-month">{monthLabel}</span>
                 </div>
+                <p className="page-subtitle">Admin panelinden aktif sezon tanimlandiginda burada liderler gorunecek.</p>
+              </article>
+            ) : (
+              leaderCards.map((card) => (
+                <Link key={card.seasonId} className="home-leader-card home-leader-card-link" href={card.href}>
+                  <div className="home-leader-head">
+                    <div>
+                      <span className="home-leader-season">{card.seasonName}</span>
+                      <strong>{card.monthLabel}</strong>
+                    </div>
+                  </div>
 
-                <strong className="home-leader-score">{card.score.toLocaleString("tr-TR")}</strong>
-              </div>
-            </Link>
-          ))
-        )}
-      </section>
+                  <div className="home-leader-body">
+                    <div className="home-leader-trophy" aria-hidden="true">
+                      <span className="home-leader-trophy-rank">1</span>
+                      <span className="home-leader-trophy-icon">🏆</span>
+                    </div>
+
+                    <div className="home-leader-content">
+                      <strong className="home-leader-name">{card.winnerName}</strong>
+                      <span className="home-leader-score-label">Ayin lideri</span>
+                    </div>
+
+                    <strong className="home-leader-score">{card.score.toLocaleString("tr-TR")}</strong>
+                  </div>
+                </Link>
+              ))
+            )}
+          </section>
+        </>
+      )}
     </main>
   );
 }

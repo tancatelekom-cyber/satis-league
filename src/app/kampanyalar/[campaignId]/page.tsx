@@ -104,7 +104,7 @@ export default async function CampaignDetailPage({
   if (isActiveCampaign) {
     menuItems.push({
       href: `/kampanyalar/${campaign.id}?view=sales`,
-      title: "Kampanya Girisi",
+      title: "Satis Girisi Yap",
       active: view === "sales"
     });
   }
@@ -263,7 +263,7 @@ export default async function CampaignDetailPage({
         <section className="guide-card">
           <div className="section-title compact-title">
             <div>
-              <h2>Kampanya Girisi</h2>
+              <h2>Satis Girisi Yap</h2>
               <p>Urun secin ve sadece bu kampanya icin satis girin.</p>
             </div>
           </div>

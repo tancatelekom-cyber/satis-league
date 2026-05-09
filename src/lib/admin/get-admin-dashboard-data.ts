@@ -244,8 +244,8 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
   const activeEmployeeTargets = approvedProfilesForSeason.filter(
     (profile) => profile.role === "employee" && !profile.is_on_leave
   );
-  const approvedCampaignPermissionProfiles = managedProfileRows
-    .filter((profile) => profile.approval === "approved")
+  const approvedCampaignPermissionProfiles = approvedProfilesForSeason
+    .filter((profile) => !profile.is_on_leave)
     .map((profile) => ({
       id: profile.id,
       full_name: profile.full_name,

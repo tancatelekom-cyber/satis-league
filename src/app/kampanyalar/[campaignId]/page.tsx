@@ -88,6 +88,7 @@ export default async function CampaignDetailPage({
 
   const { campaign, leaderboard, personal } = campaignItem;
   const isActiveCampaign = isSalesWindowOpen(campaign.start_at, campaign.end_at);
+  const canSubmitToCampaign = campaign.can_submit !== false;
   const menuItems = [
     {
       href: `/kampanyalar/${campaign.id}?view=leaderboard`,
@@ -101,7 +102,7 @@ export default async function CampaignDetailPage({
     }
   ];
 
-  if (isActiveCampaign) {
+  if (isActiveCampaign && canSubmitToCampaign) {
     menuItems.push({
       href: `/kampanyalar/${campaign.id}?view=sales`,
       title: "Satis Girisi Yap",
@@ -201,8 +202,13 @@ export default async function CampaignDetailPage({
             </div>
           </div>
         </section>
-      ) : !isActiveCampaign || view === "leaderboard" ? (
+      ) : !isActiveCampaign || view === "leaderboard" || !canSubmitToCampaign ? (
         <section className="guide-card">
+          {isActiveCampaign && !canSubmitToCampaign ? (
+            <div className="message-box error-box">
+              Bu kampanyada satis girisi sadece adminin yetki verdigi profiller tarafindan yapilabilir.
+            </div>
+          ) : null}
           <div className="leaderboard-list">
             {leaderboard.map((row, index) => {
               const rewardLabel = campaignRewardLabel(campaign, index);

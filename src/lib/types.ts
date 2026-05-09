@@ -180,6 +180,16 @@ export type CampaignStoreMultiplierRecord = {
   } | null;
 };
 
+export type CampaignEntryPermissionRecord = {
+  id: string;
+  campaign_id: string;
+  profile_id: string;
+  profile: {
+    full_name: string;
+    role: UserRole;
+  } | null;
+};
+
 export type AdminCampaignSaleRecord = {
   id: string;
   campaign_id: string;
@@ -224,6 +234,7 @@ export type CampaignPageCampaign = {
   reward_third: string | null;
   is_active: boolean;
   products: CampaignProductRecord[];
+  can_submit?: boolean;
 };
 
 export type NotificationRecord = {

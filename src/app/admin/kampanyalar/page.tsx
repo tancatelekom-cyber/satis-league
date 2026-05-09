@@ -94,6 +94,25 @@ export default async function CampaignAdminPage({ searchParams }: CampaignAdminP
               />
             </label>
 
+            <label className="field">
+              <span>Kampanya Giris Yetkisi Olan Profiller</span>
+              <div className="checkbox-grid permission-checkbox-grid">
+                {data.approvedCampaignPermissionProfiles.length === 0 ? (
+                  <span className="subtle">Onayli profil bulunamadi.</span>
+                ) : (
+                  data.approvedCampaignPermissionProfiles.map((profile) => (
+                    <label key={profile.id} className="checkbox-card">
+                      <input name="allowedEntryProfileIds" type="checkbox" value={profile.id} />
+                      <span>
+                        {profile.full_name} | {profile.role === "employee" ? "Calisan" : profile.role === "manager" ? "Magaza Muduru" : "Yonetim"}
+                      </span>
+                    </label>
+                  ))
+                )}
+              </div>
+              <small className="subtle">Bos birakirsan onayli tum kullanicilar kampanya girisi yapabilir.</small>
+            </label>
+
             <div className="auth-grid">
               <label className="field">
                 <span>Odul Basligi</span>
@@ -192,6 +211,13 @@ export default async function CampaignAdminPage({ searchParams }: CampaignAdminP
                         .filter((item) => item.campaign_id === campaign.id)
                         .map((item) => `${item.store?.name ?? "Magaza"} x${item.multiplier}`)
                         .join(", ") || "Varsayilan 1.00"}
+                    </p>
+                    <p className="subtle">
+                      Giris yetkisi olanlar:{" "}
+                      {data.campaignEntryPermissionRows
+                        .filter((item) => item.campaign_id === campaign.id)
+                        .map((item) => item.profile?.full_name ?? "Profil")
+                        .join(", ") || "Tum onayli kullanicilar"}
                     </p>
 
                     <div className="campaign-sales-admin">
@@ -336,6 +362,37 @@ export default async function CampaignAdminPage({ searchParams }: CampaignAdminP
                           name="storeMultipliers"
                           rows={4}
                         />
+                      </label>
+
+                      <label className="field compact">
+                        <span>Kampanya Giris Yetkisi Olan Profiller</span>
+                        <div className="checkbox-grid permission-checkbox-grid">
+                          {data.approvedCampaignPermissionProfiles.map((profile) => {
+                            const isChecked = data.campaignEntryPermissionRows.some(
+                              (item) => item.campaign_id === campaign.id && item.profile_id === profile.id
+                            );
+
+                            return (
+                              <label key={`${campaign.id}-${profile.id}`} className="checkbox-card">
+                                <input
+                                  defaultChecked={isChecked}
+                                  name="allowedEntryProfileIds"
+                                  type="checkbox"
+                                  value={profile.id}
+                                />
+                                <span>
+                                  {profile.full_name} |{" "}
+                                  {profile.role === "employee"
+                                    ? "Calisan"
+                                    : profile.role === "manager"
+                                      ? "Magaza Muduru"
+                                      : "Yonetim"}
+                                </span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                        <small className="subtle">Bos ise tum onayli kullanicilar kampanya girisi yapabilir.</small>
                       </label>
 
                       <div className="campaign-manage-actions">

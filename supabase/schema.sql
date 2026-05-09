@@ -179,6 +179,13 @@ create table if not exists public.campaign_profile_multipliers (
   unique (campaign_id, profile_id)
 );
 
+create table if not exists public.campaign_entry_permissions (
+  id uuid primary key default gen_random_uuid(),
+  campaign_id uuid not null references public.campaigns(id) on delete cascade,
+  profile_id uuid not null references public.profiles(id) on delete cascade,
+  unique (campaign_id, profile_id)
+);
+
 create table if not exists public.sales_entries (
   id uuid primary key default gen_random_uuid(),
   campaign_id uuid not null references public.campaigns(id) on delete cascade,
@@ -326,6 +333,7 @@ alter table public.campaigns enable row level security;
 alter table public.campaign_products enable row level security;
 alter table public.campaign_store_multipliers enable row level security;
 alter table public.campaign_profile_multipliers enable row level security;
+alter table public.campaign_entry_permissions enable row level security;
 alter table public.sales_entries enable row level security;
 alter table public.season_sales_entries enable row level security;
 alter table public.notifications enable row level security;

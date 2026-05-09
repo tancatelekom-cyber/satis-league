@@ -149,6 +149,17 @@ async function parseStoreMultipliers(rawMultipliers: string) {
   });
 }
 
+function parseAllowedEntryProfileIds(formData: FormData) {
+  return Array.from(
+    new Set(
+      formData
+        .getAll("allowedEntryProfileIds")
+        .map((value) => String(value ?? "").trim())
+        .filter(Boolean)
+    )
+  );
+}
+
 async function calculateEmployeeSeasonSale(input: {
   seasonId: string;
   productId: string;
@@ -1266,6 +1277,7 @@ export async function createCampaignAction(formData: FormData) {
   const rewardThird = String(formData.get("rewardThird") ?? "").trim();
   const productsText = String(formData.get("products") ?? "").trim();
   const storeMultipliersText = String(formData.get("storeMultipliers") ?? "").trim();
+  const allowedEntryProfileIds = parseAllowedEntryProfileIds(formData);
   const products = parseProducts(productsText);
   const startAt = localDateTimeToIso(startAtInput);
   const endAt = localDateTimeToIso(endAtInput);
@@ -1338,6 +1350,23 @@ export async function createCampaignAction(formData: FormData) {
     }
   }
 
+  if (allowedEntryProfileIds.length > 0) {
+    const { error: permissionError } = await supabase.from("campaign_entry_permissions").insert(
+      allowedEntryProfileIds.map((profileId) => ({
+        campaign_id: campaignId,
+        profile_id: profileId
+      }))
+    );
+
+    if (permissionError) {
+      redirectWithMessage(
+        `Kampanya olustu ama giris yetkileri kaydedilemedi: ${permissionError.message}`,
+        "error",
+        redirectTo
+      );
+    }
+  }
+
   const { error: productError } = await supabase.from("campaign_products").insert(
     products.map((product) => ({
       ...product,
@@ -1377,6 +1406,7 @@ export async function updateCampaignAction(formData: FormData) {
   const rewardSecond = String(formData.get("rewardSecond") ?? "").trim();
   const rewardThird = String(formData.get("rewardThird") ?? "").trim();
   const storeMultipliersText = String(formData.get("storeMultipliers") ?? "").trim();
+  const allowedEntryProfileIds = parseAllowedEntryProfileIds(formData);
   const startAt = localDateTimeToIso(startAtInput);
   const endAt = localDateTimeToIso(endAtInput);
   const startDate = startAtInput.slice(0, 10);
@@ -1441,6 +1471,36 @@ export async function updateCampaignAction(formData: FormData) {
 
     if (insertMultiplierError) {
       redirectWithMessage(`Yeni magaza carpanlari eklenemedi: ${insertMultiplierError.message}`, "error", redirectTo);
+    }
+  }
+
+  const { error: clearPermissionError } = await supabase
+    .from("campaign_entry_permissions")
+    .delete()
+    .eq("campaign_id", campaignId);
+
+  if (clearPermissionError) {
+    redirectWithMessage(
+      `Kampanya guncellendi ama giris yetkileri temizlenemedi: ${clearPermissionError.message}`,
+      "error",
+      redirectTo
+    );
+  }
+
+  if (allowedEntryProfileIds.length > 0) {
+    const { error: permissionError } = await supabase.from("campaign_entry_permissions").insert(
+      allowedEntryProfileIds.map((profileId) => ({
+        campaign_id: campaignId,
+        profile_id: profileId
+      }))
+    );
+
+    if (permissionError) {
+      redirectWithMessage(
+        `Kampanya guncellendi ama giris yetkileri kaydedilemedi: ${permissionError.message}`,
+        "error",
+        redirectTo
+      );
     }
   }
 

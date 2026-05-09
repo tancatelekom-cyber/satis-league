@@ -52,7 +52,7 @@ export async function submitSaleEntryAction(formData: FormData) {
   const successRedirectTo = getRedirectTo(formData, "successRedirectTo");
   const errorRedirectTo = getRedirectTo(formData, "errorRedirectTo");
 
-  const [{ data: actor }, { data: campaign }, { data: product }] = await Promise.all([
+  const [{ data: actor }, { data: campaign }, { data: product }, { data: permissionRows }] = await Promise.all([
     admin
       .from("profiles")
       .select("id, role, approval, store_id")
@@ -67,7 +67,11 @@ export async function submitSaleEntryAction(formData: FormData) {
       .from("campaign_products")
       .select("id, campaign_id, base_points")
       .eq("id", productId)
-      .single()
+      .single(),
+    admin
+      .from("campaign_entry_permissions")
+      .select("profile_id")
+      .eq("campaign_id", campaignId)
   ]);
 
   if (!actor || actor.approval !== "approved") {
@@ -85,6 +89,17 @@ export async function submitSaleEntryAction(formData: FormData) {
   const actorRow = actor!;
   const campaignRow = campaign!;
   const productRow = product!;
+  const allowedProfileIds = ((permissionRows as Array<{ profile_id: string }> | null) ?? []).map(
+    (row) => row.profile_id
+  );
+
+  if (allowedProfileIds.length > 0 && !allowedProfileIds.includes(actorRow.id)) {
+    redirectWithMessage(
+      "Bu kampanyaya satis girme yetkiniz yok.",
+      "error",
+      errorRedirectTo
+    );
+  }
 
   if (!Number.isFinite(quantity) || quantity === 0) {
     redirectWithMessage(

@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   AdminCampaign,
+  CampaignEntryPermissionRecord,
   AdminCampaignSaleRecord,
   AdminManagedProfile,
   AdminPendingProfile,
@@ -145,7 +146,7 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
   const campaignIds = campaignRows.map((campaign) => campaign.id);
   const seasonIds = seasonRows.map((season) => season.id);
 
-  const [{ data: campaignProducts }, { data: campaignStoreMultipliers }, { data: campaignSales }] = campaignIds.length
+  const [{ data: campaignProducts }, { data: campaignStoreMultipliers }, { data: campaignEntryPermissions }, { data: campaignSales }] = campaignIds.length
     ? await Promise.all([
         supabase
           .from("campaign_products")
@@ -161,6 +162,17 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
               store_id,
               multiplier,
               store:stores(name)
+            `
+          )
+          .in("campaign_id", campaignIds),
+        supabase
+          .from("campaign_entry_permissions")
+          .select(
+            `
+              id,
+              campaign_id,
+              profile_id,
+              profile:profiles(full_name, role)
             `
           )
           .in("campaign_id", campaignIds),
@@ -191,6 +203,7 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
     : [
         { data: [] as CampaignProductRecord[] },
         { data: [] as CampaignStoreMultiplierRecord[] },
+        { data: [] as CampaignEntryPermissionRecord[] },
         { data: [] as AdminCampaignSaleRecord[] }
       ];
 
@@ -231,6 +244,13 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
   const activeEmployeeTargets = approvedProfilesForSeason.filter(
     (profile) => profile.role === "employee" && !profile.is_on_leave
   );
+  const approvedCampaignPermissionProfiles = managedProfileRows
+    .filter((profile) => profile.approval === "approved")
+    .map((profile) => ({
+      id: profile.id,
+      full_name: profile.full_name,
+      role: profile.role
+    }));
 
   const activeSeason =
     seasonRows.find((season) => season.id === seasonId) ??
@@ -353,10 +373,12 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
     seasonRows,
     productRows: (campaignProducts as CampaignProductRecord[] | null) ?? [],
     multiplierRows: (campaignStoreMultipliers as CampaignStoreMultiplierRecord[] | null) ?? [],
+    campaignEntryPermissionRows: (campaignEntryPermissions as CampaignEntryPermissionRecord[] | null) ?? [],
     campaignSales: (campaignSales as AdminCampaignSaleRecord[] | null) ?? [],
     seasonProductRows: (seasonProducts as SeasonProductRecord[] | null) ?? [],
     seasonMultiplierRows: (seasonStoreMultipliers as SeasonStoreMultiplierRecord[] | null) ?? [],
     approvedProfilesForSeason: activeEmployeeTargets,
+    approvedCampaignPermissionProfiles,
     seasonEntryTargets:
       activeSeason?.mode === "employee"
         ? activeEmployeeTargets.map((profile) => ({

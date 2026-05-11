@@ -155,22 +155,40 @@ function isDigitalOnly(pkg: TurkcellPackage) {
   );
 }
 
+function isYapbozPackage(pkg: TurkcellPackage) {
+  const selectedTagText = (pkg.selectedTags ?? [])
+    .map((tag) => normalizeText(tag?.title ?? ""))
+    .join(" ")
+    .toLocaleLowerCase("tr-TR");
+  const text = `${pkg.title ?? ""} ${pkg.shortDescription ?? ""} ${selectedTagText} ${pkg.tab ?? ""} ${pkg.endpoint ?? ""} ${pkg.fullUrl ?? ""}`.toLocaleLowerCase(
+    "tr-TR"
+  );
+
+  return /yapboz|paketini sen olustur|paketini sen oluştur/.test(text);
+}
+
 function isCorePostpaidTariff(pkg: TurkcellPackage) {
   const title = (pkg.title ?? "").toLocaleLowerCase("tr-TR");
+  const paymentType = String(pkg.paymentType ?? "").toUpperCase();
+  const isYapboz = isYapbozPackage(pkg);
 
-  if (pkg.paymentType !== "POSTPAID") {
+  if (!isYapboz && paymentType !== "POSTPAID") {
     return false;
   }
 
-  if (!pkg.cpcmTariffOfferId) {
+  if (isYapboz && paymentType === "PREPAID") {
     return false;
   }
 
-  if (pkg.price?.onlineExclusive) {
+  if (!pkg.cpcmTariffOfferId && !isYapboz) {
     return false;
   }
 
-  if (isDigitalOnly(pkg)) {
+  if (pkg.price?.onlineExclusive && !isYapboz) {
+    return false;
+  }
+
+  if (isDigitalOnly(pkg) && !isYapboz) {
     return false;
   }
 
@@ -192,6 +210,7 @@ function isCorePostpaidTariff(pkg: TurkcellPackage) {
 function inferCategoryName(name: string, selectedTags?: Array<{ title?: string | null }> | null) {
   const lower = name.toLocaleLowerCase("tr-TR");
 
+  if (lower.includes("yapboz")) return "Yapboz";
   if (lower.includes("emekli")) return "Emekli";
   if (/\bemek\b/.test(lower)) return "Emek";
 
@@ -297,6 +316,7 @@ function packageToTariff(pkg: TurkcellPackageSource): TariffUpsertPayload {
   const item = pkg.package;
   const details = normalizeText(item.shortDescription ?? "");
   const benefits = parseBenefits(item.benefits);
+  const isYapboz = isYapbozPackage(item);
   const now = new Date().toISOString();
 
   return {
@@ -311,8 +331,8 @@ function packageToTariff(pkg: TurkcellPackageSource): TariffUpsertPayload {
     sms: Math.round(benefits.sms),
     price: Number(item.price?.amountDouble ?? toNumber(item.price?.amount)),
     details: details || null,
-    is_online_only: Boolean(item.price?.onlineExclusive) || isDigitalOnly(item),
-    is_digital_only: isDigitalOnly(item),
+    is_online_only: !isYapboz && (Boolean(item.price?.onlineExclusive) || isDigitalOnly(item)),
+    is_digital_only: !isYapboz && isDigitalOnly(item),
     is_active: true,
     scraped_at: now,
     updated_at: now

@@ -37,6 +37,7 @@ export default async function TariffsPage({ searchParams }: TariffsPageProps) {
   const selectedMode = params?.mode === "minutes" || params?.mode === "name" ? params.mode : "gb";
   const selectedPreset: TariffPreset =
     params?.preset === "new-member" ||
+    params?.preset === "yapboz" ||
     params?.preset === "emekli" ||
     params?.preset === "emek" ||
     params?.preset === "platinum" ||
@@ -95,6 +96,7 @@ export default async function TariffsPage({ searchParams }: TariffsPageProps) {
               value={buildHref(selectedMode, selectedPreset, "", search)}
               options={[
                 { value: buildHref(selectedMode, "all", "", search), label: "Tum Basliklar" },
+                { value: buildHref(selectedMode, "yapboz", "", search), label: "Yapboz" },
                 { value: buildHref(selectedMode, "emekli", "", search), label: "Emekli" },
                 { value: buildHref(selectedMode, "emek", "", search), label: "Emek" },
                 { value: buildHref(selectedMode, "platinum", "", search), label: "Platinum" },

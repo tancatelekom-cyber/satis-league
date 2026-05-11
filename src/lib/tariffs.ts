@@ -53,6 +53,8 @@ export function getTariffPresetLabel(preset: TariffPreset) {
   switch (preset) {
     case "new-member":
       return "Tarife Isimleri";
+    case "yapboz":
+      return "Yapboz";
     case "emekli":
       return "Emekli";
     case "emek":
@@ -79,6 +81,10 @@ export function matchesTariffPreset(tariff: TariffRecord, preset: TariffPreset):
     return /ilk turkcell|yeni musteri|yeni turkcell/.test(haystack);
   }
 
+  if (preset === "yapboz") {
+    return /yapboz|paketini sen olustur|paketini sen oluştur/.test(haystack);
+  }
+
   if (preset === "emekli") {
     return /emekli|altin yaslar/.test(haystack);
   }
@@ -97,6 +103,7 @@ export function matchesTariffPreset(tariff: TariffRecord, preset: TariffPreset):
 
   return (
     !matchesTariffPreset(tariff, "new-member") &&
+    !matchesTariffPreset(tariff, "yapboz") &&
     !matchesTariffPreset(tariff, "emekli") &&
     !matchesTariffPreset(tariff, "emek") &&
     !matchesTariffPreset(tariff, "platinum") &&

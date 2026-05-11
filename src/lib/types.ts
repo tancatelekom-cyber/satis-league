@@ -6,6 +6,7 @@ export type TariffCategoryMode = "gb" | "minutes" | "name";
 export type TariffPreset =
   | "all"
   | "new-member"
+  | "yapboz"
   | "emekli"
   | "emek"
   | "platinum"

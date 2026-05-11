@@ -1520,6 +1520,30 @@ textarea::placeholder {
   color: #ffffff;
 }
 
+.admin-card {
+  border: 1px solid rgba(4, 92, 96, 0.14);
+  background: rgba(255, 255, 255, 0.76);
+  color: #10203b;
+  box-shadow: 0 12px 26px rgba(8, 22, 40, 0.08);
+}
+
+.admin-card h3,
+.admin-card strong,
+.admin-card .step-item strong {
+  color: #10203b;
+}
+
+.admin-card p,
+.admin-card span,
+.admin-card label,
+.admin-card .step-item span,
+.admin-shortcut-card span,
+.admin-overview-card span,
+.admin-quick-card span,
+.admin-overview-card p {
+  color: #5d7290;
+}
+
 .admin-overview-card strong {
   font-size: 1.45rem;
 }

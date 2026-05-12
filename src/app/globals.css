@@ -2569,7 +2569,7 @@ textarea::placeholder {
 }
 
 .campaign-matrix-table {
-  min-width: 520px;
+  min-width: max-content;
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
@@ -2592,7 +2592,9 @@ textarea::placeholder {
   position: sticky;
   left: 0;
   z-index: 3;
-  min-width: 112px;
+  width: 15ch;
+  min-width: 15ch;
+  max-width: 15ch;
   box-shadow: 8px 0 16px rgba(8, 34, 66, 0.08);
 }
 
@@ -2604,7 +2606,9 @@ textarea::placeholder {
 }
 
 .campaign-matrix-table tbody th {
-  min-width: 112px;
+  width: 15ch;
+  min-width: 15ch;
+  max-width: 15ch;
   background: rgba(255, 239, 197, 0.92);
   color: #082242;
   font-weight: 800;
@@ -2613,14 +2617,17 @@ textarea::placeholder {
   left: 0;
   z-index: 2;
   box-shadow: 8px 0 16px rgba(8, 34, 66, 0.08);
+  white-space: nowrap;
 }
 
 .campaign-matrix-table tbody td {
-  min-width: 56px;
+  width: 9ch;
+  min-width: 9ch;
   background: rgba(255, 255, 255, 0.82);
   color: #0f2744;
   font-weight: 700;
   text-align: center;
+  white-space: nowrap;
 }
 
 .campaign-matrix-table tbody td.campaign-matrix-total {

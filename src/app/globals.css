@@ -2571,8 +2571,8 @@ textarea::placeholder {
 .campaign-matrix-table {
   min-width: 720px;
   width: 100%;
-  border-collapse: collapse;
-  overflow: hidden;
+  border-collapse: separate;
+  border-spacing: 0;
   border-radius: 16px;
 }
 
@@ -2592,6 +2592,7 @@ textarea::placeholder {
   position: sticky;
   left: 0;
   z-index: 3;
+  min-width: 170px;
   box-shadow: 8px 0 16px rgba(8, 34, 66, 0.08);
 }
 

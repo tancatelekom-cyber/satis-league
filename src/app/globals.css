@@ -2565,6 +2565,7 @@ textarea::placeholder {
 
 .campaign-matrix-wrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .campaign-matrix-table {
@@ -2588,6 +2589,10 @@ textarea::placeholder {
 
 .campaign-matrix-table thead th:first-child {
   text-align: left;
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  box-shadow: 8px 0 16px rgba(8, 34, 66, 0.08);
 }
 
 .campaign-matrix-table tbody th,
@@ -2603,6 +2608,10 @@ textarea::placeholder {
   color: #082242;
   font-weight: 800;
   text-align: left;
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  box-shadow: 8px 0 16px rgba(8, 34, 66, 0.08);
 }
 
 .campaign-matrix-table tbody td {

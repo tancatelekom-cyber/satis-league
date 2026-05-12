@@ -75,7 +75,7 @@ export default async function CampaignPage({ searchParams }: CampaignPageProps) 
         </div>
       ) : null}
 
-      <section className="guide-card ranking-summary-card">
+      <section className="guide-card ranking-summary-card campaign-section-card">
         <div className="section-title compact-title">
           <div>
             <h2>Ozet Siralama Bilgisi</h2>
@@ -103,7 +103,7 @@ export default async function CampaignPage({ searchParams }: CampaignPageProps) 
         )}
       </section>
 
-      <section className="guide-card">
+      <section className="guide-card campaign-section-card">
         <div className="section-title compact-title">
           <div>
             <h2>Aktif Kampanyalar</h2>
@@ -148,7 +148,7 @@ export default async function CampaignPage({ searchParams }: CampaignPageProps) 
         )}
       </section>
 
-      <section className="guide-card">
+      <section className="guide-card campaign-section-card">
         <div className="section-title compact-title">
           <div>
             <h2>Gecmis Kampanyalar</h2>
@@ -191,7 +191,7 @@ export default async function CampaignPage({ searchParams }: CampaignPageProps) 
       </section>
 
       {dashboard.plannedCampaigns.length > 0 ? (
-        <section className="guide-card">
+        <section className="guide-card campaign-section-card">
           <h3>Planlanan Kampanyalar</h3>
           <div className="approval-list">
             {dashboard.plannedCampaigns.map((campaign) => (

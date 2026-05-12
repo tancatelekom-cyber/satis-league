@@ -1169,6 +1169,39 @@ textarea::placeholder {
   margin-bottom: 20px;
 }
 
+.campaign-section-card h2,
+.campaign-section-card h3,
+.campaign-section-card .section-title h2 {
+  color: #f7fbff;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.18);
+}
+
+.campaign-section-card p,
+.campaign-section-card .section-title p,
+.campaign-section-card .subtle,
+.campaign-section-card .campaign-directory-head span,
+.campaign-section-card .campaign-directory-meta span,
+.campaign-section-card .approval-row p,
+.campaign-section-card .approval-row span {
+  color: #e1edf9;
+}
+
+.campaign-section-card .campaign-directory-head strong,
+.campaign-section-card .approval-row h4,
+.campaign-section-card .store-status strong {
+  color: #ffffff;
+}
+
+.campaign-section-card .store-status span {
+  color: #d4e7f9;
+}
+
+.campaign-section-card .campaign-directory-card,
+.campaign-section-card .approval-row {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+}
+
 .detail-switch-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

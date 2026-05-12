@@ -1544,6 +1544,34 @@ textarea::placeholder {
   color: #5d7290;
 }
 
+.admin-card .field span,
+.admin-card .field-inline span,
+.admin-card .field-inline label,
+.admin-card .league-filter-label {
+  color: #10203b !important;
+}
+
+.admin-card .field input,
+.admin-card .field select,
+.admin-card .field textarea,
+.admin-card textarea,
+.admin-card .input {
+  color: #10203b !important;
+  border: 1px solid rgba(4, 92, 96, 0.16);
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.admin-card .field input::placeholder,
+.admin-card .field textarea::placeholder,
+.admin-card textarea::placeholder,
+.admin-card .input::placeholder {
+  color: #70839d !important;
+}
+
+.admin-card .field-inline {
+  color: #10203b;
+}
+
 .admin-overview-card strong {
   font-size: 1.45rem;
 }

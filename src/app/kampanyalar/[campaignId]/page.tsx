@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { CampaignSummaryMatrix } from "@/components/campaign/campaign-summary-matrix";
 import { SaleEntryCard } from "@/components/campaign/sale-entry-card";
 import { daysLeftLabel, formatCampaignDateTime, isSalesWindowOpen } from "@/lib/campaign-utils";
 import { getCampaignDashboardData } from "@/lib/campaign/get-campaign-dashboard-data";
@@ -355,47 +356,16 @@ export default async function CampaignDetailPage({
             })}
           </div>
 
-          <section
-            className="live-sale-summary campaign-product-summary"
-            aria-label="Kampanya bazli urun ozetleri"
-          >
-            <div className="live-sale-summary-head">
-              <strong>
-                {campaign.mode === "employee" ? "Calisan Bazli Urun Ozetleri" : "Magaza Bazli Urun Ozetleri"}
-              </strong>
-              <span>
-                {campaign.mode === "employee"
-                  ? "Her calisan icin urun adetlerinin ozet gorunumu"
-                  : "Her magaza icin urun adetlerinin ozet gorunumu"}
-              </span>
-            </div>
-            <div className="campaign-matrix-wrap">
-              <table className="campaign-matrix-table">
-                <thead>
-                  <tr>
-                    <th>Urun</th>
-                    {participantSummaryColumns.map((participant) => (
-                      <th key={`matrix-head-${participant.id}`}>{participant.label}</th>
-                    ))}
-                    <th>Toplam</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {productSummaryMatrix.map((product) => (
-                    <tr key={`matrix-row-${product.id}`}>
-                      <th>{product.name}</th>
-                      {product.participantCells.map((value, index) => (
-                        <td key={`matrix-cell-${product.id}-${participantSummaryColumns[index]?.id ?? index}`}>
-                          {value > 0 ? value : ""}
-                        </td>
-                      ))}
-                      <td className="campaign-matrix-total">{product.total}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
+          <CampaignSummaryMatrix
+            columns={participantSummaryColumns}
+            rows={productSummaryMatrix}
+            subtitle={
+              campaign.mode === "employee"
+                ? "Her calisan icin urun adetlerinin ozet gorunumu"
+                : "Her magaza icin urun adetlerinin ozet gorunumu"
+            }
+            title={campaign.mode === "employee" ? "Calisan Bazli Urun Ozetleri" : "Magaza Bazli Urun Ozetleri"}
+          />
         </section>
       ) : (
         <section className="guide-card">

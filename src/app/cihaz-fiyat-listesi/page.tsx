@@ -39,6 +39,19 @@ function isCashContractRow(item: { monthlyInstallment: number; installmentCount:
   return item.monthlyInstallment <= 0 || item.installmentCount <= 0;
 }
 
+function sortDeviceRows<T extends { monthlyInstallment: number; installmentCount: number }>(rows: T[]) {
+  return [...rows].sort((a, b) => {
+    const aCash = isCashContractRow(a);
+    const bCash = isCashContractRow(b);
+
+    if (aCash !== bCash) {
+      return aCash ? -1 : 1;
+    }
+
+    return Number(a.installmentCount ?? 0) - Number(b.installmentCount ?? 0);
+  });
+}
+
 export default async function DevicePriceListPage({ searchParams }: DevicePriceListPageProps) {
   const params = searchParams ? await searchParams : undefined;
   const selectedCategory = String(params?.category ?? "").trim();
@@ -75,9 +88,10 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
   const brandRows = effectiveBrand ? categoryRows.filter((item) => item.brand === effectiveBrand) : categoryRows;
   const productOptions = buildDistinctOptions(brandRows.map((item) => item.productName));
   const effectiveProduct = selectedProduct && productOptions.includes(selectedProduct) ? selectedProduct : "";
-  const filteredRows = effectiveProduct
+  const filteredRowsRaw = effectiveProduct
     ? brandRows.filter((item) => item.productName === effectiveProduct)
     : brandRows;
+  const filteredRows = sortDeviceRows(filteredRowsRaw);
   const isSingleProductView = Boolean(effectiveProduct);
   const singleItem = isSingleProductView && filteredRows.length > 0 ? filteredRows[0] : null;
   const isSingleCashContract = singleItem ? isCashContractRow(singleItem) : false;

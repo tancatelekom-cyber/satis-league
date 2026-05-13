@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { FilterSelectNav } from "@/components/ui/filter-select-nav";
+import { TariffSearchNav } from "@/components/ui/tariff-search-nav";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -142,21 +143,15 @@ export default async function TariffsPage({ searchParams }: TariffsPageProps) {
           </div>
         ) : null}
 
-        <form className="tariff-search-row" action="/tarifeler" method="get">
-          <input name="mode" type="hidden" value={selectedMode} />
-          <input name="preset" type="hidden" value={selectedPreset} />
-          {effectiveBucket ? <input name="bucket" type="hidden" value={effectiveBucket} /> : null}
-          <input
-            className="input"
-            defaultValue={search}
-            name="search"
+        <div className="tariff-search-row">
+          <TariffSearchNav
+            bucket={effectiveBucket}
+            mode={selectedMode}
             placeholder="Tarife adina gore ara"
-            type="search"
+            preset={selectedPreset}
+            search={search}
           />
-          <button className="button-secondary" type="submit">
-            Filtrele
-          </button>
-        </form>
+        </div>
       </section>
 
       <section className="campaign-directory">

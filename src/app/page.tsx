@@ -242,7 +242,7 @@ export default async function HomePage() {
         <>
           <section className="hero home-leaders-hero">
             <div className="hero-copy">
-              <h1 className="home-leaders-title">Ayin Yildizlari</h1>
+              <h1 className="home-leaders-title">Ayın Yıldızları</h1>
             </div>
           </section>
 
@@ -273,7 +273,7 @@ export default async function HomePage() {
 
                     <div className="home-leader-content">
                       <strong className="home-leader-name">{card.winnerName}</strong>
-                      <span className="home-leader-score-label">Ayin lideri</span>
+                      <span className="home-leader-score-label">Ayın lideri</span>
                     </div>
 
                     <strong className="home-leader-score">{card.score.toLocaleString("tr-TR")}</strong>

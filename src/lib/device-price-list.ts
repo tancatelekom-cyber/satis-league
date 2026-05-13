@@ -1,3 +1,5 @@
+import { unstable_cache } from "next/cache";
+
 export type DevicePriceRow = {
   id: string;
   category: string;
@@ -81,12 +83,8 @@ function normalizeText(value: string) {
   return String(value ?? "").replace(/\s+/g, " ").trim();
 }
 
-export async function fetchDevicePriceRows() {
+async function fetchDevicePriceRowsFromSheet() {
   const response = await fetch(DEVICE_SHEET_URL, {
-    next: {
-      // Google Sheet is public and updated occasionally; keep a 24h cache to reduce load.
-      revalidate: 60 * 60 * 24
-    },
     headers: {
       // Helps some CDNs return the CSV instead of an HTML consent page.
       accept: "text/csv, text/plain, */*",
@@ -135,6 +133,10 @@ export async function fetchDevicePriceRows() {
     })
     .filter((row): row is DevicePriceRow => Boolean(row));
 }
+
+export const fetchDevicePriceRows = unstable_cache(fetchDevicePriceRowsFromSheet, ["device-price-sheet-rows"], {
+  revalidate: 60 * 60 * 6
+});
 
 export function buildDistinctOptions(values: string[]) {
   return Array.from(new Set(values.filter(Boolean))).sort((a, b) => a.localeCompare(b, "tr"));

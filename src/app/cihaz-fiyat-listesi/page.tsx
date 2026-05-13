@@ -3,8 +3,6 @@ import { FilterSelectNav } from "@/components/ui/filter-select-nav";
 import { createClient } from "@/lib/supabase/server";
 import { buildDistinctOptions, fetchDevicePriceRows } from "@/lib/device-price-list";
 
-export const dynamic = "force-dynamic";
-
 type DevicePriceListPageProps = {
   searchParams?: Promise<{
     category?: string;

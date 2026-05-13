@@ -1,10 +1,7 @@
 import { redirect } from "next/navigation";
 import { FilterSelectNav } from "@/components/ui/filter-select-nav";
 import { createClient } from "@/lib/supabase/server";
-import {
-  buildDistinctOptions,
-  fetchDevicePriceRows
-} from "@/lib/device-price-list";
+import { buildDistinctOptions, fetchDevicePriceRows } from "@/lib/device-price-list";
 
 export const dynamic = "force-dynamic";
 
@@ -81,6 +78,7 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
     fetchError = error instanceof Error ? error.message : "Cihaz listesi okunamadi.";
     allRows = [];
   }
+
   const categoryOptions = buildDistinctOptions(allRows.map((item) => item.category));
   const categoryRows = selectedCategory ? allRows.filter((item) => item.category === selectedCategory) : allRows;
   const brandOptions = buildDistinctOptions(categoryRows.map((item) => item.brand));
@@ -92,9 +90,6 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
     ? brandRows.filter((item) => item.productName === effectiveProduct)
     : brandRows;
   const filteredRows = sortDeviceRows(filteredRowsRaw);
-  const isSingleProductView = Boolean(effectiveProduct);
-  const singleItem = isSingleProductView && filteredRows.length > 0 ? filteredRows[0] : null;
-  const isSingleCashContract = singleItem ? isCashContractRow(singleItem) : false;
 
   return (
     <main>
@@ -157,44 +152,33 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
         ) : null}
       </section>
 
-      {singleItem && isSingleCashContract ? (
-        <section className="device-product-topline" aria-label="Urun ozeti">
-          <strong>{singleItem.productName}</strong>
-          <span className="device-product-topline-pill">
-            Pesine Kontrat: {formatCurrency(singleItem.contractCashPrice ?? singleItem.totalPayable)}
-          </span>
-        </section>
-      ) : null}
-
       <section className="device-cards" aria-label="Cihaz kartlari">
         {filteredRows.length === 0 ? (
           <div className="device-empty">
             {fetchError ? "Cihaz listesi su an okunamiyor." : "Seciminize uygun cihaz bulunamadi."}
           </div>
         ) : (
-          filteredRows.map((item) => (
-            <article key={item.id} className="device-card">
-              {item.contractCashPrice ? (
-                <div className="device-contract-pill">
-                  <span>Pesine Kontrat</span>
-                  <strong>{formatCurrency(item.contractCashPrice)}</strong>
+          filteredRows.map((item) =>
+            isCashContractRow(item) ? (
+              <article key={item.id} className="device-cash-row">
+                <strong>{item.productName}</strong>
+                <span>Pesine Kontrat: {formatCurrency(item.contractCashPrice ?? item.totalPayable)}</span>
+              </article>
+            ) : (
+              <article key={item.id} className="device-card">
+                <div className="device-card-top">
+                  <div className="device-card-title">
+                    <strong>{item.productName}</strong>
+                    <span className="device-card-meta">
+                      {item.brand} {item.category ? `â€¢ ${item.category}` : ""}
+                    </span>
+                  </div>
+                  <div className="device-card-total">
+                    <span className="subtle">Toplam</span>
+                    <strong>{formatCurrency(item.totalPayable)}</strong>
+                  </div>
                 </div>
-              ) : null}
 
-              <div className="device-card-top">
-                <div className="device-card-title">
-                  <strong>{item.productName}</strong>
-                  <span className="device-card-meta">
-                    {item.brand} {item.category ? `• ${item.category}` : ""}
-                  </span>
-                </div>
-                <div className="device-card-total">
-                  <span className="subtle">Toplam</span>
-                  <strong>{formatCurrency(item.totalPayable)}</strong>
-                </div>
-              </div>
-
-              {!isCashContractRow(item) ? (
                 <div className="device-card-grid">
                   <div className="device-card-kv">
                     <span className="subtle">Taksit Sayisi</span>
@@ -209,9 +193,9 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
                     <strong>{formatCurrency(item.totalPayable)}</strong>
                   </div>
                 </div>
-              ) : null}
-            </article>
-          ))
+              </article>
+            )
+          )
         )}
       </section>
 

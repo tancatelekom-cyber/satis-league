@@ -88,6 +88,7 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
     ? brandRows.filter((item) => item.productName === effectiveProduct)
     : brandRows;
   const filteredRows = sortDeviceRows(filteredRowsRaw);
+  const showDetailTable = Boolean(effectiveProduct);
 
   return (
     <main>
@@ -197,46 +198,48 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
         )}
       </section>
 
-      <section className="season-entry-table-wrap">
-        <table className="season-entry-table device-price-table">
-          <thead>
-            <tr>
-              <th>Kategori</th>
-              <th>Marka</th>
-              <th>Urun Adi</th>
-              <th>Pesine Kontrat</th>
-              <th>Taksit Sayisi</th>
-              <th>Aylik Taksit</th>
-              <th>Toplam Odenecek</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredRows.length === 0 ? (
+      {showDetailTable ? (
+        <section className="season-entry-table-wrap">
+          <table className="season-entry-table device-price-table">
+            <thead>
               <tr>
-                <td className="device-empty-row" colSpan={7}>
-                  {fetchError ? "Cihaz listesi su an okunamiyor." : "Seciminize uygun cihaz bulunamadi."}
-                </td>
+                <th>Kategori</th>
+                <th>Marka</th>
+                <th>Urun Adi</th>
+                <th>Pesine Kontrat</th>
+                <th>Taksit Sayisi</th>
+                <th>Aylik Taksit</th>
+                <th>Toplam Odenecek</th>
               </tr>
-            ) : (
-              filteredRows.map((item) => (
-                <tr key={item.id}>
-                  <td>{item.category}</td>
-                  <td>{item.brand}</td>
-                  <td>
-                    <strong>{item.productName}</strong>
-                  </td>
-                  <td>{formatCurrency(item.contractCashPrice)}</td>
-                  <td>{item.installmentCount > 0 ? `${item.installmentCount} Ay` : "-"}</td>
-                  <td>{isCashContractRow(item) ? "Pesin/Kontrat" : formatCurrency(item.monthlyInstallment)}</td>
-                  <td>
-                    <strong>{formatCurrency(item.totalPayable)}</strong>
+            </thead>
+            <tbody>
+              {filteredRows.length === 0 ? (
+                <tr>
+                  <td className="device-empty-row" colSpan={7}>
+                    {fetchError ? "Cihaz listesi su an okunamiyor." : "Seciminize uygun cihaz bulunamadi."}
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </section>
+              ) : (
+                filteredRows.map((item) => (
+                  <tr key={item.id}>
+                    <td>{item.category}</td>
+                    <td>{item.brand}</td>
+                    <td>
+                      <strong>{item.productName}</strong>
+                    </td>
+                    <td>{formatCurrency(item.contractCashPrice)}</td>
+                    <td>{item.installmentCount > 0 ? `${item.installmentCount} Ay` : "-"}</td>
+                    <td>{isCashContractRow(item) ? "Pesin/Kontrat" : formatCurrency(item.monthlyInstallment)}</td>
+                    <td>
+                      <strong>{formatCurrency(item.totalPayable)}</strong>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </section>
+      ) : null}
     </main>
   );
 }

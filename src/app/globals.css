@@ -931,11 +931,22 @@ button {
 }
 
 .tariff-search-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 12px;
+  display: block;
   margin-top: 14px;
-  align-items: center;
+}
+
+.tariff-live-search {
+  display: block;
+  width: 100%;
+}
+
+.tariff-live-search-input {
+  min-height: 62px;
+  width: 100%;
+  padding: 0 22px;
+  font-size: 1.18rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
 }
 
 .tariff-card {
@@ -3107,8 +3118,13 @@ textarea::placeholder {
   }
 
   .tariff-search-row {
-    grid-template-columns: 1fr;
-    gap: 10px;
+    display: block;
+  }
+
+  .tariff-live-search-input {
+    min-height: 58px;
+    font-size: 1.08rem;
+    padding: 0 18px;
   }
 
   .tariff-card {

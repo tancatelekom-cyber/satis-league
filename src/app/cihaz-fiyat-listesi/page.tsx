@@ -117,6 +117,7 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
               ariaLabel="Cihaz marka secimi"
               value={buildHref(selectedCategory, effectiveBrand, effectiveProduct)}
               options={[
+                { value: buildHref(selectedCategory, "", ""), label: "Marka secin" },
                 ...brandOptions.map((brand) => ({
                   value: buildHref(selectedCategory, brand, effectiveProduct),
                   label: brand
@@ -131,7 +132,10 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
               ariaLabel="Cihaz urun secimi"
               value={buildHref(selectedCategory, effectiveBrand, effectiveProduct)}
               options={[
-                { value: buildHref(selectedCategory, effectiveBrand, ""), label: "Tum Urunler" },
+                {
+                  value: buildHref(selectedCategory, effectiveBrand, ""),
+                  label: effectiveBrand ? "Tum Urunler" : "Once marka secin"
+                },
                 ...productOptions.map((product) => ({
                   value: buildHref(selectedCategory, effectiveBrand, product),
                   label: product

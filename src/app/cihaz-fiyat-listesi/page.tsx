@@ -81,7 +81,7 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
   const categoryRows = selectedCategory ? allRows.filter((item) => item.category === selectedCategory) : allRows;
   const brandOptions = buildDistinctOptions(categoryRows.map((item) => item.brand));
   const effectiveBrand = selectedBrand && brandOptions.includes(selectedBrand) ? selectedBrand : "";
-  const brandRows = effectiveBrand ? categoryRows.filter((item) => item.brand === effectiveBrand) : categoryRows;
+  const brandRows = effectiveBrand ? categoryRows.filter((item) => item.brand === effectiveBrand) : [];
   const productOptions = buildDistinctOptions(brandRows.map((item) => item.productName));
   const effectiveProduct = selectedProduct && productOptions.includes(selectedProduct) ? selectedProduct : "";
   const filteredRowsRaw = effectiveProduct
@@ -117,7 +117,6 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
               ariaLabel="Cihaz marka secimi"
               value={buildHref(selectedCategory, effectiveBrand, effectiveProduct)}
               options={[
-                { value: buildHref(selectedCategory, "", effectiveProduct), label: "Tum Markalar" },
                 ...brandOptions.map((brand) => ({
                   value: buildHref(selectedCategory, brand, effectiveProduct),
                   label: brand
@@ -154,7 +153,11 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
       <section className="device-cards" aria-label="Cihaz kartlari">
         {filteredRows.length === 0 ? (
           <div className="device-empty">
-            {fetchError ? "Cihaz listesi su an okunamiyor." : "Seciminize uygun cihaz bulunamadi."}
+            {fetchError
+              ? "Cihaz listesi su an okunamiyor."
+              : effectiveBrand
+                ? "Seciminize uygun cihaz bulunamadi."
+                : "Listeyi gormek icin once marka secin."}
           </div>
         ) : (
           filteredRows.map((item) =>
@@ -216,7 +219,11 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
               {filteredRows.length === 0 ? (
                 <tr>
                   <td className="device-empty-row" colSpan={7}>
-                    {fetchError ? "Cihaz listesi su an okunamiyor." : "Seciminize uygun cihaz bulunamadi."}
+                    {fetchError
+                      ? "Cihaz listesi su an okunamiyor."
+                      : effectiveBrand
+                        ? "Seciminize uygun cihaz bulunamadi."
+                        : "Listeyi gormek icin once marka secin."}
                   </td>
                 </tr>
               ) : (

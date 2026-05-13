@@ -235,6 +235,7 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 14px;
+  flex-wrap: wrap;
   padding: 14px 18px;
   border-radius: 22px;
   border: 1px solid rgba(255, 209, 102, 0.72);
@@ -247,7 +248,9 @@ button {
 .device-cash-row span {
   color: #09111f;
   font-weight: 900;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .device-card {
@@ -3221,6 +3224,20 @@ textarea::placeholder {
 
   .device-cards {
     display: grid;
+  }
+
+  .device-cash-row {
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 8px;
+    padding: 12px 14px;
+  }
+
+  .device-cash-row strong,
+  .device-cash-row span {
+    width: 100%;
+    font-size: 0.96rem;
+    line-height: 1.25;
   }
 
   .device-product-topline {

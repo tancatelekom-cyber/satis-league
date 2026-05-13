@@ -282,15 +282,14 @@ button {
 }
 
 .device-product-topline {
-  display: none;
+  display: flex;
   margin-top: 16px;
-  padding: 12px 14px;
-  border-radius: 22px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.06);
+  padding: 0;
+  border: 0;
+  background: transparent;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  justify-content: flex-start;
+  gap: 10px;
 }
 
 .device-product-topline strong {
@@ -299,15 +298,16 @@ button {
 }
 
 .device-product-topline-pill {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
+  justify-content: center;
+  width: 100%;
+  padding: 10px 14px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 209, 102, 0.22);
-  background: linear-gradient(135deg, rgba(255, 209, 102, 0.22), rgba(88, 240, 196, 0.08));
+  border: 1px solid rgba(255, 209, 102, 0.7);
+  background: linear-gradient(135deg, rgba(255, 223, 120, 0.98), rgba(255, 209, 102, 0.96));
   font-weight: 900;
-  color: var(--text);
+  color: #09111f;
   white-space: nowrap;
 }
 
@@ -320,17 +320,18 @@ button {
   margin: 0 0 12px;
   padding: 10px 12px;
   border-radius: 18px;
-  border: 1px solid rgba(255, 209, 102, 0.22);
-  background: linear-gradient(135deg, rgba(255, 209, 102, 0.22), rgba(88, 240, 196, 0.08));
+  border: 1px solid rgba(255, 209, 102, 0.7);
+  background: linear-gradient(135deg, rgba(255, 223, 120, 0.98), rgba(255, 209, 102, 0.96));
 }
 
 .device-contract-pill span {
-  color: var(--text);
+  color: #09111f;
   font-weight: 800;
   letter-spacing: 0.01em;
 }
 
 .device-contract-pill strong {
+  color: #09111f;
   font-size: 1.05rem;
 }
 

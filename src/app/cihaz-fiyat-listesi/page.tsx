@@ -160,6 +160,13 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
         ) : (
           filteredRows.map((item) => (
             <article key={item.id} className="device-card">
+              {item.contractCashPrice ? (
+                <div className="device-contract-pill">
+                  <span>Pesine Kontrat</span>
+                  <strong>{formatCurrency(item.contractCashPrice)}</strong>
+                </div>
+              ) : null}
+
               <div className="device-card-top">
                 <div className="device-card-title">
                   <strong>{item.productName}</strong>
@@ -172,13 +179,6 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
                   <strong>{formatCurrency(item.totalPayable)}</strong>
                 </div>
               </div>
-
-              {item.contractCashPrice ? (
-                <div className="device-contract-pill">
-                  <span>Pesine Kontrat</span>
-                  <strong>{formatCurrency(item.contractCashPrice)}</strong>
-                </div>
-              ) : null}
 
               {!isCashContractRow(item) ? (
                 <div className="device-card-grid">

@@ -231,6 +231,8 @@ button {
 }
 
 .device-card {
+  display: flex;
+  flex-direction: column;
   border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 22px;
   background: var(--card);
@@ -310,11 +312,12 @@ button {
 }
 
 .device-contract-pill {
+  order: -1;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-top: 12px;
+  margin: 0 0 12px;
   padding: 10px 12px;
   border-radius: 18px;
   border: 1px solid rgba(255, 209, 102, 0.22);

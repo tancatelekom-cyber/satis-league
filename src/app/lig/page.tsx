@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { FilterSelectNav } from "@/components/ui/filter-select-nav";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { LeaguePeriod, SeasonProductRecord, SeasonRecord } from "@/lib/types";
+import { LeaguePeriod, SeasonProductRecord, SeasonRecord, UserRole } from "@/lib/types";
 
 type LeagueRow = {
   id: string;
@@ -186,6 +186,10 @@ function buildSeasonScoreMaps(rows: SaleRow[]) {
   return { employeeScores, storeScores };
 }
 
+function canExportLeague(role: UserRole | string | null | undefined) {
+  return role === "admin" || role === "management" || role === "manager";
+}
+
 export default async function LeaguePage({ searchParams }: LeaguePageProps) {
   const params = searchParams ? await searchParams : undefined;
   const supabase = await createClient();
@@ -198,9 +202,16 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
     redirect("/giris");
   }
 
+  const { data: signedProfile } = await admin
+    .from("profiles")
+    .select("role, approval")
+    .eq("id", user.id)
+    .single();
+
   const selectedSeasonId = String(params?.seasonId ?? "").trim();
   const selectedPeriod: LeaguePeriod =
     params?.period === "quarter" || params?.period === "year" ? params.period : "month";
+  const canExport = canExportLeague(signedProfile?.role) && signedProfile?.approval === "approved";
 
   const { data: seasons } = await admin
     .from("seasons")
@@ -404,11 +415,13 @@ export default async function LeaguePage({ searchParams }: LeaguePageProps) {
         Secili sezon: {activeSeason.name} | {activeSeason.start_date} - {activeSeason.end_date}
       </p>
 
-      <div className="page-actions-row">
-        <a className="button-secondary export-link-button" href={buildLeagueHref().replace("/lig?", "/lig/excel?")}>
-          Excel'e Indir
-        </a>
-      </div>
+      {canExport ? (
+        <div className="page-actions-row">
+          <a className="button-secondary export-link-button" href={buildLeagueHref().replace("/lig?", "/lig/excel?")}>
+            Excel'e Indir
+          </a>
+        </div>
+      ) : null}
 
       <section className="guide-card game-brief-card">
         <div className="league-filter-grid">

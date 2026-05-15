@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { buildCsv } from "@/lib/export/csv";
 import { createClient } from "@/lib/supabase/server";
-import { LeaguePeriod, SeasonProductRecord, SeasonRecord } from "@/lib/types";
+import { LeaguePeriod, SeasonProductRecord, SeasonRecord, UserRole } from "@/lib/types";
 
 type LeagueRow = {
   id: string;
@@ -145,6 +145,10 @@ function clampDate(value: string, min: string, max: string) {
   return value;
 }
 
+function canExportLeague(role: UserRole | string | null | undefined) {
+  return role === "admin" || role === "management" || role === "manager";
+}
+
 export async function GET(request: Request) {
   const supabase = await createClient();
   const admin = createAdminClient();
@@ -163,11 +167,11 @@ export async function GET(request: Request) {
 
   const { data: profile } = await admin
     .from("profiles")
-    .select("id, approval")
+    .select("id, approval, role")
     .eq("id", user.id)
     .single();
 
-  if (!profile || profile.approval !== "approved") {
+  if (!profile || profile.approval !== "approved" || !canExportLeague(profile.role)) {
     return NextResponse.json({ error: "Yetkisiz erisim." }, { status: 403 });
   }
 

@@ -8,6 +8,7 @@ type GoalActualPageProps = {
   searchParams?: Promise<{
     category?: string;
     employee?: string;
+    panel?: string;
     view?: string;
   }>;
 };
@@ -55,11 +56,12 @@ const EMPTY_DAY_STATS: GoalDayStats = {
   totalDays: 0
 };
 
-function buildHref(view: string, employee?: string, category?: string) {
+function buildHref(view: string, employee?: string, category?: string, panel?: string) {
   const params = new URLSearchParams();
   params.set("view", view);
   if (employee) params.set("employee", employee);
   if (category) params.set("category", category);
+  if (panel) params.set("panel", panel);
   return `/hedef-gerceklesen?${params.toString()}`;
 }
 
@@ -171,6 +173,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
   const selectedView = String(params?.view ?? "employee").trim();
   const selectedEmployee = String(params?.employee ?? "").trim();
   const selectedCategory = String(params?.category ?? "").trim();
+  const selectedPanel = String(params?.panel ?? "detail").trim();
 
   const supabase = await createClient();
   const {
@@ -189,9 +192,10 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
 
   const canViewAll = canViewAllGoalActual(profile.role);
   const effectiveView = canViewAll ? selectedView : "employee";
+  const effectivePanel = selectedPanel === "ranking" ? "ranking" : "detail";
 
   if (!canViewAll && selectedView !== "employee") {
-    redirect(buildHref("employee", selectedEmployee, selectedCategory));
+    redirect(buildHref("employee", selectedEmployee, selectedCategory, effectivePanel));
   }
 
   let rows: GoalActualRow[] = [];
@@ -250,15 +254,15 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
 
   const employeeOptions = employeeFilteredNames.length
     ? employeeFilteredNames.map((name) => ({
-        value: buildHref("employee", name, effectiveCategory),
+        value: buildHref("employee", name, effectiveCategory, effectivePanel),
         label: name
       }))
-    : [{ value: buildHref("employee", "", effectiveCategory), label: "Calisan bulunamadi" }];
+    : [{ value: buildHref("employee", "", effectiveCategory, effectivePanel), label: "Calisan bulunamadi" }];
 
   const categorySelectOptions = [
-    { value: buildHref("employee", effectiveEmployee, ""), label: "Tum Kategoriler" },
+    { value: buildHref("employee", effectiveEmployee, "", effectivePanel), label: "Tum Kategoriler" },
     ...categoryOptions.map((category) => ({
-      value: buildHref("employee", effectiveEmployee, category),
+      value: buildHref("employee", effectiveEmployee, category, effectivePanel),
       label: category
     }))
   ];
@@ -271,16 +275,16 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
       <div className="goal-tab-row">
         <a
           className={`goal-tab ${effectiveView === "employee" ? "goal-tab-active" : ""}`}
-          href={buildHref("employee", effectiveEmployee, effectiveCategory)}
+          href={buildHref("employee", effectiveEmployee, effectiveCategory, effectivePanel)}
         >
           Calisan
         </a>
         {canViewAll ? (
           <>
-            <a className={`goal-tab ${effectiveView === "store" ? "goal-tab-active" : ""}`} href={buildHref("store", "", "")}>
+            <a className={`goal-tab ${effectiveView === "store" ? "goal-tab-active" : ""}`} href={buildHref("store", "", "", effectivePanel)}>
               Magaza
             </a>
-            <a className={`goal-tab ${effectiveView === "company" ? "goal-tab-active" : ""}`} href={buildHref("company", "", "")}>
+            <a className={`goal-tab ${effectiveView === "company" ? "goal-tab-active" : ""}`} href={buildHref("company", "", "", effectivePanel)}>
               Firma
             </a>
           </>
@@ -335,170 +339,189 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                 />
               </div>
             </div>
+
+            <div className="goal-mode-row">
+              <a
+                className={`goal-mode-button ${effectivePanel === "detail" ? "goal-mode-button-active" : ""}`}
+                href={buildHref("employee", activeEmployeeName, effectiveCategory, "detail")}
+              >
+                Hedef Gerceklesen
+              </a>
+              <a
+                className={`goal-mode-button ${effectivePanel === "ranking" ? "goal-mode-button-active" : ""}`}
+                href={buildHref("employee", activeEmployeeName, effectiveCategory, "ranking")}
+              >
+                Siralama
+              </a>
+            </div>
           </section>
 
-          <section className="goal-layout">
-            <article className="campaign-section-card goal-ranking-card">
-              <div className="goal-section-head">
-                <h2>Firma Siralamasi</h2>
-                <span>{summaries.length} calisan</span>
-              </div>
+          {effectivePanel === "ranking" ? (
+            <section className="goal-panel-single">
+              <article className="campaign-section-card goal-ranking-card">
+                <div className="goal-section-head">
+                  <h2>Firma Siralamasi</h2>
+                  <span>{summaries.length} calisan</span>
+                </div>
 
-              <div className="goal-ranking-list">
-                {summaries.length ? (
-                  summaries.map((summary, index) => (
-                    <a
-                      key={summary.name}
-                      className={`goal-ranking-row ${summary.name === activeEmployeeName ? "goal-ranking-row-active" : ""}`}
-                      href={buildHref("employee", summary.name, effectiveCategory)}
-                    >
-                      <span className="goal-rank-badge">{index + 1}</span>
-                      <div className="goal-ranking-main">
-                        <strong>{summary.name}</strong>
-                        <span>
-                          {summary.hasTarget
-                            ? `Gerceklesen ${formatPercent(summary.actualPercent)} | Ay sonu ${formatPercent(summary.projectedPercent)}`
-                            : `Gerceklesen ${formatNumber(summary.totalActual)} | Ay sonu ${formatNumber(summary.projectedActual)}`}
-                        </span>
-                      </div>
-                      <strong className="goal-ranking-score">
-                        {summary.hasTarget ? formatPercent(summary.actualPercent) : formatNumber(summary.totalActual)}
-                      </strong>
-                    </a>
-                  ))
-                ) : (
-                  <p className="subtle">Listelenecek calisan verisi bulunamadi.</p>
-                )}
-              </div>
-            </article>
+                <div className="goal-ranking-list">
+                  {summaries.length ? (
+                    summaries.map((summary, index) => (
+                      <a
+                        key={summary.name}
+                        className={`goal-ranking-row ${summary.name === activeEmployeeName ? "goal-ranking-row-active" : ""}`}
+                        href={buildHref("employee", summary.name, effectiveCategory, "ranking")}
+                      >
+                        <span className="goal-rank-badge">{index + 1}</span>
+                        <div className="goal-ranking-main">
+                          <strong>{summary.name}</strong>
+                          <span>
+                            {summary.hasTarget
+                              ? `Gerceklesen ${formatPercent(summary.actualPercent)} | Ay sonu ${formatPercent(summary.projectedPercent)}`
+                              : `Gerceklesen ${formatNumber(summary.totalActual)} | Ay sonu ${formatNumber(summary.projectedActual)}`}
+                          </span>
+                        </div>
+                        <strong className="goal-ranking-score">
+                          {summary.hasTarget ? formatPercent(summary.actualPercent) : formatNumber(summary.totalActual)}
+                        </strong>
+                      </a>
+                    ))
+                  ) : (
+                    <p className="subtle">Listelenecek calisan verisi bulunamadi.</p>
+                  )}
+                </div>
+              </article>
+            </section>
+          ) : (
+            <section className="goal-panel-single">
+              <article className="campaign-section-card goal-detail-card">
+                <div className="goal-section-head">
+                  <h2>{activeEmployeeName || "Calisan Detayi"}</h2>
+                  <span>{effectiveCategory || "Tum kategoriler"}</span>
+                </div>
 
-            <article className="campaign-section-card goal-detail-card">
-              <div className="goal-section-head">
-                <h2>{activeEmployeeName || "Calisan Detayi"}</h2>
-                <span>{effectiveCategory || "Tum kategoriler"}</span>
-              </div>
-
-              {activeEmployeeSummary ? (
-                <>
-                  <div className="goal-stat-grid">
-                    {activeEmployeeSummary.hasTarget ? (
-                      <>
-                        <div className="goal-stat-box">
-                          <span>Hedef</span>
-                          <strong>{formatNumber(activeEmployeeSummary.totalTarget)}</strong>
-                        </div>
-                        <div className="goal-stat-box">
-                          <span>Gerceklesen</span>
-                          <strong>{formatNumber(activeEmployeeSummary.totalActual)}</strong>
-                        </div>
-                        <div className="goal-stat-box">
-                          <span>Gerceklesen %</span>
-                          <strong>{formatPercent(activeEmployeeSummary.actualPercent)}</strong>
-                        </div>
-                        <div className="goal-stat-box">
-                          <span>Kalan</span>
-                          <strong>{formatNumber(activeEmployeeSummary.remaining)}</strong>
-                        </div>
-                        <div className="goal-stat-box">
-                          <span>Ay Sonu</span>
-                          <strong>{formatNumber(activeEmployeeSummary.projectedActual)}</strong>
-                        </div>
-                        <div className="goal-stat-box">
-                          <span>Ay Sonu %</span>
-                          <strong>{formatPercent(activeEmployeeSummary.projectedPercent)}</strong>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="goal-stat-box">
-                          <span>Gerceklesen</span>
-                          <strong>{formatNumber(activeEmployeeSummary.totalActual)}</strong>
-                        </div>
-                        <div className="goal-stat-box">
-                          <span>Ay Sonu</span>
-                          <strong>{formatNumber(activeEmployeeSummary.projectedActual)}</strong>
-                        </div>
-                      </>
-                    )}
-                  </div>
-
-                  <div className="goal-category-list">
-                    {categorySummaries.map((category, index) => (
-                      <details key={category.title} className="goal-category-card" open={index === 0}>
-                        <summary className="goal-category-summary">
-                          <div className="goal-category-title">
-                            <strong>{category.title}</strong>
-                            <span>
-                              {category.childCount > 0
-                                ? `${category.childCount} alt kategori`
-                                : "Tek kalem kategori"}
-                            </span>
+                {activeEmployeeSummary ? (
+                  <>
+                    <div className="goal-stat-grid">
+                      {activeEmployeeSummary.hasTarget ? (
+                        <>
+                          <div className="goal-stat-box">
+                            <span>Hedef</span>
+                            <strong>{formatNumber(activeEmployeeSummary.totalTarget)}</strong>
                           </div>
+                          <div className="goal-stat-box">
+                            <span>Gerceklesen</span>
+                            <strong>{formatNumber(activeEmployeeSummary.totalActual)}</strong>
+                          </div>
+                          <div className="goal-stat-box">
+                            <span>Gerceklesen %</span>
+                            <strong>{formatPercent(activeEmployeeSummary.actualPercent)}</strong>
+                          </div>
+                          <div className="goal-stat-box">
+                            <span>Kalan</span>
+                            <strong>{formatNumber(activeEmployeeSummary.remaining)}</strong>
+                          </div>
+                          <div className="goal-stat-box">
+                            <span>Ay Sonu</span>
+                            <strong>{formatNumber(activeEmployeeSummary.projectedActual)}</strong>
+                          </div>
+                          <div className="goal-stat-box">
+                            <span>Ay Sonu %</span>
+                            <strong>{formatPercent(activeEmployeeSummary.projectedPercent)}</strong>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="goal-stat-box">
+                            <span>Gerceklesen</span>
+                            <strong>{formatNumber(activeEmployeeSummary.totalActual)}</strong>
+                          </div>
+                          <div className="goal-stat-box">
+                            <span>Ay Sonu</span>
+                            <strong>{formatNumber(activeEmployeeSummary.projectedActual)}</strong>
+                          </div>
+                        </>
+                      )}
+                    </div>
 
-                          <div className="goal-category-metrics">
-                            <span>
-                              <small>Gerceklesen</small>
-                              <strong>{formatNumber(category.actual)}</strong>
-                            </span>
-                            <span>
-                              <small>Ay Sonu</small>
-                              <strong>{formatNumber(category.projectedActual)}</strong>
-                            </span>
-                            {category.hasTarget ? (
+                    <div className="goal-category-list">
+                      {categorySummaries.map((category, index) => (
+                        <details key={category.title} className="goal-category-card" open={index === 0}>
+                          <summary className="goal-category-summary">
+                            <div className="goal-category-title">
+                              <strong>{category.title}</strong>
                               <span>
-                                <small>Hedef %</small>
-                                <strong>{formatPercent(category.actualPercent)}</strong>
+                                {category.childCount > 0
+                                  ? `${category.childCount} alt kategori`
+                                  : "Tek kalem kategori"}
                               </span>
+                            </div>
+
+                            <div className="goal-category-metrics">
+                              <span>
+                                <small>Gerceklesen</small>
+                                <strong>{formatNumber(category.actual)}</strong>
+                              </span>
+                              <span>
+                                <small>Ay Sonu</small>
+                                <strong>{formatNumber(category.projectedActual)}</strong>
+                              </span>
+                              {category.hasTarget ? (
+                                <span>
+                                  <small>Hedef %</small>
+                                  <strong>{formatPercent(category.actualPercent)}</strong>
+                                </span>
+                              ) : null}
+                            </div>
+                          </summary>
+
+                          <div className="goal-category-body">
+                            <div className="goal-category-topline">
+                              {category.hasTarget ? (
+                                <>
+                                  <span>Hedef: {formatNumber(category.target)}</span>
+                                  <span>Kalan: {formatNumber(category.remaining)}</span>
+                                  <span>Ay Sonu %: {formatPercent(category.projectedPercent)}</span>
+                                </>
+                              ) : (
+                                <span>Bu kategoride hedef tanimi yok.</span>
+                              )}
+                            </div>
+
+                            {category.children.length ? (
+                              <div className="goal-child-list">
+                                {category.children.map((child) => (
+                                  <div key={`${category.title}-${child.title}`} className="goal-child-card">
+                                    <div className="goal-child-head">
+                                      <strong>{child.title}</strong>
+                                      <span>{formatNumber(child.actual)}</span>
+                                    </div>
+                                    <div className="goal-child-meta">
+                                      {child.hasTarget ? (
+                                        <>
+                                          <span>Hedef {formatNumber(child.target)}</span>
+                                          <span>% {formatPercent(child.actualPercent)}</span>
+                                          <span>Ay Sonu {formatNumber(child.projectedActual)}</span>
+                                        </>
+                                      ) : (
+                                        <span>Ay Sonu {formatNumber(child.projectedActual)}</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
                             ) : null}
                           </div>
-                        </summary>
-
-                        <div className="goal-category-body">
-                          <div className="goal-category-topline">
-                            {category.hasTarget ? (
-                              <>
-                                <span>Hedef: {formatNumber(category.target)}</span>
-                                <span>Kalan: {formatNumber(category.remaining)}</span>
-                                <span>Ay Sonu %: {formatPercent(category.projectedPercent)}</span>
-                              </>
-                            ) : (
-                              <span>Bu kategoride hedef tanimi yok.</span>
-                            )}
-                          </div>
-
-                          {category.children.length ? (
-                            <div className="goal-child-list">
-                              {category.children.map((child) => (
-                                <div key={`${category.title}-${child.title}`} className="goal-child-card">
-                                  <div className="goal-child-head">
-                                    <strong>{child.title}</strong>
-                                    <span>{formatNumber(child.actual)}</span>
-                                  </div>
-                                  <div className="goal-child-meta">
-                                    {child.hasTarget ? (
-                                      <>
-                                        <span>Hedef {formatNumber(child.target)}</span>
-                                        <span>% {formatPercent(child.actualPercent)}</span>
-                                        <span>Ay Sonu {formatNumber(child.projectedActual)}</span>
-                                      </>
-                                    ) : (
-                                      <span>Ay Sonu {formatNumber(child.projectedActual)}</span>
-                                    )}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          ) : null}
-                        </div>
-                      </details>
-                    ))}
-                  </div>
-                </>
-              ) : (
-                <p className="subtle">Bu filtreye uygun calisan verisi bulunamadi.</p>
-              )}
-            </article>
-          </section>
+                        </details>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <p className="subtle">Bu filtreye uygun calisan verisi bulunamadi.</p>
+                )}
+              </article>
+            </section>
+          )}
         </>
       )}
     </main>

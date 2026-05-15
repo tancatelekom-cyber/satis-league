@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { FilterSelectNav } from "@/components/ui/filter-select-nav";
 import { fetchGoalActualRows, fetchGoalDayStats, GoalActualRow } from "@/lib/goal-actuals";
 import { createClient } from "@/lib/supabase/server";
+import { UserRole } from "@/lib/types";
 
 type GoalActualPageProps = {
   searchParams?: Promise<{
@@ -92,6 +93,10 @@ function buildCategoryGroups(rows: GoalActualRow[]) {
   return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0], "tr"));
 }
 
+function canViewAllGoalActual(role: UserRole | string | null | undefined) {
+  return role === "admin" || role === "management" || role === "manager";
+}
+
 export default async function GoalActualPage({ searchParams }: GoalActualPageProps) {
   const params = searchParams ? await searchParams : undefined;
   const selectedView = String(params?.view ?? "employee").trim();
@@ -107,16 +112,25 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
     redirect("/giris");
   }
 
-  const { data: profile } = await supabase.from("profiles").select("approval").eq("id", user.id).single();
+  const { data: profile } = await supabase.from("profiles").select("approval, role").eq("id", user.id).single();
 
   if (!profile || profile.approval !== "approved") {
     redirect("/hesabim");
   }
 
+  const canViewAll = canViewAllGoalActual(profile.role);
+  const effectiveView = canViewAll ? selectedView : "employee";
+
+  if (!canViewAll && selectedView !== "employee") {
+    redirect(buildHref("employee", selectedEmployee, selectedCategory));
+  }
+
   const [rows, dayStats] = await Promise.all([fetchGoalActualRows(), fetchGoalDayStats()]);
 
   const employeeNames = Array.from(new Set(rows.map((row) => row.employeeName))).sort((a, b) => a.localeCompare(b, "tr"));
-  const categoryOptions = Array.from(new Set(rows.map((row) => row.mainCategory))).sort((a, b) => a.localeCompare(b, "tr"));
+  const categoryOptions = Array.from(new Set(rows.map((row) => row.mainCategory))).sort((a, b) =>
+    a.localeCompare(b, "tr")
+  );
 
   const effectiveCategory = categoryOptions.includes(selectedCategory) ? selectedCategory : "";
   const categoryFilteredRows = effectiveCategory ? rows.filter((row) => row.mainCategory === effectiveCategory) : rows;
@@ -162,20 +176,27 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
       <p className="page-subtitle">Google Sheet verisine göre çalışan hedef, gerçekleşen ve ay sonu projeksiyon görünümü.</p>
 
       <div className="goal-tab-row">
-        <a className={`goal-tab ${selectedView === "employee" ? "goal-tab-active" : ""}`} href={buildHref("employee", effectiveEmployee, effectiveCategory)}>
+        <a
+          className={`goal-tab ${effectiveView === "employee" ? "goal-tab-active" : ""}`}
+          href={buildHref("employee", effectiveEmployee, effectiveCategory)}
+        >
           Çalışan
         </a>
-        <a className={`goal-tab ${selectedView === "store" ? "goal-tab-active" : ""}`} href={buildHref("store", "", "")}>
-          Mağaza
-        </a>
-        <a className={`goal-tab ${selectedView === "company" ? "goal-tab-active" : ""}`} href={buildHref("company", "", "")}>
-          Firma
-        </a>
+        {canViewAll ? (
+          <>
+            <a className={`goal-tab ${effectiveView === "store" ? "goal-tab-active" : ""}`} href={buildHref("store", "", "")}>
+              Mağaza
+            </a>
+            <a className={`goal-tab ${effectiveView === "company" ? "goal-tab-active" : ""}`} href={buildHref("company", "", "")}>
+              Firma
+            </a>
+          </>
+        ) : null}
       </div>
 
-      {selectedView !== "employee" ? (
+      {effectiveView !== "employee" ? (
         <section className="guide-card goal-placeholder-card">
-          <strong>{selectedView === "store" ? "Mağaza" : "Firma"} görünümü hazırlanıyor.</strong>
+          <strong>{effectiveView === "store" ? "Mağaza" : "Firma"} görünümü hazırlanıyor.</strong>
           <p className="subtle">Bugün çalışan ekranı aktif. Diğer başlıkları sonraki aşamada tamamlarız.</p>
         </section>
       ) : (
@@ -202,12 +223,10 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                 <FilterSelectNav
                   ariaLabel="Çalışan seçimi"
                   value={buildHref("employee", activeEmployeeName, effectiveCategory)}
-                  options={[
-                    ...employeeFilteredNames.map((name) => ({
-                      value: buildHref("employee", name, effectiveCategory),
-                      label: name
-                    }))
-                  ]}
+                  options={employeeFilteredNames.map((name) => ({
+                    value: buildHref("employee", name, effectiveCategory),
+                    label: name
+                  }))}
                 />
               </div>
 

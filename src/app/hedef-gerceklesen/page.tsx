@@ -90,7 +90,7 @@ function formatPercent(value: number | null | undefined) {
 function buildEmployeeSummary(rows: GoalActualRow[], workedDays: number, totalDays: number): EmployeeSummary {
   const totalTarget = rows.reduce((sum, row) => sum + (row.target ?? 0), 0);
   const totalActual = rows.reduce((sum, row) => sum + row.actual, 0);
-  const projectedActual = workedDays > 0 ? (totalActual / workedDays) * totalDays : totalActual;
+  const projectedActual = workedDays > 0 ? Math.floor((totalActual / workedDays) * totalDays) : totalActual;
   const hasTarget = totalTarget > 0;
 
   return {
@@ -130,7 +130,7 @@ function buildCategoryGroups(rows: GoalActualRow[]) {
 function buildMetricSummary(rows: GoalActualRow[], workedDays: number, totalDays: number): GoalMetricSummary {
   const totalTarget = rows.reduce((sum, row) => sum + (row.target ?? 0), 0);
   const totalActual = rows.reduce((sum, row) => sum + row.actual, 0);
-  const projectedActual = workedDays > 0 ? (totalActual / workedDays) * totalDays : totalActual;
+  const projectedActual = workedDays > 0 ? Math.floor((totalActual / workedDays) * totalDays) : totalActual;
   const hasTarget = totalTarget > 0;
 
   return {
@@ -448,16 +448,18 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                       {categorySummaries.map((category, index) => (
                         <details key={category.title} className="goal-category-card" open={index === 0}>
                           <summary className="goal-category-summary">
-                            <div className="goal-category-title">
-                              <strong>{category.title}</strong>
-                              <span>
-                                {category.childCount > 0
-                                  ? `${category.childCount} alt kategori`
-                                  : "Tek kalem kategori"}
-                              </span>
-                            </div>
+                          <div className="goal-category-title">
+                            <strong>{category.title}</strong>
+                            <span>
+                              {category.childCount > 0
+                                ? `${category.childCount} alt kategori`
+                                : "Tek kalem kategori"}
+                            </span>
+                          </div>
 
-                            <div className="goal-category-metrics">
+                          {category.childCount > 0 ? <span className="goal-category-caret">▼</span> : null}
+
+                          <div className="goal-category-metrics">
                               <span>
                                 <small>Gerceklesen</small>
                                 <strong>{formatNumber(category.actual)}</strong>

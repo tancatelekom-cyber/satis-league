@@ -17,9 +17,17 @@ export type GoalDayStats = {
 const GOAL_SHEET_ID = "1Ppf_vGtlD6RInm0fxy3lDaV5Sy3LWggkH6Gw1wgciuA";
 const PRS_SHEET_NAME = "PRS";
 const GN_SHEET_NAME = "GN";
+const GN_SHEET_GID = "2046012697";
 
-function buildSheetUrl(sheetName: string) {
-  return `https://docs.google.com/spreadsheets/d/${GOAL_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;
+function buildSheetUrl(sheetName: string, gid?: string) {
+  const params = new URLSearchParams();
+  params.set("tqx", "out:csv");
+  params.set("sheet", sheetName);
+  if (gid) {
+    params.set("gid", gid);
+  }
+
+  return `https://docs.google.com/spreadsheets/d/${GOAL_SHEET_ID}/gviz/tq?${params.toString()}`;
 }
 
 function parseCsv(text: string) {
@@ -132,7 +140,7 @@ async function fetchGoalActualRowsFromSheet() {
 }
 
 async function fetchGoalDayStatsFromSheet() {
-  const response = await fetch(buildSheetUrl(GN_SHEET_NAME), {
+  const response = await fetch(buildSheetUrl(GN_SHEET_NAME, GN_SHEET_GID), {
     headers: {
       accept: "text/csv, text/plain, */*",
       "user-agent": "Mozilla/5.0 (compatible; TancaSuperLigBot/1.0; +https://vercel.app)"

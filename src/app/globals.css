@@ -3458,6 +3458,14 @@ textarea::placeholder {
   border-radius: 18px;
 }
 
+.goal-desktop-table-view {
+  display: block;
+}
+
+.goal-mobile-card-view {
+  display: none;
+}
+
 .goal-category-list {
   display: grid;
   gap: 12px;
@@ -3648,14 +3656,17 @@ textarea::placeholder {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  min-width: 760px;
+  min-width: 980px;
+  overflow: hidden;
+  border-radius: 18px;
+  background: rgba(8, 28, 45, 0.24);
 }
 
 .goal-detail-table th,
 .goal-detail-table td {
-  padding: 10px 12px;
-  border-bottom: 1px solid rgba(4, 92, 96, 0.1);
-  background: rgba(255, 255, 255, 0.82);
+  padding: 11px 13px;
+  border-bottom: 1px solid rgba(4, 92, 96, 0.14);
+  background: rgba(255, 255, 255, 0.9);
   color: #10203b;
   text-align: left;
   font-size: 0.94rem;
@@ -3673,6 +3684,32 @@ textarea::placeholder {
   background: rgba(4, 92, 96, 0.14);
   color: #0d3440;
   font-weight: 900;
+}
+
+.goal-table-group-row td {
+  background: rgba(255, 255, 255, 0.84);
+}
+
+.goal-table-group-row td:first-child strong {
+  display: block;
+  color: #10203b;
+  font-size: 0.98rem;
+}
+
+.goal-table-group-row td:first-child small {
+  display: block;
+  margin-top: 4px;
+  color: #5b6f8e;
+  font-size: 0.75rem;
+}
+
+.goal-table-section-row td {
+  background: rgba(255, 209, 102, 0.28);
+  color: #7c5600;
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
 .goal-child-row td:first-child {
@@ -3721,8 +3758,12 @@ textarea::placeholder {
     justify-self: end;
   }
 
-  .goal-detail-table {
-    min-width: 680px;
+  .goal-desktop-table-view {
+    display: none;
+  }
+
+  .goal-mobile-card-view {
+    display: block;
   }
 
   .goal-category-summary {

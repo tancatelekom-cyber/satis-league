@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { redirect } from "next/navigation";
 import { FilterSelectNav } from "@/components/ui/filter-select-nav";
 import { GoalActualRow, GoalStoreRow, fetchGoalActualRows, fetchGoalDayStats, fetchGoalStoreRows } from "@/lib/goal-actuals";
@@ -495,6 +496,93 @@ function GoalCategoryCards({ categories }: { categories: GoalCategorySummary[] }
   );
 }
 
+function GoalCategoryTable({ categories }: { categories: GoalCategorySummary[] }) {
+  return (
+    <div className="goal-detail-table-wrap">
+      <table className="goal-detail-table">
+        <thead>
+          <tr>
+            <th>Kategori</th>
+            <th>Hedef</th>
+            <th>Gerceklesen</th>
+            <th>Kalan</th>
+            <th>Anlik %</th>
+            <th>Ay Sonu</th>
+            <th>Ay Sonu %</th>
+          </tr>
+        </thead>
+        <tbody>
+          {categories.map((category) => (
+            <Fragment key={category.title}>
+              <tr className="goal-table-group-row">
+                <td>
+                  <strong>{category.title}</strong>
+                  <small>
+                    {category.childCount > 0
+                      ? `${category.childCount} alt kategori`
+                      : category.storeDetails?.length
+                        ? "Sube detayli"
+                        : "Tek kalem kategori"}
+                  </small>
+                </td>
+                <td>{category.hasTarget ? formatNumber(category.target) : "-"}</td>
+                <td>{formatNumber(category.actual)}</td>
+                <td>{category.hasTarget ? formatNumber(category.remaining) : "-"}</td>
+                <td>{category.hasTarget && category.actualPercent !== null ? formatPercent(category.actualPercent) : "-"}</td>
+                <td>{category.showProjection && category.projectedActual !== null ? formatNumber(category.projectedActual) : "-"}</td>
+                <td>
+                  {category.hasTarget && category.showProjection && category.projectedPercent !== null
+                    ? formatPercent(category.projectedPercent)
+                    : "-"}
+                </td>
+              </tr>
+
+              {category.children.map((child) => (
+                <tr key={`${category.title}-${child.title}`} className="goal-child-row">
+                  <td>{child.title}</td>
+                  <td>{child.hasTarget ? formatNumber(child.target) : "-"}</td>
+                  <td>{formatNumber(child.actual)}</td>
+                  <td>{child.hasTarget ? formatNumber(child.remaining) : "-"}</td>
+                  <td>{child.hasTarget && child.actualPercent !== null ? formatPercent(child.actualPercent) : "-"}</td>
+                  <td>{child.showProjection && child.projectedActual !== null ? formatNumber(child.projectedActual) : "-"}</td>
+                  <td>
+                    {child.hasTarget && child.showProjection && child.projectedPercent !== null
+                      ? formatPercent(child.projectedPercent)
+                      : "-"}
+                  </td>
+                </tr>
+              ))}
+
+              {category.storeDetails?.length ? (
+                <>
+                  <tr className="goal-table-section-row">
+                    <td colSpan={7}>Sube Detaylari</td>
+                  </tr>
+                  {category.storeDetails.map((store) => (
+                    <tr key={`${category.title}-${store.title}`} className="goal-child-row">
+                      <td>{store.title}</td>
+                      <td>{store.hasTarget ? formatNumber(store.target) : "-"}</td>
+                      <td>{formatNumber(store.actual)}</td>
+                      <td>{store.hasTarget ? formatNumber(store.remaining) : "-"}</td>
+                      <td>{store.hasTarget && store.actualPercent !== null ? formatPercent(store.actualPercent) : "-"}</td>
+                      <td>{store.showProjection && store.projectedActual !== null ? formatNumber(store.projectedActual) : "-"}</td>
+                      <td>
+                        {store.hasTarget && store.showProjection && store.projectedPercent !== null
+                          ? formatPercent(store.projectedPercent)
+                          : "-"}
+                      </td>
+                    </tr>
+                  ))}
+                </>
+              ) : null}
+            </Fragment>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export default async function GoalActualPage({ searchParams }: GoalActualPageProps) {
   const params = searchParams ? await searchParams : undefined;
   const selectedView = String(params?.view ?? "employee").trim();
@@ -879,18 +967,39 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
 
                 {effectiveView === "company" ? (
                   companyCategorySummaries.length ? (
-                    <GoalCategoryCards categories={companyCategorySummaries} />
+                    <>
+                      <div className="goal-desktop-table-view">
+                        <GoalCategoryTable categories={companyCategorySummaries} />
+                      </div>
+                      <div className="goal-mobile-card-view">
+                        <GoalCategoryCards categories={companyCategorySummaries} />
+                      </div>
+                    </>
                   ) : (
                     <p className="subtle">Firma verisi bulunamadi.</p>
                   )
                 ) : effectiveView === "store" ? (
                   storeCategorySummaries.length ? (
-                    <GoalCategoryCards categories={storeCategorySummaries} />
+                    <>
+                      <div className="goal-desktop-table-view">
+                        <GoalCategoryTable categories={storeCategorySummaries} />
+                      </div>
+                      <div className="goal-mobile-card-view">
+                        <GoalCategoryCards categories={storeCategorySummaries} />
+                      </div>
+                    </>
                   ) : (
                     <p className="subtle">Bu magaza icin kategori verisi bulunamadi.</p>
                   )
                 ) : employeeCategorySummaries.length ? (
-                  <GoalCategoryCards categories={employeeCategorySummaries} />
+                  <>
+                    <div className="goal-desktop-table-view">
+                      <GoalCategoryTable categories={employeeCategorySummaries} />
+                    </div>
+                    <div className="goal-mobile-card-view">
+                      <GoalCategoryCards categories={employeeCategorySummaries} />
+                    </div>
+                  </>
                 ) : (
                   <p className="subtle">Bu filtreye uygun calisan verisi bulunamadi.</p>
                 )}

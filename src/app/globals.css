@@ -3459,11 +3459,11 @@ textarea::placeholder {
 }
 
 .goal-desktop-table-view {
-  display: block;
+  display: none;
 }
 
 .goal-mobile-card-view {
-  display: none;
+  display: block;
 }
 
 .goal-category-list {
@@ -3756,14 +3756,6 @@ textarea::placeholder {
   .goal-ranking-score {
     grid-column: 2;
     justify-self: end;
-  }
-
-  .goal-desktop-table-view {
-    display: none;
-  }
-
-  .goal-mobile-card-view {
-    display: block;
   }
 
   .goal-category-summary {

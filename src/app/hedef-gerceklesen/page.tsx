@@ -343,7 +343,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
             <div className="goal-mode-row">
               <a
                 className={`goal-mode-button ${effectivePanel === "detail" ? "goal-mode-button-active" : ""}`}
-                href={buildHref("employee", activeEmployeeName, effectiveCategory, "detail")}
+                href={buildHref("employee", activeEmployeeName, "", "detail")}
               >
                 Hedef Gerceklesen
               </a>

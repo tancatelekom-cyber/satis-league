@@ -59,6 +59,13 @@ type GoalDayStats = {
   totalDays: number;
 };
 
+type GoalNeedRow = {
+  threshold: number;
+  targetValue: number;
+  remainingTotal: number;
+  dailyRequired: number;
+};
+
 const EMPTY_DAY_STATS: GoalDayStats = {
   workedDays: 0,
   remainingDays: 0,
@@ -351,6 +358,25 @@ function canViewAllGoalActual(role: UserRole | string | null | undefined) {
   return role === "admin" || role === "management" || role === "manager";
 }
 
+function buildNeedRows(summary: GoalCategorySummary, remainingDays: number): GoalNeedRow[] {
+  if (!summary.hasTarget || !summary.target) {
+    return [];
+  }
+
+  return [90, 100, 110, 120].map((threshold) => {
+    const targetValue = (summary.target ?? 0) * (threshold / 100);
+    const remainingTotal = Math.max(targetValue - summary.actual, 0);
+    const dailyRequired = remainingDays > 0 ? Math.ceil(remainingTotal / remainingDays) : remainingTotal > 0 ? Math.ceil(remainingTotal) : 0;
+
+    return {
+      threshold,
+      targetValue,
+      remainingTotal,
+      dailyRequired
+    };
+  });
+}
+
 function GoalCategoryCards({ categories }: { categories: GoalCategorySummary[] }) {
   return (
     <div className="goal-category-list">
@@ -490,7 +516,12 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
 
   const canViewAll = canViewAllGoalActual(profile.role);
   const effectiveView = canViewAll ? selectedView : "employee";
-  const effectivePanel = selectedPanel === "ranking" ? "ranking" : "detail";
+  const effectivePanel =
+    selectedPanel === "needs"
+      ? "needs"
+      : effectiveView === "employee" && selectedPanel === "ranking"
+        ? "ranking"
+        : "detail";
 
   if (!canViewAll && selectedView !== "employee") {
     redirect(buildHref("employee", { employee: selectedEmployee, panel: effectivePanel }));
@@ -584,6 +615,14 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
   const employeeCategorySummaries = buildCategorySummaries(activeEmployeeRows, dayStats.workedDays, dayStats.totalDays);
   const storeCategorySummaries = buildStoreCategorySummaries(activeStoreRows, dayStats.workedDays, dayStats.totalDays);
   const companyCategorySummaries = buildCompanyCategorySummaries(storeRows, dayStats.workedDays, dayStats.totalDays);
+  const storeNeedSummaries = storeCategorySummaries
+    .filter((category) => category.hasTarget)
+    .map((category) => ({
+      title: category.title,
+      actual: category.actual,
+      target: category.target ?? 0,
+      needRows: buildNeedRows(category, dayStats.remainingDays)
+    }));
 
   const employeeOptions = employeeNames.length
     ? employeeNames.map((name) => ({
@@ -660,7 +699,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
           {effectiveView !== "company" ? (
             <section className="guide-card game-brief-card">
               <div className="league-filter-grid goal-filter-grid">
-                {effectivePanel === "detail" ? (
+                {effectivePanel === "detail" || effectiveView === "store" ? (
                   <div className="league-filter-item">
                     <span className="league-filter-label">{effectiveView === "store" ? "Magaza" : "Calisan"}</span>
                     <FilterSelectNav
@@ -700,21 +739,66 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                 >
                   Hedef Gerceklesen
                 </a>
-                <a
-                  className={`goal-mode-button ${effectivePanel === "ranking" ? "goal-mode-button-active" : ""}`}
-                  href={
-                    effectiveView === "store"
-                      ? buildHref("store", { store: activeStoreName, category: effectiveCategory, panel: "ranking" })
-                      : buildHref("employee", { employee: activeEmployeeName, category: effectiveCategory, panel: "ranking" })
-                  }
-                >
-                  Siralama
-                </a>
+                {effectiveView === "store" ? (
+                  <a
+                    className={`goal-mode-button ${effectivePanel === "needs" ? "goal-mode-button-active" : ""}`}
+                    href={buildHref("store", { store: activeStoreName, panel: "needs" })}
+                  >
+                    Gunluk Ihtiyaclar
+                  </a>
+                ) : (
+                  <a
+                    className={`goal-mode-button ${effectivePanel === "ranking" ? "goal-mode-button-active" : ""}`}
+                    href={buildHref("employee", { employee: activeEmployeeName, category: effectiveCategory, panel: "ranking" })}
+                  >
+                    Siralama
+                  </a>
+                )}
               </div>
             </section>
           ) : null}
 
-          {effectivePanel === "ranking" && effectiveView !== "company" ? (
+          {effectiveView === "store" && effectivePanel === "needs" ? (
+            <section className="goal-panel-single">
+              <article className="campaign-section-card goal-detail-card">
+                <div className="goal-section-head">
+                  <h2>{activeStoreName || "Magaza Gunluk Ihtiyaclari"}</h2>
+                  <span>Hedefli kalemler icin gunluk gereken adet / tutar</span>
+                </div>
+
+                {storeNeedSummaries.length ? (
+                  <div className="goal-category-list">
+                    {storeNeedSummaries.map((item) => (
+                      <article key={item.title} className="goal-category-card goal-need-card">
+                        <div className="goal-category-summary">
+                          <div className="goal-category-title">
+                            <strong>{item.title}</strong>
+                            <span>
+                              Gerceklesen {formatNumber(item.actual)} / Hedef {formatNumber(item.target)}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="goal-category-body">
+                          <div className="goal-need-grid">
+                            {item.needRows.map((need) => (
+                              <div key={`${item.title}-${need.threshold}`} className="goal-need-row">
+                                <strong>%{need.threshold}</strong>
+                                <span>Hedef {formatNumber(need.targetValue)}</span>
+                                <span>Kalan {formatNumber(need.remainingTotal)}</span>
+                                <span>Gunluk {formatNumber(need.dailyRequired)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="subtle">Bu magazada hedef tanimli kalem bulunamadi.</p>
+                )}
+              </article>
+            </section>
+          ) : effectivePanel === "ranking" && effectiveView !== "company" ? (
             <section className="goal-panel-single">
               <article className="campaign-section-card goal-ranking-card">
                 <div className="goal-section-head">

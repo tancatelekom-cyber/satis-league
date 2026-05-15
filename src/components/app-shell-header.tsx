@@ -15,6 +15,7 @@ const baseNavItems: NavItem[] = [
   { href: "/", label: "Ana Sayfa" },
   { href: "/kampanyalar", label: "Gunluk Kampanyalar", mobileLabel: "Kampanya", icon: "⚡" },
   { href: "/lig", label: "Yildizlar Kulubu", mobileLabel: "Lig", icon: "⭐" },
+  { href: "/hedef-gerceklesen", label: "Hedef Gerçekleşen", mobileLabel: "Hedef", icon: "H" },
   { href: "/tarifeler", label: "Tarifeler", mobileLabel: "Tarife", icon: "📶" },
   { href: "/cihaz-fiyat-listesi", label: "Cihaz Fiyat Listesi", mobileLabel: "Cihaz", icon: "📱" },
   { href: "/hesabim", label: "Hesabim", mobileLabel: "Hesap", icon: "👤" }
@@ -43,7 +44,6 @@ export function AppShellHeader({ initialIsAdmin = false }: AppShellHeaderProps) 
   );
 
   const primaryTabs = useMemo(() => {
-    // Mobile tabbar only has room for 4; keep the most-used user flows.
     const wanted = ["/kampanyalar", "/lig", "/tarifeler", "/cihaz-fiyat-listesi"];
     return navItems.filter((item) => wanted.includes(item.href));
   }, [navItems]);
@@ -57,7 +57,7 @@ export function AppShellHeader({ initialIsAdmin = false }: AppShellHeaderProps) 
         </Link>
 
         <div className={`nav-cluster ${menuOpen ? "nav-cluster-open" : ""}`}>
-          <button className="menu-toggle" type="button" onClick={() => setMenuOpen((v) => !v)}>
+          <button className="menu-toggle" type="button" onClick={() => setMenuOpen((value) => !value)}>
             Menu
           </button>
 

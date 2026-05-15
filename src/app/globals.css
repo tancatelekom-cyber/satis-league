@@ -3244,10 +3244,222 @@ textarea::placeholder {
     display: flex;
   }
 
-  .device-price-table,
-  .season-entry-table-wrap {
-    display: none;
+.device-price-table,
+.season-entry-table-wrap {
+  display: none;
+}
+
+.goal-tab-row {
+  display: flex;
+  gap: 10px;
+  margin: 14px 0 18px;
+  flex-wrap: wrap;
+}
+
+.goal-tab {
+  padding: 12px 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(4, 92, 96, 0.18);
+  background: rgba(255, 255, 255, 0.7);
+  color: #18304d;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.goal-tab-active {
+  background: linear-gradient(135deg, rgba(4, 92, 96, 0.94), rgba(16, 128, 130, 0.92));
+  color: #f7fbff;
+}
+
+.goal-placeholder-card {
+  margin-top: 10px;
+}
+
+.goal-summary-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 12px 0 18px;
+}
+
+.goal-summary-card,
+.goal-stat-box {
+  border-radius: 20px;
+  border: 1px solid rgba(4, 92, 96, 0.12);
+  background: rgba(255, 255, 255, 0.74);
+  box-shadow: 0 12px 24px rgba(8, 22, 40, 0.08);
+  padding: 14px 16px;
+}
+
+.goal-summary-card span,
+.goal-stat-box span {
+  display: block;
+  color: #5a6f8f;
+  font-size: 0.9rem;
+}
+
+.goal-summary-card strong,
+.goal-stat-box strong {
+  display: block;
+  margin-top: 4px;
+  color: #10203b;
+  font-size: 1.22rem;
+}
+
+.goal-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.9fr) minmax(0, 1.4fr);
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.goal-ranking-card,
+.goal-detail-card {
+  display: grid;
+  gap: 14px;
+}
+
+.goal-section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.goal-section-head h2 {
+  margin: 0;
+  color: #f7fbff;
+  font-size: 1.4rem;
+}
+
+.goal-section-head span {
+  color: #d9e9f8;
+}
+
+.goal-ranking-list {
+  display: grid;
+  gap: 10px;
+}
+
+.goal-ranking-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  border-radius: 18px;
+  text-decoration: none;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.goal-ranking-row-active {
+  border-color: rgba(255, 209, 102, 0.54);
+  background: rgba(255, 209, 102, 0.12);
+}
+
+.goal-rank-badge {
+  min-width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #83f0c7, #ffe07d);
+  color: #09111f;
+  font-weight: 900;
+}
+
+.goal-ranking-main strong {
+  display: block;
+  color: #ffffff;
+  font-size: 1rem;
+}
+
+.goal-ranking-main span {
+  display: block;
+  margin-top: 4px;
+  color: #d8e6f7;
+  font-size: 0.9rem;
+}
+
+.goal-ranking-score {
+  color: #ffe07d;
+  font-size: 1rem;
+  white-space: nowrap;
+}
+
+.goal-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.goal-detail-table-wrap {
+  overflow-x: auto;
+  border-radius: 18px;
+}
+
+.goal-detail-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 760px;
+}
+
+.goal-detail-table th,
+.goal-detail-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(4, 92, 96, 0.1);
+  background: rgba(255, 255, 255, 0.82);
+  color: #10203b;
+  text-align: left;
+  font-size: 0.94rem;
+}
+
+.goal-detail-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: rgba(232, 245, 243, 0.96);
+  color: #0b3340;
+}
+
+.goal-main-category-row td {
+  background: rgba(4, 92, 96, 0.14);
+  color: #0d3440;
+  font-weight: 900;
+}
+
+.goal-child-row td:first-child {
+  padding-left: 28px;
+}
+
+@media (max-width: 900px) {
+  .goal-summary-strip,
+  .goal-stat-grid,
+  .goal-layout {
+    grid-template-columns: 1fr;
   }
+
+  .goal-section-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .goal-ranking-row {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .goal-ranking-score {
+    grid-column: 2;
+    justify-self: end;
+  }
+
+  .goal-detail-table {
+    min-width: 680px;
+  }
+}
 
   .compact-hero-card {
     padding: 14px;

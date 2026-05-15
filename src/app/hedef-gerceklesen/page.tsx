@@ -61,8 +61,6 @@ type GoalDayStats = {
 
 type GoalNeedRow = {
   threshold: number;
-  targetValue: number;
-  remainingTotal: number;
   dailyRequired: number;
 };
 
@@ -370,8 +368,6 @@ function buildNeedRows(summary: GoalCategorySummary, remainingDays: number): Goa
 
     return {
       threshold,
-      targetValue,
-      remainingTotal,
       dailyRequired
     };
   });
@@ -700,7 +696,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
             <section className="guide-card game-brief-card">
               <div className="league-filter-grid goal-filter-grid">
                 {effectivePanel === "detail" || effectiveView === "store" ? (
-                  <div className="league-filter-item">
+                  <div className="league-filter-item league-filter-item-wide">
                     <span className="league-filter-label">{effectiveView === "store" ? "Magaza" : "Calisan"}</span>
                     <FilterSelectNav
                       ariaLabel={effectiveView === "store" ? "Magaza secimi" : "Calisan secimi"}
@@ -713,7 +709,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                     />
                   </div>
                 ) : (
-                  <div className="league-filter-item">
+                  <div className="league-filter-item league-filter-item-wide">
                     <span className="league-filter-label">Ana Kategori</span>
                     <FilterSelectNav
                       ariaLabel="Ana kategori secimi"
@@ -783,8 +779,6 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                             {item.needRows.map((need) => (
                               <div key={`${item.title}-${need.threshold}`} className="goal-need-row">
                                 <strong>%{need.threshold}</strong>
-                                <span>Hedef {formatNumber(need.targetValue)}</span>
-                                <span>Kalan {formatNumber(need.remainingTotal)}</span>
                                 <span>Gunluk {formatNumber(need.dailyRequired)}</span>
                               </div>
                             ))}

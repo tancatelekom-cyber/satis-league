@@ -3403,6 +3403,124 @@ textarea::placeholder {
   border-radius: 18px;
 }
 
+.goal-category-list {
+  display: grid;
+  gap: 12px;
+}
+
+.goal-category-card {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.goal-category-summary {
+  list-style: none;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 16px;
+  cursor: pointer;
+}
+
+.goal-category-summary::-webkit-details-marker {
+  display: none;
+}
+
+.goal-category-title strong {
+  display: block;
+  color: #ffffff;
+  font-size: 1.05rem;
+}
+
+.goal-category-title span {
+  display: block;
+  margin-top: 4px;
+  color: #d8e6f7;
+  font-size: 0.84rem;
+}
+
+.goal-category-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.goal-category-metrics span {
+  min-width: 82px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.08);
+  text-align: right;
+}
+
+.goal-category-metrics small {
+  display: block;
+  color: #cde1f3;
+  font-size: 0.72rem;
+}
+
+.goal-category-metrics strong {
+  display: block;
+  margin-top: 2px;
+  color: #ffffff;
+  font-size: 0.96rem;
+}
+
+.goal-category-body {
+  padding: 0 16px 16px;
+}
+
+.goal-category-topline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-bottom: 12px;
+  color: #eef6ff;
+  font-size: 0.84rem;
+}
+
+.goal-child-list {
+  display: grid;
+  gap: 8px;
+}
+
+.goal-child-card {
+  padding: 12px 13px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.goal-child-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+
+.goal-child-head strong {
+  color: #ffffff;
+  font-size: 0.95rem;
+}
+
+.goal-child-head span {
+  color: #ffe07d;
+  font-weight: 900;
+}
+
+.goal-child-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  margin-top: 6px;
+  color: #e0eefc;
+  font-size: 0.8rem;
+}
+
 .goal-detail-table {
   width: 100%;
   border-collapse: separate;
@@ -3482,6 +3600,14 @@ textarea::placeholder {
 
   .goal-detail-table {
     min-width: 680px;
+  }
+
+  .goal-category-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .goal-category-metrics {
+    justify-content: flex-start;
   }
 }
 

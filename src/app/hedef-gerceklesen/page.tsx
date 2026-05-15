@@ -23,6 +23,26 @@ type EmployeeSummary = {
   hasTarget: boolean;
 };
 
+type GoalMetricSummary = {
+  target: number | null;
+  actual: number;
+  actualPercent: number | null;
+  remaining: number | null;
+  projectedActual: number;
+  projectedPercent: number | null;
+  hasTarget: boolean;
+};
+
+type GoalCategorySummary = GoalMetricSummary & {
+  title: string;
+  childCount: number;
+  children: Array<
+    GoalMetricSummary & {
+      title: string;
+    }
+  >;
+};
+
 type GoalDayStats = {
   workedDays: number;
   remainingDays: number;
@@ -103,6 +123,43 @@ function buildCategoryGroups(rows: GoalActualRow[]) {
   });
 
   return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0], "tr"));
+}
+
+function buildMetricSummary(rows: GoalActualRow[], workedDays: number, totalDays: number): GoalMetricSummary {
+  const totalTarget = rows.reduce((sum, row) => sum + (row.target ?? 0), 0);
+  const totalActual = rows.reduce((sum, row) => sum + row.actual, 0);
+  const projectedActual = workedDays > 0 ? (totalActual / workedDays) * totalDays : totalActual;
+  const hasTarget = totalTarget > 0;
+
+  return {
+    target: hasTarget ? totalTarget : null,
+    actual: totalActual,
+    actualPercent: hasTarget ? (totalActual / totalTarget) * 100 : null,
+    remaining: hasTarget ? Math.max(totalTarget - totalActual, 0) : null,
+    projectedActual,
+    projectedPercent: hasTarget ? (projectedActual / totalTarget) * 100 : null,
+    hasTarget
+  };
+}
+
+function buildCategorySummaries(rows: GoalActualRow[], workedDays: number, totalDays: number): GoalCategorySummary[] {
+  return buildCategoryGroups(rows).map(([mainCategory, group]) => {
+    const allRows = [...group.mainOnlyRows, ...group.children];
+    const summary = buildMetricSummary(allRows, workedDays, totalDays);
+    const children = group.children
+      .map((row) => ({
+        title: row.subCategory,
+        ...buildMetricSummary([row], workedDays, totalDays)
+      }))
+      .sort((a, b) => a.title.localeCompare(b.title, "tr"));
+
+    return {
+      title: mainCategory,
+      childCount: children.length,
+      children,
+      ...summary
+    };
+  });
 }
 
 function canViewAllGoalActual(role: UserRole | string | null | undefined) {
@@ -189,7 +246,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
   const activeEmployeeSummary = activeEmployeeRows.length
     ? buildEmployeeSummary(activeEmployeeRows, dayStats.workedDays, dayStats.totalDays)
     : null;
-  const categoryGroups = buildCategoryGroups(activeEmployeeRows);
+  const categorySummaries = buildCategorySummaries(activeEmployeeRows, dayStats.workedDays, dayStats.totalDays);
 
   const employeeOptions = employeeFilteredNames.length
     ? employeeFilteredNames.map((name) => ({
@@ -365,87 +422,76 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                     )}
                   </div>
 
-                  <div className="goal-detail-table-wrap">
-                    <table className="goal-detail-table">
-                      <thead>
-                        <tr>
-                          <th>Kategori</th>
-                          <th>Hedef</th>
-                          <th>Gerceklesen</th>
-                          <th>Gerceklesen %</th>
-                          <th>Kalan</th>
-                          <th>Ay Sonu</th>
-                          <th>Ay Sonu %</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {categoryGroups.flatMap(([mainCategory, group]) => {
-                          const rowsToRender: Array<{
-                            key: string;
-                            label: string;
-                            row: GoalActualRow | null;
-                            kind: "main" | "child" | "single";
-                          }> = [];
+                  <div className="goal-category-list">
+                    {categorySummaries.map((category, index) => (
+                      <details key={category.title} className="goal-category-card" open={index === 0}>
+                        <summary className="goal-category-summary">
+                          <div className="goal-category-title">
+                            <strong>{category.title}</strong>
+                            <span>
+                              {category.childCount > 0
+                                ? `${category.childCount} alt kategori`
+                                : "Tek kalem kategori"}
+                            </span>
+                          </div>
 
-                          group.mainOnlyRows.forEach((row, index) => {
-                            rowsToRender.push({
-                              key: `${mainCategory}-single-${index}`,
-                              label: mainCategory,
-                              row,
-                              kind: "single"
-                            });
-                          });
+                          <div className="goal-category-metrics">
+                            <span>
+                              <small>Gerceklesen</small>
+                              <strong>{formatNumber(category.actual)}</strong>
+                            </span>
+                            <span>
+                              <small>Ay Sonu</small>
+                              <strong>{formatNumber(category.projectedActual)}</strong>
+                            </span>
+                            {category.hasTarget ? (
+                              <span>
+                                <small>Hedef %</small>
+                                <strong>{formatPercent(category.actualPercent)}</strong>
+                              </span>
+                            ) : null}
+                          </div>
+                        </summary>
 
-                          if (group.children.length > 0) {
-                            rowsToRender.push({
-                              key: `${mainCategory}-header`,
-                              label: mainCategory,
-                              row: null,
-                              kind: "main"
-                            });
+                        <div className="goal-category-body">
+                          <div className="goal-category-topline">
+                            {category.hasTarget ? (
+                              <>
+                                <span>Hedef: {formatNumber(category.target)}</span>
+                                <span>Kalan: {formatNumber(category.remaining)}</span>
+                                <span>Ay Sonu %: {formatPercent(category.projectedPercent)}</span>
+                              </>
+                            ) : (
+                              <span>Bu kategoride hedef tanimi yok.</span>
+                            )}
+                          </div>
 
-                            group.children.forEach((row, index) => {
-                              rowsToRender.push({
-                                key: `${mainCategory}-child-${index}`,
-                                label: row.subCategory,
-                                row,
-                                kind: "child"
-                              });
-                            });
-                          }
-
-                          return rowsToRender.map((entry) => {
-                            if (!entry.row) {
-                              return (
-                                <tr key={entry.key} className="goal-main-category-row">
-                                  <td colSpan={7}>{entry.label}</td>
-                                </tr>
-                              );
-                            }
-
-                            const target = entry.row.target;
-                            const actual = entry.row.actual;
-                            const actualPercent = target ? (actual / target) * 100 : null;
-                            const remaining = target ? Math.max(target - actual, 0) : null;
-                            const projectedActual =
-                              dayStats.workedDays > 0 ? (actual / dayStats.workedDays) * dayStats.totalDays : actual;
-                            const projectedPercent = target ? (projectedActual / target) * 100 : null;
-
-                            return (
-                              <tr key={entry.key} className={entry.kind === "child" ? "goal-child-row" : ""}>
-                                <td>{entry.label}</td>
-                                <td>{formatNumber(target)}</td>
-                                <td>{formatNumber(actual)}</td>
-                                <td>{formatPercent(actualPercent)}</td>
-                                <td>{formatNumber(remaining)}</td>
-                                <td>{formatNumber(projectedActual)}</td>
-                                <td>{formatPercent(projectedPercent)}</td>
-                              </tr>
-                            );
-                          });
-                        })}
-                      </tbody>
-                    </table>
+                          {category.children.length ? (
+                            <div className="goal-child-list">
+                              {category.children.map((child) => (
+                                <div key={`${category.title}-${child.title}`} className="goal-child-card">
+                                  <div className="goal-child-head">
+                                    <strong>{child.title}</strong>
+                                    <span>{formatNumber(child.actual)}</span>
+                                  </div>
+                                  <div className="goal-child-meta">
+                                    {child.hasTarget ? (
+                                      <>
+                                        <span>Hedef {formatNumber(child.target)}</span>
+                                        <span>% {formatPercent(child.actualPercent)}</span>
+                                        <span>Ay Sonu {formatNumber(child.projectedActual)}</span>
+                                      </>
+                                    ) : (
+                                      <span>Ay Sonu {formatNumber(child.projectedActual)}</span>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : null}
+                        </div>
+                      </details>
+                    ))}
                   </div>
                 </>
               ) : (

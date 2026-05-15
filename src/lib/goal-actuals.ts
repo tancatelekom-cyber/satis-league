@@ -8,6 +8,16 @@ export type GoalActualRow = {
   actual: number;
 };
 
+export type GoalStoreRow = {
+  storeCode: string;
+  mainCategory: string;
+  subCategory: string;
+  target: number | null;
+  actual: number;
+  includeProjection: boolean;
+  companyMode: "sum" | "average";
+};
+
 export type GoalDayStats = {
   workedDays: number;
   remainingDays: number;
@@ -19,11 +29,14 @@ const PRS_SHEET_NAME = "PRS";
 const GN_SHEET_NAME = "GN";
 const PRS_SHEET_GID = "0";
 const GN_SHEET_GID = "2046012697";
+const STORE_SHEET_GID = "650800232";
 
-function buildSheetUrl(sheetName: string, gid?: string) {
+function buildSheetUrl(sheetName?: string, gid?: string) {
   const params = new URLSearchParams();
   params.set("format", "csv");
-  params.set("sheet", sheetName);
+  if (sheetName) {
+    params.set("sheet", sheetName);
+  }
   if (gid) {
     params.set("gid", gid);
   }
@@ -162,10 +175,59 @@ async function fetchGoalDayStatsFromSheet() {
   } satisfies GoalDayStats;
 }
 
+async function fetchGoalStoreRowsFromSheet() {
+  const response = await fetch(buildSheetUrl(undefined, STORE_SHEET_GID), {
+    headers: {
+      accept: "text/csv, text/plain, */*",
+      "user-agent": "Mozilla/5.0 (compatible; TancaSuperLigBot/1.0; +https://vercel.app)"
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`Magaza/Firma sayfasi okunamadi: ${response.status}`);
+  }
+
+  const rows = parseCsv(await response.text());
+
+  return rows
+    .slice(1)
+    .map((row): GoalStoreRow | null => {
+      const storeCode = normalizeText(row[0] ?? "");
+      const mainCategory = normalizeText(row[1] ?? "");
+      const subCategory = normalizeText(row[2] ?? "");
+      const targetRaw = normalizeText(row[3] ?? "");
+      const actualRaw = normalizeText(row[4] ?? "");
+      const projectionFlag = normalizeText(row[5] ?? "").toUpperCase();
+      const companyModeFlag = normalizeText(row[6] ?? "").toUpperCase();
+
+      if (!storeCode) {
+        return null;
+      }
+
+      const target = targetRaw ? parseLocalizedNumber(targetRaw) : null;
+      const actual = parseLocalizedNumber(actualRaw);
+
+      return {
+        storeCode,
+        mainCategory: mainCategory || "Genel",
+        subCategory,
+        target: target && target > 0 ? target : null,
+        actual,
+        includeProjection: projectionFlag === "E",
+        companyMode: companyModeFlag === "H" ? "average" : "sum"
+      };
+    })
+    .filter((row): row is GoalStoreRow => Boolean(row));
+}
+
 export const fetchGoalActualRows = unstable_cache(fetchGoalActualRowsFromSheet, ["goal-actual-rows"], {
   revalidate: 60 * 30
 });
 
 export const fetchGoalDayStats = unstable_cache(fetchGoalDayStatsFromSheet, ["goal-day-stats"], {
+  revalidate: 60 * 30
+});
+
+export const fetchGoalStoreRows = unstable_cache(fetchGoalStoreRowsFromSheet, ["goal-store-rows"], {
   revalidate: 60 * 30
 });

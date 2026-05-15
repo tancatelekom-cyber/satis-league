@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { FilterSelectNav } from "@/components/ui/filter-select-nav";
-import { fetchGoalActualRows, fetchGoalDayStats, GoalActualRow } from "@/lib/goal-actuals";
+import { GoalActualRow, fetchGoalActualRows, fetchGoalDayStats } from "@/lib/goal-actuals";
 import { createClient } from "@/lib/supabase/server";
 import { UserRole } from "@/lib/types";
 
@@ -21,6 +21,18 @@ type EmployeeSummary = {
   projectedActual: number;
   projectedPercent: number | null;
   hasTarget: boolean;
+};
+
+type GoalDayStats = {
+  workedDays: number;
+  remainingDays: number;
+  totalDays: number;
+};
+
+const EMPTY_DAY_STATS: GoalDayStats = {
+  workedDays: 0,
+  remainingDays: 0,
+  totalDays: 0
 };
 
 function buildHref(view: string, employee?: string, category?: string) {
@@ -125,7 +137,16 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
     redirect(buildHref("employee", selectedEmployee, selectedCategory));
   }
 
-  const [rows, dayStats] = await Promise.all([fetchGoalActualRows(), fetchGoalDayStats()]);
+  let rows: GoalActualRow[] = [];
+  let dayStats: GoalDayStats = EMPTY_DAY_STATS;
+  let sheetError = "";
+
+  try {
+    [rows, dayStats] = await Promise.all([fetchGoalActualRows(), fetchGoalDayStats()]);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Google Sheet verisi okunamadi.";
+    sheetError = message;
+  }
 
   const employeeNames = Array.from(new Set(rows.map((row) => row.employeeName))).sort((a, b) => a.localeCompare(b, "tr"));
   const categoryOptions = Array.from(new Set(rows.map((row) => row.mainCategory))).sort((a, b) =>
@@ -170,22 +191,37 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
     : null;
   const categoryGroups = buildCategoryGroups(activeEmployeeRows);
 
+  const employeeOptions = employeeFilteredNames.length
+    ? employeeFilteredNames.map((name) => ({
+        value: buildHref("employee", name, effectiveCategory),
+        label: name
+      }))
+    : [{ value: buildHref("employee", "", effectiveCategory), label: "Calisan bulunamadi" }];
+
+  const categorySelectOptions = [
+    { value: buildHref("employee", effectiveEmployee, ""), label: "Tum Kategoriler" },
+    ...categoryOptions.map((category) => ({
+      value: buildHref("employee", effectiveEmployee, category),
+      label: category
+    }))
+  ];
+
   return (
     <main>
-      <h1 className="page-title">Hedef Gerçekleşen</h1>
-      <p className="page-subtitle">Google Sheet verisine göre çalışan hedef, gerçekleşen ve ay sonu projeksiyon görünümü.</p>
+      <h1 className="page-title">Hedef Gerceklesen</h1>
+      <p className="page-subtitle">Google Sheet verisine gore calisan hedef, gerceklesen ve ay sonu projeksiyon gorunumu.</p>
 
       <div className="goal-tab-row">
         <a
           className={`goal-tab ${effectiveView === "employee" ? "goal-tab-active" : ""}`}
           href={buildHref("employee", effectiveEmployee, effectiveCategory)}
         >
-          Çalışan
+          Calisan
         </a>
         {canViewAll ? (
           <>
             <a className={`goal-tab ${effectiveView === "store" ? "goal-tab-active" : ""}`} href={buildHref("store", "", "")}>
-              Mağaza
+              Magaza
             </a>
             <a className={`goal-tab ${effectiveView === "company" ? "goal-tab-active" : ""}`} href={buildHref("company", "", "")}>
               Firma
@@ -194,24 +230,30 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
         ) : null}
       </div>
 
-      {effectiveView !== "employee" ? (
+      {sheetError ? (
         <section className="guide-card goal-placeholder-card">
-          <strong>{effectiveView === "store" ? "Mağaza" : "Firma"} görünümü hazırlanıyor.</strong>
-          <p className="subtle">Bugün çalışan ekranı aktif. Diğer başlıkları sonraki aşamada tamamlarız.</p>
+          <strong>Hedef Gerceklesen verisi su an acilamadi.</strong>
+          <p className="subtle">{sheetError}</p>
+          <p className="subtle">Google Sheet erisimi duzeldiginde sayfa otomatik olarak tekrar kullanilabilir olacak.</p>
+        </section>
+      ) : effectiveView !== "employee" ? (
+        <section className="guide-card goal-placeholder-card">
+          <strong>{effectiveView === "store" ? "Magaza" : "Firma"} gorunumu hazirlaniyor.</strong>
+          <p className="subtle">Bugun calisan ekrani aktif. Diger basliklari sonraki asamada tamamlariz.</p>
         </section>
       ) : (
         <>
           <section className="goal-summary-strip">
             <article className="goal-summary-card">
-              <span>Çalışılan Gün</span>
+              <span>Calisilan Gun</span>
               <strong>{formatNumber(dayStats.workedDays)}</strong>
             </article>
             <article className="goal-summary-card">
-              <span>Kalan Gün</span>
+              <span>Kalan Gun</span>
               <strong>{formatNumber(dayStats.remainingDays)}</strong>
             </article>
             <article className="goal-summary-card">
-              <span>Toplam Gün</span>
+              <span>Toplam Gun</span>
               <strong>{formatNumber(dayStats.totalDays)}</strong>
             </article>
           </section>
@@ -219,29 +261,20 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
           <section className="guide-card game-brief-card">
             <div className="league-filter-grid">
               <div className="league-filter-item">
-                <span className="league-filter-label">Çalışan</span>
+                <span className="league-filter-label">Calisan</span>
                 <FilterSelectNav
-                  ariaLabel="Çalışan seçimi"
+                  ariaLabel="Calisan secimi"
                   value={buildHref("employee", activeEmployeeName, effectiveCategory)}
-                  options={employeeFilteredNames.map((name) => ({
-                    value: buildHref("employee", name, effectiveCategory),
-                    label: name
-                  }))}
+                  options={employeeOptions}
                 />
               </div>
 
               <div className="league-filter-item">
                 <span className="league-filter-label">Ana Kategori</span>
                 <FilterSelectNav
-                  ariaLabel="Ana kategori seçimi"
+                  ariaLabel="Ana kategori secimi"
                   value={buildHref("employee", effectiveEmployee, effectiveCategory)}
-                  options={[
-                    { value: buildHref("employee", effectiveEmployee, ""), label: "Tüm Kategoriler" },
-                    ...categoryOptions.map((category) => ({
-                      value: buildHref("employee", effectiveEmployee, category),
-                      label: category
-                    }))
-                  ]}
+                  options={categorySelectOptions}
                 />
               </div>
             </div>
@@ -250,38 +283,42 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
           <section className="goal-layout">
             <article className="campaign-section-card goal-ranking-card">
               <div className="goal-section-head">
-                <h2>Firma Sıralaması</h2>
-                <span>{summaries.length} çalışan</span>
+                <h2>Firma Siralamasi</h2>
+                <span>{summaries.length} calisan</span>
               </div>
 
               <div className="goal-ranking-list">
-                {summaries.map((summary, index) => (
-                  <a
-                    key={summary.name}
-                    className={`goal-ranking-row ${summary.name === activeEmployeeName ? "goal-ranking-row-active" : ""}`}
-                    href={buildHref("employee", summary.name, effectiveCategory)}
-                  >
-                    <span className="goal-rank-badge">{index + 1}</span>
-                    <div className="goal-ranking-main">
-                      <strong>{summary.name}</strong>
-                      <span>
-                        {summary.hasTarget
-                          ? `Gerçekleşen ${formatPercent(summary.actualPercent)} | Ay sonu ${formatPercent(summary.projectedPercent)}`
-                          : `Gerçekleşen ${formatNumber(summary.totalActual)} | Ay sonu ${formatNumber(summary.projectedActual)}`}
-                      </span>
-                    </div>
-                    <strong className="goal-ranking-score">
-                      {summary.hasTarget ? formatPercent(summary.actualPercent) : formatNumber(summary.totalActual)}
-                    </strong>
-                  </a>
-                ))}
+                {summaries.length ? (
+                  summaries.map((summary, index) => (
+                    <a
+                      key={summary.name}
+                      className={`goal-ranking-row ${summary.name === activeEmployeeName ? "goal-ranking-row-active" : ""}`}
+                      href={buildHref("employee", summary.name, effectiveCategory)}
+                    >
+                      <span className="goal-rank-badge">{index + 1}</span>
+                      <div className="goal-ranking-main">
+                        <strong>{summary.name}</strong>
+                        <span>
+                          {summary.hasTarget
+                            ? `Gerceklesen ${formatPercent(summary.actualPercent)} | Ay sonu ${formatPercent(summary.projectedPercent)}`
+                            : `Gerceklesen ${formatNumber(summary.totalActual)} | Ay sonu ${formatNumber(summary.projectedActual)}`}
+                        </span>
+                      </div>
+                      <strong className="goal-ranking-score">
+                        {summary.hasTarget ? formatPercent(summary.actualPercent) : formatNumber(summary.totalActual)}
+                      </strong>
+                    </a>
+                  ))
+                ) : (
+                  <p className="subtle">Listelenecek calisan verisi bulunamadi.</p>
+                )}
               </div>
             </article>
 
             <article className="campaign-section-card goal-detail-card">
               <div className="goal-section-head">
-                <h2>{activeEmployeeName || "Çalışan Detayı"}</h2>
-                <span>{effectiveCategory || "Tüm kategoriler"}</span>
+                <h2>{activeEmployeeName || "Calisan Detayi"}</h2>
+                <span>{effectiveCategory || "Tum kategoriler"}</span>
               </div>
 
               {activeEmployeeSummary ? (
@@ -294,11 +331,11 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                           <strong>{formatNumber(activeEmployeeSummary.totalTarget)}</strong>
                         </div>
                         <div className="goal-stat-box">
-                          <span>Gerçekleşen</span>
+                          <span>Gerceklesen</span>
                           <strong>{formatNumber(activeEmployeeSummary.totalActual)}</strong>
                         </div>
                         <div className="goal-stat-box">
-                          <span>Gerçekleşen %</span>
+                          <span>Gerceklesen %</span>
                           <strong>{formatPercent(activeEmployeeSummary.actualPercent)}</strong>
                         </div>
                         <div className="goal-stat-box">
@@ -317,7 +354,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                     ) : (
                       <>
                         <div className="goal-stat-box">
-                          <span>Gerçekleşen</span>
+                          <span>Gerceklesen</span>
                           <strong>{formatNumber(activeEmployeeSummary.totalActual)}</strong>
                         </div>
                         <div className="goal-stat-box">
@@ -334,8 +371,8 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                         <tr>
                           <th>Kategori</th>
                           <th>Hedef</th>
-                          <th>Gerçekleşen</th>
-                          <th>Gerçekleşen %</th>
+                          <th>Gerceklesen</th>
+                          <th>Gerceklesen %</th>
                           <th>Kalan</th>
                           <th>Ay Sonu</th>
                           <th>Ay Sonu %</th>
@@ -412,7 +449,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                   </div>
                 </>
               ) : (
-                <p className="subtle">Bu filtreye uygun çalışan verisi bulunamadı.</p>
+                <p className="subtle">Bu filtreye uygun calisan verisi bulunamadi.</p>
               )}
             </article>
           </section>

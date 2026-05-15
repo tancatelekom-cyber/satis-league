@@ -3317,6 +3317,9 @@ textarea::placeholder {
 .goal-detail-card {
   display: grid;
   gap: 14px;
+  border: 1px solid rgba(4, 92, 96, 0.18);
+  background: linear-gradient(180deg, rgba(18, 86, 92, 0.94), rgba(24, 112, 118, 0.9));
+  box-shadow: 0 18px 34px rgba(8, 22, 40, 0.18);
 }
 
 .goal-section-head {
@@ -3328,12 +3331,12 @@ textarea::placeholder {
 
 .goal-section-head h2 {
   margin: 0;
-  color: #f7fbff;
+  color: #f7fbff !important;
   font-size: 1.4rem;
 }
 
 .goal-section-head span {
-  color: #d9e9f8;
+  color: #edf6ff !important;
 }
 
 .goal-ranking-list {
@@ -3349,13 +3352,13 @@ textarea::placeholder {
   padding: 12px 14px;
   border-radius: 18px;
   text-decoration: none;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .goal-ranking-row-active {
   border-color: rgba(255, 209, 102, 0.54);
-  background: rgba(255, 209, 102, 0.12);
+  background: rgba(255, 209, 102, 0.18);
 }
 
 .goal-rank-badge {
@@ -3372,19 +3375,19 @@ textarea::placeholder {
 
 .goal-ranking-main strong {
   display: block;
-  color: #ffffff;
+  color: #ffffff !important;
   font-size: 1rem;
 }
 
 .goal-ranking-main span {
   display: block;
   margin-top: 4px;
-  color: #d8e6f7;
+  color: #eef6ff !important;
   font-size: 0.9rem;
 }
 
 .goal-ranking-score {
-  color: #ffe07d;
+  color: #ffe07d !important;
   font-size: 1rem;
   white-space: nowrap;
 }

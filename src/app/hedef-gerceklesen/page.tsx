@@ -394,53 +394,11 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
               <article className="campaign-section-card goal-detail-card">
                 <div className="goal-section-head">
                   <h2>{activeEmployeeName || "Calisan Detayi"}</h2>
-                  <span>Tum kategoriler</span>
+                  <span>Kategori bazli detay</span>
                 </div>
 
                 {activeEmployeeSummary ? (
                   <>
-                    <div className="goal-stat-grid">
-                      {activeEmployeeSummary.hasTarget ? (
-                        <>
-                          <div className="goal-stat-box">
-                            <span>Hedef</span>
-                            <strong>{formatNumber(activeEmployeeSummary.totalTarget)}</strong>
-                          </div>
-                          <div className="goal-stat-box">
-                            <span>Gerceklesen</span>
-                            <strong>{formatNumber(activeEmployeeSummary.totalActual)}</strong>
-                          </div>
-                          <div className="goal-stat-box">
-                            <span>Gerceklesen %</span>
-                            <strong>{formatPercent(activeEmployeeSummary.actualPercent)}</strong>
-                          </div>
-                          <div className="goal-stat-box">
-                            <span>Kalan</span>
-                            <strong>{formatNumber(activeEmployeeSummary.remaining)}</strong>
-                          </div>
-                          <div className="goal-stat-box">
-                            <span>Ay Sonu</span>
-                            <strong>{formatNumber(activeEmployeeSummary.projectedActual)}</strong>
-                          </div>
-                          <div className="goal-stat-box">
-                            <span>Ay Sonu %</span>
-                            <strong>{formatPercent(activeEmployeeSummary.projectedPercent)}</strong>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div className="goal-stat-box">
-                            <span>Gerceklesen</span>
-                            <strong>{formatNumber(activeEmployeeSummary.totalActual)}</strong>
-                          </div>
-                          <div className="goal-stat-box">
-                            <span>Ay Sonu</span>
-                            <strong>{formatNumber(activeEmployeeSummary.projectedActual)}</strong>
-                          </div>
-                        </>
-                      )}
-                    </div>
-
                     <div className="goal-category-list">
                       {categorySummaries.map((category, index) => (
                         <details key={category.title} className="goal-category-card" open={index === 0}>

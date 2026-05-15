@@ -314,8 +314,8 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
             </article>
           </section>
 
-          <section className="guide-card game-brief-card">
-            <div className="league-filter-grid">
+            <section className="guide-card game-brief-card">
+              <div className="league-filter-grid goal-filter-grid">
               {effectivePanel === "detail" ? (
                 <div className="league-filter-item">
                   <span className="league-filter-label">Calisan</span>

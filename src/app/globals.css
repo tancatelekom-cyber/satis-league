@@ -875,6 +875,27 @@ button {
   grid-column: 1 / -1;
 }
 
+.goal-filter-grid {
+  grid-template-columns: 1fr;
+}
+
+.goal-filter-grid .league-filter-item,
+.goal-filter-grid .league-filter-item-wide {
+  grid-column: 1 / -1;
+}
+
+.goal-filter-grid .filter-select-shell {
+  width: 100%;
+}
+
+.goal-filter-grid .filter-select {
+  width: 100%;
+  min-height: 56px;
+  padding: 0.85rem 3rem 0.85rem 1rem;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
 .league-filter-label {
   display: block;
   margin: 0;
@@ -3671,6 +3692,11 @@ textarea::placeholder {
 
   .goal-mode-row {
     grid-template-columns: 1fr;
+  }
+
+  .goal-filter-grid .filter-select {
+    min-height: 60px;
+    font-size: 1.02rem;
   }
 }
 

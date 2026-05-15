@@ -46,6 +46,11 @@ type GoalCategorySummary = GoalMetricSummary & {
       title: string;
     }
   >;
+  storeDetails?: Array<
+    GoalMetricSummary & {
+      title: string;
+    }
+  >;
 };
 
 type GoalDayStats = {
@@ -174,7 +179,7 @@ function buildStoreMetricSummary(rows: GoalStoreRow[], workedDays: number, total
   return {
     target: hasTarget ? totalTarget : null,
     actual: totalActual,
-    actualPercent: hasTarget && showProjection ? (totalActual / totalTarget) * 100 : null,
+    actualPercent: hasTarget ? (totalActual / totalTarget) * 100 : null,
     remaining: hasTarget ? Math.max(totalTarget - totalActual, 0) : null,
     projectedActual,
     projectedPercent: hasTarget && showProjection && projectedActual !== null ? (projectedActual / totalTarget) * 100 : null,
@@ -238,6 +243,7 @@ function buildStoreCategorySummaries(rows: GoalStoreRow[], workedDays: number, t
         title: mainCategory,
         childCount: children.length,
         children,
+        storeDetails: [],
         ...summary
       };
     });
@@ -281,6 +287,66 @@ function buildCompanyRows(rows: GoalStoreRow[]): GoalStoreRow[] {
   });
 }
 
+function buildCompanyCategorySummaries(rows: GoalStoreRow[], workedDays: number, totalDays: number): GoalCategorySummary[] {
+  const companyRows = buildCompanyRows(rows);
+  const groupedRawRows = new Map<string, GoalStoreRow[]>();
+  const groupedCompanyRows = new Map<string, GoalStoreRow[]>();
+
+  rows.forEach((row) => {
+    const current = groupedRawRows.get(row.mainCategory) ?? [];
+    current.push(row);
+    groupedRawRows.set(row.mainCategory, current);
+  });
+
+  companyRows.forEach((row) => {
+    const current = groupedCompanyRows.get(row.mainCategory) ?? [];
+    current.push(row);
+    groupedCompanyRows.set(row.mainCategory, current);
+  });
+
+  return Array.from(groupedCompanyRows.entries())
+    .sort((a, b) => a[0].localeCompare(b[0], "tr"))
+    .map(([mainCategory, companyCategoryRows]) => {
+      const rawCategoryRows = groupedRawRows.get(mainCategory) ?? [];
+      const mainOnlyRows = companyCategoryRows.filter((row) => !row.subCategory);
+      const childRows = companyCategoryRows.filter((row) => Boolean(row.subCategory));
+      const summary = buildStoreMetricSummary(companyCategoryRows, workedDays, totalDays);
+      const children = childRows
+        .map((row) => ({
+          title: row.subCategory,
+          ...buildStoreMetricSummary([row], workedDays, totalDays)
+        }))
+        .sort((a, b) => a.title.localeCompare(b.title, "tr"));
+
+      const storeMap = new Map<string, GoalStoreRow[]>();
+      rawCategoryRows.forEach((row) => {
+        const current = storeMap.get(row.storeCode) ?? [];
+        current.push(row);
+        storeMap.set(row.storeCode, current);
+      });
+
+      const storeDetails = Array.from(storeMap.entries())
+        .map(([storeCode, storeRows]) => ({
+          title: storeCode,
+          ...buildStoreMetricSummary(storeRows, workedDays, totalDays)
+        }))
+        .sort((a, b) => {
+          if (a.hasTarget && b.hasTarget && a.actualPercent !== null && b.actualPercent !== null) {
+            return b.actualPercent - a.actualPercent || b.actual - a.actual;
+          }
+          return b.actual - a.actual;
+        });
+
+      return {
+        title: mainCategory,
+        childCount: children.length,
+        children,
+        storeDetails,
+        ...buildStoreMetricSummary([...mainOnlyRows, ...childRows], workedDays, totalDays)
+      };
+    });
+}
+
 function canViewAllGoalActual(role: UserRole | string | null | undefined) {
   return role === "admin" || role === "management" || role === "manager";
 }
@@ -296,42 +362,53 @@ function GoalCategoryCards({ categories }: { categories: GoalCategorySummary[] }
               <span>{category.childCount > 0 ? `${category.childCount} alt kategori` : "Tek kalem kategori"}</span>
             </div>
 
-            {category.childCount > 0 ? <span className="goal-category-caret">▼</span> : null}
+            {category.childCount > 0 || (category.storeDetails?.length ?? 0) > 0 ? <span className="goal-category-caret">▼</span> : null}
 
             <div className="goal-category-metrics">
+              {category.hasTarget ? (
+                <span>
+                  <small>Hedef</small>
+                  <strong>{formatNumber(category.target)}</strong>
+                </span>
+              ) : null}
               <span>
                 <small>Gerceklesen</small>
                 <strong>{formatNumber(category.actual)}</strong>
               </span>
+              {category.hasTarget ? (
+                <span>
+                  <small>Kalan</small>
+                  <strong>{formatNumber(category.remaining)}</strong>
+                </span>
+              ) : null}
+              {category.hasTarget && category.actualPercent !== null ? (
+                <span>
+                  <small>Anlik %</small>
+                  <strong>{formatPercent(category.actualPercent)}</strong>
+                </span>
+              ) : null}
               {category.showProjection && category.projectedActual !== null ? (
                 <span>
                   <small>Ay Sonu</small>
                   <strong>{formatNumber(category.projectedActual)}</strong>
                 </span>
               ) : null}
-              {category.hasTarget && category.actualPercent !== null ? (
+              {category.hasTarget && category.showProjection && category.projectedPercent !== null ? (
                 <span>
-                  <small>Hedef %</small>
-                  <strong>{formatPercent(category.actualPercent)}</strong>
+                  <small>Ay Sonu %</small>
+                  <strong>{formatPercent(category.projectedPercent)}</strong>
                 </span>
               ) : null}
             </div>
           </summary>
 
           <div className="goal-category-body">
-            <div className="goal-category-topline">
-              {category.hasTarget ? (
-                <>
-                  <span>Hedef: {formatNumber(category.target)}</span>
-                  <span>Kalan: {formatNumber(category.remaining)}</span>
-                  {category.showProjection && category.projectedPercent !== null ? (
-                    <span>Ay Sonu %: {formatPercent(category.projectedPercent)}</span>
-                  ) : null}
-                </>
-              ) : (
-                <span>Bu kategoride hedef tanimi yok.</span>
-              )}
-            </div>
+            {!category.hasTarget ? <div className="goal-category-topline"><span>Bu kategoride hedef tanimi yok.</span></div> : null}
+            {category.hasTarget && !category.showProjection ? (
+              <div className="goal-category-topline">
+                <span>Bu kategoride ay sonu projeksiyonu hesaplanmiyor.</span>
+              </div>
+            ) : null}
 
             {category.children.length ? (
               <div className="goal-child-list">
@@ -342,22 +419,43 @@ function GoalCategoryCards({ categories }: { categories: GoalCategorySummary[] }
                       <span>{formatNumber(child.actual)}</span>
                     </div>
                     <div className="goal-child-meta">
-                      {child.hasTarget ? (
-                        <>
-                          <span>Hedef {formatNumber(child.target)}</span>
-                          {child.actualPercent !== null ? <span>% {formatPercent(child.actualPercent)}</span> : null}
-                          {child.showProjection && child.projectedActual !== null ? (
-                            <span>Ay Sonu {formatNumber(child.projectedActual)}</span>
-                          ) : null}
-                        </>
-                      ) : child.showProjection && child.projectedActual !== null ? (
-                        <span>Ay Sonu {formatNumber(child.projectedActual)}</span>
-                      ) : (
-                        <span>Gerceklesen {formatNumber(child.actual)}</span>
-                      )}
+                      {child.hasTarget ? <span>Hedef {formatNumber(child.target)}</span> : null}
+                      <span>Gerceklesen {formatNumber(child.actual)}</span>
+                      {child.hasTarget ? <span>Kalan {formatNumber(child.remaining)}</span> : null}
+                      {child.hasTarget && child.actualPercent !== null ? <span>Anlik % {formatPercent(child.actualPercent)}</span> : null}
+                      {child.showProjection && child.projectedActual !== null ? <span>Ay Sonu {formatNumber(child.projectedActual)}</span> : null}
+                      {child.hasTarget && child.showProjection && child.projectedPercent !== null ? (
+                        <span>Ay Sonu % {formatPercent(child.projectedPercent)}</span>
+                      ) : null}
                     </div>
                   </div>
                 ))}
+              </div>
+            ) : null}
+
+            {category.storeDetails && category.storeDetails.length ? (
+              <div className="goal-store-detail-list">
+                <strong className="goal-store-detail-title">Sube Detaylari</strong>
+                <div className="goal-child-list">
+                  {category.storeDetails.map((store) => (
+                    <div key={`${category.title}-${store.title}`} className="goal-child-card">
+                      <div className="goal-child-head">
+                        <strong>{store.title}</strong>
+                        <span>{formatNumber(store.actual)}</span>
+                      </div>
+                      <div className="goal-child-meta">
+                        {store.hasTarget ? <span>Hedef {formatNumber(store.target)}</span> : null}
+                        <span>Gerceklesen {formatNumber(store.actual)}</span>
+                        {store.hasTarget ? <span>Kalan {formatNumber(store.remaining)}</span> : null}
+                        {store.hasTarget && store.actualPercent !== null ? <span>Anlik % {formatPercent(store.actualPercent)}</span> : null}
+                        {store.showProjection && store.projectedActual !== null ? <span>Ay Sonu {formatNumber(store.projectedActual)}</span> : null}
+                        {store.hasTarget && store.showProjection && store.projectedPercent !== null ? (
+                          <span>Ay Sonu % {formatPercent(store.projectedPercent)}</span>
+                        ) : null}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             ) : null}
           </div>
@@ -483,11 +581,9 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
     ? employeeRows.filter((row) => row.employeeName === activeEmployeeName)
     : [];
   const activeStoreRows = activeStoreName ? storeRows.filter((row) => row.storeCode === activeStoreName) : [];
-  const companyRows = buildCompanyRows(storeRows);
-
   const employeeCategorySummaries = buildCategorySummaries(activeEmployeeRows, dayStats.workedDays, dayStats.totalDays);
   const storeCategorySummaries = buildStoreCategorySummaries(activeStoreRows, dayStats.workedDays, dayStats.totalDays);
-  const companyCategorySummaries = buildStoreCategorySummaries(companyRows, dayStats.workedDays, dayStats.totalDays);
+  const companyCategorySummaries = buildCompanyCategorySummaries(storeRows, dayStats.workedDays, dayStats.totalDays);
 
   const employeeOptions = employeeNames.length
     ? employeeNames.map((name) => ({

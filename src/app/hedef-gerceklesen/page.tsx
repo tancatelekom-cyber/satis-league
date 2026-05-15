@@ -64,6 +64,14 @@ type GoalNeedRow = {
   dailyRequired: number;
 };
 
+function isAggregateCategoryLabel(value: string | null | undefined) {
+  const normalized = String(value ?? "")
+    .trim()
+    .toLocaleLowerCase("tr-TR");
+
+  return normalized === "tum kategoriler" || normalized === "tüm kategoriler";
+}
+
 const EMPTY_DAY_STATS: GoalDayStats = {
   workedDays: 0,
   remainingDays: 0,
@@ -535,12 +543,15 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
     sheetError = message;
   }
 
-  const employeeNames = Array.from(new Set(employeeRows.map((row) => row.employeeName))).sort((a, b) => a.localeCompare(b, "tr"));
-  const employeeCategoryOptions = Array.from(new Set(employeeRows.map((row) => row.mainCategory))).sort((a, b) =>
+  const filteredEmployeeRows = employeeRows.filter((row) => !isAggregateCategoryLabel(row.mainCategory));
+  const filteredStoreRows = storeRows.filter((row) => !isAggregateCategoryLabel(row.mainCategory));
+
+  const employeeNames = Array.from(new Set(filteredEmployeeRows.map((row) => row.employeeName))).sort((a, b) => a.localeCompare(b, "tr"));
+  const employeeCategoryOptions = Array.from(new Set(filteredEmployeeRows.map((row) => row.mainCategory))).sort((a, b) =>
     a.localeCompare(b, "tr")
   );
   const storeNames = Array.from(new Set(storeRows.map((row) => row.storeCode))).sort((a, b) => a.localeCompare(b, "tr"));
-  const storeCategoryOptions = Array.from(new Set(storeRows.map((row) => row.mainCategory))).sort((a, b) =>
+  const storeCategoryOptions = Array.from(new Set(filteredStoreRows.map((row) => row.mainCategory))).sort((a, b) =>
     a.localeCompare(b, "tr")
   );
 
@@ -552,9 +563,11 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
     effectivePanel === "ranking" && rankingCategoryPool.includes(selectedCategory) ? selectedCategory : defaultRankingCategory;
 
   const employeeRankingRows = effectiveCategory
-    ? employeeRows.filter((row) => row.mainCategory === effectiveCategory)
-    : employeeRows;
-  const storeRankingRows = effectiveCategory ? storeRows.filter((row) => row.mainCategory === effectiveCategory) : storeRows;
+    ? filteredEmployeeRows.filter((row) => row.mainCategory === effectiveCategory)
+    : filteredEmployeeRows;
+  const storeRankingRows = effectiveCategory
+    ? filteredStoreRows.filter((row) => row.mainCategory === effectiveCategory)
+    : filteredStoreRows;
 
   const employeeMap = new Map<string, GoalActualRow[]>();
   employeeRankingRows.forEach((row) => {
@@ -605,12 +618,12 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
   const activeStoreName = effectiveStore || storeSummaries[0]?.name || "";
 
   const activeEmployeeRows = activeEmployeeName
-    ? employeeRows.filter((row) => row.employeeName === activeEmployeeName)
+    ? filteredEmployeeRows.filter((row) => row.employeeName === activeEmployeeName)
     : [];
-  const activeStoreRows = activeStoreName ? storeRows.filter((row) => row.storeCode === activeStoreName) : [];
+  const activeStoreRows = activeStoreName ? filteredStoreRows.filter((row) => row.storeCode === activeStoreName) : [];
   const employeeCategorySummaries = buildCategorySummaries(activeEmployeeRows, dayStats.workedDays, dayStats.totalDays);
   const storeCategorySummaries = buildStoreCategorySummaries(activeStoreRows, dayStats.workedDays, dayStats.totalDays);
-  const companyCategorySummaries = buildCompanyCategorySummaries(storeRows, dayStats.workedDays, dayStats.totalDays);
+  const companyCategorySummaries = buildCompanyCategorySummaries(filteredStoreRows, dayStats.workedDays, dayStats.totalDays);
   const storeNeedSummaries = storeCategorySummaries
     .filter((category) => category.hasTarget)
     .map((category) => ({

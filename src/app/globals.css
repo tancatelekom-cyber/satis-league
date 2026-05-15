@@ -3439,10 +3439,31 @@ textarea::placeholder {
 }
 
 @media (max-width: 900px) {
-  .goal-summary-strip,
   .goal-stat-grid,
   .goal-layout {
     grid-template-columns: 1fr;
+  }
+
+  .goal-summary-strip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    margin: 10px 0 14px;
+  }
+
+  .goal-summary-card {
+    padding: 9px 9px 10px;
+    border-radius: 14px;
+  }
+
+  .goal-summary-card span {
+    font-size: 0.68rem;
+    line-height: 1.1;
+  }
+
+  .goal-summary-card strong {
+    margin-top: 3px;
+    font-size: 0.94rem;
+    line-height: 1.05;
   }
 
   .goal-section-head {

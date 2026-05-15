@@ -1,5 +1,3 @@
-import { unstable_cache } from "next/cache";
-
 export type GoalActualRow = {
   employeeName: string;
   mainCategory: string;
@@ -114,6 +112,8 @@ function parseLocalizedNumber(value: string) {
 
 async function fetchGoalActualRowsFromSheet() {
   const response = await fetch(buildSheetUrl(PRS_SHEET_NAME, PRS_SHEET_GID), {
+    cache: "no-store",
+    next: { revalidate: 0 },
     headers: {
       accept: "text/csv, text/plain, */*",
       "user-agent": "Mozilla/5.0 (compatible; TancaSuperLigBot/1.0; +https://vercel.app)"
@@ -155,6 +155,8 @@ async function fetchGoalActualRowsFromSheet() {
 
 async function fetchGoalDayStatsFromSheet() {
   const response = await fetch(buildSheetUrl(GN_SHEET_NAME, GN_SHEET_GID), {
+    cache: "no-store",
+    next: { revalidate: 0 },
     headers: {
       accept: "text/csv, text/plain, */*",
       "user-agent": "Mozilla/5.0 (compatible; TancaSuperLigBot/1.0; +https://vercel.app)"
@@ -177,6 +179,8 @@ async function fetchGoalDayStatsFromSheet() {
 
 async function fetchGoalStoreRowsFromSheet() {
   const response = await fetch(buildSheetUrl(undefined, STORE_SHEET_GID), {
+    cache: "no-store",
+    next: { revalidate: 0 },
     headers: {
       accept: "text/csv, text/plain, */*",
       "user-agent": "Mozilla/5.0 (compatible; TancaSuperLigBot/1.0; +https://vercel.app)"
@@ -220,14 +224,8 @@ async function fetchGoalStoreRowsFromSheet() {
     .filter((row): row is GoalStoreRow => Boolean(row));
 }
 
-export const fetchGoalActualRows = unstable_cache(fetchGoalActualRowsFromSheet, ["goal-actual-rows"], {
-  revalidate: 60 * 30
-});
+export const fetchGoalActualRows = fetchGoalActualRowsFromSheet;
 
-export const fetchGoalDayStats = unstable_cache(fetchGoalDayStatsFromSheet, ["goal-day-stats"], {
-  revalidate: 60 * 30
-});
+export const fetchGoalDayStats = fetchGoalDayStatsFromSheet;
 
-export const fetchGoalStoreRows = unstable_cache(fetchGoalStoreRowsFromSheet, ["goal-store-rows"], {
-  revalidate: 60 * 30
-});
+export const fetchGoalStoreRows = fetchGoalStoreRowsFromSheet;

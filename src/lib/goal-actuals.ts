@@ -17,6 +17,7 @@ export type GoalDayStats = {
 const GOAL_SHEET_ID = "1Ppf_vGtlD6RInm0fxy3lDaV5Sy3LWggkH6Gw1wgciuA";
 const PRS_SHEET_NAME = "PRS";
 const GN_SHEET_NAME = "GN";
+const PRS_SHEET_GID = "0";
 const GN_SHEET_GID = "2046012697";
 
 function buildSheetUrl(sheetName: string, gid?: string) {
@@ -99,7 +100,7 @@ function parseLocalizedNumber(value: string) {
 }
 
 async function fetchGoalActualRowsFromSheet() {
-  const response = await fetch(buildSheetUrl(PRS_SHEET_NAME), {
+  const response = await fetch(buildSheetUrl(PRS_SHEET_NAME, PRS_SHEET_GID), {
     headers: {
       accept: "text/csv, text/plain, */*",
       "user-agent": "Mozilla/5.0 (compatible; TancaSuperLigBot/1.0; +https://vercel.app)"

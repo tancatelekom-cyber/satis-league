@@ -214,8 +214,9 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
     a.localeCompare(b, "tr")
   );
 
-  const effectiveCategory = categoryOptions.includes(selectedCategory) ? selectedCategory : "";
-  const categoryFilteredRows = effectiveCategory ? rows.filter((row) => row.mainCategory === effectiveCategory) : rows;
+  const defaultCategory = categoryOptions[0] ?? "";
+  const effectiveCategory = categoryOptions.includes(selectedCategory) ? selectedCategory : defaultCategory;
+  const categoryFilteredRows = effectiveCategory ? rows.filter((row) => row.mainCategory === effectiveCategory) : [];
 
   const employeeFilteredNames = Array.from(new Set(categoryFilteredRows.map((row) => row.employeeName))).sort((a, b) =>
     a.localeCompare(b, "tr")
@@ -260,7 +261,6 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
     : [{ value: buildHref("employee", "", effectiveCategory, effectivePanel), label: "Calisan bulunamadi" }];
 
   const categorySelectOptions = [
-    { value: buildHref("employee", effectiveEmployee, "", effectivePanel), label: "Tum Kategoriler" },
     ...categoryOptions.map((category) => ({
       value: buildHref("employee", effectiveEmployee, category, effectivePanel),
       label: category
@@ -397,7 +397,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
               <article className="campaign-section-card goal-detail-card">
                 <div className="goal-section-head">
                   <h2>{activeEmployeeName || "Calisan Detayi"}</h2>
-                  <span>{effectiveCategory || "Tum kategoriler"}</span>
+                  <span>{effectiveCategory || "Kategori yok"}</span>
                 </div>
 
                 {activeEmployeeSummary ? (

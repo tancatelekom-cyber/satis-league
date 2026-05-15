@@ -775,14 +775,20 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                           </div>
                         </div>
                         <div className="goal-category-body">
-                          <div className="goal-need-grid">
-                            {item.needRows.map((need) => (
-                              <div key={`${item.title}-${need.threshold}`} className="goal-need-row">
-                                <strong>%{need.threshold}</strong>
-                                <span>Gunluk {formatNumber(need.dailyRequired)}</span>
-                              </div>
-                            ))}
-                          </div>
+                            <div className="goal-need-grid">
+                              {item.needRows.map((need) => (
+                                <div key={`${item.title}-${need.threshold}`} className="goal-need-row">
+                                  <div className="goal-need-cell">
+                                    <small>Skala</small>
+                                    <strong>%{need.threshold}</strong>
+                                  </div>
+                                  <div className="goal-need-cell goal-need-cell-value">
+                                    <small>Deger</small>
+                                    <strong>{formatNumber(need.dailyRequired)}</strong>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
                         </div>
                       </article>
                     ))}

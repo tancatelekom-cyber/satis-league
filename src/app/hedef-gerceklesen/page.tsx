@@ -215,16 +215,13 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
   );
 
   const defaultCategory = categoryOptions[0] ?? "";
-  const effectiveCategory = categoryOptions.includes(selectedCategory) ? selectedCategory : defaultCategory;
-  const categoryFilteredRows = effectiveCategory ? rows.filter((row) => row.mainCategory === effectiveCategory) : [];
+  const effectiveCategory = effectivePanel === "ranking" && categoryOptions.includes(selectedCategory) ? selectedCategory : defaultCategory;
+  const rankingRows = effectiveCategory ? rows.filter((row) => row.mainCategory === effectiveCategory) : rows;
 
-  const employeeFilteredNames = Array.from(new Set(categoryFilteredRows.map((row) => row.employeeName))).sort((a, b) =>
-    a.localeCompare(b, "tr")
-  );
-  const effectiveEmployee = employeeFilteredNames.includes(selectedEmployee) ? selectedEmployee : "";
+  const effectiveEmployee = employeeNames.includes(selectedEmployee) ? selectedEmployee : "";
 
   const employeeMap = new Map<string, GoalActualRow[]>();
-  categoryFilteredRows.forEach((row) => {
+  rankingRows.forEach((row) => {
     const current = employeeMap.get(row.employeeName) ?? [];
     current.push(row);
     employeeMap.set(row.employeeName, current);
@@ -245,24 +242,22 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
     });
 
   const activeEmployeeName = effectiveEmployee || summaries[0]?.name || "";
-  const activeEmployeeRows = activeEmployeeName
-    ? categoryFilteredRows.filter((row) => row.employeeName === activeEmployeeName)
-    : [];
+  const activeEmployeeRows = activeEmployeeName ? rows.filter((row) => row.employeeName === activeEmployeeName) : [];
   const activeEmployeeSummary = activeEmployeeRows.length
     ? buildEmployeeSummary(activeEmployeeRows, dayStats.workedDays, dayStats.totalDays)
     : null;
   const categorySummaries = buildCategorySummaries(activeEmployeeRows, dayStats.workedDays, dayStats.totalDays);
 
-  const employeeOptions = employeeFilteredNames.length
-    ? employeeFilteredNames.map((name) => ({
-        value: buildHref("employee", name, effectiveCategory, effectivePanel),
+  const employeeOptions = employeeNames.length
+    ? employeeNames.map((name) => ({
+        value: buildHref("employee", name, "", effectivePanel),
         label: name
       }))
-    : [{ value: buildHref("employee", "", effectiveCategory, effectivePanel), label: "Calisan bulunamadi" }];
+    : [{ value: buildHref("employee", "", "", effectivePanel), label: "Calisan bulunamadi" }];
 
   const categorySelectOptions = [
     ...categoryOptions.map((category) => ({
-      value: buildHref("employee", effectiveEmployee, category, effectivePanel),
+      value: buildHref("employee", activeEmployeeName, category, effectivePanel),
       label: category
     }))
   ];
@@ -321,23 +316,25 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
 
           <section className="guide-card game-brief-card">
             <div className="league-filter-grid">
-              <div className="league-filter-item">
-                <span className="league-filter-label">Calisan</span>
-                <FilterSelectNav
-                  ariaLabel="Calisan secimi"
-                  value={buildHref("employee", activeEmployeeName, effectiveCategory)}
-                  options={employeeOptions}
-                />
-              </div>
-
-              <div className="league-filter-item">
-                <span className="league-filter-label">Ana Kategori</span>
-                <FilterSelectNav
-                  ariaLabel="Ana kategori secimi"
-                  value={buildHref("employee", effectiveEmployee, effectiveCategory)}
-                  options={categorySelectOptions}
-                />
-              </div>
+              {effectivePanel === "detail" ? (
+                <div className="league-filter-item">
+                  <span className="league-filter-label">Calisan</span>
+                  <FilterSelectNav
+                    ariaLabel="Calisan secimi"
+                    value={buildHref("employee", activeEmployeeName, "", effectivePanel)}
+                    options={employeeOptions}
+                  />
+                </div>
+              ) : (
+                <div className="league-filter-item">
+                  <span className="league-filter-label">Ana Kategori</span>
+                  <FilterSelectNav
+                    ariaLabel="Ana kategori secimi"
+                    value={buildHref("employee", activeEmployeeName, effectiveCategory, effectivePanel)}
+                    options={categorySelectOptions}
+                  />
+                </div>
+              )}
             </div>
 
             <div className="goal-mode-row">
@@ -361,7 +358,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
               <article className="campaign-section-card goal-ranking-card">
                 <div className="goal-section-head">
                   <h2>Firma Siralamasi</h2>
-                  <span>{summaries.length} calisan</span>
+                  <span>{effectiveCategory || "Kategori yok"}</span>
                 </div>
 
                 <div className="goal-ranking-list">
@@ -370,7 +367,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                       <a
                         key={summary.name}
                         className={`goal-ranking-row ${summary.name === activeEmployeeName ? "goal-ranking-row-active" : ""}`}
-                        href={buildHref("employee", summary.name, effectiveCategory, "ranking")}
+                        href={buildHref("employee", summary.name, effectiveCategory, "detail")}
                       >
                         <span className="goal-rank-badge">{index + 1}</span>
                         <div className="goal-ranking-main">
@@ -397,7 +394,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
               <article className="campaign-section-card goal-detail-card">
                 <div className="goal-section-head">
                   <h2>{activeEmployeeName || "Calisan Detayi"}</h2>
-                  <span>{effectiveCategory || "Kategori yok"}</span>
+                  <span>Tum kategoriler</span>
                 </div>
 
                 {activeEmployeeSummary ? (

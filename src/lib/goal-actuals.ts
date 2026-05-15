@@ -22,13 +22,13 @@ const GN_SHEET_GID = "2046012697";
 
 function buildSheetUrl(sheetName: string, gid?: string) {
   const params = new URLSearchParams();
-  params.set("tqx", "out:csv");
+  params.set("format", "csv");
   params.set("sheet", sheetName);
   if (gid) {
     params.set("gid", gid);
   }
 
-  return `https://docs.google.com/spreadsheets/d/${GOAL_SHEET_ID}/gviz/tq?${params.toString()}`;
+  return `https://docs.google.com/spreadsheets/d/${GOAL_SHEET_ID}/export?${params.toString()}`;
 }
 
 function parseCsv(text: string) {

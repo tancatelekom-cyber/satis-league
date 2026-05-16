@@ -31,7 +31,7 @@ export function LoginForm({ message }: LoginFormProps) {
     const password = String(formData.get("password") ?? "");
     const supabase = createClient();
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
       email,
       password
     });
@@ -42,8 +42,17 @@ export function LoginForm({ message }: LoginFormProps) {
       return;
     }
 
+    const accessToken = signInData.session?.access_token ?? "";
+
     const confirmResponse = await fetch("/api/auth/confirm-session", {
-      method: "POST"
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        accessToken
+      })
     });
 
     if (!confirmResponse.ok) {

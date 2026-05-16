@@ -458,6 +458,7 @@ button {
 }
 
 .cash-depot-bonus {
+  justify-self: start;
   border-radius: 18px;
   border: 1px solid rgba(255, 209, 102, 0.28);
   background: rgba(255, 209, 102, 0.1);
@@ -466,30 +467,32 @@ button {
 
 .cash-depot-bonus summary {
   list-style: none;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px 14px;
+  justify-content: center;
+  gap: 8px;
+  padding: 6px 10px;
   cursor: pointer;
   color: #fff3c2;
-  font-weight: 800;
+  font-weight: 700;
+  font-size: 0.74rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
 }
 
 .cash-depot-bonus summary::-webkit-details-marker {
   display: none;
 }
 
-.cash-depot-bonus summary span {
+.cash-depot-bonus-label {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 72px;
-  padding: 6px 10px;
   border-radius: 999px;
   background: #ffd166;
   color: #142734;
   font-weight: 900;
+  padding: 4px 8px;
 }
 
 .cash-depot-bonus-body {
@@ -1024,6 +1027,8 @@ button {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: #0e1a2b !important;
+  opacity: 1 !important;
 }
 
 .filter-select-icon {
@@ -1035,6 +1040,21 @@ button {
   font-size: 0.9rem;
   font-weight: 900;
   pointer-events: none;
+  opacity: 1 !important;
+}
+
+.guide-card .filter-select-value,
+.admin-card .filter-select-value,
+.league-filter-item .filter-select-value,
+.goal-filter-grid .filter-select-value {
+  color: #0e1a2b !important;
+}
+
+.guide-card .filter-select-icon,
+.admin-card .filter-select-icon,
+.league-filter-item .filter-select-icon,
+.goal-filter-grid .filter-select-icon {
+  color: #35506f !important;
 }
 
 .filter-select {

@@ -46,17 +46,6 @@ function formatCurrency(value: number | null) {
   })} TL`;
 }
 
-function formatPlainNumber(value: number | null) {
-  if (!value || value <= 0) {
-    return "-";
-  }
-
-  return value.toLocaleString("tr-TR", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  });
-}
-
 function isCashContractRow(item: { monthlyInstallment: number; installmentCount: number }) {
   return item.monthlyInstallment <= 0 || item.installmentCount <= 0;
 }
@@ -346,8 +335,7 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
 
                     <details className="cash-depot-bonus">
                       <summary>
-                        Prim
-                        <span>{formatPlainNumber(item.bonus)}</span>
+                        <span className="cash-depot-bonus-label">Prim</span>
                       </summary>
                       <div className="cash-depot-bonus-body">{formatCurrency(item.bonus)}</div>
                     </details>

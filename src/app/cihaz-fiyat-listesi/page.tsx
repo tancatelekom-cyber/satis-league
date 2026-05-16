@@ -142,12 +142,14 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
   const effectiveCashBrand = selectedBrand && cashBrandOptions.includes(selectedBrand) ? selectedBrand : "";
   const cashBrandRows = effectiveCashBrand
     ? cashSubCategoryRows.filter((item) => item.brand === effectiveCashBrand)
-    : cashSubCategoryRows;
+    : [];
   const cashModelOptions = buildDistinctOptions(cashBrandRows.map((item) => item.model));
   const effectiveCashModel = selectedModel && cashModelOptions.includes(selectedModel) ? selectedModel : "";
   const filteredCashRows = effectiveCashModel
     ? cashBrandRows.filter((item) => item.model === effectiveCashModel)
-    : cashBrandRows;
+    : effectiveCashBrand
+      ? cashBrandRows
+      : [];
 
   return (
     <main>
@@ -235,7 +237,7 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
                         category: effectiveCashCategory,
                         subcategory: effectiveCashSubCategory
                       }),
-                      label: effectiveCashSubCategory ? "Tum Markalar" : "Once alt kategori secin"
+                      label: effectiveCashSubCategory ? "Marka secin" : "Once alt kategori secin"
                     },
                     ...cashBrandOptions.map((brand) => ({
                       value: buildHref({
@@ -269,7 +271,7 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
                         subcategory: effectiveCashSubCategory,
                         brand: effectiveCashBrand
                       }),
-                      label: effectiveCashSubCategory ? "Tum Modeller" : "Once alt kategori secin"
+                      label: effectiveCashBrand ? "Tum Modeller" : "Once marka secin"
                     },
                     ...cashModelOptions.map((model) => ({
                       value: buildHref({
@@ -300,9 +302,9 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
               <div className="device-empty">
                 {cashDepotError
                   ? "Nakit Depo listesi su an okunamiyor."
-                  : effectiveCashSubCategory
+                  : effectiveCashBrand
                     ? "Seciminize uygun nakit depo urunu bulunamadi."
-                    : "Listeyi gormek icin once kategori ve alt kategori secin."}
+                    : "Listeyi gormek icin once kategori, alt kategori ve marka secin."}
               </div>
             ) : (
               filteredCashRows.map((item) => (

@@ -249,6 +249,31 @@ create table if not exists public.tariffs (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.monthly_campaign_slides (
+  id uuid primary key default gen_random_uuid(),
+  title text not null default 'Aylik Kampanya',
+  image_path text not null,
+  is_active boolean not null default true,
+  sort_order integer not null default 0,
+  created_by uuid references public.profiles(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'monthly-campaigns',
+  'monthly-campaigns',
+  true,
+  5242880,
+  array['image/jpeg', 'image/png', 'image/webp']
+)
+on conflict (id) do update
+set
+  public = excluded.public,
+  file_size_limit = excluded.file_size_limit,
+  allowed_mime_types = excluded.allowed_mime_types;
+
 insert into public.stores (name, city, base_multiplier)
 values
   ('Bakirkoy AVM', 'Istanbul', 1.00),

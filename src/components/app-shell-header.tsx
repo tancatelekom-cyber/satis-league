@@ -13,12 +13,13 @@ type NavItem = {
 
 const baseNavItems: NavItem[] = [
   { href: "/", label: "Ana Sayfa" },
-  { href: "/kampanyalar", label: "Gunluk Kampanyalar", mobileLabel: "Kampanya", icon: "⚡" },
-  { href: "/lig", label: "Yildizlar Kulubu", mobileLabel: "Lig", icon: "⭐" },
-  { href: "/hedef-gerceklesen", label: "Hedef Gerçekleşen", mobileLabel: "Hedef", icon: "H" },
-  { href: "/tarifeler", label: "Tarifeler", mobileLabel: "Tarife", icon: "📶" },
-  { href: "/cihaz-fiyat-listesi", label: "Cihaz Fiyat Listesi", mobileLabel: "Cihaz", icon: "📱" },
-  { href: "/hesabim", label: "Hesabim", mobileLabel: "Hesap", icon: "👤" }
+  { href: "/kampanyalar", label: "Gunluk Kampanyalar", mobileLabel: "Kampanya", icon: "K" },
+  { href: "/aylik-kampanyalar", label: "Aylik Kampanyalar", mobileLabel: "Aylik", icon: "A" },
+  { href: "/lig", label: "Yildizlar Kulubu", mobileLabel: "Lig", icon: "L" },
+  { href: "/hedef-gerceklesen", label: "Hedef Gerceklesen", mobileLabel: "Hedef", icon: "H" },
+  { href: "/tarifeler", label: "Tarifeler", mobileLabel: "Tarife", icon: "T" },
+  { href: "/cihaz-fiyat-listesi", label: "Cihaz Fiyat Listesi", mobileLabel: "Cihaz", icon: "C" },
+  { href: "/hesabim", label: "Hesabim", mobileLabel: "Hesap", icon: "P" }
 ];
 
 function isActive(pathname: string, href: string) {
@@ -33,18 +34,17 @@ type AppShellHeaderProps = {
 export function AppShellHeader({ initialIsAdmin = false }: AppShellHeaderProps) {
   const pathname = usePathname() ?? "/";
   const [menuOpen, setMenuOpen] = useState(false);
-  const isAdmin = initialIsAdmin;
 
   const navItems = useMemo(
     () =>
-      isAdmin
-        ? [...baseNavItems, { href: "/admin", label: "Admin Paneli", mobileLabel: "Admin", icon: "🛠" }]
+      initialIsAdmin
+        ? [...baseNavItems, { href: "/admin", label: "Admin Paneli", mobileLabel: "Admin", icon: "Y" }]
         : baseNavItems,
-    [isAdmin]
+    [initialIsAdmin]
   );
 
   const primaryTabs = useMemo(() => {
-    const wanted = ["/kampanyalar", "/lig", "/tarifeler", "/cihaz-fiyat-listesi"];
+    const wanted = ["/kampanyalar", "/aylik-kampanyalar", "/lig", "/tarifeler", "/cihaz-fiyat-listesi"];
     return navItems.filter((item) => wanted.includes(item.href));
   }, [navItems]);
 
@@ -84,7 +84,7 @@ export function AppShellHeader({ initialIsAdmin = false }: AppShellHeaderProps) 
             href={item.href}
           >
             <span className="mobile-tab-icon" aria-hidden="true">
-              {item.icon ?? "•"}
+              {item.icon ?? "."}
             </span>
             <span className="mobile-tab-label">{item.mobileLabel ?? item.label}</span>
           </Link>

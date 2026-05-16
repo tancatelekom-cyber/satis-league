@@ -664,11 +664,10 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
   }));
 
   return (
-    <main>
-      <h1 className="page-title">Hedef Gerceklesen</h1>
-      <p className="page-subtitle">Google Sheet verisine gore calisan hedef, gerceklesen ve ay sonu projeksiyon gorunumu.</p>
+      <main>
+        <h1 className="page-title">Hedef Gerceklesen</h1>
 
-      <section className="goal-control-shell">
+        <section className="goal-control-shell">
         <div className="goal-tab-row">
           <a
             className={`goal-tab ${effectiveView === "employee" ? "goal-tab-active" : ""}`}

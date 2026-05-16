@@ -88,6 +88,7 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
   }
 
   const canViewCashDepotCost = profile.role === "admin" || profile.role === "management";
+  const canExportCashDepot = canViewCashDepotCost;
 
   const isTemlikliMode = selectedMode !== "nakit-depo";
 
@@ -142,14 +143,12 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
   const effectiveCashBrand = selectedBrand && cashBrandOptions.includes(selectedBrand) ? selectedBrand : "";
   const cashBrandRows = effectiveCashBrand
     ? cashSubCategoryRows.filter((item) => item.brand === effectiveCashBrand)
-    : [];
+    : cashSubCategoryRows;
   const cashModelOptions = buildDistinctOptions(cashBrandRows.map((item) => item.model));
   const effectiveCashModel = selectedModel && cashModelOptions.includes(selectedModel) ? selectedModel : "";
   const filteredCashRows = effectiveCashModel
     ? cashBrandRows.filter((item) => item.model === effectiveCashModel)
-    : effectiveCashBrand
-      ? cashBrandRows
-      : [];
+    : cashBrandRows;
 
   return (
     <main>
@@ -173,6 +172,24 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
       {!isTemlikliMode ? (
         <>
           <section className="guide-card game-brief-card">
+            {canExportCashDepot ? (
+              <div className="detail-page-head">
+                <div />
+                <a
+                  className="button-secondary export-link-button"
+                  href={buildHref({
+                    mode: selectedMode,
+                    category: effectiveCashCategory,
+                    subcategory: effectiveCashSubCategory,
+                    brand: effectiveCashBrand,
+                    model: effectiveCashModel
+                  }).replace("/cihaz-fiyat-listesi", "/cihaz-fiyat-listesi/nakit-depo-excel")}
+                >
+                  Excel'e Indir
+                </a>
+              </div>
+            ) : null}
+
             <div className="league-filter-grid">
               <div className="league-filter-item">
                 <span className="league-filter-label">Kategori</span>
@@ -237,7 +254,7 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
                         category: effectiveCashCategory,
                         subcategory: effectiveCashSubCategory
                       }),
-                      label: effectiveCashSubCategory ? "Marka secin" : "Once alt kategori secin"
+                      label: effectiveCashSubCategory ? "Tum Markalar" : "Once alt kategori secin"
                     },
                     ...cashBrandOptions.map((brand) => ({
                       value: buildHref({
@@ -271,7 +288,7 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
                         subcategory: effectiveCashSubCategory,
                         brand: effectiveCashBrand
                       }),
-                      label: effectiveCashBrand ? "Tum Modeller" : "Once marka secin"
+                      label: effectiveCashSubCategory ? "Tum Modeller" : "Once alt kategori secin"
                     },
                     ...cashModelOptions.map((model) => ({
                       value: buildHref({
@@ -302,9 +319,9 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
               <div className="device-empty">
                 {cashDepotError
                   ? "Nakit Depo listesi su an okunamiyor."
-                  : effectiveCashBrand
+                  : effectiveCashSubCategory
                     ? "Seciminize uygun nakit depo urunu bulunamadi."
-                    : "Listeyi gormek icin once kategori, alt kategori ve marka secin."}
+                    : "Listeyi gormek icin once kategori ve alt kategori secin."}
               </div>
             ) : (
               filteredCashRows.map((item) => (

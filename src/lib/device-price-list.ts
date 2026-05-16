@@ -1,5 +1,3 @@
-import { unstable_cache } from "next/cache";
-
 export type DevicePriceRow = {
   id: string;
   category: string;
@@ -101,6 +99,7 @@ function normalizeText(value: string) {
 
 async function fetchDevicePriceRowsFromSheet() {
   const response = await fetch(DEVICE_SHEET_URL, {
+    cache: "no-store",
     headers: {
       // Helps some CDNs return the CSV instead of an HTML consent page.
       accept: "text/csv, text/plain, */*",
@@ -152,6 +151,7 @@ async function fetchDevicePriceRowsFromSheet() {
 
 async function fetchCashDepotRowsFromSheet() {
   const response = await fetch(CASH_DEPOT_SHEET_URL, {
+    cache: "no-store",
     headers: {
       accept: "text/csv, text/plain, */*",
       "user-agent": "Mozilla/5.0 (compatible; TancaSuperLigBot/1.0; +https://vercel.app)"
@@ -198,13 +198,13 @@ async function fetchCashDepotRowsFromSheet() {
     .filter((row): row is CashDepotRow => Boolean(row));
 }
 
-export const fetchDevicePriceRows = unstable_cache(fetchDevicePriceRowsFromSheet, ["device-price-sheet-rows"], {
-  revalidate: 60 * 60 * 6
-});
+export async function fetchDevicePriceRows() {
+  return fetchDevicePriceRowsFromSheet();
+}
 
-export const fetchCashDepotRows = unstable_cache(fetchCashDepotRowsFromSheet, ["cash-depot-sheet-rows"], {
-  revalidate: 60 * 30
-});
+export async function fetchCashDepotRows() {
+  return fetchCashDepotRowsFromSheet();
+}
 
 export function buildDistinctOptions(values: string[]) {
   return Array.from(new Set(values.filter(Boolean))).sort((a, b) => a.localeCompare(b, "tr"));

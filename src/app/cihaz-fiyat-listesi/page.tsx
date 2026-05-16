@@ -3,6 +3,9 @@ import { FilterSelectNav } from "@/components/ui/filter-select-nav";
 import { createClient } from "@/lib/supabase/server";
 import { CashDepotRow, buildDistinctOptions, fetchCashDepotRows, fetchDevicePriceRows } from "@/lib/device-price-list";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 type DevicePriceListPageProps = {
   searchParams?: Promise<{
     mode?: string;
@@ -319,7 +322,7 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
                         {item.brand} {item.model}
                       </strong>
                       <span>
-                        {item.color || "Renk belirtilmedi"} {item.serialNo ? `• SN: ${item.serialNo}` : ""}
+                        {item.color || "Renk belirtilmedi"} {item.serialNo ? `| SN: ${item.serialNo}` : ""}
                       </span>
                     </div>
                     <strong className="cash-depot-price">{formatCurrency(item.salePrice)}</strong>
@@ -327,6 +330,10 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
 
                   <div className="cash-depot-body">
                     <div className="cash-depot-meta-grid">
+                      <div className="cash-depot-meta-box">
+                        <span>Renk</span>
+                        <strong>{item.color || "-"}</strong>
+                      </div>
                       <div className="cash-depot-meta-box">
                         <span>Ek Aciklama</span>
                         <strong>{item.note || "-"}</strong>

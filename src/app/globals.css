@@ -222,6 +222,52 @@ button {
   gap: 12px;
 }
 
+.device-mode-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 10px 0 18px;
+}
+
+.device-mode-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 54px;
+  padding: 12px 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(4, 92, 96, 0.16);
+  background: rgba(255, 255, 255, 0.76);
+  color: #163252;
+  font-size: 1rem;
+  font-weight: 900;
+  text-decoration: none;
+  box-shadow: 0 14px 26px rgba(8, 22, 40, 0.08);
+}
+
+.device-mode-button-active {
+  border-color: rgba(255, 209, 102, 0.34);
+  background: linear-gradient(135deg, rgba(4, 92, 96, 0.94), rgba(16, 128, 130, 0.92));
+  color: #f8fbff;
+  box-shadow: 0 16px 28px rgba(4, 52, 56, 0.2);
+}
+
+.device-placeholder-card {
+  display: grid;
+  gap: 10px;
+}
+
+.device-placeholder-card h2 {
+  margin: 0;
+  color: #f7fbff;
+  font-size: 1.35rem;
+}
+
+.device-placeholder-card p {
+  margin: 0;
+  color: #d7e4f6;
+}
+
 .device-empty {
   padding: 14px 16px;
   border-radius: 18px;

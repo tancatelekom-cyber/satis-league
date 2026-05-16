@@ -5,14 +5,16 @@ import { buildDistinctOptions, fetchDevicePriceRows } from "@/lib/device-price-l
 
 type DevicePriceListPageProps = {
   searchParams?: Promise<{
+    mode?: string;
     category?: string;
     brand?: string;
     product?: string;
   }>;
 };
 
-function buildHref(category?: string, brand?: string, product?: string) {
+function buildHref(mode?: string, category?: string, brand?: string, product?: string) {
   const params = new URLSearchParams();
+  if (mode) params.set("mode", mode);
   if (category) params.set("category", category);
   if (brand) params.set("brand", brand);
   if (product) params.set("product", product);
@@ -49,6 +51,7 @@ function sortDeviceRows<T extends { monthlyInstallment: number; installmentCount
 
 export default async function DevicePriceListPage({ searchParams }: DevicePriceListPageProps) {
   const params = searchParams ? await searchParams : undefined;
+  const selectedMode = String(params?.mode ?? "temlikli").trim() || "temlikli";
   const selectedCategory = String(params?.category ?? "").trim();
   const selectedBrand = String(params?.brand ?? "").trim();
   const selectedProduct = String(params?.product ?? "").trim();
@@ -68,13 +71,17 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
     redirect("/hesabim");
   }
 
+  const isTemlikliMode = selectedMode !== "nakit-depo";
+
   let allRows = [] as Awaited<ReturnType<typeof fetchDevicePriceRows>>;
   let fetchError = "";
-  try {
-    allRows = await fetchDevicePriceRows();
-  } catch (error) {
-    fetchError = error instanceof Error ? error.message : "Cihaz listesi okunamadi.";
-    allRows = [];
+  if (isTemlikliMode) {
+    try {
+      allRows = await fetchDevicePriceRows();
+    } catch (error) {
+      fetchError = error instanceof Error ? error.message : "Cihaz listesi okunamadi.";
+      allRows = [];
+    }
   }
 
   const categoryOptions = buildDistinctOptions(allRows.map((item) => item.category));
@@ -94,17 +101,38 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
     <main>
       <h1 className="page-title">Cihaz Fiyat Listesi</h1>
 
+      <div className="device-mode-row">
+        <a
+          className={`device-mode-button ${isTemlikliMode ? "device-mode-button-active" : ""}`}
+          href={buildHref("temlikli")}
+        >
+          Temlikli Urunler
+        </a>
+        <a
+          className={`device-mode-button ${!isTemlikliMode ? "device-mode-button-active" : ""}`}
+          href={buildHref("nakit-depo")}
+        >
+          Nakit Depo
+        </a>
+      </div>
+
+      {!isTemlikliMode ? (
+        <section className="guide-card game-brief-card device-placeholder-card">
+          <h2>Nakit Depo</h2>
+          <p>Bu alan hazirlaniyor. Veri kaynaginin nereden cekilecegini birlikte netlestirdigimizda bu bolumu ayni duzende aktif edecegim.</p>
+        </section>
+      ) : (
       <section className="guide-card game-brief-card">
         <div className="league-filter-grid">
           <div className="league-filter-item">
             <span className="league-filter-label">Kategori</span>
             <FilterSelectNav
               ariaLabel="Cihaz kategori secimi"
-              value={buildHref(selectedCategory, effectiveBrand, effectiveProduct)}
+              value={buildHref(selectedMode, selectedCategory, effectiveBrand, effectiveProduct)}
               options={[
-                { value: buildHref("", effectiveBrand, effectiveProduct), label: "Tum Kategoriler" },
+                { value: buildHref(selectedMode, "", effectiveBrand, effectiveProduct), label: "Tum Kategoriler" },
                 ...categoryOptions.map((category) => ({
-                  value: buildHref(category, effectiveBrand, effectiveProduct),
+                  value: buildHref(selectedMode, category, effectiveBrand, effectiveProduct),
                   label: category
                 }))
               ]}
@@ -115,11 +143,11 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
             <span className="league-filter-label">Marka</span>
             <FilterSelectNav
               ariaLabel="Cihaz marka secimi"
-              value={buildHref(selectedCategory, effectiveBrand, effectiveProduct)}
+              value={buildHref(selectedMode, selectedCategory, effectiveBrand, effectiveProduct)}
               options={[
-                { value: buildHref(selectedCategory, "", ""), label: "Marka secin" },
+                { value: buildHref(selectedMode, selectedCategory, "", ""), label: "Marka secin" },
                 ...brandOptions.map((brand) => ({
-                  value: buildHref(selectedCategory, brand, effectiveProduct),
+                  value: buildHref(selectedMode, selectedCategory, brand, effectiveProduct),
                   label: brand
                 }))
               ]}
@@ -130,14 +158,14 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
             <span className="league-filter-label">Urun</span>
             <FilterSelectNav
               ariaLabel="Cihaz urun secimi"
-              value={buildHref(selectedCategory, effectiveBrand, effectiveProduct)}
+              value={buildHref(selectedMode, selectedCategory, effectiveBrand, effectiveProduct)}
               options={[
                 {
-                  value: buildHref(selectedCategory, effectiveBrand, ""),
+                  value: buildHref(selectedMode, selectedCategory, effectiveBrand, ""),
                   label: effectiveBrand ? "Tum Urunler" : "Once marka secin"
                 },
                 ...productOptions.map((product) => ({
-                  value: buildHref(selectedCategory, effectiveBrand, product),
+                  value: buildHref(selectedMode, selectedCategory, effectiveBrand, product),
                   label: product
                 }))
               ]}
@@ -153,7 +181,9 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
           </div>
         ) : null}
       </section>
+      )}
 
+      {isTemlikliMode ? (
       <section className="device-cards" aria-label="Cihaz kartlari">
         {filteredRows.length === 0 ? (
           <div className="device-empty">
@@ -204,8 +234,9 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
           )
         )}
       </section>
+      ) : null}
 
-      {showDetailTable ? (
+      {isTemlikliMode && showDetailTable ? (
         <section className="season-entry-table-wrap">
           <table className="season-entry-table device-price-table">
             <thead>

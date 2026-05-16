@@ -81,11 +81,13 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
     redirect("/giris");
   }
 
-  const { data: profile } = await supabase.from("profiles").select("approval").eq("id", user.id).single();
+  const { data: profile } = await supabase.from("profiles").select("approval, role").eq("id", user.id).single();
 
   if (!profile || profile.approval !== "approved") {
     redirect("/hesabim");
   }
+
+  const canViewCashDepotCost = profile.role === "admin" || profile.role === "management";
 
   const isTemlikliMode = selectedMode !== "nakit-depo";
 
@@ -323,6 +325,12 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
                         <span>Renk</span>
                         <strong>{item.color || "-"}</strong>
                       </div>
+                      {canViewCashDepotCost ? (
+                        <div className="cash-depot-meta-box">
+                          <span>Maliyet</span>
+                          <strong>{formatCurrency(item.costPrice)}</strong>
+                        </div>
+                      ) : null}
                       <div className="cash-depot-meta-box">
                         <span>Ek Aciklama</span>
                         <strong>{item.note || "-"}</strong>

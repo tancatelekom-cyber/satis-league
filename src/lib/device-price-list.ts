@@ -17,6 +17,7 @@ export type CashDepotRow = {
   model: string;
   color: string;
   salePrice: number;
+  costPrice: number;
   bonus: number;
   note: string;
   serialNo: string;
@@ -177,6 +178,7 @@ async function fetchCashDepotRowsFromSheet() {
       const bonus = parseLocalizedNumber(row[6] ?? "");
       const note = normalizeText(row[7] ?? "");
       const serialNo = normalizeText(row[8] ?? "");
+      const costPrice = parseLocalizedNumber(row[9] ?? "");
 
       if (!category || !subCategory || !brand || !model) {
         return null;
@@ -190,6 +192,7 @@ async function fetchCashDepotRowsFromSheet() {
         model,
         color,
         salePrice,
+        costPrice,
         bonus,
         note,
         serialNo

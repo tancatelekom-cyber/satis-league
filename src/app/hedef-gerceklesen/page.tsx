@@ -660,35 +660,36 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
       <h1 className="page-title">Hedef Gerceklesen</h1>
       <p className="page-subtitle">Google Sheet verisine gore calisan hedef, gerceklesen ve ay sonu projeksiyon gorunumu.</p>
 
-      <div className="goal-tab-row">
-        <a
-          className={`goal-tab ${effectiveView === "employee" ? "goal-tab-active" : ""}`}
-          href={buildHref("employee", { employee: effectiveEmployee, panel: effectivePanel })}
-        >
-          Calisan
-        </a>
-        {canViewAll ? (
-          <>
-            <a
-              className={`goal-tab ${effectiveView === "store" ? "goal-tab-active" : ""}`}
-              href={buildHref("store", { store: effectiveStore, panel: effectivePanel })}
-            >
-              Magaza
-            </a>
-            <a className={`goal-tab ${effectiveView === "company" ? "goal-tab-active" : ""}`} href={buildHref("company")}>
-              Firma
-            </a>
-          </>
-        ) : null}
-      </div>
+      <section className="goal-control-shell">
+        <div className="goal-tab-row">
+          <a
+            className={`goal-tab ${effectiveView === "employee" ? "goal-tab-active" : ""}`}
+            href={buildHref("employee", { employee: effectiveEmployee, panel: effectivePanel })}
+          >
+            Calisan
+          </a>
+          {canViewAll ? (
+            <>
+              <a
+                className={`goal-tab ${effectiveView === "store" ? "goal-tab-active" : ""}`}
+                href={buildHref("store", { store: effectiveStore, panel: effectivePanel })}
+              >
+                Magaza
+              </a>
+              <a className={`goal-tab ${effectiveView === "company" ? "goal-tab-active" : ""}`} href={buildHref("company")}>
+                Firma
+              </a>
+            </>
+          ) : null}
+        </div>
 
-      {sheetError ? (
+        {sheetError ? (
         <section className="guide-card goal-placeholder-card">
           <strong>Hedef Gerceklesen verisi su an acilamadi.</strong>
           <p className="subtle">{sheetError}</p>
           <p className="subtle">Google Sheet erisimi duzeldiginde sayfa otomatik olarak tekrar kullanilabilir olacak.</p>
         </section>
-      ) : (
+        ) : (
         <>
           <section className="goal-summary-strip">
             <article className="goal-summary-card">
@@ -706,7 +707,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
           </section>
 
           {effectiveView !== "company" ? (
-            <section className="guide-card game-brief-card">
+            <section className="guide-card game-brief-card goal-filter-card">
               <div className="league-filter-grid goal-filter-grid">
                 {effectivePanel === "detail" || effectiveView === "store" ? (
                   <div className="league-filter-item league-filter-item-wide">
@@ -899,6 +900,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
           )}
         </>
       )}
+      </section>
     </main>
   );
 }

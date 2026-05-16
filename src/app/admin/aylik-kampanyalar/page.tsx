@@ -81,6 +81,16 @@ export default async function MonthlyCampaignAdminPage({
                 <span>Sira: {slide.sortOrder + 1}</span>
               </div>
 
+              <a
+                className="button-secondary"
+                href={slide.imageUrl}
+                target="_blank"
+                rel="noreferrer"
+                download
+              >
+                Gorseli Ac / Indir
+              </a>
+
               <form action={replaceMonthlyCampaignSlideAction} className="admin-media-action-form">
                 <input name="slideId" type="hidden" value={slide.id} />
                 <input accept="image/png,image/jpeg,image/webp" name="image" required type="file" />

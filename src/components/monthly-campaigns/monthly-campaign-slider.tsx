@@ -40,7 +40,27 @@ export function MonthlyCampaignSlider({ slides }: MonthlyCampaignSliderProps) {
         >
           {slides.map((slide) => (
             <article key={slide.id} className="monthly-campaign-slide">
-              <img className="monthly-campaign-slide-image" src={slide.imageUrl} alt={slide.title} />
+              <div className="monthly-campaign-slide-toolbar">
+                <strong className="monthly-campaign-slide-title">{slide.title}</strong>
+                <a
+                  className="monthly-campaign-download"
+                  href={slide.imageUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  download
+                >
+                  Indir
+                </a>
+              </div>
+              <a
+                className="monthly-campaign-slide-link"
+                href={slide.imageUrl}
+                target="_blank"
+                rel="noreferrer"
+                aria-label={`${slide.title} gorselini tam boyutta ac`}
+              >
+                <img className="monthly-campaign-slide-image" src={slide.imageUrl} alt={slide.title} />
+              </a>
             </article>
           ))}
         </div>

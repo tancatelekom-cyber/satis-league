@@ -381,6 +381,14 @@ function buildNeedRows(summary: GoalCategorySummary, remainingDays: number): Goa
   });
 }
 
+function getProjectedPercentPillClass(value: number | null | undefined) {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return "";
+  }
+
+  return value >= 100 ? "goal-status-pill-good" : "goal-status-pill-bad";
+}
+
 function GoalCategoryCards({ categories }: { categories: GoalCategorySummary[] }) {
   return (
     <div className="goal-category-list">
@@ -424,7 +432,7 @@ function GoalCategoryCards({ categories }: { categories: GoalCategorySummary[] }
                 </span>
               ) : null}
               {category.hasTarget && category.showProjection && category.projectedPercent !== null ? (
-                <span>
+                <span className={getProjectedPercentPillClass(category.projectedPercent)}>
                   <small>Ay Sonu %</small>
                   <strong>{formatPercent(category.projectedPercent)}</strong>
                 </span>
@@ -455,7 +463,7 @@ function GoalCategoryCards({ categories }: { categories: GoalCategorySummary[] }
                       {child.hasTarget && child.actualPercent !== null ? <span>Anlik % {formatPercent(child.actualPercent)}</span> : null}
                       {child.showProjection && child.projectedActual !== null ? <span>Ay Sonu {formatNumber(child.projectedActual)}</span> : null}
                       {child.hasTarget && child.showProjection && child.projectedPercent !== null ? (
-                        <span>Ay Sonu % {formatPercent(child.projectedPercent)}</span>
+                        <span className={getProjectedPercentPillClass(child.projectedPercent)}>Ay Sonu % {formatPercent(child.projectedPercent)}</span>
                       ) : null}
                     </div>
                   </div>
@@ -480,7 +488,7 @@ function GoalCategoryCards({ categories }: { categories: GoalCategorySummary[] }
                         {store.hasTarget && store.actualPercent !== null ? <span>Anlik % {formatPercent(store.actualPercent)}</span> : null}
                         {store.showProjection && store.projectedActual !== null ? <span>Ay Sonu {formatNumber(store.projectedActual)}</span> : null}
                         {store.hasTarget && store.showProjection && store.projectedPercent !== null ? (
-                          <span>Ay Sonu % {formatPercent(store.projectedPercent)}</span>
+                          <span className={getProjectedPercentPillClass(store.projectedPercent)}>Ay Sonu % {formatPercent(store.projectedPercent)}</span>
                         ) : null}
                       </div>
                     </div>

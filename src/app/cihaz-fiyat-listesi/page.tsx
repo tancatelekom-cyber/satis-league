@@ -1,23 +1,34 @@
 import { redirect } from "next/navigation";
 import { FilterSelectNav } from "@/components/ui/filter-select-nav";
 import { createClient } from "@/lib/supabase/server";
-import { buildDistinctOptions, fetchDevicePriceRows } from "@/lib/device-price-list";
+import { CashDepotRow, buildDistinctOptions, fetchCashDepotRows, fetchDevicePriceRows } from "@/lib/device-price-list";
 
 type DevicePriceListPageProps = {
   searchParams?: Promise<{
     mode?: string;
     category?: string;
+    subcategory?: string;
     brand?: string;
+    model?: string;
     product?: string;
   }>;
 };
 
-function buildHref(mode?: string, category?: string, brand?: string, product?: string) {
+function buildHref(paramsInput: {
+  mode?: string;
+  category?: string;
+  subcategory?: string;
+  brand?: string;
+  model?: string;
+  product?: string;
+}) {
   const params = new URLSearchParams();
-  if (mode) params.set("mode", mode);
-  if (category) params.set("category", category);
-  if (brand) params.set("brand", brand);
-  if (product) params.set("product", product);
+  if (paramsInput.mode) params.set("mode", paramsInput.mode);
+  if (paramsInput.category) params.set("category", paramsInput.category);
+  if (paramsInput.subcategory) params.set("subcategory", paramsInput.subcategory);
+  if (paramsInput.brand) params.set("brand", paramsInput.brand);
+  if (paramsInput.model) params.set("model", paramsInput.model);
+  if (paramsInput.product) params.set("product", paramsInput.product);
   return `/cihaz-fiyat-listesi${params.size ? `?${params.toString()}` : ""}`;
 }
 
@@ -30,6 +41,17 @@ function formatCurrency(value: number | null) {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0
   })} TL`;
+}
+
+function formatPlainNumber(value: number | null) {
+  if (!value || value <= 0) {
+    return "-";
+  }
+
+  return value.toLocaleString("tr-TR", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  });
 }
 
 function isCashContractRow(item: { monthlyInstallment: number; installmentCount: number }) {
@@ -53,7 +75,9 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
   const params = searchParams ? await searchParams : undefined;
   const selectedMode = String(params?.mode ?? "temlikli").trim() || "temlikli";
   const selectedCategory = String(params?.category ?? "").trim();
+  const selectedSubCategory = String(params?.subcategory ?? "").trim();
   const selectedBrand = String(params?.brand ?? "").trim();
+  const selectedModel = String(params?.model ?? "").trim();
   const selectedProduct = String(params?.product ?? "").trim();
 
   const supabase = await createClient();
@@ -97,6 +121,40 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
   const filteredRows = sortDeviceRows(filteredRowsRaw);
   const showDetailTable = Boolean(effectiveProduct);
 
+  let cashDepotRows: CashDepotRow[] = [];
+  let cashDepotError = "";
+  if (!isTemlikliMode) {
+    try {
+      cashDepotRows = await fetchCashDepotRows();
+    } catch (error) {
+      cashDepotError = error instanceof Error ? error.message : "Nakit Depo listesi okunamadi.";
+      cashDepotRows = [];
+    }
+  }
+
+  const cashCategoryOptions = buildDistinctOptions(cashDepotRows.map((item) => item.category));
+  const effectiveCashCategory =
+    selectedCategory && cashCategoryOptions.includes(selectedCategory) ? selectedCategory : "";
+  const cashCategoryRows = effectiveCashCategory
+    ? cashDepotRows.filter((item) => item.category === effectiveCashCategory)
+    : [];
+  const cashSubCategoryOptions = buildDistinctOptions(cashCategoryRows.map((item) => item.subCategory));
+  const effectiveCashSubCategory =
+    selectedSubCategory && cashSubCategoryOptions.includes(selectedSubCategory) ? selectedSubCategory : "";
+  const cashSubCategoryRows = effectiveCashSubCategory
+    ? cashCategoryRows.filter((item) => item.subCategory === effectiveCashSubCategory)
+    : [];
+  const cashBrandOptions = buildDistinctOptions(cashSubCategoryRows.map((item) => item.brand));
+  const effectiveCashBrand = selectedBrand && cashBrandOptions.includes(selectedBrand) ? selectedBrand : "";
+  const cashBrandRows = effectiveCashBrand
+    ? cashSubCategoryRows.filter((item) => item.brand === effectiveCashBrand)
+    : cashSubCategoryRows;
+  const cashModelOptions = buildDistinctOptions(cashBrandRows.map((item) => item.model));
+  const effectiveCashModel = selectedModel && cashModelOptions.includes(selectedModel) ? selectedModel : "";
+  const filteredCashRows = effectiveCashModel
+    ? cashBrandRows.filter((item) => item.model === effectiveCashModel)
+    : cashBrandRows;
+
   return (
     <main>
       <h1 className="page-title">Cihaz Fiyat Listesi</h1>
@@ -104,35 +162,211 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
       <div className="device-mode-row">
         <a
           className={`device-mode-button ${isTemlikliMode ? "device-mode-button-active" : ""}`}
-          href={buildHref("temlikli")}
+          href={buildHref({ mode: "temlikli" })}
         >
           Temlikli Urunler
         </a>
         <a
           className={`device-mode-button ${!isTemlikliMode ? "device-mode-button-active" : ""}`}
-          href={buildHref("nakit-depo")}
+          href={buildHref({ mode: "nakit-depo" })}
         >
           Nakit Depo
         </a>
       </div>
 
       {!isTemlikliMode ? (
-        <section className="guide-card game-brief-card device-placeholder-card">
-          <h2>Nakit Depo</h2>
-          <p>Bu alan hazirlaniyor. Veri kaynaginin nereden cekilecegini birlikte netlestirdigimizda bu bolumu ayni duzende aktif edecegim.</p>
-        </section>
+        <>
+          <section className="guide-card game-brief-card">
+            <div className="league-filter-grid">
+              <div className="league-filter-item">
+                <span className="league-filter-label">Kategori</span>
+                <FilterSelectNav
+                  ariaLabel="Nakit Depo kategori secimi"
+                  value={buildHref({
+                    mode: selectedMode,
+                    category: effectiveCashCategory,
+                    subcategory: effectiveCashSubCategory,
+                    brand: effectiveCashBrand,
+                    model: effectiveCashModel
+                  })}
+                  options={[
+                    { value: buildHref({ mode: selectedMode }), label: "Kategori secin" },
+                    ...cashCategoryOptions.map((category) => ({
+                      value: buildHref({ mode: selectedMode, category }),
+                      label: category
+                    }))
+                  ]}
+                />
+              </div>
+
+              <div className="league-filter-item">
+                <span className="league-filter-label">Alt Kategori</span>
+                <FilterSelectNav
+                  ariaLabel="Nakit Depo alt kategori secimi"
+                  value={buildHref({
+                    mode: selectedMode,
+                    category: effectiveCashCategory,
+                    subcategory: effectiveCashSubCategory,
+                    brand: effectiveCashBrand,
+                    model: effectiveCashModel
+                  })}
+                  options={[
+                    {
+                      value: buildHref({ mode: selectedMode, category: effectiveCashCategory }),
+                      label: effectiveCashCategory ? "Alt kategori secin" : "Once kategori secin"
+                    },
+                    ...cashSubCategoryOptions.map((subCategory) => ({
+                      value: buildHref({ mode: selectedMode, category: effectiveCashCategory, subcategory: subCategory }),
+                      label: subCategory
+                    }))
+                  ]}
+                />
+              </div>
+
+              <div className="league-filter-item">
+                <span className="league-filter-label">Marka</span>
+                <FilterSelectNav
+                  ariaLabel="Nakit Depo marka secimi"
+                  value={buildHref({
+                    mode: selectedMode,
+                    category: effectiveCashCategory,
+                    subcategory: effectiveCashSubCategory,
+                    brand: effectiveCashBrand,
+                    model: effectiveCashModel
+                  })}
+                  options={[
+                    {
+                      value: buildHref({
+                        mode: selectedMode,
+                        category: effectiveCashCategory,
+                        subcategory: effectiveCashSubCategory
+                      }),
+                      label: effectiveCashSubCategory ? "Tum Markalar" : "Once alt kategori secin"
+                    },
+                    ...cashBrandOptions.map((brand) => ({
+                      value: buildHref({
+                        mode: selectedMode,
+                        category: effectiveCashCategory,
+                        subcategory: effectiveCashSubCategory,
+                        brand
+                      }),
+                      label: brand
+                    }))
+                  ]}
+                />
+              </div>
+
+              <div className="league-filter-item">
+                <span className="league-filter-label">Model</span>
+                <FilterSelectNav
+                  ariaLabel="Nakit Depo model secimi"
+                  value={buildHref({
+                    mode: selectedMode,
+                    category: effectiveCashCategory,
+                    subcategory: effectiveCashSubCategory,
+                    brand: effectiveCashBrand,
+                    model: effectiveCashModel
+                  })}
+                  options={[
+                    {
+                      value: buildHref({
+                        mode: selectedMode,
+                        category: effectiveCashCategory,
+                        subcategory: effectiveCashSubCategory,
+                        brand: effectiveCashBrand
+                      }),
+                      label: effectiveCashSubCategory ? "Tum Modeller" : "Once alt kategori secin"
+                    },
+                    ...cashModelOptions.map((model) => ({
+                      value: buildHref({
+                        mode: selectedMode,
+                        category: effectiveCashCategory,
+                        subcategory: effectiveCashSubCategory,
+                        brand: effectiveCashBrand,
+                        model
+                      }),
+                      label: model
+                    }))
+                  ]}
+                />
+              </div>
+            </div>
+
+            {cashDepotError ? (
+              <div className="notice danger" role="alert">
+                <strong>Nakit Depo listesi okunamadi.</strong>
+                <span>{cashDepotError}</span>
+                <span>Biraz sonra tekrar deneyin. Sorun devam ederse Sheet erisimini kontrol edin.</span>
+              </div>
+            ) : null}
+          </section>
+
+          <section className="cash-depot-list" aria-label="Nakit Depo urunleri">
+            {filteredCashRows.length === 0 ? (
+              <div className="device-empty">
+                {cashDepotError
+                  ? "Nakit Depo listesi su an okunamiyor."
+                  : effectiveCashSubCategory
+                    ? "Seciminize uygun nakit depo urunu bulunamadi."
+                    : "Listeyi gormek icin once kategori ve alt kategori secin."}
+              </div>
+            ) : (
+              filteredCashRows.map((item) => (
+                <details key={item.id} className="cash-depot-item">
+                  <summary className="cash-depot-summary">
+                    <div className="cash-depot-main">
+                      <strong>
+                        {item.brand} {item.model}
+                      </strong>
+                      <span>
+                        {item.color || "Renk belirtilmedi"} {item.serialNo ? `• SN: ${item.serialNo}` : ""}
+                      </span>
+                    </div>
+                    <strong className="cash-depot-price">{formatCurrency(item.salePrice)}</strong>
+                  </summary>
+
+                  <div className="cash-depot-body">
+                    <div className="cash-depot-meta-grid">
+                      <div className="cash-depot-meta-box">
+                        <span>Ek Aciklama</span>
+                        <strong>{item.note || "-"}</strong>
+                      </div>
+                      <div className="cash-depot-meta-box">
+                        <span>Seri No</span>
+                        <strong>{item.serialNo || "-"}</strong>
+                      </div>
+                    </div>
+
+                    <details className="cash-depot-bonus">
+                      <summary>
+                        Prim
+                        <span>{formatPlainNumber(item.bonus)}</span>
+                      </summary>
+                      <div className="cash-depot-bonus-body">{formatCurrency(item.bonus)}</div>
+                    </details>
+                  </div>
+                </details>
+              ))
+            )}
+          </section>
+        </>
       ) : (
       <section className="guide-card game-brief-card">
         <div className="league-filter-grid">
           <div className="league-filter-item">
             <span className="league-filter-label">Kategori</span>
-            <FilterSelectNav
-              ariaLabel="Cihaz kategori secimi"
-              value={buildHref(selectedMode, selectedCategory, effectiveBrand, effectiveProduct)}
-              options={[
-                { value: buildHref(selectedMode, "", effectiveBrand, effectiveProduct), label: "Tum Kategoriler" },
+                <FilterSelectNav
+                  ariaLabel="Cihaz kategori secimi"
+              value={buildHref({
+                mode: selectedMode,
+                category: selectedCategory,
+                brand: effectiveBrand,
+                product: effectiveProduct
+              })}
+                  options={[
+                { value: buildHref({ mode: selectedMode, brand: effectiveBrand, product: effectiveProduct }), label: "Tum Kategoriler" },
                 ...categoryOptions.map((category) => ({
-                  value: buildHref(selectedMode, category, effectiveBrand, effectiveProduct),
+                  value: buildHref({ mode: selectedMode, category, brand: effectiveBrand, product: effectiveProduct }),
                   label: category
                 }))
               ]}
@@ -141,13 +375,18 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
 
           <div className="league-filter-item">
             <span className="league-filter-label">Marka</span>
-            <FilterSelectNav
-              ariaLabel="Cihaz marka secimi"
-              value={buildHref(selectedMode, selectedCategory, effectiveBrand, effectiveProduct)}
-              options={[
-                { value: buildHref(selectedMode, selectedCategory, "", ""), label: "Marka secin" },
+                <FilterSelectNav
+                  ariaLabel="Cihaz marka secimi"
+              value={buildHref({
+                mode: selectedMode,
+                category: selectedCategory,
+                brand: effectiveBrand,
+                product: effectiveProduct
+              })}
+                  options={[
+                { value: buildHref({ mode: selectedMode, category: selectedCategory }), label: "Marka secin" },
                 ...brandOptions.map((brand) => ({
-                  value: buildHref(selectedMode, selectedCategory, brand, effectiveProduct),
+                  value: buildHref({ mode: selectedMode, category: selectedCategory, brand, product: effectiveProduct }),
                   label: brand
                 }))
               ]}
@@ -156,16 +395,21 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
 
           <div className="league-filter-item league-filter-item-wide">
             <span className="league-filter-label">Urun</span>
-            <FilterSelectNav
-              ariaLabel="Cihaz urun secimi"
-              value={buildHref(selectedMode, selectedCategory, effectiveBrand, effectiveProduct)}
-              options={[
+                <FilterSelectNav
+                  ariaLabel="Cihaz urun secimi"
+              value={buildHref({
+                mode: selectedMode,
+                category: selectedCategory,
+                brand: effectiveBrand,
+                product: effectiveProduct
+              })}
+                  options={[
                 {
-                  value: buildHref(selectedMode, selectedCategory, effectiveBrand, ""),
+                  value: buildHref({ mode: selectedMode, category: selectedCategory, brand: effectiveBrand }),
                   label: effectiveBrand ? "Tum Urunler" : "Once marka secin"
                 },
                 ...productOptions.map((product) => ({
-                  value: buildHref(selectedMode, selectedCategory, effectiveBrand, product),
+                  value: buildHref({ mode: selectedMode, category: selectedCategory, brand: effectiveBrand, product }),
                   label: product
                 }))
               ]}

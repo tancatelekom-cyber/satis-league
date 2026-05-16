@@ -11,14 +11,30 @@ export type DevicePriceRow = {
   totalPayable: number;
 };
 
+export type CashDepotRow = {
+  id: string;
+  category: string;
+  subCategory: string;
+  brand: string;
+  model: string;
+  color: string;
+  salePrice: number;
+  bonus: number;
+  note: string;
+  serialNo: string;
+};
+
 const DEVICE_SHEET_ID = "1ya4e8B6MkdcL4CqPaMwwxIXVIPD9CEFjN9Jtlyf70hI";
 const DEVICE_SHEET_NAME = "Sayfa1";
+const CASH_DEPOT_SHEET_GID = "756236099";
 
 // Prefer sheet name over gid to reduce mismatch issues when tabs are reordered/duplicated.
 // gviz endpoint is also more reliable for public sheets on some deployments.
 export const DEVICE_SHEET_URL = `https://docs.google.com/spreadsheets/d/${DEVICE_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(
   DEVICE_SHEET_NAME
 )}`;
+
+export const CASH_DEPOT_SHEET_URL = `https://docs.google.com/spreadsheets/d/${DEVICE_SHEET_ID}/gviz/tq?tqx=out:csv&gid=${CASH_DEPOT_SHEET_GID}`;
 
 function parseCsv(text: string) {
   const rows: string[][] = [];
@@ -134,8 +150,60 @@ async function fetchDevicePriceRowsFromSheet() {
     .filter((row): row is DevicePriceRow => Boolean(row));
 }
 
+async function fetchCashDepotRowsFromSheet() {
+  const response = await fetch(CASH_DEPOT_SHEET_URL, {
+    headers: {
+      accept: "text/csv, text/plain, */*",
+      "user-agent": "Mozilla/5.0 (compatible; TancaSuperLigBot/1.0; +https://vercel.app)"
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`Nakit Depo sheet okunamadi: ${response.status}`);
+  }
+
+  const csv = await response.text();
+  const rows = parseCsv(csv);
+
+  return rows
+    .slice(1)
+    .map((row, index): CashDepotRow | null => {
+      const category = normalizeText(row[0] ?? "");
+      const subCategory = normalizeText(row[1] ?? "");
+      const brand = normalizeText(row[2] ?? "");
+      const model = normalizeText(row[3] ?? "");
+      const color = normalizeText(row[4] ?? "");
+      const salePrice = parseLocalizedNumber(row[5] ?? "");
+      const bonus = parseLocalizedNumber(row[6] ?? "");
+      const note = normalizeText(row[7] ?? "");
+      const serialNo = normalizeText(row[8] ?? "");
+
+      if (!category || !subCategory || !brand || !model) {
+        return null;
+      }
+
+      return {
+        id: `${index}-${category}-${subCategory}-${brand}-${model}-${color || "renksiz"}`,
+        category,
+        subCategory,
+        brand,
+        model,
+        color,
+        salePrice,
+        bonus,
+        note,
+        serialNo
+      };
+    })
+    .filter((row): row is CashDepotRow => Boolean(row));
+}
+
 export const fetchDevicePriceRows = unstable_cache(fetchDevicePriceRowsFromSheet, ["device-price-sheet-rows"], {
   revalidate: 60 * 60 * 6
+});
+
+export const fetchCashDepotRows = unstable_cache(fetchCashDepotRowsFromSheet, ["cash-depot-sheet-rows"], {
+  revalidate: 60 * 30
 });
 
 export function buildDistinctOptions(values: string[]) {

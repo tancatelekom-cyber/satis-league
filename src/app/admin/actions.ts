@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { requireAdminAccess } from "@/lib/auth/require-admin";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { localDateTimeToIso } from "@/lib/campaign-utils";
+import { fetchSeasonSalesSheetRows } from "@/lib/season-sales-sheet";
 import { syncTurkcellTariffs } from "@/lib/turkcell/tariff-sync";
 
 const allowedAdminRedirects = new Set([
@@ -1157,6 +1158,209 @@ export async function saveSeasonTableAction(formData: FormData) {
   revalidatePath("/admin");
   revalidatePath("/lig");
   redirectWithMessage("Aylik sezon tablosu kaydedildi.", "success", redirectTo, { entryMonth: monthKey });
+}
+
+export async function importSeasonSalesFromSheetAction(formData: FormData) {
+  await requireAdminAccess();
+  const redirectTo = getRedirectTo(formData);
+  const supabase = createAdminClient();
+  const seasonId = String(formData.get("seasonId") ?? "").trim();
+  const rawEntryMonth = String(formData.get("entryMonth") ?? "").trim();
+  const entryDate = normalizeMonthInput(rawEntryMonth);
+
+  if (!seasonId || !entryDate) {
+    redirectWithMessage("Sheet'ten veri cekmek icin sezon ve ay secin.", "error", redirectTo);
+  }
+
+  const { start: monthStart, endExclusive: nextMonthStart, monthKey } = getMonthRange(entryDate!);
+
+  const [{ data: season }, { data: products }] = await Promise.all([
+    supabase.from("seasons").select("id, mode").eq("id", seasonId).single(),
+    supabase
+      .from("season_products")
+      .select("id")
+      .eq("season_id", seasonId)
+  ]);
+
+  if (!season || !products) {
+    redirectWithMessage("Secili sezon veya urunleri bulunamadi.", "error", redirectTo, {
+      seasonId,
+      entryMonth: monthKey
+    });
+  }
+
+  let sheetRows: Awaited<ReturnType<typeof fetchSeasonSalesSheetRows>> = [];
+  try {
+    sheetRows = await fetchSeasonSalesSheetRows();
+  } catch (error) {
+    redirectWithMessage(
+      error instanceof Error ? error.message : "Google Sheet verisi okunamadi.",
+      "error",
+      redirectTo,
+      {
+        seasonId,
+        entryMonth: monthKey
+      }
+    );
+  }
+
+  const relevantRows = sheetRows.filter((row) => {
+    const normalizedMonth = normalizeMonthInput(row.month);
+    return row.seasonId === seasonId && normalizedMonth?.slice(0, 7) === monthKey;
+  });
+
+  if (relevantRows.length === 0) {
+    redirectWithMessage("Secili sezon ve ay icin Google Sheet'te aktarilacak veri bulunamadi.", "error", redirectTo, {
+      seasonId,
+      entryMonth: monthKey
+    });
+  }
+
+  const productIdSet = new Set((products as Array<{ id: string }>).map((product) => product.id));
+  const sourceProfileIds = Array.from(new Set(relevantRows.map((row) => row.profileId)));
+  const { data: sourceProfiles } = sourceProfileIds.length
+    ? await supabase.from("profiles").select("id, full_name, store_id").in("id", sourceProfileIds)
+    : { data: [] as Array<{ id: string; full_name: string; store_id: string | null }> };
+
+  const profileMap = new Map(
+    (((sourceProfiles as Array<{ id: string; full_name: string; store_id: string | null }> | null) ?? [])).map(
+      (profile) => [profile.id, profile]
+    )
+  );
+
+  const groupedQuantities = new Map<string, { targetId: string; productId: string; quantity: number }>();
+  let skippedMissingProfile = 0;
+  let skippedMissingStore = 0;
+  let skippedMissingProduct = 0;
+
+  relevantRows.forEach((row) => {
+    if (!productIdSet.has(row.productId)) {
+      skippedMissingProduct += 1;
+      return;
+    }
+
+    const profile = profileMap.get(row.profileId);
+    if (!profile) {
+      skippedMissingProfile += 1;
+      return;
+    }
+
+    const targetId =
+      season!.mode === "employee"
+        ? profile.id
+        : profile.store_id;
+
+    if (!targetId) {
+      skippedMissingStore += 1;
+      return;
+    }
+
+    const key = `${targetId}__${row.productId}`;
+    const current = groupedQuantities.get(key);
+    groupedQuantities.set(key, {
+      targetId,
+      productId: row.productId,
+      quantity: Number(current?.quantity ?? 0) + Number(row.value ?? 0)
+    });
+  });
+
+  const { error: deleteError } = await supabase
+    .from("season_sales_entries")
+    .delete()
+    .eq("season_id", seasonId)
+    .gte("entry_date", monthStart)
+    .lt("entry_date", nextMonthStart);
+
+  if (deleteError) {
+    redirectWithMessage(`Secili ayin eski verisi silinemedi: ${deleteError.message}`, "error", redirectTo, {
+      seasonId,
+      entryMonth: monthKey
+    });
+  }
+
+  const payloads = [];
+  for (const groupedRow of groupedQuantities.values()) {
+    if (groupedRow.quantity <= 0) {
+      continue;
+    }
+
+    const sale =
+      season!.mode === "employee"
+        ? await calculateEmployeeSeasonSale({
+            seasonId,
+            productId: groupedRow.productId,
+            targetProfileId: groupedRow.targetId,
+            quantity: groupedRow.quantity
+          })
+        : await calculateStoreSeasonSale({
+            seasonId,
+            productId: groupedRow.productId,
+            targetStoreId: groupedRow.targetId,
+            quantity: groupedRow.quantity
+          });
+
+    payloads.push(
+      season!.mode === "employee"
+        ? {
+            season_id: seasonId,
+            product_id: sale.productId,
+            product_name: sale.productName,
+            entry_date: entryDate,
+            target_profile_id: groupedRow.targetId,
+            target_store_id: null,
+            quantity: groupedRow.quantity,
+            raw_score: sale.rawScore,
+            score: sale.weightedScore,
+            note: "Google Sheet'ten aktarıldı"
+          }
+        : {
+            season_id: seasonId,
+            product_id: sale.productId,
+            product_name: sale.productName,
+            entry_date: entryDate,
+            target_profile_id: null,
+            target_store_id: groupedRow.targetId,
+            quantity: groupedRow.quantity,
+            raw_score: sale.rawScore,
+            score: sale.weightedScore,
+            note: "Google Sheet'ten aktarıldı"
+          }
+    );
+  }
+
+  if (payloads.length > 0) {
+    const { error: insertError } = await supabase.from("season_sales_entries").insert(payloads);
+
+    if (insertError) {
+      redirectWithMessage(`Google Sheet verisi kaydedilemedi: ${insertError.message}`, "error", redirectTo, {
+        seasonId,
+        entryMonth: monthKey
+      });
+    }
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/lig");
+
+  const detailParts = [
+    `${relevantRows.length} satir okundu`,
+    `${payloads.length} kayit yazildi`
+  ];
+
+  if (skippedMissingProfile > 0) {
+    detailParts.push(`${skippedMissingProfile} profil atlandi`);
+  }
+  if (skippedMissingStore > 0) {
+    detailParts.push(`${skippedMissingStore} magaza eslesmedi`);
+  }
+  if (skippedMissingProduct > 0) {
+    detailParts.push(`${skippedMissingProduct} urun eslesmedi`);
+  }
+
+  redirectWithMessage(`Google Sheet verisi guncellendi. ${detailParts.join(", ")}.`, "success", redirectTo, {
+    seasonId,
+    entryMonth: monthKey
+  });
 }
 
 export async function updateStoreAction(formData: FormData) {

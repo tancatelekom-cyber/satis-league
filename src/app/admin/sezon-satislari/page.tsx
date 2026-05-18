@@ -1,5 +1,6 @@
 import {
   deleteSeasonSaleAction,
+  importSeasonSalesFromSheetAction,
   saveSeasonTableAction,
   updateSeasonSaleAction
 } from "@/app/admin/actions";
@@ -144,6 +145,20 @@ export default async function SeasonSalesPage({ searchParams }: SeasonSalesPageP
                       ))}
                     </div>
                   ) : null}
+
+                  <form action={importSeasonSalesFromSheetAction} className="admin-form">
+                    <input name="redirectTo" type="hidden" value="/admin/sezon-satislari" />
+                    <input name="seasonId" type="hidden" value={data.activeSeason?.id ?? ""} />
+                    <input name="entryMonth" type="hidden" value={data.entryMonth} />
+                    <div className="message-box success-box">
+                      Google Sheet'ten Veri Cek butonu, sadece secili sezon ve secili ay icin kayitlari gunceller.
+                    </div>
+                    <div className="auth-actions">
+                      <button className="tiny-button approve" type="submit">
+                        Google Sheet&apos;ten Veri Cek
+                      </button>
+                    </div>
+                  </form>
 
                   <form action={saveSeasonTableAction} className="season-entry-row-form">
                     <input name="redirectTo" type="hidden" value="/admin/sezon-satislari" />

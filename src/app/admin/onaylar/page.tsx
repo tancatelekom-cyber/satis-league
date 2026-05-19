@@ -25,6 +25,7 @@ function formatLastLogin(value: string | null) {
   }
 
   return new Intl.DateTimeFormat("tr-TR", {
+    timeZone: "Europe/Istanbul",
     dateStyle: "short",
     timeStyle: "short"
   }).format(date);

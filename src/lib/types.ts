@@ -86,6 +86,7 @@ export type AdminPendingProfile = {
   role: UserRole;
   approval: "pending" | "approved" | "rejected";
   created_at: string;
+  last_sign_in_at: string | null;
   store: {
     name: string;
   } | null;
@@ -99,6 +100,7 @@ export type AdminManagedProfile = {
   role: UserRole;
   approval: "pending" | "approved" | "rejected";
   created_at: string;
+  last_sign_in_at: string | null;
   is_on_leave: boolean;
   store: {
     name: string;

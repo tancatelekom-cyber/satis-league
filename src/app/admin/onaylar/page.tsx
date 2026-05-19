@@ -13,6 +13,23 @@ type ApprovalAdminPageProps = {
   }>;
 };
 
+function formatLastLogin(value: string | null) {
+  if (!value) {
+    return "Hic giris yapmadi";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Bilinmiyor";
+  }
+
+  return new Intl.DateTimeFormat("tr-TR", {
+    dateStyle: "short",
+    timeStyle: "short"
+  }).format(date);
+}
+
 export default async function ApprovalAdminPage({ searchParams }: ApprovalAdminPageProps) {
   const params = searchParams ? await searchParams : undefined;
 
@@ -59,6 +76,7 @@ export default async function ApprovalAdminPage({ searchParams }: ApprovalAdminP
                     <p className="subtle">
                       Rol: {roleLabels[approval.role]} | Mail: {approval.email}
                     </p>
+                    <p className="subtle">Son giris: {formatLastLogin(approval.last_sign_in_at)}</p>
                   </div>
 
                   <div className="action-row">
@@ -109,6 +127,7 @@ export default async function ApprovalAdminPage({ searchParams }: ApprovalAdminP
                       Durum: {profile.approval === "approved" ? "Aktif" : "Pasif"}
                       {profile.is_on_leave ? " | Izinli" : ""}
                     </p>
+                    <p className="subtle">Son giris: {formatLastLogin(profile.last_sign_in_at)}</p>
                   </div>
 
                   <div className="action-row">

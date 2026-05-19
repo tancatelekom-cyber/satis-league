@@ -86,7 +86,40 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
   const saleCategory = String(params.saleCategory ?? "").trim();
   const supabase = createAdminClient();
 
-  const [{ data: stores }, { data: pendingProfiles }, { data: managedProfiles }, { data: campaigns }, { data: seasons }] =
+  const loadAllAuthUsers = async () => {
+    const users: Array<{ id: string; last_sign_in_at?: string | null }> = [];
+    let page = 1;
+    const perPage = 1000;
+
+    while (true) {
+      const { data, error } = await supabase.auth.admin.listUsers({ page, perPage });
+
+      if (error) {
+        console.error("Auth users could not be loaded for admin dashboard", error);
+        break;
+      }
+
+      const batch = data?.users ?? [];
+      users.push(...batch);
+
+      if (batch.length < perPage) {
+        break;
+      }
+
+      page += 1;
+    }
+
+    return users;
+  };
+
+  const [
+    { data: stores },
+    { data: pendingProfiles },
+    { data: managedProfiles },
+    { data: campaigns },
+    { data: seasons },
+    authUsers
+  ] =
     await Promise.all([
       supabase.from("stores").select("id, name, city, base_multiplier, is_active").order("name"),
       supabase
@@ -136,11 +169,22 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
           "id, name, description, start_date, end_date, mode, scoring, season_products, reward_title, reward_details, reward_first, reward_second, reward_third, is_active, created_at"
         )
         .order("start_date", { ascending: false })
+      ,
+      loadAllAuthUsers()
     ]);
 
   const storeRows = (stores as AdminStore[] | null) ?? [];
-  const approvalRows = (pendingProfiles as AdminPendingProfile[] | null) ?? [];
-  const managedProfileRows = (managedProfiles as AdminManagedProfile[] | null) ?? [];
+  const authUserLastLoginMap = new Map(
+    authUsers.map((user) => [user.id, user.last_sign_in_at ?? null] as const)
+  );
+  const approvalRows = (((pendingProfiles as AdminPendingProfile[] | null) ?? []).map((profile) => ({
+    ...profile,
+    last_sign_in_at: authUserLastLoginMap.get(profile.id) ?? null
+  })));
+  const managedProfileRows = (((managedProfiles as AdminManagedProfile[] | null) ?? []).map((profile) => ({
+    ...profile,
+    last_sign_in_at: authUserLastLoginMap.get(profile.id) ?? null
+  })));
   const campaignRows = (campaigns as AdminCampaign[] | null) ?? [];
   const seasonRows = (seasons as AdminSeason[] | null) ?? [];
   const campaignIds = campaignRows.map((campaign) => campaign.id);

@@ -1598,6 +1598,72 @@ export async function generateAndSendPasswordAction(formData: FormData) {
   redirectWithMessage("Yeni sifre uretildi ve kullanicinin mail adresine gonderildi.", "success", redirectTo);
 }
 
+export async function setManagedProfilePasswordAction(formData: FormData) {
+  await requireAdminAccess();
+  const redirectTo = getRedirectTo(formData);
+  const supabase = createAdminClient();
+  const profileId = String(formData.get("profileId") ?? "");
+  const password = String(formData.get("newPassword") ?? "").trim();
+  const shouldSendEmail = String(formData.get("sendEmail") ?? "") === "on";
+
+  if (!profileId) {
+    redirectWithMessage("Sifresi degistirilecek kullanici bulunamadi.", "error", redirectTo);
+  }
+
+  if (password.length < 8) {
+    redirectWithMessage("Yeni sifre en az 8 karakter olmali.", "error", redirectTo);
+  }
+
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("id, full_name, email")
+    .eq("id", profileId)
+    .single();
+
+  if (profileError || !profile?.email) {
+    redirectWithMessage(`Kullanici maili okunamadi: ${profileError?.message ?? "mail yok"}`, "error", redirectTo);
+  }
+
+  const safeProfile = profile as { email: string; full_name: string };
+  const { error: authError } = await supabase.auth.admin.updateUserById(profileId, {
+    password
+  });
+
+  if (authError) {
+    redirectWithMessage(`Sifre degistirilemedi: ${authError.message}`, "error", redirectTo);
+  }
+
+  if (shouldSendEmail) {
+    if (!isPasswordEmailConfigured()) {
+      redirectWithMessage(
+        "Sifre degisti fakat mail gonderilemedi: RESEND_API_KEY ortam degiskeni tanimli olmali.",
+        "error",
+        redirectTo
+      );
+    }
+
+    try {
+      await sendGeneratedPasswordEmail({
+        to: safeProfile.email,
+        fullName: safeProfile.full_name,
+        password
+      });
+    } catch (error) {
+      redirectWithMessage(
+        `Sifre degisti fakat mail gonderilemedi: ${error instanceof Error ? error.message : "bilinmeyen hata"}`,
+        "error",
+        redirectTo
+      );
+    }
+  }
+
+  redirectWithMessage(
+    shouldSendEmail ? "Yeni sifre kaydedildi ve kullanicinin mail adresine gonderildi." : "Yeni sifre kaydedildi.",
+    "success",
+    redirectTo
+  );
+}
+
 export async function createCampaignAction(formData: FormData) {
   await requireAdminAccess();
   const redirectTo = getRedirectTo(formData);

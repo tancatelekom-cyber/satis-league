@@ -1,4 +1,8 @@
-import { generateAndSendPasswordAction, updateManagedProfileAction } from "@/app/admin/actions";
+import {
+  generateAndSendPasswordAction,
+  setManagedProfilePasswordAction,
+  updateManagedProfileAction
+} from "@/app/admin/actions";
 import { AdminSectionNav } from "@/components/admin/admin-section-nav";
 import { AdminSetupNotice } from "@/components/admin/admin-setup-notice";
 import { requireAdminAccess } from "@/lib/auth/require-admin";
@@ -127,6 +131,22 @@ export default async function ApprovalAdminPage({ searchParams }: ApprovalAdminP
         <input name="profileId" type="hidden" value={profile.id} />
         <button className="tiny-button" type="submit">
           Yeni Sifre Uret ve Gonder
+        </button>
+      </form>
+
+      <form action={setManagedProfilePasswordAction} className="user-manual-password-form">
+        <input name="redirectTo" type="hidden" value="/admin/onaylar" />
+        <input name="profileId" type="hidden" value={profile.id} />
+        <label className="field">
+          <span>Yeni Sifre Belirle</span>
+          <input name="newPassword" type="text" minLength={8} placeholder="En az 8 karakter" required />
+        </label>
+        <label className="checkbox-card user-management-check">
+          <input name="sendEmail" type="checkbox" defaultChecked />
+          <span>Yeni sifreyi mail ile gonder</span>
+        </label>
+        <button className="tiny-button approve" type="submit">
+          Sifreyi Degistir
         </button>
       </form>
     </article>

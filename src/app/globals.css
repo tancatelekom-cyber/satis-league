@@ -2471,6 +2471,15 @@ textarea::placeholder {
   justify-content: flex-end;
 }
 
+.user-manual-password-form {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(190px, auto) auto;
+  gap: 12px;
+  align-items: end;
+  padding-top: 12px;
+  border-top: 1px solid rgba(4, 92, 96, 0.12);
+}
+
 .product-meta,
 .subtle {
   color: var(--muted);
@@ -4640,6 +4649,7 @@ textarea::placeholder {
 
   .repeater-row,
   .user-management-grid,
+  .user-manual-password-form,
   .store-edit-form {
     display: grid;
     grid-template-columns: 1fr;

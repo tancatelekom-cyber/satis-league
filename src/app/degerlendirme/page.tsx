@@ -171,8 +171,17 @@ function buildCompanyCategoryMetrics(rows: GoalStoreRow[], workedDays: number, t
     });
 }
 
-function pickTop(metrics: Metric[]) {
-  return [...metrics].sort((a, b) => (b.projectedPercent ?? b.actual) - (a.projectedPercent ?? a.actual)).slice(0, 3);
+function pickStrong(metrics: Metric[]) {
+  return metrics
+    .filter((metric) => {
+      if (!metric.hasTarget) {
+        return metric.actual > 0;
+      }
+
+      return (metric.projectedPercent ?? metric.actualPercent ?? 0) >= 100;
+    })
+    .sort((a, b) => (b.projectedPercent ?? b.actual) - (a.projectedPercent ?? a.actual))
+    .slice(0, 3);
 }
 
 function pickCritical(metrics: Metric[]) {
@@ -231,7 +240,7 @@ function buildCoachingText(args: {
   storeAverageNotes: string[];
   employeeAverageNotes: AverageNote[];
 }) {
-  const top = pickTop(args.metrics);
+  const strong = pickStrong(args.metrics);
   const critical = pickCritical(args.metrics);
   const actualOnly = args.metrics.filter((metric) => !metric.hasTarget).slice(0, 3);
   const dailyNeeded = (metric: Metric) =>
@@ -253,13 +262,16 @@ function buildCoachingText(args: {
     `Donem: ${formatNumber(args.workedDays)} gun tamamlandi, ${formatNumber(args.remainingDays)} gun kaldi.`,
     "",
     "Guclu taraflarin:",
-    ...(top.length
-      ? top.map((metric) => {
+    ...(strong.length
+      ? strong.map((metric) => {
           const pace = dailyCurrentPace(metric);
-          const percentText = metric.hasTarget ? ` ve ay sonu ${formatPercent(metric.projectedPercent)} seviyesine tasir` : "";
-          return `- ${metric.title}: su an ${formatNumber(metric.actual)} gerceklesen var. Bu tempo gunluk ortalama ${formatNumber(pace)} uretim demek${percentText}. Burada tempoyu dusurmeden devam etmelisin.`;
+          if (metric.hasTarget) {
+            return `- ${metric.title}: bu kalemde hedef temposu yakalaniyor. Su an ${formatNumber(metric.actual)} gerceklesen var; mevcut tempo ay sonu ${formatPercent(metric.projectedPercent)} seviyesine tasir. Gunluk ortalama ${formatNumber(pace)} uretimi korumalısin.`;
+          }
+
+          return `- ${metric.title}: hedef tanimi yok ama ${formatNumber(metric.actual)} gerceklesen var. Bu kalemi guclu takip kalemi olarak koruyalim.`;
         })
-      : ["- Henuz one cikan kategori netlesmemis. Burada ilk hedef, gunluk duzenli takip aliskanligini kurmak."]),
+      : ["- Hedefe giden guclu bir hedefli kalem henuz netlesmemis. Bu yuzden odağı hedef acigi olan kalemlere cevirmeliyiz."]),
     "",
     "Gelistirmemiz gereken alanlar:",
     ...(critical.length

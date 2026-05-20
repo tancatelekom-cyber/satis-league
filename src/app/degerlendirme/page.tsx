@@ -178,6 +178,19 @@ function isProductionPoint(title: string) {
   return normalizeCategoryKey(title).includes("URETIM PUAN");
 }
 
+function isSatisfactionScore(title: string) {
+  return normalizeCategoryKey(title).includes("MEMNUNIYET");
+}
+
+function isPinRatio(title: string) {
+  const key = normalizeCategoryKey(title);
+  return key.includes("PIN") && key.includes("ORAN");
+}
+
+function isQualityLimitMetric(title: string) {
+  return isSatisfactionScore(title) || isPinRatio(title);
+}
+
 function isEvaluationHiddenMetric(title: string) {
   return isEntryCount(title);
 }
@@ -223,10 +236,10 @@ function pickStrong(metrics: Metric[]) {
       }
 
       if (!metric.hasTarget) {
-        return metric.actual > 0 && !isProductionComponent(metric.title) && !isEntryCount(metric.title);
+        return metric.actual > 0 && !isProductionComponent(metric.title) && !isEntryCount(metric.title) && !isQualityLimitMetric(metric.title);
       }
 
-      return !isEntryCount(metric.title) && (metric.projectedPercent ?? metric.actualPercent ?? 0) >= 100;
+      return !isEntryCount(metric.title) && !isQualityLimitMetric(metric.title) && (metric.projectedPercent ?? metric.actualPercent ?? 0) >= 100;
     })
     .sort((a, b) => (b.projectedPercent ?? b.actual) - (a.projectedPercent ?? a.actual))
     .slice(0, 3);
@@ -234,7 +247,7 @@ function pickStrong(metrics: Metric[]) {
 
 function pickCritical(metrics: Metric[]) {
   return metrics
-    .filter((metric) => metric.hasTarget && (metric.projectedPercent ?? metric.actualPercent ?? 0) < 100)
+    .filter((metric) => metric.hasTarget && !isQualityLimitMetric(metric.title) && (metric.projectedPercent ?? metric.actualPercent ?? 0) < 100)
     .sort((a, b) => (a.projectedPercent ?? a.actualPercent ?? 0) - (b.projectedPercent ?? b.actualPercent ?? 0))
     .slice(0, 4);
 }
@@ -372,6 +385,44 @@ function buildProductionPointDevelopmentLines(metrics: Metric[], remainingDays: 
   ];
 }
 
+function buildQualityLimitNotes(metrics: Metric[], view: ViewMode) {
+  if (view === "employee") {
+    return [];
+  }
+
+  const notes: string[] = [];
+  const satisfactionMetric = metrics.find((metric) => isSatisfactionScore(metric.title));
+  const pinMetric = metrics.find((metric) => isPinRatio(metric.title));
+
+  if (satisfactionMetric && satisfactionMetric.actual > 0) {
+    if (satisfactionMetric.actual < 4.4) {
+      notes.push(
+        `- Memnuniyet skoru ${formatNumber(satisfactionMetric.actual)}. Alt limit 4,40 oldugu icin karsilama, ihtiyac analizi ve islem sonrasi teyit gunluk takip edilmeli.`
+      );
+    } else if (satisfactionMetric.actual < 4.5) {
+      notes.push(
+        `- Memnuniyet skoru ${formatNumber(satisfactionMetric.actual)} ile alt limite yakin. Dusus yasamamak icin musteri deneyimi her gun kontrol edilmeli.`
+      );
+    }
+  }
+
+  if (pinMetric && pinMetric.actual > 0) {
+    const pinPercent = pinMetric.actual <= 1 ? pinMetric.actual * 100 : pinMetric.actual;
+
+    if (pinPercent <= 70) {
+      notes.push(
+        `- PIN orani ${formatPercent(pinPercent)}. %70 sinirinda veya altinda oldugu icin PIN kullanim adimlari ekipte tekrar hatirlatilmali.`
+      );
+    } else if (pinPercent <= 75) {
+      notes.push(
+        `- PIN orani ${formatPercent(pinPercent)} ile alt limite yakin. Bu oranin dusmemesi icin PIN kullanim takibi siklastirilmali.`
+      );
+    }
+  }
+
+  return notes;
+}
+
 function buildCoachingText(args: {
   title: string;
   view: ViewMode;
@@ -385,7 +436,14 @@ function buildCoachingText(args: {
   const strong = pickStrong(args.metrics);
   const critical = pickCritical(args.metrics).filter((metric) => !isEvaluationHiddenMetric(metric.title));
   const actualOnly = args.metrics
-    .filter((metric) => !metric.hasTarget && !isProductionComponent(metric.title) && !isProductionPoint(metric.title) && !isEvaluationHiddenMetric(metric.title))
+    .filter(
+      (metric) =>
+        !metric.hasTarget &&
+        !isProductionComponent(metric.title) &&
+        !isProductionPoint(metric.title) &&
+        !isEvaluationHiddenMetric(metric.title) &&
+        !isQualityLimitMetric(metric.title)
+    )
     .slice(0, 3);
   const productionChannelNotes = args.view === "employee" ? buildProductionChannelNotes(args.metrics) : [];
   const entryConversionNotes = args.view === "employee" ? buildEntryConversionNotes(args.metrics) : [];
@@ -413,14 +471,27 @@ function buildCoachingText(args: {
         ...args.storeAverageNotes.map((note) => `- ${note} Bu kalem icin magaza icinde gunluk takip ve ekip yonlendirmesi artirilmali.`)
       ]
     : [];
-  const titleLine = "TANCA+ AI analizidir.";
+  const qualityLimitNotes = buildQualityLimitNotes(args.metrics, args.view);
+  const qualityLimitSection = qualityLimitNotes.length ? ["", "Alt limit uyarilari:", ...qualityLimitNotes] : [];
+  const averageFocusSection =
+    args.view === "employee"
+      ? [
+          "",
+          "Ortalama karsilastirmasina gore odak alanlari:",
+          ...(args.employeeAverageNotes.length
+            ? args.employeeAverageNotes.map(
+                (note) =>
+                  `- ${note.title}: bu kalemde ekip ortalamasi ${formatNumber(note.average)}, sende ${formatNumber(note.actual)}. Ortalama farki ${formatNumber(note.gap)}. Kalan gunlerde bu kalemi her gun kontrol edip farki kademeli kapatmaya odaklanalim.`
+              )
+            : ["- Ortalama altinda belirgin bir kalem gorunmuyor. Bu durumda yuksek hacimli kalemlerde tempoyu korumak oncelik."])
+        ]
+      : [];
   const opening =
     args.view === "employee"
       ? `Merhaba ${args.title}, bu notu performansini birlikte netlestirmek ve kalan gunlerde nereye odaklanacagimizi sadece belirlemek icin hazirladim.`
       : `Bu not, secili alanin kalan gunlerde daha net yonetilebilmesi icin hazirlandi.`;
 
   const lines = [
-    titleLine,
     opening,
     `Donem: ${formatNumber(args.workedDays)} gun tamamlandi, ${formatNumber(args.remainingDays)} gun kaldi.`,
     "",
@@ -440,16 +511,8 @@ function buildCoachingText(args: {
     ...(developmentLines.length
       ? developmentLines
       : ["- Hedefli kalemlerde su an belirgin risk yok. Bu iyi bir alan; ayni disiplini koruyalim."]),
-    "",
-    "Ortalama karsilastirmasina gore odak alanlari:",
-    ...(args.view === "employee" && args.employeeAverageNotes.length
-      ? args.employeeAverageNotes.map(
-          (note) =>
-            `- ${note.title}: bu kalemde ekip ortalamasi ${formatNumber(note.average)}, sende ${formatNumber(note.actual)}. Ortalama farki ${formatNumber(note.gap)}. Kalan gunlerde bu kalemi her gun kontrol edip farki kademeli kapatmaya odaklanalim.`
-        )
-      : args.view === "employee"
-        ? ["- Ortalama altinda belirgin bir kalem gorunmuyor. Bu durumda yuksek hacimli kalemlerde tempoyu korumak oncelik."]
-        : ["- Bu alan sadece calisan seciminde kisi bazli ortalama karsilastirmasi verir."]),
+    ...averageFocusSection,
+    ...qualityLimitSection,
     "",
     "Kalan gunler icin net aksiyon:",
     ...(dailyTargetLines.length
@@ -694,16 +757,26 @@ export default async function EvaluationPage({ searchParams }: EvaluationPagePro
               <article className="evaluation-card">
                 <h2>Kategori Kartlari</h2>
                 <div className="evaluation-metric-list">
-                  {visibleMetrics.map((metric) => (
-                    <div key={metric.title} className="evaluation-metric-card">
-                      <strong>{metric.title}</strong>
-                      <div className="evaluation-metric-values">
-                        <span>Gerceklesen {formatNumber(metric.actual)}</span>
-                        <span>Ay Sonu {formatNumber(metric.projected)}</span>
-                        {metric.hasTarget ? <b>{formatPercent(metric.projectedPercent)} ay sonu</b> : <b>Hedefsiz takip</b>}
+                  {visibleMetrics.map((metric) => {
+                    const isQualityMetric = isQualityLimitMetric(metric.title);
+
+                    return (
+                      <div key={metric.title} className="evaluation-metric-card">
+                        <strong>{metric.title}</strong>
+                        <div className="evaluation-metric-values">
+                          <span>Gerceklesen {formatNumber(metric.actual)}</span>
+                          {isQualityMetric ? (
+                            <b>{isSatisfactionScore(metric.title) ? "Alt limit 4,40" : "Alt limit %70"}</b>
+                          ) : (
+                            <>
+                              <span>Ay Sonu {formatNumber(metric.projected)}</span>
+                              {metric.hasTarget ? <b>{formatPercent(metric.projectedPercent)} ay sonu</b> : <b>Hedefsiz takip</b>}
+                            </>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </article>
             </section>

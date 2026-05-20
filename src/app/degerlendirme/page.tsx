@@ -32,6 +32,13 @@ type Metric = {
   showProjection: boolean;
 };
 
+type AverageNote = {
+  title: string;
+  actual: number;
+  average: number;
+  gap: number;
+};
+
 type ViewMode = "employee" | "store" | "company";
 
 export const dynamic = "force-dynamic";
@@ -188,6 +195,32 @@ function buildStoreAverageNotes(storeMetrics: Metric[], allStoreRows: GoalStoreR
   return notes.slice(0, 4);
 }
 
+function buildEmployeeAverageNotes(employeeMetrics: Metric[], allEmployeeRows: GoalActualRow[]) {
+  const notes: AverageNote[] = [];
+
+  employeeMetrics.forEach((metric) => {
+    const employeeTotals = new Map<string, number>();
+    allEmployeeRows
+      .filter((row) => row.mainCategory === metric.title)
+      .forEach((row) => {
+        employeeTotals.set(row.employeeName, (employeeTotals.get(row.employeeName) ?? 0) + row.actual);
+      });
+
+    const categoryAverage = average(Array.from(employeeTotals.values()).filter((value) => value > 0));
+
+    if (categoryAverage > 0 && metric.actual < categoryAverage) {
+      notes.push({
+        title: metric.title,
+        actual: metric.actual,
+        average: categoryAverage,
+        gap: categoryAverage - metric.actual
+      });
+    }
+  });
+
+  return notes.sort((a, b) => b.gap - a.gap).slice(0, 5);
+}
+
 function buildCoachingText(args: {
   title: string;
   view: ViewMode;
@@ -196,40 +229,70 @@ function buildCoachingText(args: {
   remainingDays: number;
   totalDays: number;
   storeAverageNotes: string[];
+  employeeAverageNotes: AverageNote[];
 }) {
   const top = pickTop(args.metrics);
   const critical = pickCritical(args.metrics);
   const actualOnly = args.metrics.filter((metric) => !metric.hasTarget).slice(0, 3);
+  const dailyTargetLines = critical.slice(0, 4).map((metric) => {
+    const needed = args.remainingDays > 0 && metric.remaining !== null ? Math.ceil(metric.remaining / args.remainingDays) : metric.remaining ?? 0;
+    return `- ${metric.title}: kalan ${formatNumber(metric.remaining)} icin kalan gunlerde ortalama gunluk ${formatNumber(needed)} ek katki gerekir.`;
+  });
+  const titleLine = args.view === "employee" ? `${args.title} icin kocluk notu` : `${args.title} icin ekip kocluk notu`;
+  const opening =
+    args.view === "employee"
+      ? `Merhaba ${args.title}, bu notu performansini birlikte netlestirmek ve kalan gunlerde nereye odaklanacagimizi sadece belirlemek icin hazirladim.`
+      : `Bu not, secili alanin kalan gunlerde daha net yonetilebilmesi icin hazirlandi.`;
 
   const lines = [
-    `Degerlendirme: ${args.title}`,
-    `Donem bilgisi: ${formatNumber(args.workedDays)} gun calisildi, ${formatNumber(args.remainingDays)} gun kaldi, toplam ${formatNumber(args.totalDays)} gun.`,
+    titleLine,
+    opening,
+    `Donem: ${formatNumber(args.workedDays)} gun tamamlandi, ${formatNumber(args.remainingDays)} gun kaldi.`,
     "",
-    "Guclu yonler:",
+    "Guclu taraflarin:",
     ...(top.length
-      ? top.map((metric) => `- ${metric.title}: ${formatNumber(metric.actual)} gerceklesen, ay sonu ${formatNumber(metric.projected)}.`)
-      : ["- Henuz one cikan kategori yok."]),
+      ? top.map((metric) => `- ${metric.title} tarafinda ${formatNumber(metric.actual)} gerceklesen var. Bu tempo korunursa ay sonu ${formatNumber(metric.projected)} seviyesine gidiyor.`)
+      : ["- Henuz one cikan kategori netlesmemis. Burada ilk hedef, gunluk duzenli takip aliskanligini kurmak."]),
     "",
-    "Gelistirilmesi gereken alanlar:",
+    "Gelistirmemiz gereken alanlar:",
     ...(critical.length
       ? critical.map(
           (metric) =>
-            `- ${metric.title}: ${formatPercent(metric.projectedPercent ?? metric.actualPercent)} seviyesinde. Kalan ${formatNumber(metric.remaining)}.`
+            `- ${metric.title}: ay sonu ongorusu ${formatPercent(metric.projectedPercent ?? metric.actualPercent)}. Hedefe yaklasmak icin kalan ${formatNumber(metric.remaining)} kapanmali.`
         )
-      : ["- Hedefli kalemlerde kritik risk gorunmuyor."]),
+      : ["- Hedefli kalemlerde su an belirgin risk yok. Bu iyi bir alan; ayni disiplini koruyalim."]),
     "",
-    "Odak onerisi:",
-    ...(critical.length
-      ? critical.map((metric) => `- ${metric.title} icin gunluk takip siklastirilmali.`)
-      : ["- Mevcut tempoyu koruyup yuksek hacimli kalemlerde sureklilik saglanmali."]),
+    "Ortalama karsilastirmasina gore odak alanlari:",
+    ...(args.view === "employee" && args.employeeAverageNotes.length
+      ? args.employeeAverageNotes.map(
+          (note) =>
+            `- ${note.title}: bu kalemde ekip ortalamasi ${formatNumber(note.average)}, sende ${formatNumber(note.actual)}. Burada gunluk kucuk eklemelerle farki kapatmaya odaklanalim.`
+        )
+      : args.view === "employee"
+        ? ["- Ortalama altinda belirgin bir kalem gorunmuyor. Bu durumda yuksek hacimli kalemlerde tempoyu korumak oncelik."]
+        : ["- Bu alan sadece calisan seciminde kisi bazli ortalama karsilastirmasi verir."]),
+    "",
+    "Kalan gunler icin net aksiyon:",
+    ...(dailyTargetLines.length
+      ? dailyTargetLines
+      : ["- Her gun en az bir ana kalemi kontrol edip, dusuk kalan kalemlerde satis gorusmesini ozellikle one alalim."]),
+    "- Gun sonunda sadece toplam rakama degil, hangi kalemin eksik kaldigina bakalim.",
+    "- Bir sonraki gunde en dusuk kalan kalemi ilk aksiyon olarak takip edelim.",
     "",
     "Firma / ortalama kritikleri:",
-    ...(args.storeAverageNotes.length ? args.storeAverageNotes.map((note) => `- ${note}`) : ["- Bu secimde firma ortalamasi altinda belirgin kritik yok."]),
+    ...(args.storeAverageNotes.length
+      ? args.storeAverageNotes.map((note) => `- ${note} Bu kalem icin magaza icinde gunluk takip ve ekip yonlendirmesi artirilmali.`)
+      : ["- Bu secimde firma ortalamasi altinda belirgin kritik yok."]),
     "",
     "Hedefsiz takip edilen kalemler:",
     ...(actualOnly.length
-      ? actualOnly.map((metric) => `- ${metric.title}: ${formatNumber(metric.actual)} gerceklesen, ay sonu ${formatNumber(metric.projected)}.`)
-      : ["- Hedefsiz takip edilen oncelikli kalem yok."])
+      ? actualOnly.map((metric) => `- ${metric.title}: ${formatNumber(metric.actual)} gerceklesen var, ay sonu ${formatNumber(metric.projected)} bekleniyor. Hedefsiz olsa bile trendi takip edelim.`)
+      : ["- Hedefsiz takip edilen oncelikli kalem yok."]),
+    "",
+    "Mudur notu:",
+    args.view === "employee"
+      ? "Bu tabloyu bir yargi olarak degil, kalan gunlerde nereden daha hizli sonuc alabilecegimizi gosteren yol haritasi olarak kullanalim."
+      : "Bu raporu ekip dagilimini netlestirmek ve sorumluluk alanlarinda daha dogru yonlendirme yapmak icin kullanalim."
   ];
 
   return lines.join("\n");
@@ -323,6 +386,7 @@ export default async function EvaluationPage({ searchParams }: EvaluationPagePro
   const visibleMetrics = activeCategory ? currentMetrics.filter((metric) => metric.title === activeCategory) : currentMetrics;
   const selectedTitle = view === "company" ? "Firma" : view === "store" ? activeStore : activeEmployee;
   const storeAverageNotes = view === "store" ? buildStoreAverageNotes(visibleMetrics, storeRows) : [];
+  const employeeAverageNotes = view === "employee" ? buildEmployeeAverageNotes(visibleMetrics, employeeRows) : [];
   const coachingText = buildCoachingText({
     title: selectedTitle,
     view,
@@ -330,7 +394,8 @@ export default async function EvaluationPage({ searchParams }: EvaluationPagePro
     workedDays: dayStats.workedDays,
     remainingDays: dayStats.remainingDays,
     totalDays: dayStats.totalDays,
-    storeAverageNotes
+    storeAverageNotes,
+    employeeAverageNotes
   });
 
   const employeeOptions = employeeNames.map((name) => ({ label: name, value: buildHref("employee", name, activeCategory) }));

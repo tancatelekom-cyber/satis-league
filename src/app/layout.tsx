@@ -33,7 +33,7 @@ export default async function RootLayout({
       isAdmin = profile?.role === "admin" && profile?.approval === "approved";
       canEvaluate =
         profile?.approval === "approved" &&
-        (profile.role === "admin" || profile.role === "management" || profile.role === "manager");
+        (profile.role === "admin" || profile.role === "management" || profile.role === "manager" || profile.role === "employee");
     }
   } catch {
     isAdmin = false;

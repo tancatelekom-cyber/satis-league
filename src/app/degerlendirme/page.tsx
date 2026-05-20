@@ -51,6 +51,10 @@ const EMPTY_DAYS = {
 };
 
 function canOpenEvaluation(role: UserRole | string | null | undefined) {
+  return role === "admin" || role === "management" || role === "manager" || role === "employee";
+}
+
+function canOpenStore(role: UserRole | string | null | undefined) {
   return role === "admin" || role === "management" || role === "manager";
 }
 
@@ -625,11 +629,11 @@ export default async function EvaluationPage({ searchParams }: EvaluationPagePro
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("approval, role, store:stores(name)")
+    .select("approval, role, full_name, store:stores(name)")
     .eq("id", user.id)
     .single();
 
-  const safeProfile = profile as { approval?: string; role?: UserRole; store?: { name: string } | null } | null;
+  const safeProfile = profile as { approval?: string; role?: UserRole; full_name?: string | null; store?: { name: string } | null } | null;
   if (!safeProfile || safeProfile.approval !== "approved" || !canOpenEvaluation(safeProfile.role)) {
     redirect("/");
   }
@@ -637,7 +641,7 @@ export default async function EvaluationPage({ searchParams }: EvaluationPagePro
   const view: ViewMode =
     requestedView === "company" && canOpenCompany(safeProfile.role)
       ? "company"
-      : requestedView === "store"
+      : requestedView === "store" && canOpenStore(safeProfile.role)
         ? "store"
         : "employee";
 
@@ -656,10 +660,14 @@ export default async function EvaluationPage({ searchParams }: EvaluationPagePro
   const employeeNames = Array.from(new Set(employeeRows.map((row) => row.employeeName).filter(Boolean))).sort((a, b) =>
     a.localeCompare(b, "tr")
   );
+  const visibleEmployeeNames =
+    safeProfile.role === "employee" && safeProfile.full_name
+      ? employeeNames.filter((name) => normalizeCategoryKey(name) === normalizeCategoryKey(safeProfile.full_name ?? ""))
+      : employeeNames;
   const allStoreNames = Array.from(new Set(storeRows.map((row) => row.storeCode).filter(Boolean))).sort((a, b) => a.localeCompare(b, "tr"));
   const storeNames = safeProfile.role === "manager" && ownStoreName ? allStoreNames.filter((name) => name === ownStoreName) : allStoreNames;
 
-  const activeEmployee = employeeNames.includes(requestedTarget) ? requestedTarget : employeeNames[0] ?? "";
+  const activeEmployee = visibleEmployeeNames.includes(requestedTarget) ? requestedTarget : visibleEmployeeNames[0] ?? "";
   const activeStore = storeNames.includes(requestedTarget) ? requestedTarget : storeNames[0] ?? "";
 
   const employeeTargetRows = employeeRows.filter((row) => row.employeeName === activeEmployee);
@@ -691,7 +699,7 @@ export default async function EvaluationPage({ searchParams }: EvaluationPagePro
     allEmployeeRows: employeeRows
   });
 
-  const employeeOptions = employeeNames.map((name) => ({ label: name, value: buildHref("employee", name, activeCategory) }));
+  const employeeOptions = visibleEmployeeNames.map((name) => ({ label: name, value: buildHref("employee", name, activeCategory) }));
   const storeOptions = storeNames.map((name) => ({ label: name, value: buildHref("store", name, activeCategory) }));
   const categoryOptions = [
     { label: "Tum Kategoriler", value: buildHref(view, view === "company" ? "" : selectedTitle) },
@@ -724,9 +732,11 @@ export default async function EvaluationPage({ searchParams }: EvaluationPagePro
           <a className={`goal-tab ${view === "employee" ? "goal-tab-active" : ""}`} href={buildHref("employee", activeEmployee)}>
             Calisan
           </a>
-          <a className={`goal-tab ${view === "store" ? "goal-tab-active" : ""}`} href={buildHref("store", activeStore)}>
-            Magaza
-          </a>
+          {canOpenStore(safeProfile.role) ? (
+            <a className={`goal-tab ${view === "store" ? "goal-tab-active" : ""}`} href={buildHref("store", activeStore)}>
+              Magaza
+            </a>
+          ) : null}
           {canOpenCompany(safeProfile.role) ? (
             <a className={`goal-tab ${view === "company" ? "goal-tab-active" : ""}`} href={buildHref("company")}>
               Firma

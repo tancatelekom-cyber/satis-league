@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { redirect } from "next/navigation";
 import { FilterSelectNav } from "@/components/ui/filter-select-nav";
 import { GoalActualRow, GoalStoreRow, fetchGoalActualRows, fetchGoalDayStats, fetchGoalStoreRows } from "@/lib/goal-actuals";
@@ -64,6 +65,9 @@ type GoalNeedRow = {
   dailyRequired: number;
 };
 
+type GoalView = "employee" | "store" | "company";
+type GoalPanel = "detail" | "ranking" | "needs" | "evaluation";
+
 function isAggregateCategoryLabel(value: string | null | undefined) {
   const normalized = String(value ?? "")
     .trim()
@@ -77,6 +81,254 @@ const EMPTY_DAY_STATS: GoalDayStats = {
   remainingDays: 0,
   totalDays: 0
 };
+
+const shellCardStyle: CSSProperties = {
+  borderRadius: 28,
+  border: "1px solid rgba(4, 92, 96, 0.2)",
+  background: "linear-gradient(180deg, rgba(18, 96, 102, 0.96), rgba(26, 124, 128, 0.92))",
+  boxShadow: "0 22px 40px rgba(8, 22, 40, 0.16)"
+};
+
+const blockCardStyle: CSSProperties = {
+  ...shellCardStyle,
+  padding: "22px 24px"
+};
+
+const sectionHeadingStyle: CSSProperties = {
+  margin: 0,
+  color: "#f8fbff",
+  fontSize: "1.4rem",
+  fontWeight: 900
+};
+
+const sectionSubtleStyle: CSSProperties = {
+  color: "#edf6ff",
+  fontSize: "0.96rem"
+};
+
+const controlShellStyle: CSSProperties = {
+  display: "grid",
+  gap: 20
+};
+
+const tabRowStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+  gap: 14
+};
+
+const summaryStripStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+  gap: 14
+};
+
+const summaryCardStyle: CSSProperties = {
+  padding: "18px 20px",
+  borderRadius: 22,
+  background: "rgba(255, 255, 255, 0.92)",
+  border: "1px solid rgba(4, 92, 96, 0.18)",
+  boxShadow: "0 14px 26px rgba(8, 22, 40, 0.08)",
+  display: "grid",
+  gap: 6
+};
+
+const summaryLabelStyle: CSSProperties = {
+  color: "#56708c",
+  fontSize: "0.98rem",
+  fontWeight: 700
+};
+
+const summaryValueStyle: CSSProperties = {
+  color: "#0b2143",
+  fontSize: "2rem",
+  fontWeight: 900,
+  lineHeight: 1
+};
+
+const filterCardStyle: CSSProperties = {
+  ...blockCardStyle,
+  display: "grid",
+  gap: 18
+};
+
+const filterGridStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+  gap: 18
+};
+
+const filterItemStyle: CSSProperties = {
+  display: "grid",
+  gap: 10
+};
+
+const filterLabelStyle: CSSProperties = {
+  color: "#f8fbff",
+  fontSize: "1.2rem",
+  fontWeight: 900
+};
+
+const modeRowStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+  gap: 14
+};
+
+const panelSingleStyle: CSSProperties = {
+  display: "grid"
+};
+
+const panelCardStyle: CSSProperties = {
+  ...blockCardStyle,
+  display: "grid",
+  gap: 18
+};
+
+const sectionHeadWrapStyle: CSSProperties = {
+  display: "grid",
+  gap: 6
+};
+
+const rankingListStyle: CSSProperties = {
+  display: "grid",
+  gap: 14
+};
+
+function getRankingRowStyle(active: boolean): CSSProperties {
+  return {
+    display: "grid",
+    gridTemplateColumns: "74px minmax(0, 1fr) auto",
+    alignItems: "center",
+    gap: 18,
+    padding: "16px 18px",
+    borderRadius: 22,
+    textDecoration: "none",
+    color: "#f8fbff",
+    background: active ? "rgba(255, 255, 255, 0.16)" : "rgba(8, 28, 52, 0.16)",
+    border: active ? "1px solid rgba(255, 209, 102, 0.38)" : "1px solid rgba(255, 255, 255, 0.1)",
+    boxShadow: active ? "0 14px 26px rgba(8, 22, 40, 0.18)" : "none"
+  };
+}
+
+const rankBadgeStyle: CSSProperties = {
+  display: "grid",
+  placeItems: "center",
+  width: 56,
+  minWidth: 56,
+  height: 56,
+  borderRadius: 18,
+  background: "linear-gradient(135deg, #d7f7a7, #7ef1d3)",
+  color: "#09111f",
+  fontWeight: 900,
+  fontSize: "1.5rem"
+};
+
+const rankingMainStyle: CSSProperties = {
+  display: "grid",
+  gap: 6
+};
+
+const rankingTitleStyle: CSSProperties = {
+  color: "#f8fbff",
+  fontSize: "1.25rem",
+  fontWeight: 900,
+  lineHeight: 1.1
+};
+
+const rankingMetaStyle: CSSProperties = {
+  color: "#e2efff",
+  fontSize: "0.98rem",
+  fontWeight: 600
+};
+
+const rankingScoreStyle: CSSProperties = {
+  padding: "12px 16px",
+  borderRadius: 18,
+  background: "#ffd166",
+  color: "#09111f",
+  fontWeight: 900,
+  fontSize: "1.18rem",
+  whiteSpace: "nowrap"
+};
+
+function getTopTabStyle(active: boolean): CSSProperties {
+  return {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 60,
+    padding: "12px 18px",
+    borderRadius: 999,
+    textDecoration: "none",
+    fontWeight: 900,
+    fontSize: "1.05rem",
+    border: active ? "1px solid rgba(255, 209, 102, 0.46)" : "1px solid rgba(4, 92, 96, 0.18)",
+    background: active
+      ? "linear-gradient(135deg, rgba(4, 92, 96, 0.96), rgba(16, 128, 130, 0.94))"
+      : "rgba(255, 255, 255, 0.78)",
+    color: active ? "#f8fbff" : "#163252",
+    boxShadow: active ? "0 16px 28px rgba(4, 52, 56, 0.22)" : "0 12px 24px rgba(8, 22, 40, 0.08)"
+  };
+}
+
+function getModeButtonStyle(active: boolean): CSSProperties {
+  return {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 58,
+    padding: "12px 16px",
+    borderRadius: 20,
+    textDecoration: "none",
+    fontWeight: 900,
+    fontSize: "1.02rem",
+    border: active ? "1px solid rgba(255, 209, 102, 0.46)" : "1px solid rgba(4, 92, 96, 0.16)",
+    background: active
+      ? "linear-gradient(135deg, rgba(4, 92, 96, 0.96), rgba(16, 128, 130, 0.94))"
+      : "rgba(255, 255, 255, 0.82)",
+    color: active ? "#f8fbff" : "#163252",
+    boxShadow: active ? "0 16px 28px rgba(4, 52, 56, 0.22)" : "0 14px 26px rgba(8, 22, 40, 0.08)"
+  };
+}
+
+function getProjectedPercentPillClass(value: number | null | undefined) {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return "";
+  }
+
+  return value >= 100 ? "goal-status-pill-good" : "goal-status-pill-bad";
+}
+
+function getMetricPillStyle(kind: "default" | "status-good" | "status-bad" = "default"): CSSProperties {
+  if (kind === "status-good") {
+    return {
+      padding: "12px 14px",
+      borderRadius: 18,
+      background: "#d7f7a7",
+      color: "#09111f",
+      border: "1px solid rgba(133, 185, 66, 0.35)"
+    };
+  }
+
+  if (kind === "status-bad") {
+    return {
+      padding: "12px 14px",
+      borderRadius: 18,
+      background: "#d44a4a",
+      color: "#ffffff",
+      border: "1px solid rgba(122, 24, 24, 0.38)"
+    };
+  }
+
+  return {
+    padding: "12px 14px",
+    borderRadius: 18,
+    background: "#ffd166",
+    color: "#09111f",
+    border: "1px solid rgba(186, 141, 33, 0.28)"
+  };
+}
 
 function buildHref(
   view: string,
@@ -379,14 +631,6 @@ function buildNeedRows(summary: GoalCategorySummary, remainingDays: number): Goa
       dailyRequired
     };
   });
-}
-
-function getProjectedPercentPillClass(value: number | null | undefined) {
-  if (value === null || value === undefined || Number.isNaN(value)) {
-    return "";
-  }
-
-  return value >= 100 ? "goal-status-pill-good" : "goal-status-pill-bad";
 }
 
 function GoalCategoryCards({ categories }: { categories: GoalCategorySummary[] }) {

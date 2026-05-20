@@ -29,19 +29,22 @@ function isActive(pathname: string, href: string) {
 
 type AppShellHeaderProps = {
   initialIsAdmin?: boolean;
+  initialCanEvaluate?: boolean;
 };
 
-export function AppShellHeader({ initialIsAdmin = false }: AppShellHeaderProps) {
+export function AppShellHeader({ initialIsAdmin = false, initialCanEvaluate = false }: AppShellHeaderProps) {
   const pathname = usePathname() ?? "/";
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const navItems = useMemo(
-    () =>
-      initialIsAdmin
-        ? [...baseNavItems, { href: "/admin", label: "Admin Paneli", mobileLabel: "Admin", icon: "Y" }]
-        : baseNavItems,
-    [initialIsAdmin]
-  );
+  const navItems = useMemo(() => {
+    const items = initialCanEvaluate
+      ? [...baseNavItems, { href: "/degerlendirme", label: "Degerlendirme", mobileLabel: "Deger", icon: "D" }]
+      : baseNavItems;
+
+    return initialIsAdmin
+      ? [...items, { href: "/admin", label: "Admin Paneli", mobileLabel: "Admin", icon: "Y" }]
+      : items;
+  }, [initialCanEvaluate, initialIsAdmin]);
 
   const primaryTabs = useMemo(() => {
     const wanted = ["/kampanyalar", "/aylik-kampanyalar", "/lig", "/tarifeler", "/cihaz-fiyat-listesi"];

@@ -15,6 +15,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   let isAdmin = false;
+  let canEvaluate = false;
 
   try {
     const supabase = await createClient();
@@ -30,16 +31,20 @@ export default async function RootLayout({
         .single();
 
       isAdmin = profile?.role === "admin" && profile?.approval === "approved";
+      canEvaluate =
+        profile?.approval === "approved" &&
+        (profile.role === "admin" || profile.role === "management" || profile.role === "manager");
     }
   } catch {
     isAdmin = false;
+    canEvaluate = false;
   }
 
   return (
     <html lang="tr">
       <body>
         <div className="page-shell">
-          <AppShellHeader initialIsAdmin={isAdmin} />
+          <AppShellHeader initialIsAdmin={isAdmin} initialCanEvaluate={canEvaluate} />
 
           <AuthGate>{children}</AuthGate>
         </div>

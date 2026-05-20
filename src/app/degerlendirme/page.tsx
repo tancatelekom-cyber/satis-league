@@ -71,6 +71,17 @@ function formatPercent(value: number | null | undefined) {
   return `%${value.toLocaleString("tr-TR", { maximumFractionDigits: 1 })}`;
 }
 
+function formatIstanbulDateTime(date = new Date()) {
+  return new Intl.DateTimeFormat("tr-TR", {
+    timeZone: "Europe/Istanbul",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(date);
+}
+
 function buildHref(view: ViewMode, target?: string, category?: string) {
   const params = new URLSearchParams();
   params.set("view", view);
@@ -154,6 +165,19 @@ function isProductionComponent(title: string) {
   return key.includes("TERMINAL") || key.includes("AKTIVASYON");
 }
 
+function isEntryCount(title: string) {
+  const key = normalizeCategoryKey(title);
+  return key.includes("GIRIS SAY");
+}
+
+function isRecontract(title: string) {
+  return normalizeCategoryKey(title).includes("REKONTRAT");
+}
+
+function isEvaluationHiddenMetric(title: string) {
+  return isEntryCount(title);
+}
+
 function buildCompanyCategoryMetrics(rows: GoalStoreRow[], workedDays: number, totalDays: number) {
   const categoryMap = new Map<string, GoalStoreRow[]>();
   rows.forEach((row) => {
@@ -191,10 +215,10 @@ function pickStrong(metrics: Metric[]) {
   return metrics
     .filter((metric) => {
       if (!metric.hasTarget) {
-        return metric.actual > 0;
+        return metric.actual > 0 && !isProductionComponent(metric.title) && !isEntryCount(metric.title);
       }
 
-      return (metric.projectedPercent ?? metric.actualPercent ?? 0) >= 100;
+      return !isEntryCount(metric.title) && (metric.projectedPercent ?? metric.actualPercent ?? 0) >= 100;
     })
     .sort((a, b) => (b.projectedPercent ?? b.actual) - (a.projectedPercent ?? a.actual))
     .slice(0, 3);
@@ -276,6 +300,23 @@ function buildProductionChannelNotes(metrics: Metric[]) {
   return ["- Uretim puaninda terminal ve aktivasyon dengesi kabul edilebilir seviyede. Bu dengeyi bozmadan toplam puani buyutmeye odaklanalim."];
 }
 
+function buildEntryConversionNotes(metrics: Metric[]) {
+  const entryMetric = metrics.find((metric) => isEntryCount(metric.title));
+
+  if (!entryMetric || entryMetric.actual <= 0) {
+    return [];
+  }
+
+  const salesTotal = metrics
+    .filter((metric) => isProductionComponent(metric.title) || isRecontract(metric.title))
+    .reduce((sum, metric) => sum + metric.actual, 0);
+  const conversion = (salesTotal / entryMetric.actual) * 100;
+
+  return [
+    `- Giris sayisini ayri hedef kalemi gibi degerlendirmiyorum; burada musteri trafigine donusum olarak bakiyorum. Iceri giren musterilerin yaklasik ${formatPercent(conversion)} kadarinda aktivasyon, terminal veya rekontratlama satisi olusmus. Bu orani yukari tasimak icin giris yapan musteride ihtiyac analizi ve kapanis takibini siklastiralim.`
+  ];
+}
+
 function buildCoachingText(args: {
   title: string;
   view: ViewMode;
@@ -287,9 +328,12 @@ function buildCoachingText(args: {
   employeeAverageNotes: AverageNote[];
 }) {
   const strong = pickStrong(args.metrics);
-  const critical = pickCritical(args.metrics);
-  const actualOnly = args.metrics.filter((metric) => !metric.hasTarget && !isProductionComponent(metric.title)).slice(0, 3);
+  const critical = pickCritical(args.metrics).filter((metric) => !isEvaluationHiddenMetric(metric.title));
+  const actualOnly = args.metrics
+    .filter((metric) => !metric.hasTarget && !isProductionComponent(metric.title) && !isEvaluationHiddenMetric(metric.title))
+    .slice(0, 3);
   const productionChannelNotes = args.view === "employee" ? buildProductionChannelNotes(args.metrics) : [];
+  const entryConversionNotes = args.view === "employee" ? buildEntryConversionNotes(args.metrics) : [];
   const dailyNeeded = (metric: Metric) =>
     args.remainingDays > 0 && metric.remaining !== null ? Math.ceil(metric.remaining / args.remainingDays) : metric.remaining ?? 0;
   const dailyCurrentPace = (metric: Metric) => (args.workedDays > 0 ? metric.actual / args.workedDays : metric.actual);
@@ -343,6 +387,7 @@ function buildCoachingText(args: {
       ? dailyTargetLines
       : ["- Her gun en az bir ana kalemi kontrol edip, dusuk kalan kalemlerde satis gorusmesini ozellikle one alalim."]),
     ...(productionChannelNotes.length ? productionChannelNotes : []),
+    ...(entryConversionNotes.length ? entryConversionNotes : []),
     "- Gun sonunda sadece toplam rakama degil, hangi kalemin eksik kaldigina bakalim.",
     "- Bir sonraki gunde en dusuk kalan kalemi ilk aksiyon olarak takip edelim.",
     "",
@@ -359,10 +404,7 @@ function buildCoachingText(args: {
         )
       : ["- Hedefsiz takip edilen oncelikli kalem yok."]),
     "",
-    "Mudur notu:",
-    args.view === "employee"
-      ? "Bu tabloyu bir yargi olarak degil, kalan gunlerde nereden daha hizli sonuc alabilecegimizi gosteren yol haritasi olarak kullanalim."
-      : "Bu raporu ekip dagilimini netlestirmek ve sorumluluk alanlarinda daha dogru yonlendirme yapmak icin kullanalim."
+    `Analiz guncellenme: ${formatIstanbulDateTime()}`
   ];
 
   return lines.join("\n");
@@ -451,9 +493,10 @@ export default async function EvaluationPage({ searchParams }: EvaluationPagePro
   const companyMetrics = buildCompanyCategoryMetrics(storeRows, dayStats.workedDays, dayStats.totalDays);
 
   const currentMetrics = view === "company" ? companyMetrics : view === "store" ? storeMetrics : employeeMetrics;
-  const categories = currentMetrics.map((metric) => metric.title);
+  const displayMetrics = currentMetrics.filter((metric) => !isEvaluationHiddenMetric(metric.title));
+  const categories = displayMetrics.map((metric) => metric.title);
   const activeCategory = categories.includes(requestedCategory) ? requestedCategory : "";
-  const visibleMetrics = activeCategory ? currentMetrics.filter((metric) => metric.title === activeCategory) : currentMetrics;
+  const visibleMetrics = activeCategory ? displayMetrics.filter((metric) => metric.title === activeCategory) : displayMetrics;
   const selectedTitle = view === "company" ? "Firma" : view === "store" ? activeStore : activeEmployee;
   const storeAverageNotes = view === "store" ? buildStoreAverageNotes(visibleMetrics, storeRows) : [];
   const employeeAverageNotes = view === "employee" ? buildEmployeeAverageNotes(visibleMetrics, employeeRows) : [];

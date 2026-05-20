@@ -138,6 +138,22 @@ function average(values: number[]) {
   return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 0;
 }
 
+function normalizeCategoryKey(value: string) {
+  return value
+    .toLocaleUpperCase("tr-TR")
+    .replace(/\u0130/g, "I")
+    .replace(/\u011E/g, "G")
+    .replace(/\u00DC/g, "U")
+    .replace(/\u015E/g, "S")
+    .replace(/\u00D6/g, "O")
+    .replace(/\u00C7/g, "C");
+}
+
+function isProductionComponent(title: string) {
+  const key = normalizeCategoryKey(title);
+  return key.includes("TERMINAL") || key.includes("AKTIVASYON");
+}
+
 function buildCompanyCategoryMetrics(rows: GoalStoreRow[], workedDays: number, totalDays: number) {
   const categoryMap = new Map<string, GoalStoreRow[]>();
   rows.forEach((row) => {
@@ -230,6 +246,36 @@ function buildEmployeeAverageNotes(employeeMetrics: Metric[], allEmployeeRows: G
   return notes.sort((a, b) => b.gap - a.gap).slice(0, 5);
 }
 
+function buildProductionChannelNotes(metrics: Metric[]) {
+  const terminalMetric = metrics.find((metric) => normalizeCategoryKey(metric.title).includes("TERMINAL"));
+  const activationMetric = metrics.find((metric) => normalizeCategoryKey(metric.title).includes("AKTIVASYON"));
+
+  if (!terminalMetric || !activationMetric) {
+    return [];
+  }
+
+  const terminalWeight = terminalMetric.actual / 6;
+  const activationWeight = activationMetric.actual / 3;
+
+  if (terminalWeight <= 0 && activationWeight <= 0) {
+    return ["- Uretim puani tarafinda terminal ve aktivasyon katkisi henuz net olusmamis. Kalan gunlerde iki kanali da gunluk takip edelim."];
+  }
+
+  if (terminalWeight < activationWeight * 0.7) {
+    return [
+      "- Uretim puaninda agirlik aktivasyon tarafina kaymis gorunuyor. Puan dengesini guclendirmek icin terminal tarafini gelistirmelisin; kalan gunlerde terminal gorusmelerini ayrica takip edelim."
+    ];
+  }
+
+  if (activationWeight < terminalWeight * 0.7) {
+    return [
+      "- Uretim puaninda agirlik terminal tarafina kaymis gorunuyor. Puanin daha dengeli ilerlemesi icin aktivasyon tarafini gelistirmelisin; kalan gunlerde aktivasyon aksiyonlarini one alalim."
+    ];
+  }
+
+  return ["- Uretim puaninda terminal ve aktivasyon dengesi kabul edilebilir seviyede. Bu dengeyi bozmadan toplam puani buyutmeye odaklanalim."];
+}
+
 function buildCoachingText(args: {
   title: string;
   view: ViewMode;
@@ -242,7 +288,8 @@ function buildCoachingText(args: {
 }) {
   const strong = pickStrong(args.metrics);
   const critical = pickCritical(args.metrics);
-  const actualOnly = args.metrics.filter((metric) => !metric.hasTarget).slice(0, 3);
+  const actualOnly = args.metrics.filter((metric) => !metric.hasTarget && !isProductionComponent(metric.title)).slice(0, 3);
+  const productionChannelNotes = args.view === "employee" ? buildProductionChannelNotes(args.metrics) : [];
   const dailyNeeded = (metric: Metric) =>
     args.remainingDays > 0 && metric.remaining !== null ? Math.ceil(metric.remaining / args.remainingDays) : metric.remaining ?? 0;
   const dailyCurrentPace = (metric: Metric) => (args.workedDays > 0 ? metric.actual / args.workedDays : metric.actual);
@@ -250,7 +297,7 @@ function buildCoachingText(args: {
     const needed = dailyNeeded(metric);
     return `- ${metric.title}: ay sonu ${formatPercent(metric.projectedPercent ?? metric.actualPercent)} seviyesinde kalir. Hedefi kapatmak icin kalan gunlerde gunluk en az ${formatNumber(needed)} uretmen lazim.`;
   });
-  const titleLine = args.view === "employee" ? `${args.title} icin kocluk notu` : `${args.title} icin ekip kocluk notu`;
+  const titleLine = "TANCA+ AI analizidir.";
   const opening =
     args.view === "employee"
       ? `Merhaba ${args.title}, bu notu performansini birlikte netlestirmek ve kalan gunlerde nereye odaklanacagimizi sadece belirlemek icin hazirladim.`
@@ -295,6 +342,7 @@ function buildCoachingText(args: {
     ...(dailyTargetLines.length
       ? dailyTargetLines
       : ["- Her gun en az bir ana kalemi kontrol edip, dusuk kalan kalemlerde satis gorusmesini ozellikle one alalim."]),
+    ...(productionChannelNotes.length ? productionChannelNotes : []),
     "- Gun sonunda sadece toplam rakama degil, hangi kalemin eksik kaldigina bakalim.",
     "- Bir sonraki gunde en dusuk kalan kalemi ilk aksiyon olarak takip edelim.",
     "",

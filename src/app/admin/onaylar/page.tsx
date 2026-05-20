@@ -1,10 +1,11 @@
-import { updateApprovalAction } from "@/app/admin/actions";
+import { generateAndSendPasswordAction, updateManagedProfileAction } from "@/app/admin/actions";
 import { AdminSectionNav } from "@/components/admin/admin-section-nav";
 import { AdminSetupNotice } from "@/components/admin/admin-setup-notice";
 import { requireAdminAccess } from "@/lib/auth/require-admin";
 import { getAdminDashboardData } from "@/lib/admin/get-admin-dashboard-data";
-import { roleLabels } from "@/lib/labels";
+import { approvalLabels, roleLabels } from "@/lib/labels";
 import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
+import { AdminManagedProfile, AdminPendingProfile, UserRole } from "@/lib/types";
 
 type ApprovalAdminPageProps = {
   searchParams?: Promise<{
@@ -41,12 +42,101 @@ export default async function ApprovalAdminPage({ searchParams }: ApprovalAdminP
   }
 
   const data = await getAdminDashboardData();
+  const roleOptions: UserRole[] = ["employee", "manager", "management", "admin"];
+  const approvalOptions: Array<"pending" | "approved" | "rejected"> = ["pending", "approved", "rejected"];
+  const storeOptions = data.storeRows.map((store) => ({ id: store.id, name: store.name }));
+  const renderProfileEditor = (profile: AdminPendingProfile | AdminManagedProfile) => (
+    <article key={profile.id} className="user-management-card">
+      <form action={updateManagedProfileAction} className="user-management-form">
+        <input name="redirectTo" type="hidden" value="/admin/onaylar" />
+        <input name="profileId" type="hidden" value={profile.id} />
+
+        <div className="user-management-head">
+          <div>
+            <strong>{profile.full_name}</strong>
+            <span>{profile.email}</span>
+          </div>
+          <span className={`status-chip ${profile.approval === "approved" ? "approve" : ""}`}>
+            {approvalLabels[profile.approval]}
+          </span>
+        </div>
+
+        <div className="user-management-grid">
+          <label className="field">
+            <span>Ad Soyad</span>
+            <input name="fullName" defaultValue={profile.full_name} required />
+          </label>
+          <label className="field">
+            <span>Mail Adresi</span>
+            <input name="email" type="email" defaultValue={profile.email} required />
+          </label>
+          <label className="field">
+            <span>Telefon</span>
+            <input name="phone" defaultValue={profile.phone ?? ""} />
+          </label>
+          <label className="field">
+            <span>Rol</span>
+            <select name="role" defaultValue={profile.role}>
+              {roleOptions.map((role) => (
+                <option key={role} value={role}>
+                  {roleLabels[role]}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="field">
+            <span>Magaza</span>
+            <select name="storeId" defaultValue={profile.store_id ?? ""}>
+              <option value="">Magaza yok</option>
+              {storeOptions.map((store) => (
+                <option key={store.id} value={store.id}>
+                  {store.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="field">
+            <span>Durum</span>
+            <select name="approval" defaultValue={profile.approval}>
+              {approvalOptions.map((approval) => (
+                <option key={approval} value={approval}>
+                  {approvalLabels[approval]}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="checkbox-card user-management-check">
+            <input name="isOnLeave" type="checkbox" defaultChecked={Boolean(profile.is_on_leave)} />
+            <span>Izinli / listelerde pasif</span>
+          </label>
+          <div className="user-management-meta">
+            <span>Son giris</span>
+            <strong>{formatLastLogin(profile.last_sign_in_at)}</strong>
+          </div>
+        </div>
+
+        <div className="action-row">
+          <button className="tiny-button approve" type="submit">
+            Bilgileri Kaydet
+          </button>
+        </div>
+      </form>
+
+      <form action={generateAndSendPasswordAction} className="user-password-form">
+        <input name="redirectTo" type="hidden" value="/admin/onaylar" />
+        <input name="profileId" type="hidden" value={profile.id} />
+        <button className="tiny-button" type="submit">
+          Yeni Sifre Uret ve Gonder
+        </button>
+      </form>
+    </article>
+  );
 
   return (
     <main>
-      <h1 className="page-title">Kullanici Onaylari</h1>
+      <h1 className="page-title">Kullanici Yonetimi</h1>
       <p className="page-subtitle">
-        Kayit olan kullanicilar once burada bekler. Onay verirseniz sisteme aktif olarak girerler.
+        Kullanici bilgilerini guncelleyin, durumlarini yonetin ve gerekirse yeni sifre uretip mail adreslerine gonderin.
       </p>
 
       {params?.message ? (
@@ -67,40 +157,7 @@ export default async function ApprovalAdminPage({ searchParams }: ApprovalAdminP
                 <span>Yeni kullanici kayit olunca burada gorunecek.</span>
               </div>
             ) : (
-              data.approvalRows.map((approval) => (
-                <div key={approval.id} className="approval-row">
-                  <div>
-                    <h4>{approval.full_name}</h4>
-                    <p>
-                      {approval.store?.name ?? "Magaza yok"} | {approval.phone ?? "-"}
-                    </p>
-                    <p className="subtle">
-                      Rol: {roleLabels[approval.role]} | Mail: {approval.email}
-                    </p>
-                    <p className="subtle">Son giris: {formatLastLogin(approval.last_sign_in_at)}</p>
-                  </div>
-
-                  <div className="action-row">
-                    <form action={updateApprovalAction}>
-                      <input name="redirectTo" type="hidden" value="/admin/onaylar" />
-                      <input name="profileId" type="hidden" value={approval.id} />
-                      <input name="approval" type="hidden" value="approved" />
-                      <button className="tiny-button approve" type="submit">
-                        Onayla
-                      </button>
-                    </form>
-
-                    <form action={updateApprovalAction}>
-                      <input name="redirectTo" type="hidden" value="/admin/onaylar" />
-                      <input name="profileId" type="hidden" value={approval.id} />
-                      <input name="approval" type="hidden" value="rejected" />
-                      <button className="tiny-button" type="submit">
-                        Reddet
-                      </button>
-                    </form>
-                  </div>
-                </div>
-              ))
+              data.approvalRows.map((approval) => renderProfileEditor(approval))
             )}
           </div>
         </article>
@@ -114,42 +171,7 @@ export default async function ApprovalAdminPage({ searchParams }: ApprovalAdminP
                 <span>Onaylanan veya pasife alinan kullanicilar burada listelenir.</span>
               </div>
             ) : (
-              data.managedProfileRows.map((profile) => (
-                <div key={profile.id} className="approval-row">
-                  <div>
-                    <h4>{profile.full_name}</h4>
-                    <p>
-                      {profile.store?.name ?? "Magaza yok"} | {profile.phone ?? "-"}
-                    </p>
-                    <p className="subtle">
-                      Rol: {roleLabels[profile.role]} | Mail: {profile.email}
-                    </p>
-                    <p className="subtle">
-                      Durum: {profile.approval === "approved" ? "Aktif" : "Pasif"}
-                      {profile.is_on_leave ? " | Izinli" : ""}
-                    </p>
-                    <p className="subtle">Son giris: {formatLastLogin(profile.last_sign_in_at)}</p>
-                  </div>
-
-                  <div className="action-row">
-                    <form action={updateApprovalAction}>
-                      <input name="redirectTo" type="hidden" value="/admin/onaylar" />
-                      <input name="profileId" type="hidden" value={profile.id} />
-                      <input
-                        name="approval"
-                        type="hidden"
-                        value={profile.approval === "approved" ? "rejected" : "approved"}
-                      />
-                      <button
-                        className={`tiny-button ${profile.approval === "approved" ? "" : "approve"}`}
-                        type="submit"
-                      >
-                        {profile.approval === "approved" ? "Pasife Al" : "Tekrar Aktif Et"}
-                      </button>
-                    </form>
-                  </div>
-                </div>
-              ))
+              data.managedProfileRows.map((profile) => renderProfileEditor(profile))
             )}
           </div>
         </article>

@@ -2401,6 +2401,76 @@ textarea::placeholder {
   margin: 0;
 }
 
+.user-management-card {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid rgba(4, 92, 96, 0.16);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 10px 22px rgba(8, 22, 40, 0.06);
+}
+
+.user-management-form {
+  display: grid;
+  gap: 14px;
+}
+
+.user-management-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.user-management-head > div {
+  display: grid;
+  gap: 4px;
+}
+
+.user-management-head strong {
+  color: #10203b;
+  font-size: 1.08rem;
+}
+
+.user-management-head span {
+  color: #5d7290;
+}
+
+.user-management-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+
+.user-management-check {
+  min-height: 48px;
+  align-items: center;
+}
+
+.user-management-meta {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(4, 92, 96, 0.08);
+}
+
+.user-management-meta span {
+  color: #5d7290;
+  font-size: 0.85rem;
+}
+
+.user-management-meta strong {
+  color: #10203b;
+}
+
+.user-password-form {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .product-meta,
 .subtle {
   color: var(--muted);
@@ -4551,6 +4621,8 @@ textarea::placeholder {
   .campaign-directory-meta,
   .detail-page-head,
   .ranking-focus-head,
+  .user-management-head,
+  .user-password-form,
   .product-header,
   .approval-row,
   .notification-item,
@@ -4567,6 +4639,7 @@ textarea::placeholder {
   }
 
   .repeater-row,
+  .user-management-grid,
   .store-edit-form {
     display: grid;
     grid-template-columns: 1fr;

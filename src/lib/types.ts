@@ -85,6 +85,8 @@ export type AdminPendingProfile = {
   phone: string | null;
   role: UserRole;
   approval: "pending" | "approved" | "rejected";
+  store_id: string | null;
+  is_on_leave?: boolean;
   created_at: string;
   last_sign_in_at: string | null;
   store: {
@@ -99,6 +101,7 @@ export type AdminManagedProfile = {
   phone: string | null;
   role: UserRole;
   approval: "pending" | "approved" | "rejected";
+  store_id: string | null;
   created_at: string;
   last_sign_in_at: string | null;
   is_on_leave: boolean;

@@ -132,6 +132,8 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
             phone,
             role,
             approval,
+            store_id,
+            is_on_leave,
             created_at,
             store:stores(name)
           `
@@ -148,6 +150,7 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
             phone,
             role,
             approval,
+            store_id,
             is_on_leave,
             created_at,
             store:stores(name)

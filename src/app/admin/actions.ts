@@ -1,5 +1,6 @@
 "use server";
 
+import { randomBytes } from "crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdminAccess } from "@/lib/auth/require-admin";
@@ -7,6 +8,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { localDateTimeToIso } from "@/lib/campaign-utils";
 import { fetchSeasonSalesSheetRows } from "@/lib/season-sales-sheet";
 import { syncTurkcellTariffs } from "@/lib/turkcell/tariff-sync";
+import { isPasswordEmailConfigured, sendGeneratedPasswordEmail } from "@/lib/email";
 
 const allowedAdminRedirects = new Set([
   "/admin",
@@ -22,6 +24,11 @@ const allowedAdminRedirects = new Set([
 function getRedirectTo(formData: FormData) {
   const redirectTo = String(formData.get("redirectTo") ?? "/admin").trim();
   return allowedAdminRedirects.has(redirectTo) ? redirectTo : "/admin";
+}
+
+function generateTemporaryPassword() {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!?#$";
+  return Array.from(randomBytes(14), (byte) => alphabet[byte % alphabet.length]).join("");
 }
 
 function redirectWithMessage(
@@ -1464,6 +1471,131 @@ export async function updateApprovalAction(formData: FormData) {
   redirectWithMessage(
     isApproved ? "Kullanici aktif edildi." : isPassiveChange ? "Kullanici pasife alindi." : "Kullanici reddedildi."
   , "success", redirectTo);
+}
+
+export async function updateManagedProfileAction(formData: FormData) {
+  await requireAdminAccess();
+  const redirectTo = getRedirectTo(formData);
+  const supabase = createAdminClient();
+  const profileId = String(formData.get("profileId") ?? "");
+  const fullName = String(formData.get("fullName") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const phone = String(formData.get("phone") ?? "").trim();
+  const role = String(formData.get("role") ?? "employee");
+  const approval = String(formData.get("approval") ?? "pending");
+  const storeId = String(formData.get("storeId") ?? "").trim();
+  const isOnLeave = String(formData.get("isOnLeave") ?? "") === "on";
+
+  if (!profileId || !fullName || !email) {
+    redirectWithMessage("Ad soyad ve mail alani zorunlu.", "error", redirectTo);
+  }
+
+  if (!["employee", "manager", "management", "admin"].includes(role)) {
+    redirectWithMessage("Gecersiz kullanici rolu secildi.", "error", redirectTo);
+  }
+
+  if (!["pending", "approved", "rejected"].includes(approval)) {
+    redirectWithMessage("Gecersiz kullanici durumu secildi.", "error", redirectTo);
+  }
+
+  const { data: currentProfile, error: currentProfileError } = await supabase
+    .from("profiles")
+    .select("email")
+    .eq("id", profileId)
+    .single();
+
+  if (currentProfileError) {
+    redirectWithMessage(`Kullanici okunamadi: ${currentProfileError.message}`, "error", redirectTo);
+  }
+
+  if (currentProfile?.email !== email) {
+    const { error: authError } = await supabase.auth.admin.updateUserById(profileId, {
+      email,
+      user_metadata: { full_name: fullName }
+    });
+
+    if (authError) {
+      redirectWithMessage(`Auth maili guncellenemedi: ${authError.message}`, "error", redirectTo);
+    }
+  } else {
+    await supabase.auth.admin.updateUserById(profileId, {
+      user_metadata: { full_name: fullName }
+    });
+  }
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      full_name: fullName,
+      email,
+      phone: phone || null,
+      role,
+      approval,
+      store_id: storeId || null,
+      is_on_leave: isOnLeave
+    })
+    .eq("id", profileId);
+
+  if (error) {
+    redirectWithMessage(`Kullanici bilgileri guncellenemedi: ${error.message}`, "error", redirectTo);
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/onaylar");
+  revalidatePath("/hesabim");
+  revalidatePath("/");
+  redirectWithMessage("Kullanici bilgileri guncellendi.", "success", redirectTo);
+}
+
+export async function generateAndSendPasswordAction(formData: FormData) {
+  await requireAdminAccess();
+  const redirectTo = getRedirectTo(formData);
+  const supabase = createAdminClient();
+  const profileId = String(formData.get("profileId") ?? "");
+
+  if (!profileId) {
+    redirectWithMessage("Sifre olusturulacak kullanici bulunamadi.", "error", redirectTo);
+  }
+
+  if (!isPasswordEmailConfigured()) {
+    redirectWithMessage("Yeni sifre maili icin RESEND_API_KEY ortam degiskeni tanimli olmali.", "error", redirectTo);
+  }
+
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("id, full_name, email")
+    .eq("id", profileId)
+    .single();
+
+  if (profileError || !profile?.email) {
+    redirectWithMessage(`Kullanici maili okunamadi: ${profileError?.message ?? "mail yok"}`, "error", redirectTo);
+  }
+
+  const safeProfile = profile as { email: string; full_name: string };
+  const password = generateTemporaryPassword();
+  const { error: authError } = await supabase.auth.admin.updateUserById(profileId, {
+    password
+  });
+
+  if (authError) {
+    redirectWithMessage(`Yeni sifre atanamadi: ${authError.message}`, "error", redirectTo);
+  }
+
+  try {
+    await sendGeneratedPasswordEmail({
+      to: safeProfile.email,
+      fullName: safeProfile.full_name,
+      password
+    });
+  } catch (error) {
+    redirectWithMessage(
+      `Sifre guncellendi fakat mail gonderilemedi: ${error instanceof Error ? error.message : "bilinmeyen hata"}`,
+      "error",
+      redirectTo
+    );
+  }
+
+  redirectWithMessage("Yeni sifre uretildi ve kullanicinin mail adresine gonderildi.", "success", redirectTo);
 }
 
 export async function createCampaignAction(formData: FormData) {

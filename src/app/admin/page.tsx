@@ -52,7 +52,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         <article className="admin-overview-card">
           <span>Bekleyen Onay</span>
           <strong>{data.approvalRows.length}</strong>
-          <p>Kullanici Onaylari sayfasinda onay bekleyen hesaplar bulunuyor.</p>
+          <p>Kullanici Yonetimi sayfasinda onay bekleyen hesaplar bulunuyor.</p>
         </article>
 
         <article className="admin-overview-card">
@@ -94,8 +94,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           <span>Kayit ekraninda gorunen magazalari burada yonet.</span>
         </a>
         <a className="admin-quick-card" href="/admin/onaylar">
-          <strong>Kullanici Onaylari</strong>
-          <span>Bekleyen hesaplari hizlica onayla veya reddet.</span>
+          <strong>Kullanici Yonetimi</strong>
+          <span>Kullanici bilgilerini, durumunu ve sifresini yonet.</span>
         </a>
         <a className="admin-quick-card" href="/admin/siralama">
           <strong>Siralama</strong>

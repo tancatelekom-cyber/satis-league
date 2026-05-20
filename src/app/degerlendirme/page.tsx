@@ -234,9 +234,12 @@ function buildCoachingText(args: {
   const top = pickTop(args.metrics);
   const critical = pickCritical(args.metrics);
   const actualOnly = args.metrics.filter((metric) => !metric.hasTarget).slice(0, 3);
+  const dailyNeeded = (metric: Metric) =>
+    args.remainingDays > 0 && metric.remaining !== null ? Math.ceil(metric.remaining / args.remainingDays) : metric.remaining ?? 0;
+  const dailyCurrentPace = (metric: Metric) => (args.workedDays > 0 ? metric.actual / args.workedDays : metric.actual);
   const dailyTargetLines = critical.slice(0, 4).map((metric) => {
-    const needed = args.remainingDays > 0 && metric.remaining !== null ? Math.ceil(metric.remaining / args.remainingDays) : metric.remaining ?? 0;
-    return `- ${metric.title}: kalan ${formatNumber(metric.remaining)} icin kalan gunlerde ortalama gunluk ${formatNumber(needed)} ek katki gerekir.`;
+    const needed = dailyNeeded(metric);
+    return `- ${metric.title}: ay sonu ${formatPercent(metric.projectedPercent ?? metric.actualPercent)} seviyesinde kalir. Hedefi kapatmak icin kalan gunlerde gunluk en az ${formatNumber(needed)} uretmen lazim.`;
   });
   const titleLine = args.view === "employee" ? `${args.title} icin kocluk notu` : `${args.title} icin ekip kocluk notu`;
   const opening =
@@ -251,14 +254,18 @@ function buildCoachingText(args: {
     "",
     "Guclu taraflarin:",
     ...(top.length
-      ? top.map((metric) => `- ${metric.title} tarafinda ${formatNumber(metric.actual)} gerceklesen var. Bu tempo korunursa ay sonu ${formatNumber(metric.projected)} seviyesine gidiyor.`)
+      ? top.map((metric) => {
+          const pace = dailyCurrentPace(metric);
+          const percentText = metric.hasTarget ? ` ve ay sonu ${formatPercent(metric.projectedPercent)} seviyesine tasir` : "";
+          return `- ${metric.title}: su an ${formatNumber(metric.actual)} gerceklesen var. Bu tempo gunluk ortalama ${formatNumber(pace)} uretim demek${percentText}. Burada tempoyu dusurmeden devam etmelisin.`;
+        })
       : ["- Henuz one cikan kategori netlesmemis. Burada ilk hedef, gunluk duzenli takip aliskanligini kurmak."]),
     "",
     "Gelistirmemiz gereken alanlar:",
     ...(critical.length
       ? critical.map(
           (metric) =>
-            `- ${metric.title}: ay sonu ongorusu ${formatPercent(metric.projectedPercent ?? metric.actualPercent)}. Hedefe yaklasmak icin kalan ${formatNumber(metric.remaining)} kapanmali.`
+            `- ${metric.title}: mevcut tempo ile ay sonu ${formatPercent(metric.projectedPercent ?? metric.actualPercent)} olur. Kalan ${formatNumber(metric.remaining)} acigi kapatmak icin gunluk en az ${formatNumber(dailyNeeded(metric))} uretim gerekiyor.`
         )
       : ["- Hedefli kalemlerde su an belirgin risk yok. Bu iyi bir alan; ayni disiplini koruyalim."]),
     "",
@@ -266,7 +273,7 @@ function buildCoachingText(args: {
     ...(args.view === "employee" && args.employeeAverageNotes.length
       ? args.employeeAverageNotes.map(
           (note) =>
-            `- ${note.title}: bu kalemde ekip ortalamasi ${formatNumber(note.average)}, sende ${formatNumber(note.actual)}. Burada gunluk kucuk eklemelerle farki kapatmaya odaklanalim.`
+            `- ${note.title}: bu kalemde ekip ortalamasi ${formatNumber(note.average)}, sende ${formatNumber(note.actual)}. Ortalama farki ${formatNumber(note.gap)}. Kalan gunlerde bu kalemi her gun kontrol edip farki kademeli kapatmaya odaklanalim.`
         )
       : args.view === "employee"
         ? ["- Ortalama altinda belirgin bir kalem gorunmuyor. Bu durumda yuksek hacimli kalemlerde tempoyu korumak oncelik."]
@@ -286,7 +293,10 @@ function buildCoachingText(args: {
     "",
     "Hedefsiz takip edilen kalemler:",
     ...(actualOnly.length
-      ? actualOnly.map((metric) => `- ${metric.title}: ${formatNumber(metric.actual)} gerceklesen var, ay sonu ${formatNumber(metric.projected)} bekleniyor. Hedefsiz olsa bile trendi takip edelim.`)
+      ? actualOnly.map(
+          (metric) =>
+            `- ${metric.title}: hedef tanimi yok ama su an ${formatNumber(metric.actual)} gerceklesen var. Mevcut gunluk tempo ${formatNumber(dailyCurrentPace(metric))}; ay sonu tahmini ${formatNumber(metric.projected)}. Burada amac trendi korumak ve dusus varsa hemen fark etmek.`
+        )
       : ["- Hedefsiz takip edilen oncelikli kalem yok."]),
     "",
     "Mudur notu:",

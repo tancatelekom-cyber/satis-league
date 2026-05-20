@@ -174,6 +174,10 @@ function isRecontract(title: string) {
   return normalizeCategoryKey(title).includes("REKONTRAT");
 }
 
+function isProductionPoint(title: string) {
+  return normalizeCategoryKey(title).includes("URETIM PUAN");
+}
+
 function isEvaluationHiddenMetric(title: string) {
   return isEntryCount(title);
 }
@@ -317,6 +321,32 @@ function buildEntryConversionNotes(metrics: Metric[]) {
   ];
 }
 
+function buildProductionPointScaleNotes(metrics: Metric[], remainingDays: number) {
+  const productionPointMetric = metrics.find((metric) => isProductionPoint(metric.title));
+
+  if (!productionPointMetric) {
+    return [];
+  }
+
+  const projected = productionPointMetric.projected ?? productionPointMetric.actual;
+  const currentScale = projected < 400 ? 0 : Math.min(Math.floor(projected / 50) * 50, 10000);
+  const nextScale = currentScale < 400 ? 400 : Math.min(currentScale + 50, 10000);
+
+  if (nextScale >= 10000 && currentScale >= 10000) {
+    return [
+      `- Uretim puaninda ay sonu gidisatin ${formatNumber(currentScale)} skalasina denk geliyor. Bu en ust skala oldugu icin burada amac tempoyu korumak ve kanal dengesini bozmamak.`
+    ];
+  }
+
+  const neededForNextScale = Math.max(nextScale - productionPointMetric.actual, 0);
+  const dailyNeed = remainingDays > 0 ? Math.ceil(neededForNextScale / remainingDays) : neededForNextScale;
+  const scaleText = currentScale > 0 ? `${formatNumber(currentScale)} skalasina` : "400 skalasinin altina";
+
+  return [
+    `- Uretim puaninda mevcut gidisat ay sonu ${scaleText} denk geliyor. Bir ust skala olan ${formatNumber(nextScale)} icin kalan gunlerde gunluk en az ${formatNumber(dailyNeed)} uretim puani yapman gerekiyor.`
+  ];
+}
+
 function buildCoachingText(args: {
   title: string;
   view: ViewMode;
@@ -330,10 +360,11 @@ function buildCoachingText(args: {
   const strong = pickStrong(args.metrics);
   const critical = pickCritical(args.metrics).filter((metric) => !isEvaluationHiddenMetric(metric.title));
   const actualOnly = args.metrics
-    .filter((metric) => !metric.hasTarget && !isProductionComponent(metric.title) && !isEvaluationHiddenMetric(metric.title))
+    .filter((metric) => !metric.hasTarget && !isProductionComponent(metric.title) && !isProductionPoint(metric.title) && !isEvaluationHiddenMetric(metric.title))
     .slice(0, 3);
   const productionChannelNotes = args.view === "employee" ? buildProductionChannelNotes(args.metrics) : [];
   const entryConversionNotes = args.view === "employee" ? buildEntryConversionNotes(args.metrics) : [];
+  const productionPointScaleNotes = args.view === "employee" ? buildProductionPointScaleNotes(args.metrics, args.remainingDays) : [];
   const dailyNeeded = (metric: Metric) =>
     args.remainingDays > 0 && metric.remaining !== null ? Math.ceil(metric.remaining / args.remainingDays) : metric.remaining ?? 0;
   const dailyCurrentPace = (metric: Metric) => (args.workedDays > 0 ? metric.actual / args.workedDays : metric.actual);
@@ -357,12 +388,12 @@ function buildCoachingText(args: {
       ? strong.map((metric) => {
           const pace = dailyCurrentPace(metric);
           if (metric.hasTarget) {
-            return `- ${metric.title}: bu kalemde hedef temposu yakalaniyor. Su an ${formatNumber(metric.actual)} gerceklesen var; mevcut tempo ay sonu ${formatPercent(metric.projectedPercent)} seviyesine tasir. Gunluk ortalama ${formatNumber(pace)} uretimi korumalısin.`;
+            return `- ${metric.title}: bu kalemde hedef temposu yakalaniyor. Su an ${formatNumber(metric.actual)} gerceklesen var; mevcut tempo ay sonu ${formatPercent(metric.projectedPercent)} seviyesine tasir. Gunluk ortalama ${formatNumber(pace)} uretimi korumalisin.`;
           }
 
           return `- ${metric.title}: hedef tanimi yok ama ${formatNumber(metric.actual)} gerceklesen var. Bu kalemi guclu takip kalemi olarak koruyalim.`;
         })
-      : ["- Hedefe giden guclu bir hedefli kalem henuz netlesmemis. Bu yuzden odağı hedef acigi olan kalemlere cevirmeliyiz."]),
+      : ["- Hedefe giden guclu bir hedefli kalem henuz netlesmemis. Bu yuzden odagi hedef acigi olan kalemlere cevirmeliyiz."]),
     "",
     "Gelistirmemiz gereken alanlar:",
     ...(critical.length
@@ -387,6 +418,7 @@ function buildCoachingText(args: {
       ? dailyTargetLines
       : ["- Her gun en az bir ana kalemi kontrol edip, dusuk kalan kalemlerde satis gorusmesini ozellikle one alalim."]),
     ...(productionChannelNotes.length ? productionChannelNotes : []),
+    ...(productionPointScaleNotes.length ? productionPointScaleNotes : []),
     ...(entryConversionNotes.length ? entryConversionNotes : []),
     "- Gun sonunda sadece toplam rakama degil, hangi kalemin eksik kaldigina bakalim.",
     "- Bir sonraki gunde en dusuk kalan kalemi ilk aksiyon olarak takip edelim.",

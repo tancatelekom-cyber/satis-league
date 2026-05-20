@@ -218,6 +218,10 @@ function buildCompanyCategoryMetrics(rows: GoalStoreRow[], workedDays: number, t
 function pickStrong(metrics: Metric[]) {
   return metrics
     .filter((metric) => {
+      if (isProductionPoint(metric.title)) {
+        return false;
+      }
+
       if (!metric.hasTarget) {
         return metric.actual > 0 && !isProductionComponent(metric.title) && !isEntryCount(metric.title);
       }
@@ -347,6 +351,27 @@ function buildProductionPointScaleNotes(metrics: Metric[], remainingDays: number
   ];
 }
 
+function buildProductionPointDevelopmentLines(metrics: Metric[], remainingDays: number) {
+  const productionPointMetric = metrics.find((metric) => isProductionPoint(metric.title));
+
+  if (!productionPointMetric) {
+    return [];
+  }
+
+  const projected = productionPointMetric.projected ?? productionPointMetric.actual;
+
+  if (projected >= 400) {
+    return [];
+  }
+
+  const neededForFirstScale = Math.max(400 - productionPointMetric.actual, 0);
+  const dailyNeed = remainingDays > 0 ? Math.ceil(neededForFirstScale / remainingDays) : neededForFirstScale;
+
+  return [
+    `- ${productionPointMetric.title}: ay sonu gidisat 400 puanlik ilk prim skalasinin altinda kaliyor. Ilk skalaya girmek icin kalan gunlerde gunluk en az ${formatNumber(dailyNeed)} uretim puani yapman gerekiyor.`
+  ];
+}
+
 function buildCoachingText(args: {
   title: string;
   view: ViewMode;
@@ -365,6 +390,8 @@ function buildCoachingText(args: {
   const productionChannelNotes = args.view === "employee" ? buildProductionChannelNotes(args.metrics) : [];
   const entryConversionNotes = args.view === "employee" ? buildEntryConversionNotes(args.metrics) : [];
   const productionPointScaleNotes = args.view === "employee" ? buildProductionPointScaleNotes(args.metrics, args.remainingDays) : [];
+  const productionPointDevelopmentLines =
+    args.view === "employee" ? buildProductionPointDevelopmentLines(args.metrics, args.remainingDays) : [];
   const dailyNeeded = (metric: Metric) =>
     args.remainingDays > 0 && metric.remaining !== null ? Math.ceil(metric.remaining / args.remainingDays) : metric.remaining ?? 0;
   const dailyCurrentPace = (metric: Metric) => (args.workedDays > 0 ? metric.actual / args.workedDays : metric.actual);
@@ -372,6 +399,20 @@ function buildCoachingText(args: {
     const needed = dailyNeeded(metric);
     return `- ${metric.title}: ay sonu ${formatPercent(metric.projectedPercent ?? metric.actualPercent)} seviyesinde kalir. Hedefi kapatmak icin kalan gunlerde gunluk en az ${formatNumber(needed)} uretmen lazim.`;
   });
+  const developmentLines = [
+    ...critical.map(
+      (metric) =>
+        `- ${metric.title}: mevcut tempo ile ay sonu ${formatPercent(metric.projectedPercent ?? metric.actualPercent)} olur. Kalan ${formatNumber(metric.remaining)} acigi kapatmak icin gunluk en az ${formatNumber(dailyNeeded(metric))} uretim gerekiyor.`
+    ),
+    ...productionPointDevelopmentLines
+  ];
+  const storeAverageSection = args.storeAverageNotes.length
+    ? [
+        "",
+        "Firma / ortalama kritikleri:",
+        ...args.storeAverageNotes.map((note) => `- ${note} Bu kalem icin magaza icinde gunluk takip ve ekip yonlendirmesi artirilmali.`)
+      ]
+    : [];
   const titleLine = "TANCA+ AI analizidir.";
   const opening =
     args.view === "employee"
@@ -396,11 +437,8 @@ function buildCoachingText(args: {
       : ["- Hedefe giden guclu bir hedefli kalem henuz netlesmemis. Bu yuzden odagi hedef acigi olan kalemlere cevirmeliyiz."]),
     "",
     "Gelistirmemiz gereken alanlar:",
-    ...(critical.length
-      ? critical.map(
-          (metric) =>
-            `- ${metric.title}: mevcut tempo ile ay sonu ${formatPercent(metric.projectedPercent ?? metric.actualPercent)} olur. Kalan ${formatNumber(metric.remaining)} acigi kapatmak icin gunluk en az ${formatNumber(dailyNeeded(metric))} uretim gerekiyor.`
-        )
+    ...(developmentLines.length
+      ? developmentLines
       : ["- Hedefli kalemlerde su an belirgin risk yok. Bu iyi bir alan; ayni disiplini koruyalim."]),
     "",
     "Ortalama karsilastirmasina gore odak alanlari:",
@@ -422,11 +460,7 @@ function buildCoachingText(args: {
     ...(entryConversionNotes.length ? entryConversionNotes : []),
     "- Gun sonunda sadece toplam rakama degil, hangi kalemin eksik kaldigina bakalim.",
     "- Bir sonraki gunde en dusuk kalan kalemi ilk aksiyon olarak takip edelim.",
-    "",
-    "Firma / ortalama kritikleri:",
-    ...(args.storeAverageNotes.length
-      ? args.storeAverageNotes.map((note) => `- ${note} Bu kalem icin magaza icinde gunluk takip ve ekip yonlendirmesi artirilmali.`)
-      : ["- Bu secimde firma ortalamasi altinda belirgin kritik yok."]),
+    ...storeAverageSection,
     "",
     "Hedefsiz takip edilen kalemler:",
     ...(actualOnly.length
@@ -663,9 +697,11 @@ export default async function EvaluationPage({ searchParams }: EvaluationPagePro
                   {visibleMetrics.map((metric) => (
                     <div key={metric.title} className="evaluation-metric-card">
                       <strong>{metric.title}</strong>
-                      <span>Gerceklesen {formatNumber(metric.actual)}</span>
-                      <span>Ay Sonu {formatNumber(metric.projected)}</span>
-                      {metric.hasTarget ? <b>{formatPercent(metric.projectedPercent)} ay sonu</b> : <b>Hedefsiz takip</b>}
+                      <div className="evaluation-metric-values">
+                        <span>Gerceklesen {formatNumber(metric.actual)}</span>
+                        <span>Ay Sonu {formatNumber(metric.projected)}</span>
+                        {metric.hasTarget ? <b>{formatPercent(metric.projectedPercent)} ay sonu</b> : <b>Hedefsiz takip</b>}
+                      </div>
                     </div>
                   ))}
                 </div>

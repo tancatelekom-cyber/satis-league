@@ -5101,9 +5101,9 @@ textarea::placeholder {
 
 .evaluation-metric-card {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) repeat(3, auto);
+  grid-template-columns: 1fr;
   gap: 10px;
-  align-items: center;
+  align-items: stretch;
   padding: 14px;
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.92);
@@ -5114,17 +5114,28 @@ textarea::placeholder {
 .evaluation-metric-card strong {
   color: #0b2143;
   font-size: 1rem;
+  line-height: 1.15;
+}
+
+.evaluation-metric-values {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
 }
 
 .evaluation-metric-card span,
 .evaluation-metric-card b {
+  display: grid;
+  align-content: center;
+  min-height: 38px;
   padding: 8px 10px;
   border-radius: 12px;
   background: rgba(4, 92, 96, 0.1);
   color: #0b2143;
   font-size: 0.86rem;
   font-weight: 900;
-  white-space: nowrap;
+  white-space: normal;
+  line-height: 1.15;
 }
 
 .evaluation-metric-card b {
@@ -5142,6 +5153,10 @@ textarea::placeholder {
   }
 
   .evaluation-metric-card {
+    grid-template-columns: 1fr;
+  }
+
+  .evaluation-metric-values {
     grid-template-columns: 1fr;
   }
 

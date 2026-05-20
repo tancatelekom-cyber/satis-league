@@ -245,6 +245,52 @@ function pickStrong(metrics: Metric[]) {
     .slice(0, 3);
 }
 
+function getEmployeeCategoryAverage(title: string, allEmployeeRows: GoalActualRow[]) {
+  const employeeTotals = new Map<string, number>();
+  allEmployeeRows
+    .filter((row) => row.mainCategory === title)
+    .forEach((row) => {
+      employeeTotals.set(row.employeeName, (employeeTotals.get(row.employeeName) ?? 0) + row.actual);
+    });
+
+  return average(Array.from(employeeTotals.values()).filter((value) => value > 0));
+}
+
+function buildProductionStrongMetrics(metrics: Metric[], allEmployeeRows: GoalActualRow[]) {
+  const productionPointMetric = metrics.find((metric) => isProductionPoint(metric.title));
+
+  if (!productionPointMetric) {
+    return [];
+  }
+
+  const projected = productionPointMetric.projected ?? productionPointMetric.actual;
+  if (projected < 400) {
+    return [];
+  }
+
+  const terminalMetric = metrics.find((metric) => normalizeCategoryKey(metric.title).includes("TERMINAL"));
+  const activationMetric = metrics.find((metric) => normalizeCategoryKey(metric.title).includes("AKTIVASYON"));
+
+  if (!terminalMetric || !activationMetric) {
+    return [];
+  }
+
+  const terminalWeight = terminalMetric.actual / 6;
+  const activationWeight = activationMetric.actual / 3;
+  const terminalAverage = getEmployeeCategoryAverage(terminalMetric.title, allEmployeeRows);
+  const activationAverage = getEmployeeCategoryAverage(activationMetric.title, allEmployeeRows);
+
+  if (activationWeight < terminalWeight * 0.7 && terminalAverage > 0 && terminalMetric.actual > terminalAverage) {
+    return [terminalMetric];
+  }
+
+  if (terminalWeight < activationWeight * 0.7 && activationAverage > 0 && activationMetric.actual > activationAverage) {
+    return [activationMetric];
+  }
+
+  return [];
+}
+
 function pickCritical(metrics: Metric[]) {
   return metrics
     .filter((metric) => metric.hasTarget && !isQualityLimitMetric(metric.title) && (metric.projectedPercent ?? metric.actualPercent ?? 0) < 100)
@@ -432,8 +478,12 @@ function buildCoachingText(args: {
   totalDays: number;
   storeAverageNotes: string[];
   employeeAverageNotes: AverageNote[];
+  allEmployeeRows: GoalActualRow[];
 }) {
-  const strong = pickStrong(args.metrics);
+  const strong = [
+    ...pickStrong(args.metrics),
+    ...(args.view === "employee" ? buildProductionStrongMetrics(args.metrics, args.allEmployeeRows) : [])
+  ].filter((metric, index, list) => list.findIndex((item) => item.title === metric.title) === index);
   const critical = pickCritical(args.metrics).filter((metric) => !isEvaluationHiddenMetric(metric.title));
   const actualOnly = args.metrics
     .filter(
@@ -637,7 +687,8 @@ export default async function EvaluationPage({ searchParams }: EvaluationPagePro
     remainingDays: dayStats.remainingDays,
     totalDays: dayStats.totalDays,
     storeAverageNotes,
-    employeeAverageNotes
+    employeeAverageNotes,
+    allEmployeeRows: employeeRows
   });
 
   const employeeOptions = employeeNames.map((name) => ({ label: name, value: buildHref("employee", name, activeCategory) }));

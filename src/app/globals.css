@@ -5161,6 +5161,12 @@ textarea::placeholder {
   text-transform: uppercase;
 }
 
+.evaluation-zero-alert p {
+  margin: 0;
+  color: #991b1b;
+  font-weight: 950;
+}
+
 .evaluation-zero-alert div {
   display: flex;
   flex-wrap: wrap;

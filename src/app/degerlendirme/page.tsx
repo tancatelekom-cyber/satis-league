@@ -39,6 +39,11 @@ type AverageNote = {
   gap: number;
 };
 
+type ZeroActualItem = {
+  key: string;
+  label: string;
+};
+
 type ViewMode = "employee" | "store" | "company";
 
 export const dynamic = "force-dynamic";
@@ -341,6 +346,28 @@ function buildEmployeeAverageNotes(employeeMetrics: Metric[], allEmployeeRows: G
   return notes.sort((a, b) => b.gap - a.gap).slice(0, 5);
 }
 
+function buildStoreZeroActualItems(rows: GoalStoreRow[], activeCategory: string) {
+  const seen = new Set<string>();
+
+  return rows
+    .filter((row) => !activeCategory || row.mainCategory === activeCategory)
+    .filter((row) => !isEvaluationHiddenMetric(row.mainCategory) && row.actual === 0)
+    .map((row) => {
+      const label = row.subCategory ? `${row.mainCategory} / ${row.subCategory}` : row.mainCategory;
+      return {
+        key: `${row.storeCode}-${row.mainCategory}-${row.subCategory || "main"}`,
+        label
+      };
+    })
+    .filter((item) => {
+      if (seen.has(item.label)) {
+        return false;
+      }
+      seen.add(item.label);
+      return true;
+    });
+}
+
 function buildProductionChannelNotes(metrics: Metric[]) {
   const terminalMetric = metrics.find((metric) => normalizeCategoryKey(metric.title).includes("TERMINAL"));
   const activationMetric = metrics.find((metric) => normalizeCategoryKey(metric.title).includes("AKTIVASYON"));
@@ -483,7 +510,7 @@ function buildCoachingText(args: {
   storeAverageNotes: string[];
   employeeAverageNotes: AverageNote[];
   allEmployeeRows: GoalActualRow[];
-  zeroActualMetrics?: Metric[];
+  zeroActualItems?: ZeroActualItem[];
 }) {
   const strong = [
     ...pickStrong(args.metrics),
@@ -527,11 +554,11 @@ function buildCoachingText(args: {
       ]
     : [];
   const zeroActualSection =
-    args.view === "store" && args.zeroActualMetrics?.length
+    args.view === "store" && args.zeroActualItems?.length
       ? [
           "",
           "Gozden kacirdigin kalemler:",
-          ...args.zeroActualMetrics.map((metric) => `- ${metric.title}: bu kalemde henuz gerceklesen yok. Bugun mutlaka kontrol listesine alinmali.`)
+          ...args.zeroActualItems.map((item) => `- ${item.label}: bu kalemde henuz gerceklesen yok. Bugun mutlaka kontrol listesine alinmali.`)
         ]
       : [];
   const qualityLimitNotes = buildQualityLimitNotes(args.metrics, args.view);
@@ -697,10 +724,7 @@ export default async function EvaluationPage({ searchParams }: EvaluationPagePro
   const selectedTitle = view === "company" ? "Firma" : view === "store" ? activeStore : activeEmployee;
   const storeAverageNotes = view === "store" ? buildStoreAverageNotes(visibleMetrics, storeRows) : [];
   const employeeAverageNotes = view === "employee" ? buildEmployeeAverageNotes(visibleMetrics, employeeRows) : [];
-  const zeroActualMetrics =
-    view === "store"
-      ? visibleMetrics.filter((metric) => !isEvaluationHiddenMetric(metric.title) && metric.actual === 0)
-      : [];
+  const zeroActualItems = view === "store" ? buildStoreZeroActualItems(storeTargetRows, activeCategory) : [];
   const coachingText = buildCoachingText({
     title: selectedTitle,
     view,
@@ -711,7 +735,7 @@ export default async function EvaluationPage({ searchParams }: EvaluationPagePro
     storeAverageNotes,
     employeeAverageNotes,
     allEmployeeRows: employeeRows,
-    zeroActualMetrics
+    zeroActualItems
   });
 
   const employeeOptions = visibleEmployeeNames.map((name) => ({ label: name, value: buildHref("employee", name, activeCategory) }));
@@ -808,12 +832,13 @@ export default async function EvaluationPage({ searchParams }: EvaluationPagePro
                   </div>
                   <CopyCoachingButton text={coachingText} />
                 </div>
-                {zeroActualMetrics.length ? (
+                {zeroActualItems.length ? (
                   <div className="evaluation-zero-alert">
                     <strong>Gozden kacirdigin kalemler</strong>
+                    <p>Gercekleseni 0 olan bu kalemler bugun mutlaka kontrol edilmeli.</p>
                     <div>
-                      {zeroActualMetrics.map((metric) => (
-                        <span key={metric.title}>{metric.title}</span>
+                      {zeroActualItems.map((item) => (
+                        <span key={item.key}>{item.label}</span>
                       ))}
                     </div>
                   </div>

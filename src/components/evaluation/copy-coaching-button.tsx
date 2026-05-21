@@ -13,7 +13,7 @@ export function CopyCoachingButton({ text }: { text: string }) {
 
   return (
     <button className="button-primary evaluation-copy-button" type="button" onClick={handleCopy}>
-      {copied ? "Kopyalandi" : "Kocluk Metnini Kopyala"}
+      {copied ? "Kopyalandi" : "Metni Kopyala"}
     </button>
   );
 }

@@ -13,14 +13,14 @@ type NavItem = {
 
 const baseNavItems: NavItem[] = [
   { href: "/", label: "Ana Sayfa" },
-  { href: "/kampanyalar", label: "Gunluk Kampanyalar", mobileLabel: "Kampanya", icon: "K" },
-  { href: "/aylik-kampanyalar", label: "Aylik Kampanyalar", mobileLabel: "Aylik", icon: "A" },
-  { href: "/lig", label: "Yildizlar Kulubu", mobileLabel: "Lig", icon: "L" },
-  { href: "/hedef-gerceklesen", label: "Hedef Gerceklesen", mobileLabel: "Hedef", icon: "H" },
-  { href: "/tarifeler", label: "Tarifeler", mobileLabel: "Tarife", icon: "T" },
-  { href: "/cihaz-fiyat-listesi", label: "Cihaz Fiyat Listesi", mobileLabel: "Cihaz", icon: "C" },
-  { href: "/stok-bilgisi", label: "Stok Bilgisi", mobileLabel: "Stok", icon: "S" },
-  { href: "/hesabim", label: "Hesabim", mobileLabel: "Hesap", icon: "P" }
+  { href: "/kampanyalar", label: "Gunluk Kampanyalar", mobileLabel: "Kampanya", icon: "⚡" },
+  { href: "/aylik-kampanyalar", label: "Aylik Kampanyalar", mobileLabel: "Aylik", icon: "🖼" },
+  { href: "/lig", label: "Yildizlar Kulubu", mobileLabel: "Lig", icon: "⭐" },
+  { href: "/hedef-gerceklesen", label: "Hedef Gerceklesen", mobileLabel: "Hedef", icon: "🎯" },
+  { href: "/tarifeler", label: "Tarifeler", mobileLabel: "Tarife", icon: "📊" },
+  { href: "/cihaz-fiyat-listesi", label: "Cihaz Fiyat Listesi", mobileLabel: "Cihaz", icon: "📱" },
+  { href: "/stok-bilgisi", label: "Stok Bilgisi", mobileLabel: "Stok", icon: "📦" },
+  { href: "/hesabim", label: "Hesabim", mobileLabel: "Hesap", icon: "👤" }
 ];
 
 function isActive(pathname: string, href: string) {
@@ -39,11 +39,11 @@ export function AppShellHeader({ initialIsAdmin = false, initialCanEvaluate = fa
 
   const navItems = useMemo(() => {
     const items = initialCanEvaluate
-      ? [...baseNavItems, { href: "/degerlendirme", label: "Degerlendirme", mobileLabel: "Deger", icon: "D" }]
+      ? [...baseNavItems, { href: "/degerlendirme", label: "Degerlendirme", mobileLabel: "Deger", icon: "🧭" }]
       : baseNavItems;
 
     return initialIsAdmin
-      ? [...items, { href: "/admin", label: "Admin Paneli", mobileLabel: "Admin", icon: "Y" }]
+      ? [...items, { href: "/admin", label: "Admin Paneli", mobileLabel: "Admin", icon: "⚙" }]
       : items;
   }, [initialCanEvaluate, initialIsAdmin]);
 

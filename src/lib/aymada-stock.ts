@@ -17,6 +17,11 @@ export type AymadaStockResult = {
   total: number;
   updatedAt: string;
   warning?: string;
+  debug?: {
+    recordCount: number;
+    productCardLookups: number;
+    sampleRecords: XmlRecord[];
+  };
 };
 
 type XmlRecord = Record<string, string>;
@@ -129,7 +134,7 @@ function detectCategory(record: XmlRecord): AymadaStockCategory | null {
 function isDeviceRecord(record: XmlRecord) {
   const typeText = compactText(getFirst(record, ["ProductTypeName", "ProductCardTypeName", "ProductType", "TypeName"]));
   if (!typeText) return true;
-  return typeText.includes("CIHAZ") || typeText.includes("DEVICE");
+  return typeText.includes("CIHAZ") || typeText.includes("CİHAZ") || typeText.includes("DEVICE");
 }
 
 function getQuantity(record: XmlRecord) {
@@ -500,6 +505,7 @@ export async function fetchAymadaBranchStocks(): Promise<AymadaStockResult> {
   const productCardCache = new Map<string, XmlRecord | null>();
   const map = new Map<string, AymadaBranchStock>();
   let matchedRecords = 0;
+  const sampleRecords: XmlRecord[] = [];
 
   for (const baseRecord of records) {
     let record = baseRecord;
@@ -515,6 +521,10 @@ export async function fetchAymadaBranchStocks(): Promise<AymadaStockResult> {
       }
 
       record = { ...baseRecord, ...(productCardCache.get(productCardId) ?? {}) };
+    }
+
+    if (sampleRecords.length < 5) {
+      sampleRecords.push(record);
     }
 
     const category = detectCategory(record);
@@ -565,6 +575,14 @@ export async function fetchAymadaBranchStocks(): Promise<AymadaStockResult> {
     warning:
       records.length > 0 && matchedRecords === 0
         ? "Aymada verisi okundu fakat cihaz/smartphone/tablet/iot eslesmesi bulunamadi. API alan adlari kontrol edilmeli."
+        : undefined,
+    debug:
+      process.env.AYMADA_STOCK_DEBUG === "true"
+        ? {
+            recordCount: records.length,
+            productCardLookups: productCardCache.size,
+            sampleRecords
+          }
         : undefined
   };
 }

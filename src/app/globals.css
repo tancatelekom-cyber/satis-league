@@ -5053,6 +5053,27 @@ textarea::placeholder {
   font-weight: 800;
 }
 
+.stock-debug {
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(8, 22, 40, 0.06);
+  color: #10203b;
+}
+
+.stock-debug summary {
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.stock-debug pre {
+  overflow: auto;
+  max-height: 360px;
+  margin: 12px 0 0;
+  color: #10203b;
+  white-space: pre-wrap;
+  font-size: 0.8rem;
+}
+
 .stock-table-wrap {
   overflow-x: auto;
   border-radius: 20px;

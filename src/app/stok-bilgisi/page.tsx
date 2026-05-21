@@ -94,6 +94,13 @@ export default async function StockInfoPage() {
 
             {stock.warning ? <p className="stock-warning">{stock.warning}</p> : null}
 
+            {stock.debug ? (
+              <details className="stock-debug">
+                <summary>Aymada gelen veri ornegi</summary>
+                <pre>{JSON.stringify(stock.debug, null, 2)}</pre>
+              </details>
+            ) : null}
+
             {stock.rows.length > 0 ? (
               <>
                 <div className="stock-mobile-list">

@@ -5144,6 +5144,40 @@ textarea::placeholder {
   font: 800 0.98rem/1.55 inherit;
 }
 
+.evaluation-zero-alert {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border: 2px solid #b91c1c;
+  border-radius: 18px;
+  background: #fee2e2;
+  color: #7f1d1d;
+}
+
+.evaluation-zero-alert strong {
+  color: #7f1d1d;
+  font-size: 1.12rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.evaluation-zero-alert div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.evaluation-zero-alert span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: #b91c1c;
+  color: #ffffff;
+  font-weight: 950;
+}
+
 .evaluation-bars,
 .evaluation-metric-list {
   display: grid;

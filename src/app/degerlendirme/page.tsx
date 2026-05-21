@@ -483,6 +483,7 @@ function buildCoachingText(args: {
   storeAverageNotes: string[];
   employeeAverageNotes: AverageNote[];
   allEmployeeRows: GoalActualRow[];
+  zeroActualMetrics?: Metric[];
 }) {
   const strong = [
     ...pickStrong(args.metrics),
@@ -525,6 +526,14 @@ function buildCoachingText(args: {
         ...args.storeAverageNotes.map((note) => `- ${note} Bu kalem icin magaza icinde gunluk takip ve ekip yonlendirmesi artirilmali.`)
       ]
     : [];
+  const zeroActualSection =
+    args.view === "store" && args.zeroActualMetrics?.length
+      ? [
+          "",
+          "Gozden kacirdigin kalemler:",
+          ...args.zeroActualMetrics.map((metric) => `- ${metric.title}: bu kalemde henuz gerceklesen yok. Bugun mutlaka kontrol listesine alinmali.`)
+        ]
+      : [];
   const qualityLimitNotes = buildQualityLimitNotes(args.metrics, args.view);
   const qualityLimitSection = qualityLimitNotes.length ? ["", "Alt limit uyarilari:", ...qualityLimitNotes] : [];
   const averageFocusSection =
@@ -577,6 +586,7 @@ function buildCoachingText(args: {
     ...(entryConversionNotes.length ? entryConversionNotes : []),
     "- Gun sonunda sadece toplam rakama degil, hangi kalemin eksik kaldigina bakalim.",
     "- Bir sonraki gunde en dusuk kalan kalemi ilk aksiyon olarak takip edelim.",
+    ...zeroActualSection,
     ...storeAverageSection,
     "",
     "Hedefsiz takip edilen kalemler:",
@@ -687,6 +697,10 @@ export default async function EvaluationPage({ searchParams }: EvaluationPagePro
   const selectedTitle = view === "company" ? "Firma" : view === "store" ? activeStore : activeEmployee;
   const storeAverageNotes = view === "store" ? buildStoreAverageNotes(visibleMetrics, storeRows) : [];
   const employeeAverageNotes = view === "employee" ? buildEmployeeAverageNotes(visibleMetrics, employeeRows) : [];
+  const zeroActualMetrics =
+    view === "store"
+      ? visibleMetrics.filter((metric) => !isEvaluationHiddenMetric(metric.title) && metric.actual === 0)
+      : [];
   const coachingText = buildCoachingText({
     title: selectedTitle,
     view,
@@ -696,7 +710,8 @@ export default async function EvaluationPage({ searchParams }: EvaluationPagePro
     totalDays: dayStats.totalDays,
     storeAverageNotes,
     employeeAverageNotes,
-    allEmployeeRows: employeeRows
+    allEmployeeRows: employeeRows,
+    zeroActualMetrics
   });
 
   const employeeOptions = visibleEmployeeNames.map((name) => ({ label: name, value: buildHref("employee", name, activeCategory) }));
@@ -793,6 +808,16 @@ export default async function EvaluationPage({ searchParams }: EvaluationPagePro
                   </div>
                   <CopyCoachingButton text={coachingText} />
                 </div>
+                {zeroActualMetrics.length ? (
+                  <div className="evaluation-zero-alert">
+                    <strong>Gozden kacirdigin kalemler</strong>
+                    <div>
+                      {zeroActualMetrics.map((metric) => (
+                        <span key={metric.title}>{metric.title}</span>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
                 <pre className="evaluation-copy-text">{coachingText}</pre>
               </article>
 

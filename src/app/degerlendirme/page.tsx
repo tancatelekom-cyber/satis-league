@@ -353,7 +353,7 @@ function buildStoreZeroActualItems(rows: GoalStoreRow[], activeCategory: string)
     .filter((row) => !activeCategory || row.mainCategory === activeCategory)
     .filter((row) => !isEvaluationHiddenMetric(row.mainCategory) && row.actual === 0)
     .map((row) => {
-      const label = row.subCategory ? `${row.mainCategory} / ${row.subCategory}` : row.mainCategory;
+      const label = row.subCategory || row.mainCategory;
       return {
         key: `${row.storeCode}-${row.mainCategory}-${row.subCategory || "main"}`,
         label

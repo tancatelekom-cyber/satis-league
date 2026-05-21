@@ -225,31 +225,84 @@ function getDateRange() {
   const now = new Date();
   const start = process.env.AYMADA_STOCK_START_DATE?.trim() || "2000-01-01T00:00:00";
   const end = process.env.AYMADA_STOCK_END_DATE?.trim() || formatSoapDate(now);
-  const isComplete = process.env.AYMADA_STOCK_IS_COMPLETE?.trim() || "false";
+  const isComplete = process.env.AYMADA_STOCK_IS_COMPLETE?.trim() || "true";
 
   return { start, end, isComplete };
 }
 
-async function callInventoryService() {
-  const { firmApiCode, userName, password, serviceUrl } = requireConfig();
-  const { start, end, isComplete } = getDateRange();
-
+function buildSoapBody(input: {
+  firmApiCode: string;
+  userName: string;
+  password: string;
+  start: string;
+  end: string;
+  isComplete: string;
+}) {
   const body = `<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
     <GetInventoryList xmlns="http://tempuri.org/">
-      <FirmApiCode>${xmlEscape(firmApiCode)}</FirmApiCode>
-      <UserName>${xmlEscape(userName)}</UserName>
-      <Password>${xmlEscape(password)}</Password>
+      <FirmApiCode>${xmlEscape(input.firmApiCode)}</FirmApiCode>
+      <UserName>${xmlEscape(input.userName)}</UserName>
+      <Password>${xmlEscape(input.password)}</Password>
       <CLCardCode></CLCardCode>
-      <StartDate>${xmlEscape(start)}</StartDate>
-      <EndDate>${xmlEscape(end)}</EndDate>
-      <IsComplete>${xmlEscape(isComplete)}</IsComplete>
+      <StartDate>${xmlEscape(input.start)}</StartDate>
+      <EndDate>${xmlEscape(input.end)}</EndDate>
+      <IsComplete>${xmlEscape(input.isComplete)}</IsComplete>
     </GetInventoryList>
   </soap:Body>
 </soap:Envelope>`;
 
-  const response = await fetch(serviceUrl, {
+  return body;
+}
+
+function buildProductCardSoapBody(input: {
+  firmApiCode: string;
+  userName: string;
+  password: string;
+  productCardId: string;
+}) {
+  return `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <GetProductCard xmlns="http://tempuri.org/">
+      <FirmApiCode>${xmlEscape(input.firmApiCode)}</FirmApiCode>
+      <UserName>${xmlEscape(input.userName)}</UserName>
+      <Password>${xmlEscape(input.password)}</Password>
+      <ProductCardID>${xmlEscape(input.productCardId)}</ProductCardID>
+    </GetProductCard>
+  </soap:Body>
+</soap:Envelope>`;
+}
+
+function getAymadaErrorMessage(text: string) {
+  const normalized = normalizeTagNames(text);
+  const statusCode = extractTag(normalized, "StatusCode");
+  const statusMessage = extractTag(normalized, "StatusMessage");
+  const fault = extractTag(normalized, "faultstring");
+  const message = statusMessage || fault;
+
+  if (statusCode && statusCode !== "0") {
+    return message && message !== "ERROR" ? message : "Aymada servisi ERROR dondu.";
+  }
+
+  if (fault) return fault;
+
+  return "";
+}
+
+async function postSoapInventory(input: {
+  serviceUrl: string;
+  firmApiCode: string;
+  userName: string;
+  password: string;
+  start: string;
+  end: string;
+  isComplete: string;
+}) {
+  const body = buildSoapBody(input);
+
+  const response = await fetch(input.serviceUrl, {
     method: "POST",
     headers: {
       "Content-Type": "text/xml; charset=utf-8",
@@ -266,26 +319,208 @@ async function callInventoryService() {
     throw new Error(`Aymada stok servisi yanit vermedi: ${response.status}`);
   }
 
-  const statusCode = extractTag(normalizeTagNames(text), "StatusCode");
-  const statusMessage = extractTag(normalizeTagNames(text), "StatusMessage");
-  if (statusCode && statusCode !== "0") {
-    throw new Error(statusMessage || "Aymada stok servisi hata dondurdu.");
+  const serviceError = getAymadaErrorMessage(text);
+  if (serviceError) {
+    throw new Error(serviceError);
   }
 
   return text;
 }
 
+async function postSoapProductCard(input: {
+  serviceUrl: string;
+  firmApiCode: string;
+  userName: string;
+  password: string;
+  productCardId: string;
+}) {
+  const response = await fetch(input.serviceUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "text/xml; charset=utf-8",
+      SOAPAction: "http://tempuri.org/GetProductCard"
+    },
+    body: buildProductCardSoapBody(input),
+    cache: "no-store",
+    next: { revalidate: 0 }
+  });
+
+  const text = await response.text();
+
+  if (!response.ok) {
+    throw new Error(`Aymada urun karti servisi yanit vermedi: ${response.status}`);
+  }
+
+  const serviceError = getAymadaErrorMessage(text);
+  if (serviceError) {
+    throw new Error(serviceError);
+  }
+
+  return text;
+}
+
+async function postFormProductCard(input: {
+  serviceUrl: string;
+  firmApiCode: string;
+  userName: string;
+  password: string;
+  productCardId: string;
+}) {
+  const url = `${input.serviceUrl.replace(/\/$/, "")}/GetProductCard`;
+  const body = new URLSearchParams({
+    FirmApiCode: input.firmApiCode,
+    UserName: input.userName,
+    Password: input.password,
+    ProductCardID: input.productCardId
+  });
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body,
+    cache: "no-store",
+    next: { revalidate: 0 }
+  });
+
+  const text = await response.text();
+
+  if (!response.ok) {
+    throw new Error(`Aymada urun karti servisi yanit vermedi: ${response.status}`);
+  }
+
+  const serviceError = getAymadaErrorMessage(text);
+  if (serviceError) {
+    throw new Error(serviceError);
+  }
+
+  return text;
+}
+
+async function postFormInventory(input: {
+  serviceUrl: string;
+  firmApiCode: string;
+  userName: string;
+  password: string;
+  start: string;
+  end: string;
+  isComplete: string;
+}) {
+  const url = `${input.serviceUrl.replace(/\/$/, "")}/GetInventoryList`;
+  const body = new URLSearchParams({
+    FirmApiCode: input.firmApiCode,
+    UserName: input.userName,
+    Password: input.password,
+    CLCardCode: "",
+    StartDate: input.start,
+    EndDate: input.end,
+    IsComplete: input.isComplete
+  });
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body,
+    cache: "no-store",
+    next: { revalidate: 0 }
+  });
+
+  const text = await response.text();
+
+  if (!response.ok) {
+    throw new Error(`Aymada stok servisi yanit vermedi: ${response.status}`);
+  }
+
+  const serviceError = getAymadaErrorMessage(text);
+  if (serviceError) {
+    throw new Error(serviceError);
+  }
+
+  return text;
+}
+
+async function callInventoryService() {
+  const { firmApiCode, userName, password, serviceUrl } = requireConfig();
+  const { start, end, isComplete } = getDateRange();
+  const preferredComplete = compactText(isComplete) === "FALSE" ? "false" : "true";
+  const fallbackComplete = preferredComplete === "true" ? "false" : "true";
+  const attempts = [
+    { type: "soap", isComplete: preferredComplete },
+    { type: "soap", isComplete: fallbackComplete },
+    { type: "form", isComplete: preferredComplete },
+    { type: "form", isComplete: fallbackComplete }
+  ];
+  const errors: string[] = [];
+
+  for (const attempt of attempts) {
+    try {
+      const input = { serviceUrl, firmApiCode, userName, password, start, end, isComplete: attempt.isComplete };
+      return attempt.type === "soap" ? await postSoapInventory(input) : await postFormInventory(input);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Bilinmeyen hata";
+      errors.push(`${attempt.type}/${attempt.isComplete}: ${message}`);
+    }
+  }
+
+  throw new Error(`Aymada stok servisi okunamadi. Denenen yollar: ${errors.join(" | ")}`);
+}
+
+async function fetchProductCardDetail(productCardId: string) {
+  const { firmApiCode, userName, password, serviceUrl } = requireConfig();
+  const input = { serviceUrl, firmApiCode, userName, password, productCardId };
+  const commonTags = [
+    "ProductCardID",
+    "ProductCardCode",
+    "ProductCardName",
+    "CategoryID",
+    "CategoryName",
+    "MainCategoryID",
+    "MainCategoryName",
+    "ProductTypeID",
+    "ProductTypeName",
+    "VATRatio",
+    "UnitType",
+    "SerialNoControl",
+    "SerialNoKontrol"
+  ];
+
+  try {
+    return recordFromBlock(normalizeTagNames(await postSoapProductCard(input)), commonTags);
+  } catch {
+    return recordFromBlock(normalizeTagNames(await postFormProductCard(input)), commonTags);
+  }
+}
+
 export async function fetchAymadaBranchStocks(): Promise<AymadaStockResult> {
   const xml = await callInventoryService();
   const records = buildRecordList(xml);
+  const productCardCache = new Map<string, XmlRecord | null>();
   const map = new Map<string, AymadaBranchStock>();
   let matchedRecords = 0;
 
-  for (const record of records) {
-    if (!isDeviceRecord(record)) continue;
+  for (const baseRecord of records) {
+    let record = baseRecord;
+    const productCardId = getFirst(baseRecord, ["ProductCardID"]);
+
+    if (productCardId) {
+      if (!productCardCache.has(productCardId)) {
+        try {
+          productCardCache.set(productCardId, await fetchProductCardDetail(productCardId));
+        } catch {
+          productCardCache.set(productCardId, null);
+        }
+      }
+
+      record = { ...baseRecord, ...(productCardCache.get(productCardId) ?? {}) };
+    }
 
     const category = detectCategory(record);
     if (!category) continue;
+
+    if (!isDeviceRecord(record)) continue;
 
     const quantity = getQuantity(record);
     if (quantity <= 0) continue;

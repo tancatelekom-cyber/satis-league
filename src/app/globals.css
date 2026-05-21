@@ -4967,6 +4967,150 @@ textarea::placeholder {
   gap: 10px;
 }
 
+.stock-total-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin: 0 0 18px;
+}
+
+.stock-total-card {
+  display: grid;
+  gap: 6px;
+  padding: 18px 20px;
+  border-radius: 22px;
+  border: 1px solid rgba(4, 92, 96, 0.16);
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 14px 28px rgba(8, 22, 40, 0.1);
+}
+
+.stock-total-card span {
+  color: #526885;
+  font-weight: 800;
+}
+
+.stock-total-card strong {
+  color: #10203b;
+  font-size: clamp(1.6rem, 3vw, 2.25rem);
+  line-height: 1;
+}
+
+.stock-total-card-main {
+  background: linear-gradient(135deg, rgba(4, 92, 96, 0.94), rgba(16, 128, 130, 0.9));
+}
+
+.stock-total-card-main span,
+.stock-total-card-main strong {
+  color: #ffffff;
+}
+
+.stock-alert-card {
+  margin-bottom: 18px;
+}
+
+.stock-alert-card h2,
+.stock-card h2 {
+  margin: 0;
+  color: #10203b;
+}
+
+.stock-card {
+  display: grid;
+  gap: 16px;
+}
+
+.stock-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.stock-card-head p {
+  margin: 6px 0 0;
+  color: #5d7290;
+}
+
+.stock-card-head > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: #ffd166;
+  color: #10203b;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.stock-warning {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(255, 209, 102, 0.24);
+  color: #6f4b00 !important;
+  font-weight: 800;
+}
+
+.stock-table-wrap {
+  overflow-x: auto;
+  border-radius: 20px;
+  border: 1px solid rgba(4, 92, 96, 0.14);
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.stock-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 680px;
+}
+
+.stock-table th,
+.stock-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(4, 92, 96, 0.1);
+  color: #10203b;
+  text-align: right;
+}
+
+.stock-table th:first-child,
+.stock-table td:first-child {
+  text-align: left;
+}
+
+.stock-table th {
+  background: rgba(4, 92, 96, 0.1);
+  font-size: 0.86rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.stock-table td:first-child strong {
+  display: block;
+  color: #10203b;
+}
+
+.stock-table td:first-child span {
+  display: block;
+  margin-top: 2px;
+  color: #62758f;
+  font-size: 0.82rem;
+}
+
+.stock-mobile-list {
+  display: none;
+}
+
+.stock-empty {
+  margin: 0;
+  padding: 18px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.72);
+  color: #10203b !important;
+  font-weight: 800;
+}
+
 .button-danger {
   padding: 14px 18px;
   border-radius: 16px;
@@ -4978,9 +5122,82 @@ textarea::placeholder {
   .admin-media-grid {
     grid-template-columns: 1fr;
   }
+
+  .stock-total-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 640px) {
+  .stock-total-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .stock-total-card {
+    padding: 14px;
+    border-radius: 18px;
+  }
+
+  .stock-card-head {
+    display: grid;
+  }
+
+  .stock-table-wrap {
+    display: none;
+  }
+
+  .stock-mobile-list {
+    display: grid;
+    gap: 10px;
+  }
+
+  .stock-branch-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px 12px;
+    padding: 14px;
+    border-radius: 18px;
+    border: 1px solid rgba(4, 92, 96, 0.12);
+    background: rgba(255, 255, 255, 0.78);
+  }
+
+  .stock-branch-card span {
+    color: #60758f;
+    font-size: 0.82rem;
+    font-weight: 800;
+  }
+
+  .stock-branch-card strong {
+    color: #10203b;
+  }
+
+  .stock-branch-total {
+    align-self: start;
+    min-width: 58px;
+    padding: 8px 10px;
+    border-radius: 14px;
+    background: #ffd166;
+    color: #10203b !important;
+    text-align: center;
+  }
+
+  .stock-branch-split {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .stock-branch-split span {
+    padding: 7px;
+    border-radius: 12px;
+    background: rgba(4, 92, 96, 0.08);
+    color: #10203b;
+    text-align: center;
+    font-size: 0.72rem;
+  }
+
   .monthly-campaign-slider {
     border-radius: 22px;
   }

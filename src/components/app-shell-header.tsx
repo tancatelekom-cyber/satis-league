@@ -19,6 +19,7 @@ const baseNavItems: NavItem[] = [
   { href: "/hedef-gerceklesen", label: "Hedef Gerceklesen", mobileLabel: "Hedef", icon: "H" },
   { href: "/tarifeler", label: "Tarifeler", mobileLabel: "Tarife", icon: "T" },
   { href: "/cihaz-fiyat-listesi", label: "Cihaz Fiyat Listesi", mobileLabel: "Cihaz", icon: "C" },
+  { href: "/stok-bilgisi", label: "Stok Bilgisi", mobileLabel: "Stok", icon: "S" },
   { href: "/hesabim", label: "Hesabim", mobileLabel: "Hesap", icon: "P" }
 ];
 
@@ -47,7 +48,7 @@ export function AppShellHeader({ initialIsAdmin = false, initialCanEvaluate = fa
   }, [initialCanEvaluate, initialIsAdmin]);
 
   const primaryTabs = useMemo(() => {
-    const wanted = ["/kampanyalar", "/aylik-kampanyalar", "/lig", "/tarifeler", "/cihaz-fiyat-listesi"];
+    const wanted = ["/kampanyalar", "/aylik-kampanyalar", "/lig", "/degerlendirme", "/tarifeler", "/cihaz-fiyat-listesi"];
     return navItems.filter((item) => wanted.includes(item.href));
   }, [navItems]);
 

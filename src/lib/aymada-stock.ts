@@ -9,8 +9,21 @@ export type AymadaBranchStock = {
   total: number;
 };
 
+export type AymadaStockProduct = {
+  productCardId: string;
+  productCardCode: string;
+  productBarcode: string;
+  productCardName: string;
+  productTypeName: string;
+  categoryName: string;
+  mainCategoryName: string;
+  category: AymadaStockCategory;
+  stockCount: number;
+};
+
 export type AymadaStockResult = {
   rows: AymadaBranchStock[];
+  products: AymadaStockProduct[];
   totalSmartphone: number;
   totalTablet: number;
   totalIot: number;
@@ -19,20 +32,22 @@ export type AymadaStockResult = {
   warning?: string;
   debug?: {
     recordCount: number;
-    productCardLookups: number;
     sampleRecords: XmlRecord[];
   };
 };
 
 type XmlRecord = Record<string, string>;
 
-const DEFAULT_SERVICE_URL = "https://portal.aymada.com/WebService/WSAccountEntegration.asmx";
+const DEFAULT_PRODUCT_SERVICE_URL = "https://portal.aymada.com/WebService/WSIntegrationProduct.asmx";
 
 function requireConfig() {
   const firmApiCode = process.env.AYMADA_FIRM_API_CODE?.trim();
   const userName = process.env.AYMADA_USERNAME?.trim();
   const password = process.env.AYMADA_PASSWORD?.trim();
-  const serviceUrl = process.env.AYMADA_SERVICE_URL?.trim() || DEFAULT_SERVICE_URL;
+  const productServiceUrl =
+    process.env.AYMADA_PRODUCT_SERVICE_URL?.trim() ||
+    process.env.AYMADA_CUSTOM_PRODUCT_SERVICE_URL?.trim() ||
+    DEFAULT_PRODUCT_SERVICE_URL;
 
   if (!firmApiCode || !userName || !password) {
     throw new Error(
@@ -40,7 +55,7 @@ function requireConfig() {
     );
   }
 
-  return { firmApiCode, userName, password, serviceUrl };
+  return { firmApiCode, userName, password, productServiceUrl };
 }
 
 function xmlEscape(value: string) {
@@ -78,23 +93,10 @@ function extractBlocks(xml: string, tagName: string) {
   );
 }
 
-function recordFromBlock(block: string, preferredTags: string[]) {
-  const record: XmlRecord = {};
-
-  for (const tag of preferredTags) {
-    const value = extractTag(block, tag);
-    if (value) record[tag] = value;
-  }
-
-  return record;
-}
-
 function compactText(value: string) {
   return value
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
-    .replace(/İ/g, "I")
-    .replace(/ı/g, "i")
     .toUpperCase()
     .replace(/\s+/g, " ")
     .trim();
@@ -114,170 +116,37 @@ function parseNumber(value: string) {
   return Number.isFinite(number) ? number : 0;
 }
 
-function detectCategory(record: XmlRecord): AymadaStockCategory | null {
-  const text = compactText(
-    [
-      getFirst(record, ["CategoryName", "SubCategoryName", "MainCategoryName", "ProductCategoryName"]),
-      getFirst(record, ["ProductCardName", "ProductName", "ProductCodeName", "ProductCode Name"])
-    ].join(" ")
-  );
-
-  if (text.includes("SMARTPHONE") || text.includes("AKILLI TELEFON") || text.includes("TELEFON")) {
-    return "smartphone";
-  }
-  if (text.includes("TABLET")) return "tablet";
-  if (text.includes("IOT")) return "iot";
-
-  return null;
-}
-
-function isDeviceRecord(record: XmlRecord) {
-  const typeText = compactText(getFirst(record, ["ProductTypeName", "ProductCardTypeName", "ProductType", "TypeName"]));
-  if (!typeText) return true;
-  return typeText.includes("CIHAZ") || typeText.includes("CİHAZ") || typeText.includes("DEVICE");
-}
-
-function getQuantity(record: XmlRecord) {
-  const value = getFirst(record, [
-    "ProductCount",
-    "StockCount",
-    "StockQuantity",
-    "Quantity",
-    "Unit",
-    "Count",
-    "MoveCount",
-    "OrderCount"
-  ]);
-
-  if (value) return parseNumber(value);
-  return getFirst(record, ["SerialNumber", "Barcode", "ProductCardCode", "ProductName", "ProductCardName"]) ? 1 : 0;
-}
-
-function buildRecordList(xml: string) {
-  const normalizedXml = normalizeTagNames(xml);
-  const commonTags = [
-    "FirmCode",
-    "FirmName",
-    "BranchCode",
-    "BranchName",
-    "WarehouseCode",
-    "WarehouseName",
+function recordFromBlock(block: string) {
+  const tags = [
     "ProductCardID",
     "ProductCardCode",
+    "ProductBarcode",
     "ProductCardName",
-    "ProductName",
-    "ProductCodeName",
-    "ProductCode Name",
-    "ProductType",
-    "ProductTypeName",
-    "ProductCardTypeName",
-    "CategoryName",
-    "SubCategoryName",
-    "MainCategoryName",
-    "ProductCategoryName",
-    "ProductCount",
     "StockCount",
-    "StockQuantity",
-    "Quantity",
-    "Unit",
-    "Count",
-    "SerialNumber",
-    "Barcode"
+    "ProductTypeID",
+    "ProductTypeName",
+    "CategoryID",
+    "CategoryName",
+    "MainCategoryID",
+    "MainCategoryName"
   ];
+  const record: XmlRecord = {};
 
-  const records: XmlRecord[] = [];
-  const inventoryBlocks = extractBlocks(normalizedXml, "WSInventoryControl");
-
-  for (const inventoryBlock of inventoryBlocks) {
-    const parent = recordFromBlock(inventoryBlock, commonTags);
-    const detailBlocks = extractBlocks(inventoryBlock, "WSInventoryControlDetail");
-
-    if (detailBlocks.length === 0) {
-      records.push(parent);
-      continue;
-    }
-
-    for (const detailBlock of detailBlocks) {
-      records.push({ ...parent, ...recordFromBlock(detailBlock, commonTags) });
-    }
+  for (const tag of tags) {
+    const value = extractTag(block, tag);
+    if (value) record[tag] = value;
   }
+
+  return record;
+}
+
+function buildProductRecordList(xml: string) {
+  const normalizedXml = normalizeTagNames(xml);
+  const records = extractBlocks(normalizedXml, "IntegrationProducts").map(recordFromBlock);
 
   if (records.length > 0) return records;
 
-  for (const rowTag of [
-    "WSInventoryControlDetail",
-    "WSStock",
-    "Stock",
-    "StockItem",
-    "ProductStock",
-    "Inventory",
-    "InventoryItem",
-    "Table"
-  ]) {
-    for (const block of extractBlocks(normalizedXml, rowTag)) {
-      records.push(recordFromBlock(block, commonTags));
-    }
-  }
-
-  return records;
-}
-
-function formatSoapDate(date: Date) {
-  return date.toISOString().slice(0, 19);
-}
-
-function getDateRange() {
-  const now = new Date();
-  const start = process.env.AYMADA_STOCK_START_DATE?.trim() || "2000-01-01T00:00:00";
-  const end = process.env.AYMADA_STOCK_END_DATE?.trim() || formatSoapDate(now);
-  const isComplete = process.env.AYMADA_STOCK_IS_COMPLETE?.trim() || "true";
-
-  return { start, end, isComplete };
-}
-
-function buildSoapBody(input: {
-  firmApiCode: string;
-  userName: string;
-  password: string;
-  start: string;
-  end: string;
-  isComplete: string;
-}) {
-  const body = `<?xml version="1.0" encoding="utf-8"?>
-<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-  <soap:Body>
-    <GetInventoryList xmlns="http://tempuri.org/">
-      <FirmApiCode>${xmlEscape(input.firmApiCode)}</FirmApiCode>
-      <UserName>${xmlEscape(input.userName)}</UserName>
-      <Password>${xmlEscape(input.password)}</Password>
-      <CLCardCode></CLCardCode>
-      <StartDate>${xmlEscape(input.start)}</StartDate>
-      <EndDate>${xmlEscape(input.end)}</EndDate>
-      <IsComplete>${xmlEscape(input.isComplete)}</IsComplete>
-    </GetInventoryList>
-  </soap:Body>
-</soap:Envelope>`;
-
-  return body;
-}
-
-function buildProductCardSoapBody(input: {
-  firmApiCode: string;
-  userName: string;
-  password: string;
-  productCardId: string;
-}) {
-  return `<?xml version="1.0" encoding="utf-8"?>
-<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-  <soap:Body>
-    <GetProductCard xmlns="http://tempuri.org/">
-      <FirmApiCode>${xmlEscape(input.firmApiCode)}</FirmApiCode>
-      <UserName>${xmlEscape(input.userName)}</UserName>
-      <Password>${xmlEscape(input.password)}</Password>
-      <ProductCardID>${xmlEscape(input.productCardId)}</ProductCardID>
-    </GetProductCard>
-  </soap:Body>
-</soap:Envelope>`;
+  return extractBlocks(normalizedXml, "Table").map(recordFromBlock);
 }
 
 function getAymadaErrorMessage(text: string) {
@@ -296,28 +165,35 @@ function getAymadaErrorMessage(text: string) {
   return "";
 }
 
-async function postSoapInventory(input: {
-  serviceUrl: string;
+function buildGetProductsSoapBody(input: { firmApiCode: string; userName: string; password: string }) {
+  return `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <GetProducts xmlns="http://tempuri.org/">
+      <firmApiCode>${xmlEscape(input.firmApiCode)}</firmApiCode>
+      <userName>${xmlEscape(input.userName)}</userName>
+      <password>${xmlEscape(input.password)}</password>
+    </GetProducts>
+  </soap:Body>
+</soap:Envelope>`;
+}
+
+async function postSoapGetProducts(input: {
+  productServiceUrl: string;
   firmApiCode: string;
   userName: string;
   password: string;
-  start: string;
-  end: string;
-  isComplete: string;
 }) {
-  const body = buildSoapBody(input);
-
-  const response = await fetch(input.serviceUrl, {
+  const response = await fetch(input.productServiceUrl, {
     method: "POST",
     headers: {
       "Content-Type": "text/xml; charset=utf-8",
-      SOAPAction: "http://tempuri.org/GetInventoryList"
+      SOAPAction: "http://tempuri.org/GetProducts"
     },
-    body,
+    body: buildGetProductsSoapBody(input),
     cache: "no-store",
     next: { revalidate: 0 }
   });
-
   const text = await response.text();
 
   if (!response.ok) {
@@ -325,60 +201,23 @@ async function postSoapInventory(input: {
   }
 
   const serviceError = getAymadaErrorMessage(text);
-  if (serviceError) {
-    throw new Error(serviceError);
-  }
+  if (serviceError) throw new Error(serviceError);
 
   return text;
 }
 
-async function postSoapProductCard(input: {
-  serviceUrl: string;
+async function postFormGetProducts(input: {
+  productServiceUrl: string;
   firmApiCode: string;
   userName: string;
   password: string;
-  productCardId: string;
 }) {
-  const response = await fetch(input.serviceUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "text/xml; charset=utf-8",
-      SOAPAction: "http://tempuri.org/GetProductCard"
-    },
-    body: buildProductCardSoapBody(input),
-    cache: "no-store",
-    next: { revalidate: 0 }
-  });
-
-  const text = await response.text();
-
-  if (!response.ok) {
-    throw new Error(`Aymada urun karti servisi yanit vermedi: ${response.status}`);
-  }
-
-  const serviceError = getAymadaErrorMessage(text);
-  if (serviceError) {
-    throw new Error(serviceError);
-  }
-
-  return text;
-}
-
-async function postFormProductCard(input: {
-  serviceUrl: string;
-  firmApiCode: string;
-  userName: string;
-  password: string;
-  productCardId: string;
-}) {
-  const url = `${input.serviceUrl.replace(/\/$/, "")}/GetProductCard`;
+  const url = `${input.productServiceUrl.replace(/\/$/, "")}/GetProducts`;
   const body = new URLSearchParams({
-    FirmApiCode: input.firmApiCode,
-    UserName: input.userName,
-    Password: input.password,
-    ProductCardID: input.productCardId
+    firmApiCode: input.firmApiCode,
+    userName: input.userName,
+    password: input.password
   });
-
   const response = await fetch(url, {
     method: "POST",
     headers: {
@@ -388,51 +227,6 @@ async function postFormProductCard(input: {
     cache: "no-store",
     next: { revalidate: 0 }
   });
-
-  const text = await response.text();
-
-  if (!response.ok) {
-    throw new Error(`Aymada urun karti servisi yanit vermedi: ${response.status}`);
-  }
-
-  const serviceError = getAymadaErrorMessage(text);
-  if (serviceError) {
-    throw new Error(serviceError);
-  }
-
-  return text;
-}
-
-async function postFormInventory(input: {
-  serviceUrl: string;
-  firmApiCode: string;
-  userName: string;
-  password: string;
-  start: string;
-  end: string;
-  isComplete: string;
-}) {
-  const url = `${input.serviceUrl.replace(/\/$/, "")}/GetInventoryList`;
-  const body = new URLSearchParams({
-    FirmApiCode: input.firmApiCode,
-    UserName: input.userName,
-    Password: input.password,
-    CLCardCode: "",
-    StartDate: input.start,
-    EndDate: input.end,
-    IsComplete: input.isComplete
-  });
-
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded"
-    },
-    body,
-    cache: "no-store",
-    next: { revalidate: 0 }
-  });
-
   const text = await response.text();
 
   if (!response.ok) {
@@ -440,148 +234,163 @@ async function postFormInventory(input: {
   }
 
   const serviceError = getAymadaErrorMessage(text);
-  if (serviceError) {
-    throw new Error(serviceError);
-  }
+  if (serviceError) throw new Error(serviceError);
 
   return text;
 }
 
-async function callInventoryService() {
-  const { firmApiCode, userName, password, serviceUrl } = requireConfig();
-  const { start, end, isComplete } = getDateRange();
-  const preferredComplete = compactText(isComplete) === "FALSE" ? "false" : "true";
-  const fallbackComplete = preferredComplete === "true" ? "false" : "true";
+async function getProductsHttp(input: {
+  productServiceUrl: string;
+  firmApiCode: string;
+  userName: string;
+  password: string;
+}) {
+  const url = new URL(`${input.productServiceUrl.replace(/\/$/, "")}/GetProducts`);
+  url.searchParams.set("firmApiCode", input.firmApiCode);
+  url.searchParams.set("userName", input.userName);
+  url.searchParams.set("password", input.password);
+
+  const response = await fetch(url.toString(), {
+    method: "GET",
+    cache: "no-store",
+    next: { revalidate: 0 }
+  });
+  const text = await response.text();
+
+  if (!response.ok) {
+    throw new Error(`Aymada stok servisi yanit vermedi: ${response.status}`);
+  }
+
+  const serviceError = getAymadaErrorMessage(text);
+  if (serviceError) throw new Error(serviceError);
+
+  return text;
+}
+
+async function callGetProductsService() {
+  const input = requireConfig();
   const attempts = [
-    { type: "soap", isComplete: preferredComplete },
-    { type: "soap", isComplete: fallbackComplete },
-    { type: "form", isComplete: preferredComplete },
-    { type: "form", isComplete: fallbackComplete }
+    () => postSoapGetProducts(input),
+    () => postFormGetProducts(input),
+    () => getProductsHttp(input)
   ];
   const errors: string[] = [];
 
   for (const attempt of attempts) {
     try {
-      const input = { serviceUrl, firmApiCode, userName, password, start, end, isComplete: attempt.isComplete };
-      return attempt.type === "soap" ? await postSoapInventory(input) : await postFormInventory(input);
+      return await attempt();
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Bilinmeyen hata";
-      errors.push(`${attempt.type}/${attempt.isComplete}: ${message}`);
+      errors.push(error instanceof Error ? error.message : "Bilinmeyen hata");
     }
   }
 
-  throw new Error(`Aymada stok servisi okunamadi. Denenen yollar: ${errors.join(" | ")}`);
+  throw new Error(`Aymada GetProducts servisi okunamadi. Denenen yollar: ${errors.join(" | ")}`);
 }
 
-async function fetchProductCardDetail(productCardId: string) {
-  const { firmApiCode, userName, password, serviceUrl } = requireConfig();
-  const input = { serviceUrl, firmApiCode, userName, password, productCardId };
-  const commonTags = [
-    "ProductCardID",
-    "ProductCardCode",
-    "ProductCardName",
-    "CategoryID",
-    "CategoryName",
-    "MainCategoryID",
-    "MainCategoryName",
-    "ProductTypeID",
-    "ProductTypeName",
-    "VATRatio",
-    "UnitType",
-    "SerialNoControl",
-    "SerialNoKontrol"
-  ];
+function detectCategory(record: XmlRecord): AymadaStockCategory | null {
+  const text = compactText(
+    [
+      getFirst(record, ["CategoryName"]),
+      getFirst(record, ["MainCategoryName"]),
+      getFirst(record, ["ProductCardName"]),
+      getFirst(record, ["ProductCardCode"])
+    ].join(" ")
+  );
 
-  try {
-    return recordFromBlock(normalizeTagNames(await postSoapProductCard(input)), commonTags);
-  } catch {
-    return recordFromBlock(normalizeTagNames(await postFormProductCard(input)), commonTags);
+  if (text.includes("SMARTPHONE") || text.includes("AKILLI TELEFON") || text.includes("TELEFON")) {
+    return "smartphone";
   }
+  if (text.includes("TABLET")) return "tablet";
+  if (text.includes("IOT") || text.includes("I O T")) return "iot";
+
+  return null;
+}
+
+function isDeviceRecord(record: XmlRecord) {
+  const typeText = compactText(getFirst(record, ["ProductTypeName"]));
+  if (!typeText) return true;
+  return (
+    typeText.includes("CIHAZ") ||
+    typeText.includes("DEVICE") ||
+    typeText.includes("SMARTPHONE") ||
+    typeText.includes("TELEFON") ||
+    typeText.includes("TABLET") ||
+    typeText.includes("IOT")
+  );
+}
+
+function toStockProduct(record: XmlRecord): AymadaStockProduct | null {
+  const category = detectCategory(record);
+  if (!category || !isDeviceRecord(record)) return null;
+
+  const stockCount = parseNumber(getFirst(record, ["StockCount"]));
+  if (stockCount <= 0) return null;
+
+  return {
+    productCardId: getFirst(record, ["ProductCardID"]),
+    productCardCode: getFirst(record, ["ProductCardCode"]),
+    productBarcode: getFirst(record, ["ProductBarcode"]),
+    productCardName: getFirst(record, ["ProductCardName"]) || "Urun adi yok",
+    productTypeName: getFirst(record, ["ProductTypeName"]) || "Cihaz",
+    categoryName: getFirst(record, ["CategoryName"]),
+    mainCategoryName: getFirst(record, ["MainCategoryName"]),
+    category,
+    stockCount
+  };
 }
 
 export async function fetchAymadaBranchStocks(): Promise<AymadaStockResult> {
-  const xml = await callInventoryService();
-  const records = buildRecordList(xml);
-  const productCardCache = new Map<string, XmlRecord | null>();
-  const map = new Map<string, AymadaBranchStock>();
-  let matchedRecords = 0;
-  const sampleRecords: XmlRecord[] = [];
+  const xml = await callGetProductsService();
+  const records = buildProductRecordList(xml);
+  const products = records
+    .map(toStockProduct)
+    .filter((product): product is AymadaStockProduct => Boolean(product))
+    .sort(
+      (a, b) =>
+        b.stockCount - a.stockCount ||
+        a.category.localeCompare(b.category, "tr") ||
+        a.productCardName.localeCompare(b.productCardName, "tr")
+    );
 
-  for (const baseRecord of records) {
-    let record = baseRecord;
-    const productCardId = getFirst(baseRecord, ["ProductCardID"]);
-
-    if (productCardId) {
-      if (!productCardCache.has(productCardId)) {
-        try {
-          productCardCache.set(productCardId, await fetchProductCardDetail(productCardId));
-        } catch {
-          productCardCache.set(productCardId, null);
-        }
-      }
-
-      record = { ...baseRecord, ...(productCardCache.get(productCardId) ?? {}) };
-    }
-
-    if (sampleRecords.length < 5) {
-      sampleRecords.push(record);
-    }
-
-    const category = detectCategory(record);
-    if (!category) continue;
-
-    if (!isDeviceRecord(record)) continue;
-
-    const quantity = getQuantity(record);
-    if (quantity <= 0) continue;
-
-    matchedRecords += 1;
-
-    const branchCode = getFirst(record, ["FirmCode", "BranchCode", "WarehouseCode"]);
-    const branchName = getFirst(record, ["FirmName", "BranchName", "WarehouseName"]) || branchCode || "Sube belirtilmedi";
-    const key = `${branchCode || branchName}`.trim();
-    const row =
-      map.get(key) ??
-      ({
-        branchCode,
-        branchName,
-        smartphone: 0,
-        tablet: 0,
-        iot: 0,
-        total: 0
-      } satisfies AymadaBranchStock);
-
-    row[category] += quantity;
-    row.total += quantity;
-    map.set(key, row);
-  }
-
-  const rows = [...map.values()].sort((a, b) => b.total - a.total || a.branchName.localeCompare(b.branchName, "tr"));
-  const totals = rows.reduce(
-    (acc, row) => {
-      acc.totalSmartphone += row.smartphone;
-      acc.totalTablet += row.tablet;
-      acc.totalIot += row.iot;
-      acc.total += row.total;
+  const totals = products.reduce(
+    (acc, product) => {
+      if (product.category === "smartphone") acc.totalSmartphone += product.stockCount;
+      if (product.category === "tablet") acc.totalTablet += product.stockCount;
+      if (product.category === "iot") acc.totalIot += product.stockCount;
+      acc.total += product.stockCount;
       return acc;
     },
     { totalSmartphone: 0, totalTablet: 0, totalIot: 0, total: 0 }
   );
 
+  const rows: AymadaBranchStock[] =
+    totals.total > 0
+      ? [
+          {
+            branchCode: "",
+            branchName: "Genel stok",
+            smartphone: totals.totalSmartphone,
+            tablet: totals.totalTablet,
+            iot: totals.totalIot,
+            total: totals.total
+          }
+        ]
+      : [];
+
   return {
     rows,
+    products,
     ...totals,
     updatedAt: new Date().toISOString(),
     warning:
-      records.length > 0 && matchedRecords === 0
-        ? "Aymada verisi okundu fakat cihaz/smartphone/tablet/iot eslesmesi bulunamadi. API alan adlari kontrol edilmeli."
-        : undefined,
+      records.length > 0 && products.length === 0
+        ? "Aymada verisi okundu fakat cihaz/smartphone/tablet/iot eslesmesi bulunamadi. ProductTypeName, CategoryName ve MainCategoryName alanlari kontrol edilmeli."
+        : "Aymada Custom API GetProducts servisi stok adetini genel toplam olarak veriyor; sube bilgisi bu serviste bulunmuyor.",
     debug:
       process.env.AYMADA_STOCK_DEBUG === "true"
         ? {
             recordCount: records.length,
-            productCardLookups: productCardCache.size,
-            sampleRecords
+            sampleRecords: records.slice(0, 5)
           }
         : undefined
   };

@@ -50,7 +50,7 @@ export default async function StockInfoPage() {
       <section className="hero home-leaders-hero">
         <div className="hero-copy">
           <h1 className="page-title">Stok Bilgisi</h1>
-          <p className="page-subtitle">Aymada uzerinden okunan cihaz stoklari sube bazli burada gorunur.</p>
+          <p className="page-subtitle">Aymada Custom API uzerinden okunan cihaz stoklari burada gorunur.</p>
         </div>
       </section>
 
@@ -86,10 +86,10 @@ export default async function StockInfoPage() {
           <section className="admin-card stock-card">
             <div className="stock-card-head">
               <div>
-                <h2>Sube Bazli Cihaz Stoklari</h2>
+                <h2>Cihaz Stoklari</h2>
                 <p>Son okuma: {formatUpdatedAt(stock.updatedAt)}</p>
               </div>
-              <span>{stock.rows.length} sube</span>
+              <span>{stock.products.length} urun</span>
             </div>
 
             {stock.warning ? <p className="stock-warning">{stock.warning}</p> : null}
@@ -101,20 +101,20 @@ export default async function StockInfoPage() {
               </details>
             ) : null}
 
-            {stock.rows.length > 0 ? (
+            {stock.products.length > 0 ? (
               <>
                 <div className="stock-mobile-list">
-                  {stock.rows.map((row) => (
-                    <article className="stock-branch-card" key={row.branchCode || row.branchName}>
+                  {stock.products.map((product) => (
+                    <article className="stock-branch-card" key={product.productCardId || product.productCardCode}>
                       <div>
-                        <span>{row.branchCode || "Sube"}</span>
-                        <strong>{row.branchName}</strong>
+                        <span>{product.categoryName || product.mainCategoryName || product.productTypeName}</span>
+                        <strong>{product.productCardName}</strong>
                       </div>
-                      <strong className="stock-branch-total">{formatNumber(row.total)}</strong>
+                      <strong className="stock-branch-total">{formatNumber(product.stockCount)}</strong>
                       <div className="stock-branch-split">
-                        <span>Smartphone {formatNumber(row.smartphone)}</span>
-                        <span>Tablet {formatNumber(row.tablet)}</span>
-                        <span>IoT {formatNumber(row.iot)}</span>
+                        <span>{product.productCardCode || "Kod yok"}</span>
+                        <span>{product.productBarcode || "Barkod yok"}</span>
+                        <span>{product.category === "smartphone" ? "Smartphone" : product.category === "tablet" ? "Tablet" : "IoT"}</span>
                       </div>
                     </article>
                   ))}
@@ -124,25 +124,25 @@ export default async function StockInfoPage() {
                   <table className="stock-table">
                     <thead>
                       <tr>
-                        <th>Sube</th>
-                        <th>Smartphone</th>
-                        <th>Tablet</th>
-                        <th>IoT</th>
-                        <th>Toplam</th>
+                        <th>Urun</th>
+                        <th>Tip</th>
+                        <th>Kategori</th>
+                        <th>Kod</th>
+                        <th>Stok</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {stock.rows.map((row) => (
-                        <tr key={row.branchCode || row.branchName}>
+                      {stock.products.map((product) => (
+                        <tr key={product.productCardId || product.productCardCode}>
                           <td>
-                            <strong>{row.branchName}</strong>
-                            {row.branchCode ? <span>{row.branchCode}</span> : null}
+                            <strong>{product.productCardName}</strong>
+                            {product.productBarcode ? <span>{product.productBarcode}</span> : null}
                           </td>
-                          <td>{formatNumber(row.smartphone)}</td>
-                          <td>{formatNumber(row.tablet)}</td>
-                          <td>{formatNumber(row.iot)}</td>
+                          <td>{product.category === "smartphone" ? "Smartphone" : product.category === "tablet" ? "Tablet" : "IoT"}</td>
+                          <td>{product.categoryName || product.mainCategoryName || "-"}</td>
+                          <td>{product.productCardCode || "-"}</td>
                           <td>
-                            <strong>{formatNumber(row.total)}</strong>
+                            <strong>{formatNumber(product.stockCount)}</strong>
                           </td>
                         </tr>
                       ))}

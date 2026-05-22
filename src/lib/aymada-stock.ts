@@ -107,10 +107,10 @@ function compactText(value: string) {
     .toLocaleUpperCase("tr-TR");
 }
 
-function detectCategory(categoryName: string, productName: string): AymadaStockCategory | null {
-  const text = compactText(`${categoryName} ${productName}`);
+function detectCategory(categoryName: string): AymadaStockCategory | null {
+  const text = compactText(categoryName);
 
-  if (text.includes("SMARTPHONE") || text.includes("AKILLI TELEFON") || text.includes("TELEFON")) {
+  if (text.includes("SMARTPHONE") || text.includes("AKILLI TELEFON")) {
     return "smartphone";
   }
 
@@ -163,7 +163,7 @@ export async function fetchAymadaBranchStocks(): Promise<AymadaStockResult> {
   const branchMap = new Map<string, AymadaBranchStock>();
 
   for (const record of records) {
-    const category = detectCategory(record.categoryName, record.productName);
+    const category = detectCategory(record.categoryName);
     if (!category) continue;
 
     const productKey = [record.branchName, record.categoryName, record.productName].join("||");

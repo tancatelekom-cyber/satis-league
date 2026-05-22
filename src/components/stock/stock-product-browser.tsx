@@ -10,8 +10,7 @@ type StockProductBrowserProps = {
 const categoryLabels: Record<AymadaStockProduct["category"], string> = {
   smartphone: "Smartphone",
   tablet: "Tablet",
-  iot: "IoT",
-  other: "Diger"
+  iot: "IoT"
 };
 
 function formatNumber(value: number) {
@@ -121,7 +120,6 @@ export function StockProductBrowser({ products }: StockProductBrowserProps) {
             <option value="smartphone">Smartphone</option>
             <option value="tablet">Tablet</option>
             <option value="iot">IoT</option>
-            <option value="other">Diger</option>
           </select>
         </label>
 

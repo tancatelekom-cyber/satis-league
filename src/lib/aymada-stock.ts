@@ -1,4 +1,4 @@
-export type AymadaStockCategory = "smartphone" | "tablet" | "iot" | "other";
+export type AymadaStockCategory = "smartphone" | "tablet" | "iot";
 
 export type AymadaBranchStock = {
   branchCode: string;
@@ -107,7 +107,7 @@ function compactText(value: string) {
     .toLocaleUpperCase("tr-TR");
 }
 
-function detectCategory(categoryName: string, productName: string): AymadaStockCategory {
+function detectCategory(categoryName: string, productName: string): AymadaStockCategory | null {
   const text = compactText(`${categoryName} ${productName}`);
 
   if (text.includes("SMARTPHONE") || text.includes("AKILLI TELEFON") || text.includes("TELEFON")) {
@@ -117,7 +117,7 @@ function detectCategory(categoryName: string, productName: string): AymadaStockC
   if (text.includes("TABLET")) return "tablet";
   if (text.includes("IOT") || text.includes("I O T")) return "iot";
 
-  return "other";
+  return null;
 }
 
 async function fetchStockSheetRecords() {
@@ -164,6 +164,8 @@ export async function fetchAymadaBranchStocks(): Promise<AymadaStockResult> {
 
   for (const record of records) {
     const category = detectCategory(record.categoryName, record.productName);
+    if (!category) continue;
+
     const productKey = [record.branchName, record.categoryName, record.productName].join("||");
     const existingProduct = productMap.get(productKey);
 

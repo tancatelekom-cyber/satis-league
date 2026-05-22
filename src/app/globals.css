@@ -5068,6 +5068,83 @@ textarea::placeholder {
   font-weight: 800;
 }
 
+.stock-browser {
+  display: grid;
+  gap: 14px;
+}
+
+.stock-filter-card {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.8fr) minmax(150px, 0.8fr) minmax(220px, 1.4fr) auto;
+  align-items: end;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 20px;
+  border: 1px solid rgba(4, 92, 96, 0.14);
+  background: linear-gradient(135deg, rgba(4, 92, 96, 0.94), rgba(16, 128, 130, 0.88));
+}
+
+.stock-filter-card label {
+  display: grid;
+  gap: 7px;
+}
+
+.stock-filter-card label span {
+  color: #ffffff;
+  font-size: 0.86rem;
+  font-weight: 900;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.28);
+}
+
+.stock-filter-card select,
+.stock-filter-card input {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid rgba(2, 35, 48, 0.16);
+  border-radius: 16px;
+  background: #f8fbff;
+  color: #10203b;
+  font-size: 0.98rem;
+  font-weight: 900;
+  outline: none;
+  padding: 0 14px;
+}
+
+.stock-filter-card input::placeholder {
+  color: #61728d;
+  font-weight: 700;
+}
+
+.stock-filter-summary {
+  display: grid;
+  min-width: 124px;
+  min-height: 48px;
+  place-content: center;
+  gap: 2px;
+  padding: 7px 12px;
+  border-radius: 16px;
+  background: #ffd166;
+  color: #10203b;
+  text-align: center;
+  box-shadow: 0 10px 22px rgba(8, 22, 40, 0.14);
+}
+
+.stock-filter-summary span,
+.stock-filter-summary strong {
+  color: #10203b;
+  line-height: 1.1;
+}
+
+.stock-filter-summary span {
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.stock-filter-summary strong {
+  font-size: 1rem;
+  font-weight: 1000;
+}
+
 .stock-debug {
   padding: 14px;
   border-radius: 16px;
@@ -5177,6 +5254,26 @@ textarea::placeholder {
 
   .stock-card-head {
     display: grid;
+  }
+
+  .stock-filter-card {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 18px;
+  }
+
+  .stock-search-field,
+  .stock-filter-summary {
+    grid-column: 1 / -1;
+  }
+
+  .stock-filter-card select,
+  .stock-filter-card input {
+    min-height: 44px;
+    border-radius: 14px;
+    font-size: 0.9rem;
+    padding: 0 10px;
   }
 
   .stock-table-wrap {

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { fetchAymadaBranchStocks } from "@/lib/aymada-stock";
 import { createClient } from "@/lib/supabase/server";
+import { StockProductBrowser } from "@/components/stock/stock-product-browser";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -102,54 +103,7 @@ export default async function StockInfoPage() {
             ) : null}
 
             {stock.products.length > 0 ? (
-              <>
-                <div className="stock-mobile-list">
-                  {stock.products.map((product) => (
-                    <article className="stock-branch-card" key={product.productCardId || product.productCardCode}>
-                      <div>
-                        <span>{product.categoryName || product.mainCategoryName || product.productTypeName}</span>
-                        <strong>{product.productCardName}</strong>
-                      </div>
-                      <strong className="stock-branch-total">{formatNumber(product.stockCount)}</strong>
-                      <div className="stock-branch-split">
-                        <span>{product.productCardCode || "Kod yok"}</span>
-                        <span>{product.productBarcode || "Barkod yok"}</span>
-                        <span>{product.category === "smartphone" ? "Smartphone" : product.category === "tablet" ? "Tablet" : "IoT"}</span>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-
-                <div className="stock-table-wrap">
-                  <table className="stock-table">
-                    <thead>
-                      <tr>
-                        <th>Urun</th>
-                        <th>Tip</th>
-                        <th>Kategori</th>
-                        <th>Kod</th>
-                        <th>Stok</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {stock.products.map((product) => (
-                        <tr key={product.productCardId || product.productCardCode}>
-                          <td>
-                            <strong>{product.productCardName}</strong>
-                            {product.productBarcode ? <span>{product.productBarcode}</span> : null}
-                          </td>
-                          <td>{product.category === "smartphone" ? "Smartphone" : product.category === "tablet" ? "Tablet" : "IoT"}</td>
-                          <td>{product.categoryName || product.mainCategoryName || "-"}</td>
-                          <td>{product.productCardCode || "-"}</td>
-                          <td>
-                            <strong>{formatNumber(product.stockCount)}</strong>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </>
+              <StockProductBrowser products={stock.products} />
             ) : (
               <p className="stock-empty">Smartphone, tablet veya IoT stogu bulunamadi.</p>
             )}

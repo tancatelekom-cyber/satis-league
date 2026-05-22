@@ -89,9 +89,9 @@ function groupProductsByName(products: AymadaStockProduct[]) {
     }))
     .sort(
       (a, b) =>
-        b.stockCount - a.stockCount ||
+        a.productCardName.localeCompare(b.productCardName, "tr") ||
         a.categoryName.localeCompare(b.categoryName, "tr") ||
-        a.productCardName.localeCompare(b.productCardName, "tr")
+        b.stockCount - a.stockCount
     );
 }
 

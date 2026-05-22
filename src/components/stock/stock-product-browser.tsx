@@ -10,7 +10,8 @@ type StockProductBrowserProps = {
 const categoryLabels: Record<AymadaStockProduct["category"], string> = {
   smartphone: "Smartphone",
   tablet: "Tablet",
-  iot: "IoT"
+  iot: "IoT",
+  other: "Diger"
 };
 
 function formatNumber(value: number) {
@@ -34,18 +35,28 @@ function getBrand(productName: string) {
 }
 
 export function StockProductBrowser({ products }: StockProductBrowserProps) {
+  const [branch, setBranch] = useState("all");
   const [category, setCategory] = useState("all");
   const [brand, setBrand] = useState("all");
   const [query, setQuery] = useState("");
 
+  const branches = useMemo(() => {
+    const branchSet = new Set<string>();
+    for (const product of products) {
+      branchSet.add(product.branchName || "Sube yok");
+    }
+    return [...branchSet].sort((a, b) => a.localeCompare(b, "tr"));
+  }, [products]);
+
   const brands = useMemo(() => {
     const brandSet = new Set<string>();
     for (const product of products) {
+      if (branch !== "all" && product.branchName !== branch) continue;
       if (category !== "all" && product.category !== category) continue;
       brandSet.add(getBrand(product.productCardName));
     }
     return [...brandSet].sort((a, b) => a.localeCompare(b, "tr"));
-  }, [category, products]);
+  }, [branch, category, products]);
 
   const filteredProducts = useMemo(() => {
     const search = compactText(query);
@@ -60,23 +71,43 @@ export function StockProductBrowser({ products }: StockProductBrowserProps) {
           product.categoryName,
           product.mainCategoryName,
           product.productTypeName,
+          product.branchName,
           productBrand
         ].join(" ")
       );
 
+      if (branch !== "all" && product.branchName !== branch) return false;
       if (category !== "all" && product.category !== category) return false;
       if (brand !== "all" && productBrand !== brand) return false;
       if (search && !haystack.includes(search)) return false;
 
       return true;
     });
-  }, [brand, category, products, query]);
+  }, [branch, brand, category, products, query]);
 
   const filteredTotal = filteredProducts.reduce((sum, product) => sum + product.stockCount, 0);
 
   return (
     <div className="stock-browser">
       <section className="stock-filter-card" aria-label="Stok filtreleri">
+        <label>
+          <span>Sube</span>
+          <select
+            value={branch}
+            onChange={(event) => {
+              setBranch(event.target.value);
+              setBrand("all");
+            }}
+          >
+            <option value="all">Tum subeler</option>
+            {branches.map((branchName) => (
+              <option value={branchName} key={branchName}>
+                {branchName}
+              </option>
+            ))}
+          </select>
+        </label>
+
         <label>
           <span>Kategori</span>
           <select
@@ -90,6 +121,7 @@ export function StockProductBrowser({ products }: StockProductBrowserProps) {
             <option value="smartphone">Smartphone</option>
             <option value="tablet">Tablet</option>
             <option value="iot">IoT</option>
+            <option value="other">Diger</option>
           </select>
         </label>
 
@@ -128,14 +160,13 @@ export function StockProductBrowser({ products }: StockProductBrowserProps) {
               <article className="stock-branch-card" key={product.productCardId || product.productCardCode}>
                 <div>
                   <span>
-                    {getBrand(product.productCardName)} | {product.categoryName || product.mainCategoryName || product.productTypeName}
+                    {product.branchName} | {getBrand(product.productCardName)}
                   </span>
                   <strong>{product.productCardName}</strong>
                 </div>
                 <strong className="stock-branch-total">{formatNumber(product.stockCount)}</strong>
                 <div className="stock-branch-split">
-                  <span>{product.productCardCode || "Kod yok"}</span>
-                  <span>{product.productBarcode || "Barkod yok"}</span>
+                  <span>{product.categoryName || product.mainCategoryName || product.productTypeName}</span>
                   <span>{categoryLabels[product.category]}</span>
                 </div>
               </article>
@@ -147,10 +178,10 @@ export function StockProductBrowser({ products }: StockProductBrowserProps) {
               <thead>
                 <tr>
                   <th>Urun</th>
+                  <th>Sube</th>
                   <th>Marka</th>
                   <th>Tip</th>
                   <th>Kategori</th>
-                  <th>Kod</th>
                   <th>Stok</th>
                 </tr>
               </thead>
@@ -161,10 +192,10 @@ export function StockProductBrowser({ products }: StockProductBrowserProps) {
                       <strong>{product.productCardName}</strong>
                       {product.productBarcode ? <span>{product.productBarcode}</span> : null}
                     </td>
+                    <td>{product.branchName || "-"}</td>
                     <td>{getBrand(product.productCardName)}</td>
                     <td>{categoryLabels[product.category]}</td>
                     <td>{product.categoryName || product.mainCategoryName || "-"}</td>
-                    <td>{product.productCardCode || "-"}</td>
                     <td>
                       <strong>{formatNumber(product.stockCount)}</strong>
                     </td>

@@ -5075,7 +5075,7 @@ textarea::placeholder {
 
 .stock-filter-card {
   display: grid;
-  grid-template-columns: minmax(150px, 0.8fr) minmax(150px, 0.8fr) minmax(220px, 1.4fr) auto;
+  grid-template-columns: repeat(3, minmax(150px, 1fr)) auto;
   align-items: end;
   gap: 12px;
   padding: 14px;
@@ -5113,6 +5113,10 @@ textarea::placeholder {
 .stock-filter-card input::placeholder {
   color: #61728d;
   font-weight: 700;
+}
+
+.stock-search-field {
+  grid-column: 1 / span 3;
 }
 
 .stock-filter-summary {
@@ -5318,7 +5322,7 @@ textarea::placeholder {
   .stock-branch-split {
     grid-column: 1 / -1;
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 6px;
   }
 

@@ -51,7 +51,7 @@ export default async function StockInfoPage() {
       <section className="hero home-leaders-hero">
         <div className="hero-copy">
           <h1 className="page-title">Stok Bilgisi</h1>
-          <p className="page-subtitle">Aymada Custom API uzerinden okunan cihaz stoklari burada gorunur.</p>
+          <p className="page-subtitle">Google Sheet listesinden sayilan sube bazli stoklar burada gorunur.</p>
         </div>
       </section>
 
@@ -59,7 +59,7 @@ export default async function StockInfoPage() {
         <section className="admin-card stock-alert-card">
           <h2>Stok bilgisi acilamadi.</h2>
           <p>{error}</p>
-          <p>Vercel ortam degiskenlerinde Aymada API bilgilerini tanimladiktan sonra sayfayi tekrar acin.</p>
+          <p>Google Sheet paylasim izinlerini kontrol edip sayfayi tekrar acin.</p>
         </section>
       ) : null}
 
@@ -87,17 +87,17 @@ export default async function StockInfoPage() {
           <section className="admin-card stock-card">
             <div className="stock-card-head">
               <div>
-                <h2>Cihaz Stoklari</h2>
+              <h2>Sube Bazli Cihaz Stoklari</h2>
                 <p>Son okuma: {formatUpdatedAt(stock.updatedAt)}</p>
               </div>
-              <span>{stock.products.length} urun</span>
+              <span>{stock.products.length} satir</span>
             </div>
 
             {stock.warning ? <p className="stock-warning">{stock.warning}</p> : null}
 
             {stock.debug ? (
               <details className="stock-debug">
-                <summary>Aymada gelen veri ornegi</summary>
+                <summary>Google Sheet gelen veri ornegi</summary>
                 <pre>{JSON.stringify(stock.debug, null, 2)}</pre>
               </details>
             ) : null}

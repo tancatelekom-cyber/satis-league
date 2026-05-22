@@ -7,6 +7,21 @@ type StockProductBrowserProps = {
   products: AymadaStockProduct[];
 };
 
+type StockProductGroup = {
+  id: string;
+  productCardName: string;
+  brand: string;
+  productTypeName: string;
+  categoryName: string;
+  mainCategoryName: string;
+  category: AymadaStockProduct["category"];
+  stockCount: number;
+  branches: Array<{
+    branchName: string;
+    stockCount: number;
+  }>;
+};
+
 const categoryLabels: Record<AymadaStockProduct["category"], string> = {
   smartphone: "Smartphone",
   tablet: "Tablet",
@@ -31,6 +46,66 @@ function compactText(value: string) {
 
 function getBrand(productName: string) {
   return productName.trim().split(/\s+/)[0]?.toLocaleUpperCase("tr-TR") || "MARKA YOK";
+}
+
+function groupProductsByName(products: AymadaStockProduct[]) {
+  const groupMap = new Map<string, StockProductGroup>();
+
+  for (const product of products) {
+    const key = [product.category, product.categoryName, product.productCardName].join("||");
+    const brand = getBrand(product.productCardName);
+    const group = groupMap.get(key) ?? {
+      id: key,
+      productCardName: product.productCardName,
+      brand,
+      productTypeName: product.productTypeName,
+      categoryName: product.categoryName,
+      mainCategoryName: product.mainCategoryName,
+      category: product.category,
+      stockCount: 0,
+      branches: []
+    };
+    const branchName = product.branchName || "Sube yok";
+    const branchRow = group.branches.find((item) => item.branchName === branchName);
+
+    group.stockCount += product.stockCount;
+
+    if (branchRow) {
+      branchRow.stockCount += product.stockCount;
+    } else {
+      group.branches.push({
+        branchName,
+        stockCount: product.stockCount
+      });
+    }
+
+    groupMap.set(key, group);
+  }
+
+  return [...groupMap.values()]
+    .map((group) => ({
+      ...group,
+      branches: group.branches.sort((a, b) => b.stockCount - a.stockCount || a.branchName.localeCompare(b.branchName, "tr"))
+    }))
+    .sort(
+      (a, b) =>
+        b.stockCount - a.stockCount ||
+        a.categoryName.localeCompare(b.categoryName, "tr") ||
+        a.productCardName.localeCompare(b.productCardName, "tr")
+    );
+}
+
+function BranchStockList({ branches }: { branches: StockProductGroup["branches"] }) {
+  return (
+    <div className="stock-product-branches">
+      {branches.map((branchItem) => (
+        <span key={branchItem.branchName}>
+          <b>{branchItem.branchName}</b>
+          <strong>{formatNumber(branchItem.stockCount)}</strong>
+        </span>
+      ))}
+    </div>
+  );
 }
 
 export function StockProductBrowser({ products }: StockProductBrowserProps) {
@@ -85,6 +160,7 @@ export function StockProductBrowser({ products }: StockProductBrowserProps) {
   }, [branch, brand, category, products, query]);
 
   const filteredTotal = filteredProducts.reduce((sum, product) => sum + product.stockCount, 0);
+  const groupedProducts = useMemo(() => groupProductsByName(filteredProducts), [filteredProducts]);
 
   return (
     <div className="stock-browser">
@@ -146,28 +222,27 @@ export function StockProductBrowser({ products }: StockProductBrowserProps) {
         </label>
 
         <div className="stock-filter-summary">
-          <span>{filteredProducts.length} urun</span>
+          <span>{groupedProducts.length} urun</span>
           <strong>{formatNumber(filteredTotal)} stok</strong>
         </div>
       </section>
 
-      {filteredProducts.length > 0 ? (
+      {groupedProducts.length > 0 ? (
         <>
           <div className="stock-mobile-list">
-            {filteredProducts.map((product) => (
-              <article className="stock-branch-card" key={product.productCardId || product.productCardCode}>
-                <div>
-                  <span>
-                    {product.branchName} | {getBrand(product.productCardName)}
-                  </span>
-                  <strong>{product.productCardName}</strong>
-                </div>
-                <strong className="stock-branch-total">{formatNumber(product.stockCount)}</strong>
-                <div className="stock-branch-split">
-                  <span>{product.categoryName || product.mainCategoryName || product.productTypeName}</span>
-                  <span>{categoryLabels[product.category]}</span>
-                </div>
-              </article>
+            {groupedProducts.map((product) => (
+              <details className="stock-branch-card stock-product-detail-card" key={product.id}>
+                <summary>
+                  <div>
+                    <span>
+                      {product.brand} | {product.categoryName || product.mainCategoryName || product.productTypeName}
+                    </span>
+                    <strong>{product.productCardName}</strong>
+                  </div>
+                  <strong className="stock-branch-total">{formatNumber(product.stockCount)}</strong>
+                </summary>
+                <BranchStockList branches={product.branches} />
+              </details>
             ))}
           </div>
 
@@ -176,7 +251,6 @@ export function StockProductBrowser({ products }: StockProductBrowserProps) {
               <thead>
                 <tr>
                   <th>Urun</th>
-                  <th>Sube</th>
                   <th>Marka</th>
                   <th>Tip</th>
                   <th>Kategori</th>
@@ -184,14 +258,18 @@ export function StockProductBrowser({ products }: StockProductBrowserProps) {
                 </tr>
               </thead>
               <tbody>
-                {filteredProducts.map((product) => (
-                  <tr key={product.productCardId || product.productCardCode}>
+                {groupedProducts.map((product) => (
+                  <tr key={product.id}>
                     <td>
-                      <strong>{product.productCardName}</strong>
-                      {product.productBarcode ? <span>{product.productBarcode}</span> : null}
+                      <details className="stock-table-product-detail">
+                        <summary>
+                          <strong>{product.productCardName}</strong>
+                          <span>Sube adetlerini goster</span>
+                        </summary>
+                        <BranchStockList branches={product.branches} />
+                      </details>
                     </td>
-                    <td>{product.branchName || "-"}</td>
-                    <td>{getBrand(product.productCardName)}</td>
+                    <td>{product.brand}</td>
                     <td>{categoryLabels[product.category]}</td>
                     <td>{product.categoryName || product.mainCategoryName || "-"}</td>
                     <td>

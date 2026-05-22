@@ -5215,6 +5215,97 @@ textarea::placeholder {
   font-size: 0.82rem;
 }
 
+.stock-table-product-detail summary,
+.stock-product-detail-card summary {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.stock-table-product-detail summary::-webkit-details-marker,
+.stock-product-detail-card summary::-webkit-details-marker {
+  display: none;
+}
+
+.stock-table-product-detail summary::before,
+.stock-product-detail-card summary::before {
+  content: "›";
+  display: inline-grid;
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+  place-items: center;
+  border-radius: 999px;
+  background: #ffd166;
+  color: #10203b;
+  font-size: 1.15rem;
+  font-weight: 1000;
+  transform: rotate(0deg);
+  transition: transform 160ms ease;
+}
+
+.stock-table-product-detail[open] summary::before,
+.stock-product-detail-card[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.stock-table-product-detail summary > strong {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.stock-table-product-detail summary > span {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.stock-product-detail-card summary > div {
+  grid-column: 2;
+  min-width: 0;
+}
+
+.stock-product-detail-card .stock-branch-total {
+  grid-column: 3;
+  grid-row: 1 / span 2;
+}
+
+.stock-product-branches {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(4, 92, 96, 0.12);
+}
+
+.stock-product-branches span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(255, 209, 102, 0.28);
+  color: #10203b;
+  font-weight: 900;
+}
+
+.stock-product-branches b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stock-product-branches strong {
+  color: #045c60 !important;
+  font-size: 1rem;
+}
+
 .stock-mobile-list {
   display: none;
 }

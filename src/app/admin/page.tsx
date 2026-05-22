@@ -85,6 +85,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           <strong>Aylik Kampanyalar</strong>
           <span>Slider icin gorseller yukle, degistir ve kaldir.</span>
         </a>
+        <a className="admin-quick-card" href="/admin/bildirimler">
+          <strong>Popup Bildirimler</strong>
+          <span>Ana ekranda acilacak duyurulari tarih ve role gore yonet.</span>
+        </a>
         <a className="admin-quick-card" href="/admin/tarifeler">
           <strong>Tarifeler</strong>
           <span>Turkcell tarifelerini ekle, duzenle ve kategorilere ayir.</span>

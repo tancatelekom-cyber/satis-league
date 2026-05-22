@@ -5710,6 +5710,236 @@ textarea::placeholder {
   background: #ffd166;
 }
 
+.home-popup-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(5, 14, 28, 0.68);
+  backdrop-filter: blur(10px);
+}
+
+.home-popup-card {
+  position: relative;
+  width: min(560px, 100%);
+  padding: 28px;
+  border-radius: 28px;
+  border: 1px solid rgba(88, 240, 196, 0.35);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(226, 249, 244, 0.96)),
+    #ffffff;
+  color: #0a1730;
+  box-shadow: 0 28px 70px rgba(4, 19, 37, 0.34);
+}
+
+.home-popup-card h2 {
+  margin: 10px 0 12px;
+  color: #0a1730;
+  font-size: clamp(1.65rem, 5vw, 2.45rem);
+  line-height: 1.05;
+}
+
+.home-popup-card p {
+  margin: 0;
+  color: #263d5d;
+  font-size: 1.08rem;
+  line-height: 1.65;
+  white-space: pre-line;
+}
+
+.home-popup-kicker {
+  display: inline-flex;
+  width: fit-content;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #58f0c4, #ffd166);
+  color: #071322;
+  font-weight: 900;
+}
+
+.home-popup-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: #0b1728;
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 1.2rem;
+  font-weight: 900;
+}
+
+.home-popup-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 22px;
+}
+
+.popup-admin-panel {
+  margin-bottom: 24px;
+}
+
+.popup-admin-form {
+  display: grid;
+  gap: 18px;
+}
+
+.popup-admin-form .field span,
+.popup-date-grid .field span {
+  color: #10203b !important;
+}
+
+.popup-admin-form .text-area {
+  min-height: 138px;
+  color: #10203b !important;
+  background: rgba(255, 255, 255, 0.94);
+  border-color: rgba(4, 92, 96, 0.16);
+}
+
+.popup-date-grid,
+.popup-target-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.popup-date-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.popup-target-card {
+  padding: 18px;
+  border-radius: 20px;
+  background: rgba(4, 92, 96, 0.08);
+  border: 1px solid rgba(4, 92, 96, 0.14);
+}
+
+.popup-target-card strong,
+.popup-target-card p {
+  color: #10203b;
+}
+
+.popup-target-card p {
+  margin: 6px 0 14px;
+}
+
+.popup-target-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.popup-target-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.86);
+  color: #10203b;
+  font-weight: 900;
+}
+
+.popup-target-option input {
+  width: 18px;
+  height: 18px;
+  accent-color: #07877f;
+}
+
+.popup-admin-list {
+  display: grid;
+  gap: 14px;
+}
+
+.popup-admin-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: start;
+  padding: 20px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(4, 92, 96, 0.14);
+  color: #10203b;
+  box-shadow: 0 12px 26px rgba(8, 22, 40, 0.08);
+}
+
+.popup-admin-card-head,
+.popup-admin-actions,
+.popup-admin-meta {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.popup-admin-card-head strong {
+  color: #10203b;
+  font-size: 1.15rem;
+}
+
+.popup-admin-card p {
+  margin: 8px 0 12px;
+  color: #294569;
+  white-space: pre-line;
+}
+
+.popup-admin-meta span,
+.popup-status-active,
+.popup-status-passive {
+  display: inline-flex;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: rgba(4, 92, 96, 0.1);
+  color: #10203b;
+  font-weight: 800;
+  font-size: 0.86rem;
+}
+
+.popup-status-active {
+  background: #ccfbf1;
+  color: #065f46;
+}
+
+.popup-status-passive {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.popup-delete-button {
+  color: #991b1b;
+}
+
+@media (max-width: 760px) {
+  .home-popup-card {
+    padding: 24px 20px;
+    border-radius: 24px;
+  }
+
+  .home-popup-actions {
+    justify-content: stretch;
+  }
+
+  .home-popup-actions .button-primary {
+    width: 100%;
+  }
+
+  .popup-date-grid,
+  .popup-target-grid,
+  .popup-admin-card {
+    grid-template-columns: 1fr;
+  }
+
+  .popup-admin-actions form,
+  .popup-admin-actions button {
+    width: 100%;
+  }
+}
+
 @media (max-width: 860px) {
   .evaluation-title-row,
   .evaluation-card-head {

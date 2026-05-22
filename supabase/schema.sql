@@ -229,6 +229,27 @@ create table if not exists public.notifications (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.popup_announcements (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  body text not null,
+  target_roles text[] not null default '{}'::text[],
+  show_from timestamptz not null,
+  show_until timestamptz not null,
+  is_active boolean not null default true,
+  created_by uuid references public.profiles(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.popup_announcement_dismissals (
+  id uuid primary key default gen_random_uuid(),
+  announcement_id uuid not null references public.popup_announcements(id) on delete cascade,
+  profile_id uuid not null references public.profiles(id) on delete cascade,
+  dismissed_at timestamptz not null default now(),
+  unique (announcement_id, profile_id)
+);
+
 create table if not exists public.tariffs (
   id uuid primary key default gen_random_uuid(),
   provider text not null default 'Turkcell',
@@ -363,6 +384,8 @@ alter table public.campaign_entry_permissions enable row level security;
 alter table public.sales_entries enable row level security;
 alter table public.season_sales_entries enable row level security;
 alter table public.notifications enable row level security;
+alter table public.popup_announcements enable row level security;
+alter table public.popup_announcement_dismissals enable row level security;
 
 drop policy if exists "active stores are visible to everyone" on public.stores;
 create policy "active stores are visible to everyone" on public.stores
@@ -407,3 +430,22 @@ drop policy if exists "users can update their notifications" on public.notificat
 create policy "users can update their notifications" on public.notifications
 for update using (auth.uid() = profile_id)
 with check (auth.uid() = profile_id);
+
+drop policy if exists "approved users can view popup announcements" on public.popup_announcements;
+create policy "approved users can view popup announcements" on public.popup_announcements
+for select using (
+  exists (
+    select 1
+    from public.profiles p
+    where p.id = auth.uid()
+      and p.approval = 'approved'
+  )
+);
+
+drop policy if exists "users can view popup dismissals" on public.popup_announcement_dismissals;
+create policy "users can view popup dismissals" on public.popup_announcement_dismissals
+for select using (auth.uid() = profile_id);
+
+drop policy if exists "users can create popup dismissals" on public.popup_announcement_dismissals;
+create policy "users can create popup dismissals" on public.popup_announcement_dismissals
+for insert with check (auth.uid() = profile_id);

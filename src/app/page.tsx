@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth/require-user";
 import { getCampaignDashboardData } from "@/lib/campaign/get-campaign-dashboard-data";
+import { getActivePopupAnnouncementForProfile } from "@/lib/popup-announcements";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { SeasonRecord } from "@/lib/types";
+import { HomePopupAnnouncement } from "@/components/home-popup-announcement";
 
 export const dynamic = "force-dynamic";
 
@@ -67,6 +69,10 @@ export default async function HomePage() {
   const monthEnd = toDateString(new Date(now.getFullYear(), now.getMonth() + 1, 0));
 
   const campaignDashboard = await getCampaignDashboardData(user.id);
+  const activePopupAnnouncement =
+    campaignDashboard?.profile.approval === "approved"
+      ? await getActivePopupAnnouncementForProfile(campaignDashboard.profile)
+      : null;
   const liveCampaignLeaderboard =
     campaignDashboard?.profile.approval === "approved"
       ? campaignDashboard.activeLeaderboards.find(
@@ -181,6 +187,8 @@ export default async function HomePage() {
 
   return (
     <main>
+      {activePopupAnnouncement ? <HomePopupAnnouncement announcement={activePopupAnnouncement} /> : null}
+
       {liveCampaignLeaderboard ? (
         <>
           <section className="hero home-leaders-hero">

@@ -30,7 +30,7 @@ export function HomePopupAnnouncement({ announcement }: HomePopupAnnouncementPro
           x
         </button>
 
-        <span className="home-popup-kicker">Duyuru</span>
+        <span className="home-popup-kicker">Tanca+ Pano</span>
         <h2 id="home-popup-title">{announcement.title}</h2>
         <p>{announcement.body}</p>
 

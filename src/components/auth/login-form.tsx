@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { createClient } from "@/lib/supabase/browser";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
@@ -11,7 +10,6 @@ type LoginFormProps = {
 };
 
 export function LoginForm({ message }: LoginFormProps) {
-  const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -62,7 +60,7 @@ export function LoginForm({ message }: LoginFormProps) {
       return;
     }
 
-    router.replace("/");
+    window.location.assign("/");
   }
 
   return (

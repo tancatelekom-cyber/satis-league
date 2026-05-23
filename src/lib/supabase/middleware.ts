@@ -7,7 +7,8 @@ const PUBLIC_ROUTES = new Set([
   "/kayit",
   "/sifremi-unuttum",
   "/sifre-yenile",
-  "/api/auth/confirm-session"
+  "/api/auth/confirm-session",
+  "/api/auth/forgot-password"
 ]);
 const APP_SESSION_COOKIE = "tanca_session";
 
@@ -16,8 +17,15 @@ export async function updateSession(request: NextRequest) {
     request
   });
   const env = getSupabasePublicEnv();
+  const pathname = request.nextUrl.pathname;
+  const isPublicRoute = PUBLIC_ROUTES.has(pathname);
+  const hasAppSession = request.cookies.get(APP_SESSION_COOKIE)?.value === "active";
 
   if (!env) {
+    return response;
+  }
+
+  if (isPublicRoute && !hasAppSession) {
     return response;
   }
 
@@ -51,10 +59,6 @@ export async function updateSession(request: NextRequest) {
   const {
     data: { user }
   } = await supabase.auth.getUser();
-
-  const pathname = request.nextUrl.pathname;
-  const isPublicRoute = PUBLIC_ROUTES.has(pathname);
-  const hasAppSession = request.cookies.get(APP_SESSION_COOKIE)?.value === "active";
 
   if ((!user || !hasAppSession) && !isPublicRoute) {
     const redirectUrl = request.nextUrl.clone();

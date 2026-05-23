@@ -68,21 +68,8 @@ export default async function HomePage() {
   const monthStart = toDateString(new Date(now.getFullYear(), now.getMonth(), 1));
   const monthEnd = toDateString(new Date(now.getFullYear(), now.getMonth() + 1, 0));
 
-  const campaignDashboard = await getCampaignDashboardData(user.id);
-  const activePopupAnnouncement =
-    campaignDashboard?.profile.approval === "approved"
-      ? await getActivePopupAnnouncementForProfile(campaignDashboard.profile)
-      : null;
-  const liveCampaignLeaderboard =
-    campaignDashboard?.profile.approval === "approved"
-      ? campaignDashboard.activeLeaderboards.find(
-          (item) =>
-            new Date(item.campaign.start_at).getTime() <= now.getTime() &&
-            new Date(item.campaign.end_at).getTime() >= now.getTime()
-        ) ?? null
-      : null;
-
-  const [{ data: seasons }, { data: profiles }, { data: stores }, { data: seasonSales }] = await Promise.all([
+  const campaignDashboardPromise = getCampaignDashboardData(user.id);
+  const seasonDataPromise = Promise.all([
     admin
       .from("seasons")
       .select("id, name, start_date, end_date, mode, is_active, created_at")
@@ -99,6 +86,23 @@ export default async function HomePage() {
       .gte("entry_date", monthStart)
       .lte("entry_date", monthEnd)
   ]);
+
+  const campaignDashboard = await campaignDashboardPromise;
+  const activePopupAnnouncementPromise =
+    campaignDashboard?.profile.approval === "approved"
+      ? getActivePopupAnnouncementForProfile(campaignDashboard.profile)
+      : Promise.resolve(null);
+  const liveCampaignLeaderboard =
+    campaignDashboard?.profile.approval === "approved"
+      ? campaignDashboard.activeLeaderboards.find(
+          (item) =>
+            new Date(item.campaign.start_at).getTime() <= now.getTime() &&
+            new Date(item.campaign.end_at).getTime() >= now.getTime()
+        ) ?? null
+      : null;
+
+  const [{ data: seasons }, { data: profiles }, { data: stores }, { data: seasonSales }] = await seasonDataPromise;
+  const activePopupAnnouncement = await activePopupAnnouncementPromise;
 
   const seasonRows = ((seasons as SeasonRecord[] | null) ?? []).filter((season) => season.is_active);
   const employeeProfiles =

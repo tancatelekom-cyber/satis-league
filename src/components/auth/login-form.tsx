@@ -62,8 +62,7 @@ export function LoginForm({ message }: LoginFormProps) {
       return;
     }
 
-    router.push("/");
-    router.refresh();
+    router.replace("/");
   }
 
   return (

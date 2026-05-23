@@ -51,7 +51,7 @@ export default async function StockInfoPage() {
       <section className="hero home-leaders-hero">
         <div className="hero-copy">
           <h1 className="page-title">Stok Bilgisi</h1>
-          <p className="page-subtitle">Google Sheet listesinden sayilan sube bazli stoklar burada gorunur.</p>
+          <p className="page-subtitle">Aymada uzerinden okunan cihaz stoklari burada gorunur.</p>
         </div>
       </section>
 
@@ -59,7 +59,7 @@ export default async function StockInfoPage() {
         <section className="admin-card stock-alert-card">
           <h2>Stok bilgisi acilamadi.</h2>
           <p>{error}</p>
-          <p>Google Sheet paylasim izinlerini kontrol edip sayfayi tekrar acin.</p>
+          <p>Vercel ortam degiskenlerinde Aymada API bilgilerini ve servis erisimini kontrol edip sayfayi tekrar acin.</p>
         </section>
       ) : null}
 
@@ -97,7 +97,7 @@ export default async function StockInfoPage() {
 
             {stock.debug ? (
               <details className="stock-debug">
-                <summary>Google Sheet gelen veri ornegi</summary>
+                <summary>Aymada gelen veri ornegi</summary>
                 <pre>{JSON.stringify(stock.debug, null, 2)}</pre>
               </details>
             ) : null}

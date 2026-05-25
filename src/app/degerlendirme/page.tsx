@@ -307,6 +307,25 @@ function pickCritical(metrics: Metric[]) {
     .slice(0, 4);
 }
 
+function buildCriticalChartMetrics(metrics: Metric[]) {
+  const criticalMetrics = pickCritical(metrics);
+  const activationMetric = metrics.find(
+    (metric) =>
+      normalizeCategoryKey(metric.title).includes("AKTIVASYON") &&
+      metric.hasTarget &&
+      !isQualityLimitMetric(metric.title) &&
+      (metric.projectedPercent ?? metric.actualPercent ?? 0) < 100
+  );
+
+  if (!activationMetric || criticalMetrics.some((metric) => metric.title === activationMetric.title)) {
+    return criticalMetrics;
+  }
+
+  return [...criticalMetrics, activationMetric].sort(
+    (a, b) => (a.projectedPercent ?? a.actualPercent ?? 0) - (b.projectedPercent ?? b.actualPercent ?? 0)
+  );
+}
+
 function buildStoreAverageNotes(storeMetrics: Metric[], allStoreRows: GoalStoreRow[]) {
   const notes: string[] = [];
   storeMetrics.forEach((metric) => {
@@ -763,6 +782,7 @@ export default async function EvaluationPage({ searchParams }: EvaluationPagePro
   const storeAverageNotes = view === "store" ? buildStoreAverageNotes(visibleMetrics, storeRows) : [];
   const employeeAverageNotes = view === "employee" ? buildEmployeeAverageNotes(visibleMetrics, employeeRows) : [];
   const zeroActualItems = view === "store" ? buildStoreZeroActualItems(storeTargetRows, activeCategory) : [];
+  const criticalChartMetrics = buildCriticalChartMetrics(visibleMetrics);
   const coachingText = buildCoachingText({
     title: selectedTitle,
     view,
@@ -887,8 +907,8 @@ export default async function EvaluationPage({ searchParams }: EvaluationPagePro
               <article className="evaluation-card">
                 <h2>Gelistirme Alanlari</h2>
                 <div className="evaluation-bars">
-                  {pickCritical(visibleMetrics).length ? (
-                    pickCritical(visibleMetrics).map((metric) => (
+                  {criticalChartMetrics.length ? (
+                    criticalChartMetrics.map((metric) => (
                       <div key={metric.title} className="evaluation-bar-row">
                         <span>{metric.title}</span>
                         <strong>{formatPercent(metric.projectedPercent ?? metric.actualPercent)}</strong>

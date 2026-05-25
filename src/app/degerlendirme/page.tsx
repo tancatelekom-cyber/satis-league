@@ -462,6 +462,42 @@ function buildProductionPointDevelopmentLines(metrics: Metric[], remainingDays: 
   ];
 }
 
+function buildActivationCountNotes(metrics: Metric[], workedDays: number, remainingDays: number) {
+  const activationMetric = metrics.find((metric) => normalizeCategoryKey(metric.title).includes("AKTIVASYON"));
+
+  if (!activationMetric) {
+    return [];
+  }
+
+  const pace = workedDays > 0 ? activationMetric.actual / workedDays : activationMetric.actual;
+  const projectedPercent = activationMetric.projectedPercent ?? activationMetric.actualPercent;
+
+  if (!activationMetric.hasTarget) {
+    if (activationMetric.actual <= 0) {
+      return [];
+    }
+
+    return [
+      `- ${activationMetric.title}: bu kalem hedefsiz takip ediliyor. Su an ${formatNumber(activationMetric.actual)} gerceklesen var; gunluk ortalama ${formatNumber(pace)} seviyesinde. Toplam aktivasyon adedindeki bu tempoyu koruyup dusus olursa ayni gun mudahale edelim.`
+    ];
+  }
+
+  if ((projectedPercent ?? 0) >= 100) {
+    return [
+      `- ${activationMetric.title}: aktivasyon adedinde mevcut tempo hedefi tasiyor. Su an ${formatNumber(activationMetric.actual)} gerceklesen var; bu tempo ay sonu ${formatPercent(projectedPercent)} seviyesine ulasiyor. Toplam adet ritmini korumaya odaklanalim.`
+    ];
+  }
+
+  const needed =
+    remainingDays > 0 && activationMetric.remaining !== null
+      ? Math.ceil(activationMetric.remaining / remainingDays)
+      : activationMetric.remaining ?? 0;
+
+  return [
+    `- ${activationMetric.title}: aktivasyon adedinde mevcut tempo ay sonu ${formatPercent(projectedPercent)} seviyesinde kaliyor. Hedefi kapatmak icin kalan gunlerde gunluk en az ${formatNumber(needed)} aktivasyon gerekiyor. Bu kalemi toplam adet uzerinden gunluk takip edelim.`
+  ];
+}
+
 function buildQualityLimitNotes(metrics: Metric[], view: ViewMode) {
   if (view === "employee") {
     return [];
@@ -532,6 +568,7 @@ function buildCoachingText(args: {
   const productionPointScaleNotes = args.view === "employee" ? buildProductionPointScaleNotes(args.metrics, args.remainingDays) : [];
   const productionPointDevelopmentLines =
     args.view === "employee" ? buildProductionPointDevelopmentLines(args.metrics, args.remainingDays) : [];
+  const activationCountNotes = buildActivationCountNotes(args.metrics, args.workedDays, args.remainingDays);
   const dailyNeeded = (metric: Metric) =>
     args.remainingDays > 0 && metric.remaining !== null ? Math.ceil(metric.remaining / args.remainingDays) : metric.remaining ?? 0;
   const dailyCurrentPace = (metric: Metric) => (args.workedDays > 0 ? metric.actual / args.workedDays : metric.actual);
@@ -608,6 +645,7 @@ function buildCoachingText(args: {
     ...(dailyTargetLines.length
       ? dailyTargetLines
       : ["- Her gun en az bir ana kalemi kontrol edip, dusuk kalan kalemlerde satis gorusmesini ozellikle one alalim."]),
+    ...(activationCountNotes.length ? activationCountNotes : []),
     ...(productionChannelNotes.length ? productionChannelNotes : []),
     ...(productionPointScaleNotes.length ? productionPointScaleNotes : []),
     ...(entryConversionNotes.length ? entryConversionNotes : []),

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { CopyCoachingButton } from "@/components/evaluation/copy-coaching-button";
+import { SpeakCoachingButton } from "@/components/evaluation/speak-coaching-button";
 import { FilterSelectNav } from "@/components/ui/filter-select-nav";
 import {
   GoalActualRow,
@@ -888,7 +889,10 @@ export default async function EvaluationPage({ searchParams }: EvaluationPagePro
                     <span>Secili Alan</span>
                     <strong>{selectedTitle || "Veri yok"}</strong>
                   </div>
-                  <CopyCoachingButton text={coachingText} />
+                  <div className="evaluation-card-actions">
+                    <SpeakCoachingButton text={coachingText} />
+                    <CopyCoachingButton text={coachingText} />
+                  </div>
                 </div>
                 {zeroActualItems.length ? (
                   <div className="evaluation-zero-alert">

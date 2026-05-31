@@ -5476,9 +5476,17 @@ textarea::placeholder {
 }
 
 .evaluation-refresh-button,
-.evaluation-copy-button {
+.evaluation-copy-button,
+.evaluation-speak-button {
   min-height: 52px;
   white-space: nowrap;
+}
+
+.evaluation-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px;
 }
 
 .evaluation-shell {
@@ -5944,6 +5952,10 @@ textarea::placeholder {
   .evaluation-title-row,
   .evaluation-card-head {
     display: grid;
+  }
+
+  .evaluation-card-actions {
+    justify-content: stretch;
   }
 
   .evaluation-grid {

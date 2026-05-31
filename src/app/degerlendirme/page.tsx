@@ -400,22 +400,22 @@ function buildProductionChannelNotes(metrics: Metric[]) {
   const activationWeight = activationMetric.actual / 3;
 
   if (terminalWeight <= 0 && activationWeight <= 0) {
-    return ["- Uretim puani tarafinda terminal ve aktivasyon katkisi henuz net olusmamis. Kalan gunlerde iki kanali da gunluk takip edelim."];
+    return ["- Üretim puanı tarafında terminal ve aktivasyon katkısı henüz net oluşmamış. Kalan günlerde iki kanalı da günlük takip edelim."];
   }
 
   if (terminalWeight < activationWeight * 0.7) {
     return [
-      "- Uretim puaninda agirlik aktivasyon tarafina kaymis gorunuyor. Puan dengesini guclendirmek icin terminal tarafini gelistirmelisin; kalan gunlerde terminal gorusmelerini ayrica takip edelim."
+      "- Üretim puanında ağırlık aktivasyon tarafına kaymış görünüyor. Puan dengesini güçlendirmek için terminal tarafını geliştirmelisin; kalan günlerde terminal görüşmelerini ayrıca takip edelim."
     ];
   }
 
   if (activationWeight < terminalWeight * 0.7) {
     return [
-      "- Uretim puaninda agirlik terminal tarafina kaymis gorunuyor. Puanin daha dengeli ilerlemesi icin aktivasyon tarafini gelistirmelisin; kalan gunlerde aktivasyon aksiyonlarini one alalim."
+      "- Üretim puanında ağırlık terminal tarafına kaymış görünüyor. Puanın daha dengeli ilerlemesi için aktivasyon tarafını geliştirmelisin; kalan günlerde aktivasyon aksiyonlarını öne alalım."
     ];
   }
 
-  return ["- Uretim puaninda terminal ve aktivasyon dengesi kabul edilebilir seviyede. Bu dengeyi bozmadan toplam puani buyutmeye odaklanalim."];
+  return ["- Üretim puanında terminal ve aktivasyon dengesi kabul edilebilir seviyede. Bu dengeyi bozmadan toplam puanı büyütmeye odaklanalım."];
 }
 
 function buildEntryConversionNotes(metrics: Metric[]) {
@@ -431,7 +431,7 @@ function buildEntryConversionNotes(metrics: Metric[]) {
   const conversion = (salesTotal / entryMetric.actual) * 100;
 
   return [
-    `- Giris sayisini ayri hedef kalemi gibi degerlendirmiyorum; burada musteri trafigine donusum olarak bakiyorum. Iceri giren musterilerin yaklasik ${formatPercent(conversion)} kadarinda aktivasyon, terminal veya rekontratlama satisi olusmus. Bu orani yukari tasimak icin giris yapan musteride ihtiyac analizi ve kapanis takibini siklastiralim.`
+    `- Giriş sayısını ayrı hedef kalemi gibi değerlendirmiyorum; burada müşteri trafiğine dönüşüm olarak bakıyorum. İçeri giren müşterilerin yaklaşık ${formatPercent(conversion)} kadarında aktivasyon, terminal veya rekontratlama satışı oluşmuş. Bu oranı yukarı taşımak için giriş yapan müşteride ihtiyaç analizi ve kapanış takibini sıklaştıralım.`
   ];
 }
 
@@ -448,16 +448,16 @@ function buildProductionPointScaleNotes(metrics: Metric[], remainingDays: number
 
   if (nextScale >= 10000 && currentScale >= 10000) {
     return [
-      `- Uretim puaninda ay sonu gidisatin ${formatNumber(currentScale)} skalasina denk geliyor. Bu en ust skala oldugu icin burada amac tempoyu korumak ve kanal dengesini bozmamak.`
+      `- Üretim puanında ay sonu gidişatın ${formatNumber(currentScale)} skalasına denk geliyor. Bu en üst skala olduğu için burada amaç tempoyu korumak ve kanal dengesini bozmamak.`
     ];
   }
 
   const neededForNextScale = Math.max(nextScale - productionPointMetric.actual, 0);
   const dailyNeed = remainingDays > 0 ? Math.ceil(neededForNextScale / remainingDays) : neededForNextScale;
-  const scaleText = currentScale > 0 ? `${formatNumber(currentScale)} skalasina` : "400 skalasinin altina";
+  const scaleText = currentScale > 0 ? `${formatNumber(currentScale)} skalasına` : "400 skalasının altına";
 
   return [
-    `- Uretim puaninda mevcut gidisat ay sonu ${scaleText} denk geliyor. Bir ust skala olan ${formatNumber(nextScale)} icin kalan gunlerde gunluk en az ${formatNumber(dailyNeed)} uretim puani yapman gerekiyor.`
+    `- Üretim puanında mevcut gidişat ay sonu ${scaleText} denk geliyor. Bir üst skala olan ${formatNumber(nextScale)} için kalan günlerde günlük en az ${formatNumber(dailyNeed)} üretim puanı yapman gerekiyor.`
   ];
 }
 
@@ -478,7 +478,7 @@ function buildProductionPointDevelopmentLines(metrics: Metric[], remainingDays: 
   const dailyNeed = remainingDays > 0 ? Math.ceil(neededForFirstScale / remainingDays) : neededForFirstScale;
 
   return [
-    `- ${productionPointMetric.title}: ay sonu gidisat 400 puanlik ilk prim skalasinin altinda kaliyor. Ilk skalaya girmek icin kalan gunlerde gunluk en az ${formatNumber(dailyNeed)} uretim puani yapman gerekiyor.`
+    `- ${productionPointMetric.title}: ay sonu gidişat 400 puanlık ilk prim skalasının altında kalıyor. İlk skalaya girmek için kalan günlerde günlük en az ${formatNumber(dailyNeed)} üretim puanı yapman gerekiyor.`
   ];
 }
 
@@ -498,13 +498,13 @@ function buildActivationCountNotes(metrics: Metric[], workedDays: number, remain
     }
 
     return [
-      `- ${activationMetric.title}: bu kalem hedefsiz takip ediliyor. Su an ${formatNumber(activationMetric.actual)} gerceklesen var; gunluk ortalama ${formatNumber(pace)} seviyesinde. Toplam aktivasyon adedindeki bu tempoyu koruyup dusus olursa ayni gun mudahale edelim.`
+      `- ${activationMetric.title}: bu kalem hedefsiz takip ediliyor. Şu an ${formatNumber(activationMetric.actual)} gerçekleşen var; günlük ortalama ${formatNumber(pace)} seviyesinde. Toplam aktivasyon adedindeki bu tempoyu koruyup düşüş olursa aynı gün müdahale edelim.`
     ];
   }
 
   if ((projectedPercent ?? 0) >= 100) {
     return [
-      `- ${activationMetric.title}: aktivasyon adedinde mevcut tempo hedefi tasiyor. Su an ${formatNumber(activationMetric.actual)} gerceklesen var; bu tempo ay sonu ${formatPercent(projectedPercent)} seviyesine ulasiyor. Toplam adet ritmini korumaya odaklanalim.`
+      `- ${activationMetric.title}: aktivasyon adedinde mevcut tempo hedefi taşıyor. Şu an ${formatNumber(activationMetric.actual)} gerçekleşen var; bu tempo ay sonu ${formatPercent(projectedPercent)} seviyesine ulaşıyor. Toplam adet ritmini korumaya odaklanalım.`
     ];
   }
 
@@ -514,7 +514,7 @@ function buildActivationCountNotes(metrics: Metric[], workedDays: number, remain
       : activationMetric.remaining ?? 0;
 
   return [
-    `- ${activationMetric.title}: aktivasyon adedinde mevcut tempo ay sonu ${formatPercent(projectedPercent)} seviyesinde kaliyor. Hedefi kapatmak icin kalan gunlerde gunluk en az ${formatNumber(needed)} aktivasyon gerekiyor. Bu kalemi toplam adet uzerinden gunluk takip edelim.`
+    `- ${activationMetric.title}: aktivasyon adedinde mevcut tempo ay sonu ${formatPercent(projectedPercent)} seviyesinde kalıyor. Hedefi kapatmak için kalan günlerde günlük en az ${formatNumber(needed)} aktivasyon gerekiyor. Bu kalemi toplam adet üzerinden günlük takip edelim.`
   ];
 }
 
@@ -530,11 +530,11 @@ function buildQualityLimitNotes(metrics: Metric[], view: ViewMode) {
   if (satisfactionMetric && satisfactionMetric.actual > 0) {
     if (satisfactionMetric.actual < 4.4) {
       notes.push(
-        `- Memnuniyet skoru ${formatNumber(satisfactionMetric.actual)}. Alt limit 4,40 oldugu icin karsilama, ihtiyac analizi ve islem sonrasi teyit gunluk takip edilmeli.`
+        `- Memnuniyet skoru ${formatNumber(satisfactionMetric.actual)}. Alt limit 4,40 olduğu için karşılama, ihtiyaç analizi ve işlem sonrası teyit günlük takip edilmeli.`
       );
     } else if (satisfactionMetric.actual < 4.5) {
       notes.push(
-        `- Memnuniyet skoru ${formatNumber(satisfactionMetric.actual)} ile alt limite yakin. Dusus yasamamak icin musteri deneyimi her gun kontrol edilmeli.`
+        `- Memnuniyet skoru ${formatNumber(satisfactionMetric.actual)} ile alt limite yakın. Düşüş yaşamamak için müşteri deneyimi her gün kontrol edilmeli.`
       );
     }
   }
@@ -544,11 +544,11 @@ function buildQualityLimitNotes(metrics: Metric[], view: ViewMode) {
 
     if (pinPercent <= 70) {
       notes.push(
-        `- PIN orani ${formatPercent(pinPercent)}. %70 sinirinda veya altinda oldugu icin PIN kullanim adimlari ekipte tekrar hatirlatilmali.`
+        `- PIN oranı ${formatPercent(pinPercent)}. %70 sınırında veya altında olduğu için PIN kullanım adımları ekipte tekrar hatırlatılmalı.`
       );
     } else if (pinPercent <= 75) {
       notes.push(
-        `- PIN orani ${formatPercent(pinPercent)} ile alt limite yakin. Bu oranin dusmemesi icin PIN kullanim takibi siklastirilmali.`
+        `- PIN oranı ${formatPercent(pinPercent)} ile alt limite yakın. Bu oranın düşmemesi için PIN kullanım takibi sıklaştırılmalı.`
       );
     }
   }
@@ -594,12 +594,12 @@ function buildCoachingText(args: {
   const dailyCurrentPace = (metric: Metric) => (args.workedDays > 0 ? metric.actual / args.workedDays : metric.actual);
   const dailyTargetLines = critical.slice(0, 4).map((metric) => {
     const needed = dailyNeeded(metric);
-    return `- ${metric.title}: ay sonu ${formatPercent(metric.projectedPercent ?? metric.actualPercent)} seviyesinde kalir. Hedefi kapatmak icin kalan gunlerde gunluk en az ${formatNumber(needed)} uretmen lazim.`;
+    return `- ${metric.title}: ay sonu ${formatPercent(metric.projectedPercent ?? metric.actualPercent)} seviyesinde kalır. Hedefi kapatmak için kalan günlerde günlük en az ${formatNumber(needed)} üretmen lazım.`;
   });
   const developmentLines = [
     ...critical.map(
       (metric) =>
-        `- ${metric.title}: mevcut tempo ile ay sonu ${formatPercent(metric.projectedPercent ?? metric.actualPercent)} olur. Kalan ${formatNumber(metric.remaining)} acigi kapatmak icin gunluk en az ${formatNumber(dailyNeeded(metric))} uretim gerekiyor.`
+        `- ${metric.title}: mevcut tempo ile ay sonu ${formatPercent(metric.projectedPercent ?? metric.actualPercent)} olur. Kalan ${formatNumber(metric.remaining)} açığı kapatmak için günlük en az ${formatNumber(dailyNeeded(metric))} üretim gerekiyor.`
     ),
     ...productionPointDevelopmentLines
   ];
@@ -607,70 +607,70 @@ function buildCoachingText(args: {
     ? [
         "",
         "Firma / ortalama kritikleri:",
-        ...args.storeAverageNotes.map((note) => `- ${note} Bu kalem icin magaza icinde gunluk takip ve ekip yonlendirmesi artirilmali.`)
+        ...args.storeAverageNotes.map((note) => `- ${note} Bu kalem için mağaza içinde günlük takip ve ekip yönlendirmesi artırılmalı.`)
       ]
     : [];
   const zeroActualSection =
     args.view === "store" && args.zeroActualItems?.length
       ? [
           "",
-          "Gozden kacirdigin kalemler:",
-          ...args.zeroActualItems.map((item) => `- ${item.label}: bu kalemde henuz gerceklesen yok. Bugun mutlaka kontrol listesine alinmali.`)
+          "Gözden kaçırdığın kalemler:",
+          ...args.zeroActualItems.map((item) => `- ${item.label}: bu kalemde henüz gerçekleşen yok. Bugün mutlaka kontrol listesine alınmalı.`)
         ]
       : [];
   const qualityLimitNotes = buildQualityLimitNotes(args.metrics, args.view);
-  const qualityLimitSection = qualityLimitNotes.length ? ["", "Alt limit uyarilari:", ...qualityLimitNotes] : [];
+  const qualityLimitSection = qualityLimitNotes.length ? ["", "Alt limit uyarıları:", ...qualityLimitNotes] : [];
   const averageFocusSection =
     args.view === "employee"
       ? [
           "",
-          "Ortalama karsilastirmasina gore odak alanlari:",
+          "Ortalama karşılaştırmasına göre odak alanları:",
           ...(args.employeeAverageNotes.length
             ? args.employeeAverageNotes.map(
                 (note) =>
-                  `- ${note.title}: bu kalemde ekip ortalamasi ${formatNumber(note.average)}, sende ${formatNumber(note.actual)}. Ortalama farki ${formatNumber(note.gap)}. Kalan gunlerde bu kalemi her gun kontrol edip farki kademeli kapatmaya odaklanalim.`
+                  `- ${note.title}: bu kalemde ekip ortalaması ${formatNumber(note.average)}, sende ${formatNumber(note.actual)}. Ortalama farkı ${formatNumber(note.gap)}. Kalan günlerde bu kalemi her gün kontrol edip farkı kademeli kapatmaya odaklanalım.`
               )
-            : ["- Ortalama altinda belirgin bir kalem gorunmuyor. Bu durumda yuksek hacimli kalemlerde tempoyu korumak oncelik."])
+            : ["- Ortalama altında belirgin bir kalem görünmüyor. Bu durumda yüksek hacimli kalemlerde tempoyu korumak öncelik."])
         ]
       : [];
   const opening =
     args.view === "employee"
-      ? `Merhaba ${args.title}, bu notu performansini birlikte netlestirmek ve kalan gunlerde nereye odaklanacagimizi sadece belirlemek icin hazirladim.`
-      : `Bu not, secili alanin kalan gunlerde daha net yonetilebilmesi icin hazirlandi.`;
+      ? `Merhaba ${args.title}, bu notu performansını birlikte netleştirmek ve kalan günlerde nereye odaklanacağımızı belirlemek için hazırladım.`
+      : `Bu not, seçili alanın kalan günlerde daha net yönetilebilmesi için hazırlandı.`;
 
   const lines = [
     opening,
-    `Donem: ${formatNumber(args.workedDays)} gun tamamlandi, ${formatNumber(args.remainingDays)} gun kaldi.`,
+    `Dönem: ${formatNumber(args.workedDays)} gün tamamlandı, ${formatNumber(args.remainingDays)} gün kaldı.`,
     "",
-    "Guclu taraflarin:",
+    "Güçlü tarafların:",
     ...(strong.length
       ? strong.map((metric) => {
           const pace = dailyCurrentPace(metric);
           if (metric.hasTarget) {
-            return `- ${metric.title}: bu kalemde hedef temposu yakalaniyor. Su an ${formatNumber(metric.actual)} gerceklesen var; mevcut tempo ay sonu ${formatPercent(metric.projectedPercent)} seviyesine tasir. Gunluk ortalama ${formatNumber(pace)} uretimi korumalisin.`;
+            return `- ${metric.title}: bu kalemde hedef temposu yakalanıyor. Şu an ${formatNumber(metric.actual)} gerçekleşen var; mevcut tempo ay sonu ${formatPercent(metric.projectedPercent)} seviyesine taşır. Günlük ortalama ${formatNumber(pace)} üretimi korumalısın.`;
           }
 
-          return `- ${metric.title}: hedef tanimi yok ama ${formatNumber(metric.actual)} gerceklesen var. Bu kalemi guclu takip kalemi olarak koruyalim.`;
+          return `- ${metric.title}: hedef tanımı yok ama ${formatNumber(metric.actual)} gerçekleşen var. Bu kalemi güçlü takip kalemi olarak koruyalım.`;
         })
-      : ["- Hedefe giden guclu bir hedefli kalem henuz netlesmemis. Bu yuzden odagi hedef acigi olan kalemlere cevirmeliyiz."]),
+      : ["- Hedefe giden güçlü bir hedefli kalem henüz netleşmemiş. Bu yüzden odağı hedef açığı olan kalemlere çevirmeliyiz."]),
     "",
-    "Gelistirmemiz gereken alanlar:",
+    "Geliştirmemiz gereken alanlar:",
     ...(developmentLines.length
       ? developmentLines
-      : ["- Hedefli kalemlerde su an belirgin risk yok. Bu iyi bir alan; ayni disiplini koruyalim."]),
+      : ["- Hedefli kalemlerde şu an belirgin risk yok. Bu iyi bir alan; aynı disiplini koruyalım."]),
     ...averageFocusSection,
     ...qualityLimitSection,
     "",
-    "Kalan gunler icin net aksiyon:",
+    "Kalan günler için net aksiyon:",
     ...(dailyTargetLines.length
       ? dailyTargetLines
-      : ["- Her gun en az bir ana kalemi kontrol edip, dusuk kalan kalemlerde satis gorusmesini ozellikle one alalim."]),
+      : ["- Her gün en az bir ana kalemi kontrol edip, düşük kalan kalemlerde satış görüşmesini özellikle öne alalım."]),
     ...(activationCountNotes.length ? activationCountNotes : []),
     ...(productionChannelNotes.length ? productionChannelNotes : []),
     ...(productionPointScaleNotes.length ? productionPointScaleNotes : []),
     ...(entryConversionNotes.length ? entryConversionNotes : []),
-    "- Gun sonunda sadece toplam rakama degil, hangi kalemin eksik kaldigina bakalim.",
-    "- Bir sonraki gunde en dusuk kalan kalemi ilk aksiyon olarak takip edelim.",
+    "- Gün sonunda sadece toplam rakama değil, hangi kalemin eksik kaldığına bakalım.",
+    "- Bir sonraki günde en düşük kalan kalemi ilk aksiyon olarak takip edelim.",
     ...zeroActualSection,
     ...storeAverageSection,
     "",
@@ -678,11 +678,11 @@ function buildCoachingText(args: {
     ...(actualOnly.length
       ? actualOnly.map(
           (metric) =>
-            `- ${metric.title}: hedef tanimi yok ama su an ${formatNumber(metric.actual)} gerceklesen var. Mevcut gunluk tempo ${formatNumber(dailyCurrentPace(metric))}; ay sonu tahmini ${formatNumber(metric.projected)}. Burada amac trendi korumak ve dusus varsa hemen fark etmek.`
+            `- ${metric.title}: hedef tanımı yok ama şu an ${formatNumber(metric.actual)} gerçekleşen var. Mevcut günlük tempo ${formatNumber(dailyCurrentPace(metric))}; ay sonu tahmini ${formatNumber(metric.projected)}. Burada amaç trendi korumak ve düşüş varsa hemen fark etmek.`
         )
-      : ["- Hedefsiz takip edilen oncelikli kalem yok."]),
+      : ["- Hedefsiz takip edilen öncelikli kalem yok."]),
     "",
-    `Analiz guncellenme: ${formatIstanbulDateTime()}`
+    `Analiz güncellenme: ${formatIstanbulDateTime()}`
   ];
 
   return lines.join("\n");

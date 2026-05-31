@@ -40,7 +40,7 @@ export function SpeakCoachingButton({ text }: { text: string }) {
 
     utterance.lang = selectedVoice?.lang || "tr-TR";
     utterance.voice = selectedVoice;
-    utterance.rate = 0.95;
+    utterance.rate = 1.5;
     utterance.pitch = 1;
     utterance.onend = () => {
       setSpeaking(false);

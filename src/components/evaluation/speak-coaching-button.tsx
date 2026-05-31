@@ -2,11 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 
-type DeliveryMode = "standard" | "emphasis";
-
 const STORAGE_KEYS = {
-  voice: "evaluation-speech-voice",
-  mode: "evaluation-speech-mode"
+  voice: "evaluation-speech-voice"
 } as const;
 
 function isTurkishVoice(voice: SpeechSynthesisVoice) {
@@ -34,12 +31,8 @@ function pickBestTurkishVoice(voices: SpeechSynthesisVoice[]) {
     .sort((left, right) => scoreVoice(right) - scoreVoice(left))[0] ?? null;
 }
 
-function buildSpeechText(text: string, mode: DeliveryMode) {
+function buildSpeechText(text: string) {
   const normalized = text.replace(/\s+/g, " ").trim();
-
-  if (mode === "standard") {
-    return normalized;
-  }
 
   return normalized
     .replace(/:\s*/g, ". ")
@@ -54,7 +47,6 @@ export function SpeakCoachingButton({ text }: { text: string }) {
   const [speaking, setSpeaking] = useState(false);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [selectedVoiceUri, setSelectedVoiceUri] = useState("");
-  const [deliveryMode, setDeliveryMode] = useState<DeliveryMode>("emphasis");
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
   const turkishVoices = useMemo(
@@ -75,14 +67,9 @@ export function SpeakCoachingButton({ text }: { text: string }) {
     }
 
     const savedVoice = window.localStorage.getItem(STORAGE_KEYS.voice) ?? "";
-    const savedMode = window.localStorage.getItem(STORAGE_KEYS.mode);
 
     if (savedVoice) {
       setSelectedVoiceUri(savedVoice);
-    }
-
-    if (savedMode === "standard" || savedMode === "emphasis") {
-      setDeliveryMode(savedMode);
     }
 
     const loadVoices = () => {
@@ -126,15 +113,6 @@ export function SpeakCoachingButton({ text }: { text: string }) {
     }
   }
 
-  function handleModeChange(event: ChangeEvent<HTMLSelectElement>) {
-    const nextMode = event.target.value as DeliveryMode;
-    setDeliveryMode(nextMode);
-
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(STORAGE_KEYS.mode, nextMode);
-    }
-  }
-
   function handleToggle() {
     if (!supported || typeof window === "undefined") {
       return;
@@ -149,12 +127,12 @@ export function SpeakCoachingButton({ text }: { text: string }) {
 
     const selectedVoice =
       turkishVoices.find((voice) => voice.voiceURI === selectedVoiceUri) ?? pickBestTurkishVoice(voices) ?? null;
-    const utterance = new SpeechSynthesisUtterance(buildSpeechText(text, deliveryMode));
+    const utterance = new SpeechSynthesisUtterance(buildSpeechText(text));
 
     utterance.lang = selectedVoice?.lang || "tr-TR";
     utterance.voice = selectedVoice;
-    utterance.rate = deliveryMode === "emphasis" ? 1.35 : 1.5;
-    utterance.pitch = deliveryMode === "emphasis" ? 1.1 : 1;
+    utterance.rate = 1.35;
+    utterance.pitch = 1.1;
     utterance.volume = 1;
     utterance.onend = () => {
       setSpeaking(false);
@@ -196,16 +174,8 @@ export function SpeakCoachingButton({ text }: { text: string }) {
         </select>
       </label>
 
-      <label className="evaluation-speech-field">
-        <span>Ton</span>
-        <select className="evaluation-speech-select" value={deliveryMode} onChange={handleModeChange}>
-          <option value="standard">Standart</option>
-          <option value="emphasis">Vurgulu</option>
-        </select>
-      </label>
-
       <button className="button-secondary evaluation-speak-button" type="button" onClick={handleToggle}>
-        {speaking ? "Okumayi Durdur" : "Notu Sesli Oku"}
+        {speaking ? "Okumayi Durdur" : "Sesli Oku"}
       </button>
     </div>
   );

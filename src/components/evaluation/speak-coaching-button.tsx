@@ -1,27 +1,139 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 
-function pickTurkishVoice(voices: SpeechSynthesisVoice[]) {
-  return voices.find((voice) => voice.lang.toLocaleLowerCase("tr-TR").startsWith("tr")) ?? null;
+type DeliveryMode = "standard" | "emphasis";
+
+const STORAGE_KEYS = {
+  voice: "evaluation-speech-voice",
+  mode: "evaluation-speech-mode"
+} as const;
+
+function isTurkishVoice(voice: SpeechSynthesisVoice) {
+  return voice.lang.toLocaleLowerCase("tr-TR").startsWith("tr");
+}
+
+function scoreVoice(voice: SpeechSynthesisVoice) {
+  const name = voice.name.toLocaleLowerCase("tr-TR");
+  let score = 0;
+
+  if (isTurkishVoice(voice)) score += 100;
+  if (voice.default) score += 12;
+  if (name.includes("microsoft")) score += 10;
+  if (name.includes("google")) score += 7;
+  if (name.includes("turkish") || name.includes("türkçe")) score += 8;
+  if (name.includes("natural") || name.includes("neural") || name.includes("online")) score += 14;
+  if (name.includes("female") || name.includes("kadın")) score += 3;
+
+  return score;
+}
+
+function pickBestTurkishVoice(voices: SpeechSynthesisVoice[]) {
+  return [...voices]
+    .filter(isTurkishVoice)
+    .sort((left, right) => scoreVoice(right) - scoreVoice(left))[0] ?? null;
+}
+
+function buildSpeechText(text: string, mode: DeliveryMode) {
+  const normalized = text.replace(/\s+/g, " ").trim();
+
+  if (mode === "standard") {
+    return normalized;
+  }
+
+  return normalized
+    .replace(/:\s*/g, ". ")
+    .replace(/%/g, " yüzde ")
+    .replace(/-\s+/g, "")
+    .replace(/\.\s+/g, ". ")
+    .replace(/,\s+/g, ", ");
 }
 
 export function SpeakCoachingButton({ text }: { text: string }) {
   const [supported, setSupported] = useState(false);
   const [speaking, setSpeaking] = useState(false);
+  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [selectedVoiceUri, setSelectedVoiceUri] = useState("");
+  const [deliveryMode, setDeliveryMode] = useState<DeliveryMode>("emphasis");
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+
+  const turkishVoices = useMemo(
+    () => [...voices].filter(isTurkishVoice).sort((left, right) => scoreVoice(right) - scoreVoice(left)),
+    [voices]
+  );
 
   useEffect(() => {
     if (typeof window === "undefined") {
       return;
     }
 
-    setSupported("speechSynthesis" in window && "SpeechSynthesisUtterance" in window);
+    const available = "speechSynthesis" in window && "SpeechSynthesisUtterance" in window;
+    setSupported(available);
+
+    if (!available) {
+      return;
+    }
+
+    const savedVoice = window.localStorage.getItem(STORAGE_KEYS.voice) ?? "";
+    const savedMode = window.localStorage.getItem(STORAGE_KEYS.mode);
+
+    if (savedVoice) {
+      setSelectedVoiceUri(savedVoice);
+    }
+
+    if (savedMode === "standard" || savedMode === "emphasis") {
+      setDeliveryMode(savedMode);
+    }
+
+    const loadVoices = () => {
+      const nextVoices = window.speechSynthesis.getVoices();
+      setVoices(nextVoices);
+    };
+
+    loadVoices();
+    window.speechSynthesis.addEventListener("voiceschanged", loadVoices);
 
     return () => {
-      window.speechSynthesis?.cancel();
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.removeEventListener("voiceschanged", loadVoices);
     };
   }, []);
+
+  useEffect(() => {
+    if (!supported || typeof window === "undefined") {
+      return;
+    }
+
+    if (selectedVoiceUri) {
+      return;
+    }
+
+    const preferredVoice = pickBestTurkishVoice(voices);
+    if (!preferredVoice) {
+      return;
+    }
+
+    setSelectedVoiceUri(preferredVoice.voiceURI);
+    window.localStorage.setItem(STORAGE_KEYS.voice, preferredVoice.voiceURI);
+  }, [supported, selectedVoiceUri, voices]);
+
+  function handleVoiceChange(event: ChangeEvent<HTMLSelectElement>) {
+    const nextValue = event.target.value;
+    setSelectedVoiceUri(nextValue);
+
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(STORAGE_KEYS.voice, nextValue);
+    }
+  }
+
+  function handleModeChange(event: ChangeEvent<HTMLSelectElement>) {
+    const nextMode = event.target.value as DeliveryMode;
+    setDeliveryMode(nextMode);
+
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(STORAGE_KEYS.mode, nextMode);
+    }
+  }
 
   function handleToggle() {
     if (!supported || typeof window === "undefined") {
@@ -35,13 +147,15 @@ export function SpeakCoachingButton({ text }: { text: string }) {
       return;
     }
 
-    const utterance = new SpeechSynthesisUtterance(text);
-    const selectedVoice = pickTurkishVoice(window.speechSynthesis.getVoices());
+    const selectedVoice =
+      turkishVoices.find((voice) => voice.voiceURI === selectedVoiceUri) ?? pickBestTurkishVoice(voices) ?? null;
+    const utterance = new SpeechSynthesisUtterance(buildSpeechText(text, deliveryMode));
 
     utterance.lang = selectedVoice?.lang || "tr-TR";
     utterance.voice = selectedVoice;
-    utterance.rate = 1.5;
-    utterance.pitch = 1;
+    utterance.rate = deliveryMode === "emphasis" ? 1.35 : 1.5;
+    utterance.pitch = deliveryMode === "emphasis" ? 1.1 : 1;
+    utterance.volume = 1;
     utterance.onend = () => {
       setSpeaking(false);
       utteranceRef.current = null;
@@ -66,8 +180,33 @@ export function SpeakCoachingButton({ text }: { text: string }) {
   }
 
   return (
-    <button className="button-secondary evaluation-speak-button" type="button" onClick={handleToggle}>
-      {speaking ? "Okumayi Durdur" : "Notu Sesli Oku"}
-    </button>
+    <div className="evaluation-speech-controls">
+      <label className="evaluation-speech-field">
+        <span>Ses</span>
+        <select className="evaluation-speech-select" value={selectedVoiceUri} onChange={handleVoiceChange}>
+          {turkishVoices.length ? (
+            turkishVoices.map((voice) => (
+              <option key={voice.voiceURI} value={voice.voiceURI}>
+                {voice.name}
+              </option>
+            ))
+          ) : (
+            <option value="">Varsayilan Turkce Ses</option>
+          )}
+        </select>
+      </label>
+
+      <label className="evaluation-speech-field">
+        <span>Ton</span>
+        <select className="evaluation-speech-select" value={deliveryMode} onChange={handleModeChange}>
+          <option value="standard">Standart</option>
+          <option value="emphasis">Vurgulu</option>
+        </select>
+      </label>
+
+      <button className="button-secondary evaluation-speak-button" type="button" onClick={handleToggle}>
+        {speaking ? "Okumayi Durdur" : "Notu Sesli Oku"}
+      </button>
+    </div>
   );
 }

@@ -5489,6 +5489,37 @@ textarea::placeholder {
   gap: 12px;
 }
 
+.evaluation-speech-controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.evaluation-speech-field {
+  display: grid;
+  gap: 6px;
+  min-width: 180px;
+}
+
+.evaluation-speech-field > span {
+  color: #dff1ff;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.evaluation-speech-select {
+  min-height: 52px;
+  padding: 0 14px;
+  border: 1px solid rgba(4, 92, 96, 0.2);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  color: #08152a;
+  font: 800 0.95rem/1.2 inherit;
+}
+
 .evaluation-shell {
   display: grid;
   gap: 18px;
@@ -5956,6 +5987,11 @@ textarea::placeholder {
 
   .evaluation-card-actions {
     justify-content: stretch;
+  }
+
+  .evaluation-speech-controls,
+  .evaluation-speech-field {
+    width: 100%;
   }
 
   .evaluation-grid {

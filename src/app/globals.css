@@ -5597,13 +5597,13 @@ textarea::placeholder {
   overflow: auto;
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.92);
-  color: #08152a;
+  color: #08152a !important;
   font: 500 0.98rem/1.62 inherit;
 }
 
 .evaluation-line {
   margin: 0;
-  color: #08152a;
+  color: #08152a !important;
 }
 
 .evaluation-line + .evaluation-line {
@@ -5614,12 +5614,12 @@ textarea::placeholder {
   margin-bottom: 8px;
   font-size: 1.02rem;
   line-height: 1.5;
-  color: #08152a;
+  color: #08152a !important;
 }
 
 .evaluation-line-heading strong {
   font-weight: 900;
-  color: #08152a;
+  color: #08152a !important;
 }
 
 .evaluation-line-spacer {
@@ -5629,16 +5629,18 @@ textarea::placeholder {
 .evaluation-line-key,
 .evaluation-line-need {
   font-weight: 900;
-  color: #07101f;
+  color: #07101f !important;
 }
 
 .evaluation-line-bullet {
-  color: #08152a;
+  color: #08152a !important;
 }
 
+.evaluation-copy-text *,
 .evaluation-copy-text span,
-.evaluation-copy-text strong {
-  color: inherit;
+.evaluation-copy-text strong,
+.evaluation-copy-text p {
+  color: #08152a !important;
 }
 
 .evaluation-zero-alert {

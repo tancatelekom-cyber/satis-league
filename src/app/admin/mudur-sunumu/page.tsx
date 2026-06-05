@@ -50,6 +50,10 @@ type PresentationCategoryTableRow = {
   actualPercent: number | null;
   projectedActual: number | null;
   projectedPercent: number | null;
+  dailyNeeds: Array<{
+    threshold: number;
+    dailyRequired: number;
+  }>;
 };
 
 type PresentationCategoryTable = {
@@ -413,7 +417,26 @@ function buildManagerActionLines(storeFocusItems: FocusItem[], employeeFocusItem
   return lines;
 }
 
-function buildStoreCategoryTables(rows: GoalStoreRow[], workedDays: number, totalDays: number) {
+function buildNeedTargets(target: number | null, actual: number, remainingDays: number) {
+  if (!target) {
+    return [90, 100, 110, 120].map((threshold) => ({
+      threshold,
+      dailyRequired: 0
+    }));
+  }
+
+  return [90, 100, 110, 120].map((threshold) => {
+    const thresholdTarget = target * (threshold / 100);
+    const remainingTotal = Math.max(thresholdTarget - actual, 0);
+
+    return {
+      threshold,
+      dailyRequired: remainingDays > 0 ? Math.ceil(remainingTotal / remainingDays) : Math.ceil(remainingTotal)
+    };
+  });
+}
+
+function buildStoreCategoryTables(rows: GoalStoreRow[], workedDays: number, totalDays: number, remainingDays: number) {
   const categoryMap = new Map<string, GoalStoreRow[]>();
 
   rows.forEach((row) => {
@@ -446,7 +469,8 @@ function buildStoreCategoryTables(rows: GoalStoreRow[], workedDays: number, tota
             remaining: summary.remaining,
             actualPercent: summary.actualPercent,
             projectedActual: summary.projectedActual,
-            projectedPercent: summary.projectedPercent
+            projectedPercent: summary.projectedPercent,
+            dailyNeeds: buildNeedTargets(summary.target, summary.actual, remainingDays)
           } satisfies PresentationCategoryTableRow;
         })
         .sort((left, right) => (left.projectedPercent ?? left.actualPercent ?? 0) - (right.projectedPercent ?? right.actualPercent ?? 0));
@@ -459,7 +483,8 @@ function buildStoreCategoryTables(rows: GoalStoreRow[], workedDays: number, tota
         remaining: companySummary?.remaining ?? null,
         actualPercent: companySummary?.actualPercent ?? null,
         projectedActual: companySummary?.projectedActual ?? null,
-        projectedPercent: companySummary?.projectedPercent ?? null
+        projectedPercent: companySummary?.projectedPercent ?? null,
+        dailyNeeds: buildNeedTargets(companySummary?.target ?? null, companySummary?.actual ?? 0, remainingDays)
       } satisfies PresentationCategoryTableRow;
 
       return {
@@ -471,7 +496,7 @@ function buildStoreCategoryTables(rows: GoalStoreRow[], workedDays: number, tota
     });
 }
 
-function buildEmployeeCategoryTables(rows: GoalActualRow[], workedDays: number, totalDays: number) {
+function buildEmployeeCategoryTables(rows: GoalActualRow[], workedDays: number, totalDays: number, remainingDays: number) {
   const categoryMap = new Map<string, GoalActualRow[]>();
 
   rows.forEach((row) => {
@@ -502,7 +527,8 @@ function buildEmployeeCategoryTables(rows: GoalActualRow[], workedDays: number, 
             remaining: summary.remaining,
             actualPercent: summary.actualPercent,
             projectedActual: summary.projectedActual,
-            projectedPercent: summary.projectedPercent
+            projectedPercent: summary.projectedPercent,
+            dailyNeeds: buildNeedTargets(summary.target, summary.actual, remainingDays)
           } satisfies PresentationCategoryTableRow;
         })
         .sort((left, right) => (left.projectedPercent ?? left.actualPercent ?? 0) - (right.projectedPercent ?? right.actualPercent ?? 0));
@@ -515,7 +541,8 @@ function buildEmployeeCategoryTables(rows: GoalActualRow[], workedDays: number, 
         remaining: totalSummary.remaining,
         actualPercent: totalSummary.actualPercent,
         projectedActual: totalSummary.projectedActual,
-        projectedPercent: totalSummary.projectedPercent
+        projectedPercent: totalSummary.projectedPercent,
+        dailyNeeds: buildNeedTargets(totalSummary.target, totalSummary.actual, remainingDays)
       } satisfies PresentationCategoryTableRow;
 
       return {
@@ -621,8 +648,13 @@ export default async function ManagerBriefingPage() {
   const riskStores = [...storeHealthSnapshots].sort((left, right) => left.averagePercent - right.averagePercent).slice(0, 4);
   const topEmployees = [...employeeHealthSnapshots].sort((left, right) => right.averagePercent - left.averagePercent).slice(0, 4);
   const riskEmployees = [...employeeHealthSnapshots].sort((left, right) => left.averagePercent - right.averagePercent).slice(0, 4);
-  const storeCategoryTables = buildStoreCategoryTables(filteredStoreRows, dayStats.workedDays, dayStats.totalDays);
-  const employeeCategoryTables = buildEmployeeCategoryTables(filteredEmployeeRows, dayStats.workedDays, dayStats.totalDays);
+  const storeCategoryTables = buildStoreCategoryTables(filteredStoreRows, dayStats.workedDays, dayStats.totalDays, dayStats.remainingDays);
+  const employeeCategoryTables = buildEmployeeCategoryTables(
+    filteredEmployeeRows,
+    dayStats.workedDays,
+    dayStats.totalDays,
+    dayStats.remainingDays
+  );
   const strongestCompanyMetric =
     buildCompanyCategorySummaries(filteredStoreRows, dayStats.workedDays, dayStats.totalDays)
       .filter((metric) => metric.hasTarget && !isEntryCount(metric.title))

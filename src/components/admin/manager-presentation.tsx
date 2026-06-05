@@ -38,6 +38,10 @@ type PresentationCategoryTableRow = {
   actualPercent: number | null;
   projectedActual: number | null;
   projectedPercent: number | null;
+  dailyNeeds: Array<{
+    threshold: number;
+    dailyRequired: number;
+  }>;
 };
 
 type PresentationCategoryTable = {
@@ -356,6 +360,32 @@ export function ManagerPresentation({
                       </tr>
                     </tfoot>
                   </table>
+                </div>
+
+                <div className="presentation-need-board">
+                  {group.map((row) => (
+                    <article key={`store-need-${table.title}-${row.label}`} className="presentation-need-card">
+                      <strong>{row.label}</strong>
+                      <div className="presentation-need-grid">
+                        {row.dailyNeeds.map((need) => (
+                          <span key={`${row.label}-${need.threshold}`} className="presentation-need-pill">
+                            %{need.threshold}: {need.dailyRequired}
+                          </span>
+                        ))}
+                      </div>
+                    </article>
+                  ))}
+
+                  <article key={`store-need-total-${table.title}`} className="presentation-need-card presentation-need-card-total">
+                    <strong>{table.totalRow.label}</strong>
+                    <div className="presentation-need-grid">
+                      {table.totalRow.dailyNeeds.map((need) => (
+                        <span key={`${table.totalRow.label}-${need.threshold}`} className="presentation-need-pill">
+                          %{need.threshold}: {need.dailyRequired}
+                        </span>
+                      ))}
+                    </div>
+                  </article>
                 </div>
               </section>
             </div>

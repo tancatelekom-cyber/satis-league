@@ -2302,6 +2302,49 @@ textarea::placeholder {
   font-weight: 900;
 }
 
+.presentation-need-board {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.presentation-need-card {
+  padding: 16px 18px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #10203b;
+  box-shadow: 0 14px 28px rgba(4, 16, 31, 0.12);
+}
+
+.presentation-need-card strong {
+  display: block;
+  margin-bottom: 12px;
+  color: #10203b;
+  font-size: 1rem;
+}
+
+.presentation-need-card-total {
+  background: linear-gradient(135deg, rgba(255, 209, 102, 0.94), rgba(126, 241, 211, 0.9));
+}
+
+.presentation-need-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.presentation-need-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: rgba(16, 32, 59, 0.08);
+  color: #10203b;
+  font-weight: 800;
+}
+
 .presentation-focus-card {
   padding: 22px 24px;
   display: grid;
@@ -2451,7 +2494,8 @@ textarea::placeholder {
   .presentation-cover-grid,
   .presentation-two-column,
   .presentation-grid-2,
-  .presentation-grid-3 {
+  .presentation-grid-3,
+  .presentation-need-board {
     grid-template-columns: 1fr;
   }
 

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -56,7 +57,9 @@ export function AppShellHeader({ initialIsAdmin = false, initialCanEvaluate = fa
     <>
       <header className="topbar topbar-app">
         <Link className="brand" href="/" onClick={() => setMenuOpen(false)}>
-          <span className="brand-badge">T+</span>
+          <span className="brand-badge">
+            <Image src="/tplus-logo.png" alt="TANCA+ logo" width={40} height={40} className="brand-logo-image" priority />
+          </span>
           <span>TANCA+</span>
         </Link>
 

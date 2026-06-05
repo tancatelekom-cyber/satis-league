@@ -152,9 +152,14 @@ button {
   display: grid;
   place-items: center;
   border-radius: 12px;
-  color: #09111f;
-  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
-  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.brand-logo-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .topbar-auth {
@@ -3897,8 +3902,6 @@ textarea::placeholder {
     width: 32px;
     height: 32px;
     border-radius: 10px;
-    font-size: 0.95rem;
-    box-shadow: none;
   }
 
   main {

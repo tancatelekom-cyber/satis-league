@@ -87,6 +87,11 @@ type AverageGapNote = {
   gap: number;
 };
 
+type ZeroActualItem = {
+  key: string;
+  label: string;
+};
+
 type GoalView = "employee" | "store" | "company";
 type GoalPanel = "detail" | "ranking" | "needs" | "evaluation";
 
@@ -556,6 +561,44 @@ function normalizeCategoryKey(value: string) {
 
 function isEntryCount(title: string) {
   return normalizeCategoryKey(title).includes("GIRIS SAY");
+}
+
+function buildEmployeeZeroActualItems(rows: GoalActualRow[]) {
+  const seen = new Set<string>();
+
+  return rows
+    .filter((row) => !isEntryCount(row.mainCategory) && row.actual === 0)
+    .map((row) => ({
+      key: `${row.employeeName}-${row.mainCategory}-${row.subCategory || "main"}`,
+      label: row.subCategory || row.mainCategory
+    }))
+    .filter((item) => {
+      if (seen.has(item.label)) {
+        return false;
+      }
+
+      seen.add(item.label);
+      return true;
+    });
+}
+
+function buildStoreZeroActualItems(rows: GoalStoreRow[]) {
+  const seen = new Set<string>();
+
+  return rows
+    .filter((row) => !isEntryCount(row.mainCategory) && row.actual === 0)
+    .map((row) => ({
+      key: `${row.storeCode}-${row.mainCategory}-${row.subCategory || "main"}`,
+      label: row.subCategory || row.mainCategory
+    }))
+    .filter((item) => {
+      if (seen.has(item.label)) {
+        return false;
+      }
+
+      seen.add(item.label);
+      return true;
+    });
 }
 
 function toCoachingMetric(summary: GoalCategorySummary): CoachingMetric {
@@ -1058,6 +1101,12 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
     storeAverageNotes: detailStoreAverageNotes,
     remainingDays: dayStats.remainingDays
   });
+  const detailZeroActualItems =
+    effectiveView === "employee"
+      ? buildEmployeeZeroActualItems(activeEmployeeRows)
+      : effectiveView === "store"
+        ? buildStoreZeroActualItems(activeStoreRows)
+        : [];
   const detailCardTitle =
     effectiveView === "company" ? "FIRMA" : effectiveView === "store" ? activeStoreName || "MAGAZA" : activeEmployeeName || "CALISAN";
 
@@ -1326,6 +1375,18 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                     </div>
 
                     <FormattedCoachingText text={detailCoachingText} />
+
+                    {detailZeroActualItems.length ? (
+                      <div className="evaluation-zero-alert">
+                        <strong>Gozden kacirdigin kalemler</strong>
+                        <p>Gercekleseni 0 olan bu kalemler bugun mutlaka kontrol edilmeli.</p>
+                        <div>
+                          {detailZeroActualItems.map((item) => (
+                            <span key={item.key}>{item.label}</span>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
 
                     <div className="evaluation-card-actions evaluation-card-actions-bottom">
                       <SpeakCoachingButton text={detailCoachingText} />

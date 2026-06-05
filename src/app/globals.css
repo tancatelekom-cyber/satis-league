@@ -1990,6 +1990,459 @@ textarea::placeholder {
   line-height: 1.65;
 }
 
+.presentation-shell {
+  min-height: 100vh;
+  padding: 18px 18px 22px;
+  background:
+    radial-gradient(circle at top left, rgba(126, 241, 211, 0.18), transparent 28%),
+    radial-gradient(circle at top right, rgba(255, 209, 102, 0.2), transparent 26%),
+    linear-gradient(180deg, #061d34, #0a3f53 54%, #0e6d72);
+}
+
+.presentation-control-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.presentation-control-copy {
+  display: grid;
+  gap: 2px;
+}
+
+.presentation-control-copy strong {
+  color: #f7fbff;
+  font-size: 1.05rem;
+}
+
+.presentation-control-copy span {
+  color: #cfe5ff;
+  font-size: 0.92rem;
+}
+
+.presentation-control-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.presentation-stage {
+  min-height: calc(100vh - 126px);
+}
+
+.presentation-slide {
+  min-height: calc(100vh - 126px);
+  padding: clamp(28px, 4vw, 52px);
+  border-radius: 34px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background:
+    linear-gradient(180deg, rgba(5, 28, 49, 0.9), rgba(6, 52, 67, 0.88)),
+    radial-gradient(circle at top right, rgba(126, 241, 211, 0.12), transparent 24%);
+  box-shadow: 0 28px 60px rgba(5, 18, 36, 0.32);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 26px;
+}
+
+.presentation-slide-head {
+  display: grid;
+  gap: 12px;
+}
+
+.presentation-kicker {
+  display: inline-flex;
+  width: fit-content;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #dff7ff;
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.presentation-slide-head h1,
+.presentation-cover-copy h2,
+.presentation-closing-card h2 {
+  margin: 0;
+  color: #f7fbff;
+  line-height: 1.02;
+}
+
+.presentation-slide-head h1 {
+  font-size: clamp(2.6rem, 4.6vw, 5rem);
+  max-width: 14ch;
+}
+
+.presentation-slide-body {
+  min-height: 0;
+}
+
+.presentation-cover-grid,
+.presentation-two-column,
+.presentation-panel-stack,
+.presentation-grid-2,
+.presentation-grid-3 {
+  display: grid;
+  gap: 18px;
+}
+
+.presentation-cover-grid {
+  grid-template-columns: 1.1fr 0.9fr;
+  align-items: stretch;
+}
+
+.presentation-cover-copy,
+.presentation-panel,
+.presentation-focus-card,
+.presentation-closing-card,
+.presentation-action-card {
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+}
+
+.presentation-cover-copy,
+.presentation-panel,
+.presentation-closing-card {
+  padding: 24px 26px;
+}
+
+.presentation-cover-copy {
+  display: grid;
+  align-content: center;
+  gap: 16px;
+}
+
+.presentation-cover-copy p,
+.presentation-panel p,
+.presentation-focus-card p,
+.presentation-closing-card p {
+  margin: 0;
+  color: #d5e8ff;
+  line-height: 1.72;
+}
+
+.presentation-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.presentation-stat-card {
+  padding: 18px 20px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #10203b;
+  box-shadow: 0 16px 30px rgba(4, 16, 31, 0.16);
+}
+
+.presentation-stat-card span {
+  display: block;
+  color: #56708c;
+  font-size: 0.94rem;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.presentation-stat-card strong {
+  display: block;
+  color: #10203b;
+  font-size: clamp(1.8rem, 2.8vw, 2.8rem);
+  line-height: 1;
+  margin-bottom: 10px;
+}
+
+.presentation-stat-card p {
+  color: #5b728e;
+  line-height: 1.55;
+}
+
+.presentation-two-column {
+  grid-template-columns: 1fr 1fr;
+}
+
+.presentation-panel {
+  display: grid;
+  gap: 18px;
+}
+
+.presentation-panel-hero {
+  background: linear-gradient(135deg, rgba(255, 209, 102, 0.16), rgba(126, 241, 211, 0.14));
+}
+
+.presentation-panel-head {
+  display: grid;
+  gap: 8px;
+}
+
+.presentation-panel-head span {
+  color: #92c8ff;
+  font-size: 0.9rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.presentation-panel-head strong {
+  color: #f8fbff;
+  font-size: clamp(1.3rem, 2vw, 2rem);
+  line-height: 1.18;
+}
+
+.presentation-health-list,
+.presentation-chip-cloud,
+.presentation-action-stack {
+  display: grid;
+  gap: 12px;
+}
+
+.presentation-health-card,
+.presentation-action-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: start;
+  padding: 18px 20px;
+}
+
+.presentation-health-card strong,
+.presentation-action-card strong,
+.presentation-focus-card strong,
+.presentation-focus-head h3 {
+  color: #f7fbff;
+}
+
+.presentation-health-card p,
+.presentation-health-card span {
+  color: #d2e8ff;
+}
+
+.presentation-health-card > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 90px;
+  padding: 10px 14px;
+  border-radius: 16px;
+  background: rgba(126, 241, 211, 0.16);
+  font-weight: 900;
+}
+
+.presentation-health-card-alert {
+  background: rgba(255, 112, 112, 0.12);
+}
+
+.presentation-grid-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.presentation-grid-2 {
+  grid-template-columns: 1fr 1fr;
+}
+
+.presentation-focus-card {
+  padding: 22px 24px;
+  display: grid;
+  gap: 16px;
+}
+
+.presentation-focus-card-wide {
+  min-height: 280px;
+}
+
+.presentation-card-tag {
+  display: inline-flex;
+  width: fit-content;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #dff7ff;
+  font-size: 0.84rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.presentation-focus-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.presentation-focus-head h3 {
+  margin: 8px 0 0;
+  font-size: clamp(1.6rem, 2.2vw, 2.2rem);
+  line-height: 1.08;
+}
+
+.presentation-score-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 102px;
+  padding: 12px 16px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #ffd166, #7ef1d3);
+  color: #08111f;
+  font-size: 1.18rem;
+  font-weight: 900;
+}
+
+.presentation-focus-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.presentation-focus-footer span,
+.presentation-focus-footer small {
+  color: #d5ecff;
+}
+
+.presentation-bullet-list {
+  margin: 0;
+  padding-left: 22px;
+  color: #d5ecff;
+  display: grid;
+  gap: 10px;
+  line-height: 1.6;
+}
+
+.presentation-chip {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(126, 241, 211, 0.14);
+  color: #eef7ff;
+  font-weight: 800;
+}
+
+.presentation-chip-alert {
+  background: rgba(255, 107, 107, 0.16);
+}
+
+.presentation-action-card {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.presentation-action-order {
+  display: inline-flex;
+  width: 54px;
+  height: 54px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #ffd166, #7ef1d3);
+  color: #08111f;
+  font-size: 1.4rem;
+  font-weight: 900;
+}
+
+.presentation-empty {
+  color: #d5ecff;
+}
+
+.presentation-closing-card {
+  min-height: 100%;
+  display: grid;
+  align-content: center;
+  gap: 20px;
+  text-align: center;
+  background: linear-gradient(180deg, rgba(8, 90, 96, 0.6), rgba(4, 38, 54, 0.72));
+}
+
+.presentation-closing-card h2 {
+  font-size: clamp(2rem, 3.6vw, 4rem);
+  max-width: 18ch;
+  margin-inline: auto;
+}
+
+.presentation-dots {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.presentation-dot {
+  width: 11px;
+  height: 11px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.26);
+  cursor: pointer;
+}
+
+.presentation-dot-active {
+  width: 28px;
+  background: linear-gradient(135deg, #ffd166, #7ef1d3);
+}
+
+@media (max-width: 1280px) {
+  .presentation-cover-grid,
+  .presentation-two-column,
+  .presentation-grid-2,
+  .presentation-grid-3 {
+    grid-template-columns: 1fr;
+  }
+
+  .presentation-slide {
+    min-height: auto;
+  }
+}
+
+@media (max-width: 860px) {
+  .presentation-shell {
+    padding: 12px 12px 18px;
+  }
+
+  .presentation-control-bar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .presentation-control-actions {
+    justify-content: stretch;
+  }
+
+  .presentation-control-actions .button-primary,
+  .presentation-control-actions .button-secondary {
+    flex: 1 1 160px;
+  }
+
+  .presentation-stage,
+  .presentation-slide {
+    min-height: calc(100vh - 166px);
+  }
+
+  .presentation-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .presentation-health-card,
+  .presentation-action-card,
+  .presentation-focus-head {
+    grid-template-columns: 1fr;
+  }
+
+  .presentation-focus-head,
+  .presentation-focus-footer {
+    display: grid;
+  }
+}
+
 .player-spotlight,
 .mission-card {
   padding: 24px;

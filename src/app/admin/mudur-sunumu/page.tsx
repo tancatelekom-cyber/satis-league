@@ -1,5 +1,5 @@
-import { AdminSectionNav } from "@/components/admin/admin-section-nav";
 import { AdminSetupNotice } from "@/components/admin/admin-setup-notice";
+import { ManagerPresentation } from "@/components/admin/manager-presentation";
 import { requireAdminAccess } from "@/lib/auth/require-admin";
 import { fetchGoalActualRows, fetchGoalDayStats, fetchGoalStoreRows, type GoalActualRow, type GoalDayStats, type GoalStoreRow } from "@/lib/goal-actuals";
 import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
@@ -32,6 +32,14 @@ type SummaryCard = {
   label: string;
   value: string;
   detail: string;
+};
+
+type HealthSnapshot = {
+  owner: string;
+  averagePercent: number;
+  belowTargetCount: number;
+  primaryRisk: string;
+  strongestMetric: string;
 };
 
 const EMPTY_DAYS: GoalDayStats = {
@@ -388,6 +396,68 @@ function buildManagerActionLines(storeFocusItems: FocusItem[], employeeFocusItem
   return lines;
 }
 
+function buildStoreHealthSnapshots(rows: GoalStoreRow[], workedDays: number, totalDays: number) {
+  const storeMap = new Map<string, GoalStoreRow[]>();
+
+  rows.forEach((row) => {
+    const current = storeMap.get(row.storeCode) ?? [];
+    current.push(row);
+    storeMap.set(row.storeCode, current);
+  });
+
+  return Array.from(storeMap.entries())
+    .map(([owner, storeRows]) => {
+      const metrics = buildStoreCategorySummaries(storeRows, workedDays, totalDays).filter((metric) => metric.hasTarget && !isEntryCount(metric.title));
+      const scores = metrics.map((metric) => metric.projectedPercent ?? metric.actualPercent ?? 0).filter((value) => value > 0);
+      const sortedMetrics = [...metrics].sort(
+        (left, right) => (left.projectedPercent ?? left.actualPercent ?? 0) - (right.projectedPercent ?? right.actualPercent ?? 0)
+      );
+      const strongest = [...metrics].sort(
+        (left, right) => (right.projectedPercent ?? right.actualPercent ?? 0) - (left.projectedPercent ?? left.actualPercent ?? 0)
+      )[0];
+
+      return {
+        owner,
+        averagePercent: average(scores),
+        belowTargetCount: metrics.filter((metric) => (metric.projectedPercent ?? metric.actualPercent ?? 0) < 100).length,
+        primaryRisk: sortedMetrics[0]?.title ?? "-",
+        strongestMetric: strongest?.title ?? "-"
+      } satisfies HealthSnapshot;
+    })
+    .filter((item) => item.averagePercent > 0);
+}
+
+function buildEmployeeHealthSnapshots(rows: GoalActualRow[], workedDays: number, totalDays: number) {
+  const employeeMap = new Map<string, GoalActualRow[]>();
+
+  rows.forEach((row) => {
+    const current = employeeMap.get(row.employeeName) ?? [];
+    current.push(row);
+    employeeMap.set(row.employeeName, current);
+  });
+
+  return Array.from(employeeMap.entries())
+    .map(([owner, employeeRows]) => {
+      const metrics = buildEmployeeCategorySummaries(employeeRows, workedDays, totalDays).filter((metric) => metric.hasTarget && !isEntryCount(metric.title));
+      const scores = metrics.map((metric) => metric.projectedPercent ?? metric.actualPercent ?? 0).filter((value) => value > 0);
+      const sortedMetrics = [...metrics].sort(
+        (left, right) => (left.projectedPercent ?? left.actualPercent ?? 0) - (right.projectedPercent ?? right.actualPercent ?? 0)
+      );
+      const strongest = [...metrics].sort(
+        (left, right) => (right.projectedPercent ?? right.actualPercent ?? 0) - (left.projectedPercent ?? left.actualPercent ?? 0)
+      )[0];
+
+      return {
+        owner,
+        averagePercent: average(scores),
+        belowTargetCount: metrics.filter((metric) => (metric.projectedPercent ?? metric.actualPercent ?? 0) < 100).length,
+        primaryRisk: sortedMetrics[0]?.title ?? "-",
+        strongestMetric: strongest?.title ?? "-"
+      } satisfies HealthSnapshot;
+    })
+    .filter((item) => item.averagePercent > 0);
+}
+
 export default async function ManagerBriefingPage() {
   await requireAdminAccess();
 
@@ -414,147 +484,47 @@ export default async function ManagerBriefingPage() {
   const zeroItems = buildZeroActualItems(filteredStoreRows);
   const summaryCards = buildSummaryCards(dayStats, storeFocusItems, employeeFocusItems, companyFocusItems, zeroItems);
   const actionLines = buildManagerActionLines(storeFocusItems, employeeFocusItems, companyFocusItems, zeroItems);
+  const storeHealthSnapshots = buildStoreHealthSnapshots(filteredStoreRows, dayStats.workedDays, dayStats.totalDays);
+  const employeeHealthSnapshots = buildEmployeeHealthSnapshots(filteredEmployeeRows, dayStats.workedDays, dayStats.totalDays);
+  const topStores = [...storeHealthSnapshots].sort((left, right) => right.averagePercent - left.averagePercent).slice(0, 4);
+  const riskStores = [...storeHealthSnapshots].sort((left, right) => left.averagePercent - right.averagePercent).slice(0, 4);
+  const topEmployees = [...employeeHealthSnapshots].sort((left, right) => right.averagePercent - left.averagePercent).slice(0, 4);
+  const riskEmployees = [...employeeHealthSnapshots].sort((left, right) => left.averagePercent - right.averagePercent).slice(0, 4);
   const strongestCompanyMetric =
     buildCompanyCategorySummaries(filteredStoreRows, dayStats.workedDays, dayStats.totalDays)
       .filter((metric) => metric.hasTarget && !isEntryCount(metric.title))
       .sort((left, right) => (right.projectedPercent ?? right.actualPercent ?? 0) - (left.projectedPercent ?? left.actualPercent ?? 0))[0] ?? null;
+  const generatedAt = new Intl.DateTimeFormat("tr-TR", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(new Date());
+  const companyNarrative = companyFocusItems.length
+    ? `Firma genelinde ${companyFocusItems.length} ana kategori hedef temposunun altinda. En iyi korunan alan ${
+        strongestCompanyMetric?.title ?? "belirsiz"
+      }, en kritik alan ise ${companyFocusItems[0]?.metric ?? "belirsiz"}.`
+    : "Firma genelinde belirgin hedef riski gorunmuyor. Mevcut tempo korunursa hedef kapanisi destekleniyor.";
 
   return (
     <main>
-      <h1 className="page-title">Mudur Sunumu</h1>
-      <p className="page-subtitle">
-        Bu ekran sadece admin icin hazirlandi. Anlik hedef gerceklesen verisine gore magaza mudurlerine sunulacak kritikleri, firma durumunu
-        ve kalan gun aksiyonlarini tek yerde toplar.
-      </p>
-
       {errorMessage ? <div className="message-box error-box">{errorMessage}</div> : null}
 
-      <AdminSectionNav currentPath="/admin/mudur-sunumu" />
-
-      <section className="admin-overview-grid">
-        {summaryCards.map((card) => (
-          <article key={card.label} className="admin-overview-card">
-            <span>{card.label}</span>
-            <strong>{card.value}</strong>
-            <p>{card.detail}</p>
-          </article>
-        ))}
-      </section>
-
-      <section className="admin-stack">
-        <article className="admin-card executive-hero-card">
-          <h3>Firma Genel Durumu</h3>
-          <p>
-            {companyFocusItems.length
-              ? `Firma genelinde ${companyFocusItems.length} ana kategori hedef temposunun altinda. En iyi korunan alan ${
-                  strongestCompanyMetric?.title ?? "belirsiz"
-                }, en kritik alan ise ${companyFocusItems[0]?.metric ?? "belirsiz"}.`
-              : "Firma genelinde belirgin hedef riski gorunmuyor. Mevcut tempo korunursa hedef kapanisi destekleniyor."}
-          </p>
-
-          <div className="executive-chip-row">
-            <span className="executive-chip">Calisilan gun: {formatNumber(dayStats.workedDays)}</span>
-            <span className="executive-chip">Kalan gun: {formatNumber(dayStats.remainingDays)}</span>
-            <span className="executive-chip">Sifir gerceklesen kalem: {formatNumber(zeroItems.length)}</span>
-          </div>
-        </article>
-
-        <section className="admin-grid executive-grid">
-          <article className="admin-card">
-            <h3>Firma Hedef Gerceklesenleri</h3>
-            <div className="executive-list">
-              {companyFocusItems.length ? (
-                companyFocusItems.slice(0, 8).map((item) => (
-                  <div key={`company-${item.metric}`} className="executive-list-item">
-                    <div>
-                      <strong>{item.metric}</strong>
-                      <p>{item.note}</p>
-                    </div>
-                    <span className="executive-score">{formatPercent(item.projectedPercent)}</span>
-                  </div>
-                ))
-              ) : (
-                <p className="subtle">Firma tarafinda hedef altinda belirgin ana kategori bulunmuyor.</p>
-              )}
-            </div>
-          </article>
-
-          <article className="admin-card">
-            <h3>Gozden Kacirilan Firma Kalemleri</h3>
-            <div className="executive-chip-row">
-              {zeroItems.length ? (
-                zeroItems.map((item) => (
-                  <span key={item} className="executive-chip executive-chip-alert">
-                    {item}
-                  </span>
-                ))
-              ) : (
-                <p className="subtle">Firma genelinde sifir gerceklesen kritik kalem yok.</p>
-              )}
-            </div>
-          </article>
-        </section>
-
-        <section className="admin-grid executive-grid">
-          <article className="admin-card">
-            <h3>Magaza Kritikleri</h3>
-            <div className="executive-list">
-              {storeFocusItems.length ? (
-                storeFocusItems.map((item) => (
-                  <div key={`${item.owner}-${item.metric}`} className="executive-list-item">
-                    <div>
-                      <strong>{item.owner}</strong>
-                      <span>{item.metric}</span>
-                      <p>{item.note}</p>
-                      <p className="executive-action-copy">{item.action}</p>
-                    </div>
-                    <span className="executive-score">{formatPercent(item.projectedPercent)}</span>
-                  </div>
-                ))
-              ) : (
-                <p className="subtle">Magaza bazli acil kritik gorunmuyor.</p>
-              )}
-            </div>
-          </article>
-
-          <article className="admin-card">
-            <h3>Calisan Kritikleri</h3>
-            <div className="executive-list">
-              {employeeFocusItems.length ? (
-                employeeFocusItems.map((item) => (
-                  <div key={`${item.owner}-${item.metric}`} className="executive-list-item">
-                    <div>
-                      <strong>{item.owner}</strong>
-                      <span>{item.metric}</span>
-                      <p>{item.note}</p>
-                      <p className="executive-action-copy">{item.action}</p>
-                    </div>
-                    <span className="executive-score">{formatPercent(item.projectedPercent)}</span>
-                  </div>
-                ))
-              ) : (
-                <p className="subtle">Calisan bazli acil kritik gorunmuyor.</p>
-              )}
-            </div>
-          </article>
-        </section>
-
-        <article className="admin-card">
-          <h3>Kalan Gunler Icin Alinmasi Gereken Aksiyonlar</h3>
-          <div className="executive-action-list">
-            {actionLines.length ? (
-              actionLines.map((line) => (
-                <div key={line} className="step-item executive-step-item">
-                  <strong>Aksiyon</strong>
-                  <span>{line}</span>
-                </div>
-              ))
-            ) : (
-              <p className="subtle">Ek aksiyon gerektiren belirgin bir baski gorunmuyor.</p>
-            )}
-          </div>
-        </article>
-      </section>
+      <ManagerPresentation
+        actionLines={actionLines}
+        companyFocusItems={companyFocusItems}
+        companyNarrative={companyNarrative}
+        employeeFocusItems={employeeFocusItems}
+        generatedAt={generatedAt}
+        riskEmployees={riskEmployees}
+        riskStores={riskStores}
+        storeFocusItems={storeFocusItems}
+        summaryCards={summaryCards}
+        topEmployees={topEmployees}
+        topStores={topStores}
+        zeroItems={zeroItems}
+      />
     </main>
   );
 }

@@ -1,5 +1,7 @@
 import type { CSSProperties } from "react";
 import { redirect } from "next/navigation";
+import { CopyCoachingButton } from "@/components/evaluation/copy-coaching-button";
+import { SpeakCoachingButton } from "@/components/evaluation/speak-coaching-button";
 import { FilterSelectNav } from "@/components/ui/filter-select-nav";
 import { GoalActualRow, GoalStoreRow, fetchGoalActualRows, fetchGoalDayStats, fetchGoalStoreRows } from "@/lib/goal-actuals";
 import { createClient } from "@/lib/supabase/server";
@@ -63,6 +65,25 @@ type GoalDayStats = {
 type GoalNeedRow = {
   threshold: number;
   dailyRequired: number;
+};
+
+type CoachingMetric = {
+  title: string;
+  target: number | null;
+  actual: number;
+  actualPercent: number | null;
+  remaining: number | null;
+  projectedActual: number | null;
+  projectedPercent: number | null;
+  hasTarget: boolean;
+  showProjection: boolean;
+};
+
+type AverageGapNote = {
+  title: string;
+  actual: number;
+  average: number;
+  gap: number;
 };
 
 type GoalView = "employee" | "store" | "company";
@@ -521,6 +542,134 @@ function average(values: number[]) {
   return values.reduce((sum, value) => sum + value, 0) / values.length;
 }
 
+function normalizeCategoryKey(value: string) {
+  return value
+    .toLocaleUpperCase("tr-TR")
+    .replace(/\u0130/g, "I")
+    .replace(/\u011E/g, "G")
+    .replace(/\u00DC/g, "U")
+    .replace(/\u015E/g, "S")
+    .replace(/\u00D6/g, "O")
+    .replace(/\u00C7/g, "C");
+}
+
+function isEntryCount(title: string) {
+  return normalizeCategoryKey(title).includes("GIRIS SAY");
+}
+
+function toCoachingMetric(summary: GoalCategorySummary): CoachingMetric {
+  return {
+    title: summary.title,
+    target: summary.target,
+    actual: summary.actual,
+    actualPercent: summary.actualPercent,
+    remaining: summary.remaining,
+    projectedActual: summary.projectedActual,
+    projectedPercent: summary.projectedPercent,
+    hasTarget: summary.hasTarget,
+    showProjection: summary.showProjection
+  };
+}
+
+function buildEmployeeAverageGapNotes(metrics: CoachingMetric[], rows: GoalActualRow[]) {
+  const notes: AverageGapNote[] = [];
+
+  metrics.forEach((metric) => {
+    const employeeTotals = new Map<string, number>();
+    rows
+      .filter((row) => row.mainCategory === metric.title)
+      .forEach((row) => {
+        employeeTotals.set(row.employeeName, (employeeTotals.get(row.employeeName) ?? 0) + row.actual);
+      });
+
+    const categoryAverage = average(Array.from(employeeTotals.values()).filter((value) => value > 0));
+
+    if (categoryAverage > 0 && metric.actual < categoryAverage) {
+      notes.push({
+        title: metric.title,
+        actual: metric.actual,
+        average: categoryAverage,
+        gap: categoryAverage - metric.actual
+      });
+    }
+  });
+
+  return notes.sort((a, b) => b.gap - a.gap);
+}
+
+function buildStoreAverageGapNotes(metrics: CoachingMetric[], rows: GoalStoreRow[]) {
+  const notes: string[] = [];
+
+  metrics.forEach((metric) => {
+    const categoryRows = rows.filter((row) => row.mainCategory === metric.title);
+    const categoryAverage = average(categoryRows.map((row) => row.actual).filter((value) => value > 0));
+
+    if (categoryAverage > 0 && metric.actual < categoryAverage) {
+      notes.push(`${metric.title}: firma ortalamasi ${formatNumber(categoryAverage)}, mevcut ${formatNumber(metric.actual)}.`);
+    }
+  });
+
+  return notes;
+}
+
+function buildGoalActualCoachingText(args: {
+  view: GoalView;
+  metrics: CoachingMetric[];
+  employeeAverageNotes: AverageGapNote[];
+  storeAverageNotes: string[];
+  remainingDays: number;
+}) {
+  const criticalMetrics = args.metrics
+    .filter((metric) => metric.hasTarget && !isEntryCount(metric.title) && (metric.projectedPercent ?? metric.actualPercent ?? 0) < 100)
+    .sort((a, b) => (a.projectedPercent ?? a.actualPercent ?? 0) - (b.projectedPercent ?? b.actualPercent ?? 0));
+
+  const focusItems = new Map<string, string>();
+
+  criticalMetrics.forEach((metric) => {
+    focusItems.set(
+      metric.title,
+      `- ${metric.title}: hedef temposunun altindasin. Ay sonu ${formatPercent(metric.projectedPercent ?? metric.actualPercent)} seviyesinde kalir.`
+    );
+  });
+
+  if (args.view === "employee") {
+    args.employeeAverageNotes.forEach((note) => {
+      if (!focusItems.has(note.title)) {
+        focusItems.set(
+          note.title,
+          `- ${note.title}: firma ortalamasi ${formatNumber(note.average)}, sende ${formatNumber(note.actual)}. Fark ${formatNumber(note.gap)}.`
+        );
+      }
+    });
+  }
+
+  if (args.view === "store") {
+    args.storeAverageNotes.forEach((note) => {
+      const title = note.split(":")[0]?.trim() || note;
+      if (!focusItems.has(title)) {
+        focusItems.set(title, `- ${note}`);
+      }
+    });
+  }
+
+  const dailyLines = criticalMetrics.map((metric) => {
+    const remaining = args.remainingDays > 0 && metric.remaining !== null ? Math.ceil(metric.remaining / args.remainingDays) : metric.remaining ?? 0;
+    return `- ${metric.title}: ay sonu ${formatPercent(metric.projectedPercent ?? metric.actualPercent)} seviyesinde kalir. Hedefi kapatmak icin kalan gunlerde gunluk en az ${formatNumber(remaining)} uretmen lazim.`;
+  });
+
+  const firstTitle =
+    args.view === "company" ? "FIRMANIN HEDEFIN ALTINDA KALDIGI KALEMLER:" : "HEDEFIN VE FIRMA ORTALAMASININ ALTINDA KALDIGIN KALEMLER:";
+  const secondTitle = args.view === "company" ? "GUNLUK MINIMUM IHTIYACLAR:" : "GUNLUK MINIMUM IHTIYACLARIN:";
+
+  return [
+    firstTitle,
+    ...(focusItems.size ? Array.from(focusItems.values()) : ["- Belirgin bir kritik kalem gorunmuyor."]),
+    "",
+    secondTitle,
+    ...(dailyLines.length ? dailyLines : ["- Bugun icin ek gunluk minimum ihtiyac gorunmuyor. Mevcut tempoyu koruyalim."])
+  ].join("\n");
+}
+
 function buildCompanyRows(rows: GoalStoreRow[]): GoalStoreRow[] {
   const grouped = new Map<string, GoalStoreRow[]>();
 
@@ -771,7 +920,13 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
   }
 
   const canViewAll = canViewAllGoalActual(profile.role);
-  const effectiveView = canViewAll ? selectedView : "employee";
+  const effectiveView: GoalView = canViewAll
+    ? selectedView === "store"
+      ? "store"
+      : selectedView === "company"
+        ? "company"
+        : "employee"
+    : "employee";
   const effectivePanel =
     selectedPanel === "needs"
       ? "needs"
@@ -884,6 +1039,26 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
       target: category.target ?? 0,
       needRows: buildNeedRows(category, dayStats.remainingDays)
     }));
+  const detailCategorySummaries =
+    effectiveView === "company"
+      ? companyCategorySummaries
+      : effectiveView === "store"
+        ? storeCategorySummaries
+        : employeeCategorySummaries;
+  const detailCoachingMetrics = detailCategorySummaries.map(toCoachingMetric);
+  const detailEmployeeAverageNotes =
+    effectiveView === "employee" ? buildEmployeeAverageGapNotes(detailCoachingMetrics, filteredEmployeeRows) : [];
+  const detailStoreAverageNotes =
+    effectiveView === "store" ? buildStoreAverageGapNotes(detailCoachingMetrics, filteredStoreRows) : [];
+  const detailCoachingText = buildGoalActualCoachingText({
+    view: effectiveView,
+    metrics: detailCoachingMetrics,
+    employeeAverageNotes: detailEmployeeAverageNotes,
+    storeAverageNotes: detailStoreAverageNotes,
+    remainingDays: dayStats.remainingDays
+  });
+  const detailCardTitle =
+    effectiveView === "company" ? "FIRMA" : effectiveView === "store" ? activeStoreName || "MAGAZA" : activeEmployeeName || "CALISAN";
 
   const employeeOptions = employeeNames.length
     ? employeeNames.map((name) => ({
@@ -978,11 +1153,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                     <span className="league-filter-label">Ana Kategori</span>
                     <FilterSelectNav
                       ariaLabel="Ana kategori secimi"
-                      value={
-                        effectiveView === "store"
-                          ? buildHref("store", { store: activeStoreName, category: effectiveCategory, panel: effectivePanel })
-                          : buildHref("employee", { employee: activeEmployeeName, category: effectiveCategory, panel: effectivePanel })
-                      }
+                      value={buildHref("employee", { employee: activeEmployeeName, category: effectiveCategory, panel: effectivePanel })}
                       options={categoryOptions}
                     />
                   </div>
@@ -1146,6 +1317,21 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                 ) : (
                   <p className="subtle">Bu filtreye uygun calisan verisi bulunamadi.</p>
                 )}
+
+                {detailCategorySummaries.length ? (
+                  <div className="evaluation-card">
+                    <div className="evaluation-card-head">
+                      <strong>{detailCardTitle}</strong>
+                    </div>
+
+                    <pre className="evaluation-copy-text">{detailCoachingText}</pre>
+
+                    <div className="evaluation-card-actions evaluation-card-actions-bottom">
+                      <SpeakCoachingButton text={detailCoachingText} />
+                      <CopyCoachingButton text={detailCoachingText} />
+                    </div>
+                  </div>
+                ) : null}
               </article>
             </section>
           )}

@@ -421,6 +421,8 @@ export function ManagerPresentation({
     });
 
     storeCategoryTables.forEach((table) => {
+      const matchingSubtables = storeSubcategoryTables.filter((subtable) => subtable.parentTitle === table.title);
+
       chunk(table.rows, 8).forEach((group, index, list) => {
         items.push({
           id: `store-table-${table.title}-${index}`,
@@ -430,16 +432,16 @@ export function ManagerPresentation({
           body: renderCategoryTable(table, group)
         });
       });
-    });
 
-    storeSubcategoryTables.forEach((table) => {
-      chunk(table.rows, 8).forEach((group, index, list) => {
-        items.push({
-          id: `store-sub-table-${table.parentTitle}-${table.title}-${index}`,
-          title: `${table.parentTitle} / ${table.title} ALT KATEGORI`,
-          subtitle: `Alt kategori bazli magaza hedef-gerceklesen tablosu | Sayfa ${index + 1}/${list.length}`,
-          layout: "compact",
-          body: renderCategoryTable(table, group)
+      matchingSubtables.forEach((subtable) => {
+        chunk(subtable.rows, 8).forEach((group, index, list) => {
+          items.push({
+            id: `store-sub-table-${subtable.parentTitle}-${subtable.title}-${index}`,
+            title: `${subtable.parentTitle} / ${subtable.title} ALT KATEGORI`,
+            subtitle: `Alt kategori bazli magaza hedef-gerceklesen tablosu | Sayfa ${index + 1}/${list.length}`,
+            layout: "compact",
+            body: renderCategoryTable(subtable, group)
+          });
         });
       });
     });
@@ -475,6 +477,8 @@ export function ManagerPresentation({
     });
 
     employeeCategoryTables.forEach((table) => {
+      const matchingSubtables = employeeSubcategoryTables.filter((subtable) => subtable.parentTitle === table.title);
+
       chunk(table.rows, 8).forEach((group, index, list) => {
         items.push({
           id: `employee-table-${table.title}-${index}`,
@@ -484,16 +488,16 @@ export function ManagerPresentation({
           body: renderCategoryTable(table, group)
         });
       });
-    });
 
-    employeeSubcategoryTables.forEach((table) => {
-      chunk(table.rows, 8).forEach((group, index, list) => {
-        items.push({
-          id: `employee-sub-table-${table.parentTitle}-${table.title}-${index}`,
-          title: `${table.parentTitle} / ${table.title} ALT KATEGORI`,
-          subtitle: `Alt kategori bazli calisan hedef-gerceklesen tablosu | Sayfa ${index + 1}/${list.length}`,
-          layout: "compact",
-          body: renderCategoryTable(table, group)
+      matchingSubtables.forEach((subtable) => {
+        chunk(subtable.rows, 8).forEach((group, index, list) => {
+          items.push({
+            id: `employee-sub-table-${subtable.parentTitle}-${subtable.title}-${index}`,
+            title: `${subtable.parentTitle} / ${subtable.title} ALT KATEGORI`,
+            subtitle: `Alt kategori bazli calisan hedef-gerceklesen tablosu | Sayfa ${index + 1}/${list.length}`,
+            layout: "compact",
+            body: renderCategoryTable(subtable, group)
+          });
         });
       });
     });

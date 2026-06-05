@@ -475,7 +475,7 @@ function buildStoreCategoryTables(rows: GoalStoreRow[], workedDays: number, tota
             dailyNeeds: buildNeedTargets(summary.target, summary.actual, remainingDays)
           } satisfies PresentationCategoryTableRow;
         })
-        .sort((left, right) => (left.projectedPercent ?? left.actualPercent ?? 0) - (right.projectedPercent ?? right.actualPercent ?? 0));
+        .sort((left, right) => left.label.localeCompare(right.label, "tr"));
 
       const companySummary = companySummaries.find((item) => item.title === title);
       const totalRow = {
@@ -534,7 +534,7 @@ function buildEmployeeCategoryTables(rows: GoalActualRow[], workedDays: number, 
             dailyNeeds: buildNeedTargets(summary.target, summary.actual, remainingDays)
           } satisfies PresentationCategoryTableRow;
         })
-        .sort((left, right) => (left.projectedPercent ?? left.actualPercent ?? 0) - (right.projectedPercent ?? right.actualPercent ?? 0));
+        .sort((left, right) => left.label.localeCompare(right.label, "tr"));
 
       const totalSummary = buildEmployeeMetricSummary(categoryRows, workedDays, totalDays);
       const totalRow = {
@@ -599,7 +599,7 @@ function buildStoreSubcategoryTables(rows: GoalStoreRow[], workedDays: number, t
             dailyNeeds: buildNeedTargets(summary.target, summary.actual, remainingDays)
           } satisfies PresentationCategoryTableRow;
         })
-        .sort((left, right) => (left.projectedPercent ?? left.actualPercent ?? 0) - (right.projectedPercent ?? right.actualPercent ?? 0));
+        .sort((left, right) => left.label.localeCompare(right.label, "tr"));
 
       const companySummary = buildStoreMetricSummary(
         companyRows.filter((row) => row.mainCategory === parentTitle && row.subCategory === title),
@@ -667,7 +667,7 @@ function buildEmployeeSubcategoryTables(rows: GoalActualRow[], workedDays: numbe
             dailyNeeds: buildNeedTargets(summary.target, summary.actual, remainingDays)
           } satisfies PresentationCategoryTableRow;
         })
-        .sort((left, right) => (left.projectedPercent ?? left.actualPercent ?? 0) - (right.projectedPercent ?? right.actualPercent ?? 0));
+        .sort((left, right) => left.label.localeCompare(right.label, "tr"));
 
       const totalSummary = buildEmployeeMetricSummary(subcategoryRows, workedDays, totalDays);
       const totalRow = {

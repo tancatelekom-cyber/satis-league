@@ -479,25 +479,21 @@ export function ManagerPresentation({
     employeeCategoryTables.forEach((table) => {
       const matchingSubtables = employeeSubcategoryTables.filter((subtable) => subtable.parentTitle === table.title);
 
-      chunk(table.rows, 8).forEach((group, index, list) => {
-        items.push({
-          id: `employee-table-${table.title}-${index}`,
-          title: `${table.title} CALISAN TABLOSU`,
-          subtitle: `Kategori bazli calisan hedef-gerceklesen tablosu | Sayfa ${index + 1}/${list.length}`,
-          layout: "compact",
-          body: renderCategoryTable(table, group)
-        });
+      items.push({
+        id: `employee-table-${table.title}`,
+        title: `${table.title} CALISAN TABLOSU`,
+        subtitle: "Kategori bazli calisan hedef-gerceklesen tablosu | Tum calisanlar tek sayfa",
+        layout: "compact",
+        body: renderCategoryTable(table, table.rows)
       });
 
       matchingSubtables.forEach((subtable) => {
-        chunk(subtable.rows, 8).forEach((group, index, list) => {
-          items.push({
-            id: `employee-sub-table-${subtable.parentTitle}-${subtable.title}-${index}`,
-            title: `${subtable.parentTitle} / ${subtable.title} ALT KATEGORI`,
-            subtitle: `Alt kategori bazli calisan hedef-gerceklesen tablosu | Sayfa ${index + 1}/${list.length}`,
-            layout: "compact",
-            body: renderCategoryTable(subtable, group)
-          });
+        items.push({
+          id: `employee-sub-table-${subtable.parentTitle}-${subtable.title}`,
+          title: `${subtable.parentTitle} / ${subtable.title} ALT KATEGORI`,
+          subtitle: "Alt kategori bazli calisan hedef-gerceklesen tablosu | Tum calisanlar tek sayfa",
+          layout: "compact",
+          body: renderCategoryTable(subtable, subtable.rows)
         });
       });
     });

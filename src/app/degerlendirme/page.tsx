@@ -308,23 +308,41 @@ function pickCritical(metrics: Metric[]) {
     .slice(0, 4);
 }
 
-function buildCriticalChartMetrics(metrics: Metric[]) {
-  const criticalMetrics = pickCritical(metrics);
+function isCriticalCandidate(metric: Metric | undefined) {
+  if (!metric) {
+    return false;
+  }
+
+  return metric.hasTarget && !isQualityLimitMetric(metric.title) && (metric.projectedPercent ?? metric.actualPercent ?? 0) < 100;
+}
+
+function appendUniqueMetric(metrics: Metric[], candidate: Metric | undefined) {
+  if (!candidate || !isCriticalCandidate(candidate) || metrics.some((metric) => metric.title === candidate.title)) {
+    return metrics;
+  }
+
+  return [...metrics, candidate].sort((a, b) => (a.projectedPercent ?? a.actualPercent ?? 0) - (b.projectedPercent ?? b.actualPercent ?? 0));
+}
+
+function buildPriorityCriticalMetrics(metrics: Metric[], view: ViewMode) {
+  let criticalMetrics = pickCritical(metrics);
   const activationMetric = metrics.find(
     (metric) =>
       normalizeCategoryKey(metric.title).includes("AKTIVASYON") &&
-      metric.hasTarget &&
-      !isQualityLimitMetric(metric.title) &&
-      (metric.projectedPercent ?? metric.actualPercent ?? 0) < 100
+      isCriticalCandidate(metric)
   );
+  criticalMetrics = appendUniqueMetric(criticalMetrics, activationMetric);
 
-  if (!activationMetric || criticalMetrics.some((metric) => metric.title === activationMetric.title)) {
-    return criticalMetrics;
+  if (view === "company") {
+    const terminalMetric = metrics.find(
+      (metric) =>
+        normalizeCategoryKey(metric.title).includes("TERMINAL") &&
+        isCriticalCandidate(metric)
+    );
+    criticalMetrics = appendUniqueMetric(criticalMetrics, terminalMetric);
   }
 
-  return [...criticalMetrics, activationMetric].sort(
-    (a, b) => (a.projectedPercent ?? a.actualPercent ?? 0) - (b.projectedPercent ?? b.actualPercent ?? 0)
-  );
+  return criticalMetrics;
 }
 
 function buildStoreAverageNotes(storeMetrics: Metric[], allStoreRows: GoalStoreRow[]) {
@@ -572,7 +590,7 @@ function buildCoachingText(args: {
     ...pickStrong(args.metrics),
     ...(args.view === "employee" ? buildProductionStrongMetrics(args.metrics, args.allEmployeeRows) : [])
   ].filter((metric, index, list) => list.findIndex((item) => item.title === metric.title) === index);
-  const critical = pickCritical(args.metrics).filter((metric) => !isEvaluationHiddenMetric(metric.title));
+  const critical = buildPriorityCriticalMetrics(args.metrics, args.view).filter((metric) => !isEvaluationHiddenMetric(metric.title));
   const actualOnly = args.metrics
     .filter(
       (metric) =>
@@ -783,7 +801,7 @@ export default async function EvaluationPage({ searchParams }: EvaluationPagePro
   const storeAverageNotes = view === "store" ? buildStoreAverageNotes(visibleMetrics, storeRows) : [];
   const employeeAverageNotes = view === "employee" ? buildEmployeeAverageNotes(visibleMetrics, employeeRows) : [];
   const zeroActualItems = view === "store" ? buildStoreZeroActualItems(storeTargetRows, activeCategory) : [];
-  const criticalChartMetrics = buildCriticalChartMetrics(visibleMetrics);
+  const criticalChartMetrics = buildPriorityCriticalMetrics(visibleMetrics, view);
   const coachingText = buildCoachingText({
     title: selectedTitle,
     view,

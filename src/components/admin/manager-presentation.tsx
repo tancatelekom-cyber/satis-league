@@ -30,6 +30,23 @@ type HealthSnapshot = {
   strongestMetric: string;
 };
 
+type PresentationCategoryTableRow = {
+  label: string;
+  target: number | null;
+  actual: number;
+  remaining: number | null;
+  actualPercent: number | null;
+  projectedActual: number | null;
+  projectedPercent: number | null;
+};
+
+type PresentationCategoryTable = {
+  audience: "store" | "employee";
+  title: string;
+  rows: PresentationCategoryTableRow[];
+  totalRow: PresentationCategoryTableRow;
+};
+
 type ManagerPresentationProps = {
   actionLines: string[];
   companyFocusItems: FocusItem[];
@@ -43,6 +60,8 @@ type ManagerPresentationProps = {
   riskStores: HealthSnapshot[];
   topEmployees: HealthSnapshot[];
   riskEmployees: HealthSnapshot[];
+  storeCategoryTables: PresentationCategoryTable[];
+  employeeCategoryTables: PresentationCategoryTable[];
 };
 
 function chunk<T>(items: T[], size: number) {
@@ -78,7 +97,9 @@ export function ManagerPresentation({
   topStores,
   riskStores,
   topEmployees,
-  riskEmployees
+  riskEmployees,
+  storeCategoryTables,
+  employeeCategoryTables
 }: ManagerPresentationProps) {
   const stageRef = useRef<HTMLDivElement | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -279,6 +300,70 @@ export function ManagerPresentation({
       });
     });
 
+    storeCategoryTables.forEach((table) => {
+      chunk(table.rows, 8).forEach((group, index, list) => {
+        items.push({
+          id: `store-table-${table.title}-${index}`,
+          title: `${table.title} MAGAZA TABLOSU`,
+          subtitle: `Kategori bazli magaza hedef-gerceklesen tablosu | Sayfa ${index + 1}/${list.length}`,
+          body: (
+            <div className="presentation-panel-stack">
+              <section className="presentation-table-panel">
+                <div className="presentation-panel-head">
+                  <span>Magaza Bazli Tablo</span>
+                  <strong>{table.title} kategorisinde magazalarin anlik durumu</strong>
+                </div>
+
+                <div className="presentation-table-wrap">
+                  <table className="presentation-table">
+                    <thead>
+                      <tr>
+                        <th>{table.title}</th>
+                        <th>Hedef</th>
+                        <th>Gerc.</th>
+                        <th>Kalan</th>
+                        <th>Anlik %</th>
+                        <th>Ay Sonu</th>
+                        <th>Ay Sonu %</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {group.map((row) => (
+                        <tr key={`${table.title}-${row.label}`}>
+                          <td>{row.label}</td>
+                          <td>{row.target?.toLocaleString("tr-TR") ?? "-"}</td>
+                          <td>{row.actual.toLocaleString("tr-TR")}</td>
+                          <td>{row.remaining?.toLocaleString("tr-TR") ?? "-"}</td>
+                          <td>{formatPercent(row.actualPercent)}</td>
+                          <td>{row.projectedActual?.toLocaleString("tr-TR") ?? "-"}</td>
+                          <td className={(row.projectedPercent ?? 0) < 100 ? "presentation-table-alert" : ""}>
+                            {formatPercent(row.projectedPercent)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr>
+                        <td>{table.totalRow.label}</td>
+                        <td>{table.totalRow.target?.toLocaleString("tr-TR") ?? "-"}</td>
+                        <td>{table.totalRow.actual.toLocaleString("tr-TR")}</td>
+                        <td>{table.totalRow.remaining?.toLocaleString("tr-TR") ?? "-"}</td>
+                        <td>{formatPercent(table.totalRow.actualPercent)}</td>
+                        <td>{table.totalRow.projectedActual?.toLocaleString("tr-TR") ?? "-"}</td>
+                        <td className={(table.totalRow.projectedPercent ?? 0) < 100 ? "presentation-table-alert" : ""}>
+                          {formatPercent(table.totalRow.projectedPercent)}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </section>
+            </div>
+          )
+        });
+      });
+    });
+
     chunk(employeeFocusItems, 4).forEach((group, index, list) => {
       items.push({
         id: `employees-${index}`,
@@ -306,6 +391,70 @@ export function ManagerPresentation({
             ))}
           </div>
         )
+      });
+    });
+
+    employeeCategoryTables.forEach((table) => {
+      chunk(table.rows, 8).forEach((group, index, list) => {
+        items.push({
+          id: `employee-table-${table.title}-${index}`,
+          title: `${table.title} CALISAN TABLOSU`,
+          subtitle: `Kategori bazli calisan hedef-gerceklesen tablosu | Sayfa ${index + 1}/${list.length}`,
+          body: (
+            <div className="presentation-panel-stack">
+              <section className="presentation-table-panel">
+                <div className="presentation-panel-head">
+                  <span>Calisan Bazli Tablo</span>
+                  <strong>{table.title} kategorisinde calisanlarin anlik durumu</strong>
+                </div>
+
+                <div className="presentation-table-wrap">
+                  <table className="presentation-table">
+                    <thead>
+                      <tr>
+                        <th>{table.title}</th>
+                        <th>Hedef</th>
+                        <th>Gerc.</th>
+                        <th>Kalan</th>
+                        <th>Anlik %</th>
+                        <th>Ay Sonu</th>
+                        <th>Ay Sonu %</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {group.map((row) => (
+                        <tr key={`${table.title}-${row.label}`}>
+                          <td>{row.label}</td>
+                          <td>{row.target?.toLocaleString("tr-TR") ?? "-"}</td>
+                          <td>{row.actual.toLocaleString("tr-TR")}</td>
+                          <td>{row.remaining?.toLocaleString("tr-TR") ?? "-"}</td>
+                          <td>{formatPercent(row.actualPercent)}</td>
+                          <td>{row.projectedActual?.toLocaleString("tr-TR") ?? "-"}</td>
+                          <td className={(row.projectedPercent ?? 0) < 100 ? "presentation-table-alert" : ""}>
+                            {formatPercent(row.projectedPercent)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr>
+                        <td>{table.totalRow.label}</td>
+                        <td>{table.totalRow.target?.toLocaleString("tr-TR") ?? "-"}</td>
+                        <td>{table.totalRow.actual.toLocaleString("tr-TR")}</td>
+                        <td>{table.totalRow.remaining?.toLocaleString("tr-TR") ?? "-"}</td>
+                        <td>{formatPercent(table.totalRow.actualPercent)}</td>
+                        <td>{table.totalRow.projectedActual?.toLocaleString("tr-TR") ?? "-"}</td>
+                        <td className={(table.totalRow.projectedPercent ?? 0) < 100 ? "presentation-table-alert" : ""}>
+                          {formatPercent(table.totalRow.projectedPercent)}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </section>
+            </div>
+          )
+        });
       });
     });
 
@@ -359,9 +508,11 @@ export function ManagerPresentation({
     riskEmployees,
     riskStores,
     storeFocusItems,
+    storeCategoryTables,
     summaryCards,
     topEmployees,
     topStores,
+    employeeCategoryTables,
     zeroItems
   ]);
 

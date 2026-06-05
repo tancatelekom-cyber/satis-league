@@ -42,6 +42,23 @@ type HealthSnapshot = {
   strongestMetric: string;
 };
 
+type PresentationCategoryTableRow = {
+  label: string;
+  target: number | null;
+  actual: number;
+  remaining: number | null;
+  actualPercent: number | null;
+  projectedActual: number | null;
+  projectedPercent: number | null;
+};
+
+type PresentationCategoryTable = {
+  audience: "store" | "employee";
+  title: string;
+  rows: PresentationCategoryTableRow[];
+  totalRow: PresentationCategoryTableRow;
+};
+
 const EMPTY_DAYS: GoalDayStats = {
   workedDays: 0,
   remainingDays: 0,
@@ -396,6 +413,120 @@ function buildManagerActionLines(storeFocusItems: FocusItem[], employeeFocusItem
   return lines;
 }
 
+function buildStoreCategoryTables(rows: GoalStoreRow[], workedDays: number, totalDays: number) {
+  const categoryMap = new Map<string, GoalStoreRow[]>();
+
+  rows.forEach((row) => {
+    const current = categoryMap.get(row.mainCategory) ?? [];
+    current.push(row);
+    categoryMap.set(row.mainCategory, current);
+  });
+
+  const companySummaries = buildCompanyCategorySummaries(rows, workedDays, totalDays);
+
+  return Array.from(categoryMap.entries())
+    .sort((left, right) => left[0].localeCompare(right[0], "tr"))
+    .map(([title, categoryRows]) => {
+      const storeMap = new Map<string, GoalStoreRow[]>();
+
+      categoryRows.forEach((row) => {
+        const current = storeMap.get(row.storeCode) ?? [];
+        current.push(row);
+        storeMap.set(row.storeCode, current);
+      });
+
+      const rowsForTable = Array.from(storeMap.entries())
+        .map(([label, storeRows]) => {
+          const summary = buildStoreMetricSummary(storeRows, workedDays, totalDays);
+
+          return {
+            label,
+            target: summary.target,
+            actual: summary.actual,
+            remaining: summary.remaining,
+            actualPercent: summary.actualPercent,
+            projectedActual: summary.projectedActual,
+            projectedPercent: summary.projectedPercent
+          } satisfies PresentationCategoryTableRow;
+        })
+        .sort((left, right) => (left.projectedPercent ?? left.actualPercent ?? 0) - (right.projectedPercent ?? right.actualPercent ?? 0));
+
+      const companySummary = companySummaries.find((item) => item.title === title);
+      const totalRow = {
+        label: "FIRMA",
+        target: companySummary?.target ?? null,
+        actual: companySummary?.actual ?? 0,
+        remaining: companySummary?.remaining ?? null,
+        actualPercent: companySummary?.actualPercent ?? null,
+        projectedActual: companySummary?.projectedActual ?? null,
+        projectedPercent: companySummary?.projectedPercent ?? null
+      } satisfies PresentationCategoryTableRow;
+
+      return {
+        audience: "store",
+        title,
+        rows: rowsForTable,
+        totalRow
+      } satisfies PresentationCategoryTable;
+    });
+}
+
+function buildEmployeeCategoryTables(rows: GoalActualRow[], workedDays: number, totalDays: number) {
+  const categoryMap = new Map<string, GoalActualRow[]>();
+
+  rows.forEach((row) => {
+    const current = categoryMap.get(row.mainCategory) ?? [];
+    current.push(row);
+    categoryMap.set(row.mainCategory, current);
+  });
+
+  return Array.from(categoryMap.entries())
+    .sort((left, right) => left[0].localeCompare(right[0], "tr"))
+    .map(([title, categoryRows]) => {
+      const employeeMap = new Map<string, GoalActualRow[]>();
+
+      categoryRows.forEach((row) => {
+        const current = employeeMap.get(row.employeeName) ?? [];
+        current.push(row);
+        employeeMap.set(row.employeeName, current);
+      });
+
+      const rowsForTable = Array.from(employeeMap.entries())
+        .map(([label, employeeRows]) => {
+          const summary = buildEmployeeMetricSummary(employeeRows, workedDays, totalDays);
+
+          return {
+            label,
+            target: summary.target,
+            actual: summary.actual,
+            remaining: summary.remaining,
+            actualPercent: summary.actualPercent,
+            projectedActual: summary.projectedActual,
+            projectedPercent: summary.projectedPercent
+          } satisfies PresentationCategoryTableRow;
+        })
+        .sort((left, right) => (left.projectedPercent ?? left.actualPercent ?? 0) - (right.projectedPercent ?? right.actualPercent ?? 0));
+
+      const totalSummary = buildEmployeeMetricSummary(categoryRows, workedDays, totalDays);
+      const totalRow = {
+        label: "TOPLAM",
+        target: totalSummary.target,
+        actual: totalSummary.actual,
+        remaining: totalSummary.remaining,
+        actualPercent: totalSummary.actualPercent,
+        projectedActual: totalSummary.projectedActual,
+        projectedPercent: totalSummary.projectedPercent
+      } satisfies PresentationCategoryTableRow;
+
+      return {
+        audience: "employee",
+        title,
+        rows: rowsForTable,
+        totalRow
+      } satisfies PresentationCategoryTable;
+    });
+}
+
 function buildStoreHealthSnapshots(rows: GoalStoreRow[], workedDays: number, totalDays: number) {
   const storeMap = new Map<string, GoalStoreRow[]>();
 
@@ -490,6 +621,8 @@ export default async function ManagerBriefingPage() {
   const riskStores = [...storeHealthSnapshots].sort((left, right) => left.averagePercent - right.averagePercent).slice(0, 4);
   const topEmployees = [...employeeHealthSnapshots].sort((left, right) => right.averagePercent - left.averagePercent).slice(0, 4);
   const riskEmployees = [...employeeHealthSnapshots].sort((left, right) => left.averagePercent - right.averagePercent).slice(0, 4);
+  const storeCategoryTables = buildStoreCategoryTables(filteredStoreRows, dayStats.workedDays, dayStats.totalDays);
+  const employeeCategoryTables = buildEmployeeCategoryTables(filteredEmployeeRows, dayStats.workedDays, dayStats.totalDays);
   const strongestCompanyMetric =
     buildCompanyCategorySummaries(filteredStoreRows, dayStats.workedDays, dayStats.totalDays)
       .filter((metric) => metric.hasTarget && !isEntryCount(metric.title))
@@ -523,6 +656,8 @@ export default async function ManagerBriefingPage() {
         summaryCards={summaryCards}
         topEmployees={topEmployees}
         topStores={topStores}
+        storeCategoryTables={storeCategoryTables}
+        employeeCategoryTables={employeeCategoryTables}
         zeroItems={zeroItems}
       />
     </main>

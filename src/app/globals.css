@@ -2245,6 +2245,63 @@ textarea::placeholder {
   grid-template-columns: 1fr 1fr;
 }
 
+.presentation-table-panel {
+  padding: 24px 26px;
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+  display: grid;
+  gap: 18px;
+}
+
+.presentation-table-wrap {
+  overflow: auto;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.presentation-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 980px;
+  color: #10203b;
+}
+
+.presentation-table th,
+.presentation-table td {
+  padding: 14px 16px;
+  border: 1px solid rgba(16, 32, 59, 0.14);
+  text-align: right;
+  font-size: 1.05rem;
+}
+
+.presentation-table th:first-child,
+.presentation-table td:first-child {
+  text-align: left;
+}
+
+.presentation-table thead th {
+  background: #dbe8f5;
+  color: #08111f;
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.presentation-table tbody tr:nth-child(even) td {
+  background: rgba(225, 236, 248, 0.42);
+}
+
+.presentation-table tfoot td {
+  background: #dbe8f5;
+  font-weight: 900;
+}
+
+.presentation-table-alert {
+  color: #d92525;
+  font-weight: 900;
+}
+
 .presentation-focus-card {
   padding: 22px 24px;
   display: grid;

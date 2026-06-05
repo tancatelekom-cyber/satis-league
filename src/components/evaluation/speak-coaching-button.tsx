@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 const STORAGE_KEYS = {
   voice: "evaluation-speech-voice"
@@ -104,15 +104,6 @@ export function SpeakCoachingButton({ text }: { text: string }) {
     window.localStorage.setItem(STORAGE_KEYS.voice, preferredVoice.voiceURI);
   }, [supported, selectedVoiceUri, voices]);
 
-  function handleVoiceChange(event: ChangeEvent<HTMLSelectElement>) {
-    const nextValue = event.target.value;
-    setSelectedVoiceUri(nextValue);
-
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(STORAGE_KEYS.voice, nextValue);
-    }
-  }
-
   function handleToggle() {
     if (!supported || typeof window === "undefined") {
       return;
@@ -158,25 +149,8 @@ export function SpeakCoachingButton({ text }: { text: string }) {
   }
 
   return (
-    <div className="evaluation-speech-controls">
-      <label className="evaluation-speech-field">
-        <span>Ses</span>
-        <select className="evaluation-speech-select" value={selectedVoiceUri} onChange={handleVoiceChange}>
-          {turkishVoices.length ? (
-            turkishVoices.map((voice) => (
-              <option key={voice.voiceURI} value={voice.voiceURI}>
-                {voice.name}
-              </option>
-            ))
-          ) : (
-            <option value="">Varsayilan Turkce Ses</option>
-          )}
-        </select>
-      </label>
-
-      <button className="button-secondary evaluation-speak-button" type="button" onClick={handleToggle}>
-        {speaking ? "Okumayi Durdur" : "Sesli Oku"}
-      </button>
-    </div>
+    <button className="button-secondary evaluation-speak-button" type="button" onClick={handleToggle}>
+      {speaking ? "Okumayi Durdur" : "Sesli Oku"}
+    </button>
   );
 }

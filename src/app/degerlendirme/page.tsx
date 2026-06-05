@@ -961,10 +961,6 @@ export default async function EvaluationPage({ searchParams }: EvaluationPagePro
                     <span>Secili Alan</span>
                     <strong>{selectedTitle || "Veri yok"}</strong>
                   </div>
-                  <div className="evaluation-card-actions">
-                    <SpeakCoachingButton text={coachingText} />
-                    <CopyCoachingButton text={coachingText} />
-                  </div>
                 </div>
                 {zeroActualItems.length ? (
                   <div className="evaluation-zero-alert">
@@ -978,6 +974,10 @@ export default async function EvaluationPage({ searchParams }: EvaluationPagePro
                   </div>
                 ) : null}
                 <pre className="evaluation-copy-text">{coachingText}</pre>
+                <div className="evaluation-card-actions evaluation-card-actions-bottom">
+                  <SpeakCoachingButton text={coachingText} />
+                  <CopyCoachingButton text={coachingText} />
+                </div>
               </article>
 
               <article className="evaluation-card">

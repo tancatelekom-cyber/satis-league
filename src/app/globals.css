@@ -1892,6 +1892,104 @@ textarea::placeholder {
   line-height: 1.6;
 }
 
+.executive-hero-card {
+  background: linear-gradient(180deg, rgba(7, 95, 101, 0.92), rgba(15, 126, 131, 0.9));
+  color: #f6fbff;
+}
+
+.executive-hero-card h3,
+.executive-hero-card p,
+.executive-hero-card strong,
+.executive-hero-card span {
+  color: #f6fbff !important;
+}
+
+.executive-grid {
+  grid-template-columns: 1fr 1fr;
+}
+
+.executive-list,
+.executive-action-list,
+.executive-chip-row {
+  display: grid;
+  gap: 12px;
+}
+
+.executive-list-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: start;
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(4, 92, 96, 0.12);
+}
+
+.executive-list-item strong {
+  display: block;
+  margin-bottom: 6px;
+  color: #10203b;
+}
+
+.executive-list-item span,
+.executive-list-item p {
+  color: #4f6684 !important;
+}
+
+.executive-action-copy {
+  margin: 8px 0 0;
+  font-weight: 700;
+  color: #163252 !important;
+}
+
+.executive-score {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 88px;
+  padding: 10px 14px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #ffd166, #7ef1d3);
+  color: #09111f !important;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.executive-chip-row {
+  grid-template-columns: repeat(auto-fit, minmax(180px, max-content));
+}
+
+.executive-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 12px;
+  border-radius: 999px;
+  background: rgba(4, 92, 96, 0.1);
+  color: #163252 !important;
+  font-weight: 800;
+}
+
+.executive-chip-alert {
+  background: rgba(220, 74, 74, 0.12);
+  color: #8a2020 !important;
+}
+
+.executive-step-item {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(4, 92, 96, 0.12);
+}
+
+.executive-step-item strong {
+  color: #10203b !important;
+}
+
+.executive-step-item span {
+  color: #4f6684 !important;
+  line-height: 1.65;
+}
+
 .player-spotlight,
 .mission-card {
   padding: 24px;

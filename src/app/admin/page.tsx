@@ -97,6 +97,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           <strong>Magazalar</strong>
           <span>Kayit ekraninda gorunen magazalari burada yonet.</span>
         </a>
+        <a className="admin-quick-card" href="/admin/mudur-sunumu">
+          <strong>Mudur Sunumu</strong>
+          <span>Magaza mudurlerine anlatilacak anlik hedef gerceklesen kritikleri ve aksiyonlari ac.</span>
+        </a>
         <a className="admin-quick-card" href="/admin/onaylar">
           <strong>Kullanici Yonetimi</strong>
           <span>Kullanici bilgilerini, durumunu ve sifresini yonet.</span>

@@ -2087,8 +2087,9 @@ textarea::placeholder {
 }
 
 .presentation-slide-head-compact h1 {
-  font-size: clamp(1.55rem, 2.3vw, 2.3rem);
-  max-width: none;
+  font-size: clamp(1.4rem, 1.9vw, 2rem);
+  line-height: 1.08;
+  max-width: 22ch;
 }
 
 .presentation-slide-head-compact .presentation-kicker {
@@ -2474,6 +2475,13 @@ textarea::placeholder {
   color: #08111f;
   font-size: 1.4rem;
   font-weight: 900;
+}
+
+.presentation-action-card p {
+  margin: 6px 0 0;
+  color: #e7f3ff;
+  line-height: 1.6;
+  font-size: 1.05rem;
 }
 
 .presentation-empty {

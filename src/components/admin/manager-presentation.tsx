@@ -562,6 +562,14 @@ export function ManagerPresentation({
     zeroItems
   ]);
 
+  function isCompactSlide() {
+    if (activeSlide.layout === "compact") {
+      return true;
+    }
+
+    return activeSlide.title.length > 22;
+  }
+
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "ArrowRight" || event.key === "PageDown" || event.key === " ") {
@@ -612,6 +620,7 @@ export function ManagerPresentation({
   }
 
   const activeSlide = slides[activeIndex];
+  const compactSlide = isCompactSlide();
 
   return (
     <main className="presentation-shell">
@@ -640,8 +649,8 @@ export function ManagerPresentation({
       </div>
 
       <section ref={stageRef} className="presentation-stage">
-        <article className={`presentation-slide ${activeSlide.layout === "compact" ? "presentation-slide-compact" : ""}`}>
-          <div className={`presentation-slide-head ${activeSlide.layout === "compact" ? "presentation-slide-head-compact" : ""}`}>
+        <article className={`presentation-slide ${compactSlide ? "presentation-slide-compact" : ""}`}>
+          <div className={`presentation-slide-head ${compactSlide ? "presentation-slide-head-compact" : ""}`}>
             <span className="presentation-kicker">{activeSlide.subtitle}</span>
             <h1>{activeSlide.title}</h1>
           </div>

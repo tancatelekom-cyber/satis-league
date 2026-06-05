@@ -301,11 +301,14 @@ function buildProductionStrongMetrics(metrics: Metric[], allEmployeeRows: GoalAc
   return [];
 }
 
-function pickCritical(metrics: Metric[]) {
+function collectCriticalMetrics(metrics: Metric[]) {
   return metrics
     .filter((metric) => metric.hasTarget && !isQualityLimitMetric(metric.title) && (metric.projectedPercent ?? metric.actualPercent ?? 0) < 100)
-    .sort((a, b) => (a.projectedPercent ?? a.actualPercent ?? 0) - (b.projectedPercent ?? b.actualPercent ?? 0))
-    .slice(0, 4);
+    .sort((a, b) => (a.projectedPercent ?? a.actualPercent ?? 0) - (b.projectedPercent ?? b.actualPercent ?? 0));
+}
+
+function pickCritical(metrics: Metric[]) {
+  return collectCriticalMetrics(metrics).slice(0, 4);
 }
 
 function isCriticalCandidate(metric: Metric | undefined) {
@@ -324,8 +327,8 @@ function appendUniqueMetric(metrics: Metric[], candidate: Metric | undefined) {
   return [...metrics, candidate].sort((a, b) => (a.projectedPercent ?? a.actualPercent ?? 0) - (b.projectedPercent ?? b.actualPercent ?? 0));
 }
 
-function buildPriorityCriticalMetrics(metrics: Metric[], view: ViewMode) {
-  let criticalMetrics = pickCritical(metrics);
+function buildPriorityCriticalMetrics(metrics: Metric[], view: ViewMode, limit?: number) {
+  let criticalMetrics = collectCriticalMetrics(metrics);
   const activationMetric = metrics.find(
     (metric) =>
       normalizeCategoryKey(metric.title).includes("AKTIVASYON") &&
@@ -342,7 +345,7 @@ function buildPriorityCriticalMetrics(metrics: Metric[], view: ViewMode) {
     criticalMetrics = appendUniqueMetric(criticalMetrics, terminalMetric);
   }
 
-  return criticalMetrics;
+  return typeof limit === "number" ? criticalMetrics.slice(0, limit) : criticalMetrics;
 }
 
 function buildStoreAverageNotes(storeMetrics: Metric[], allStoreRows: GoalStoreRow[]) {
@@ -590,7 +593,10 @@ function buildCoachingText(args: {
     ...pickStrong(args.metrics),
     ...(args.view === "employee" ? buildProductionStrongMetrics(args.metrics, args.allEmployeeRows) : [])
   ].filter((metric, index, list) => list.findIndex((item) => item.title === metric.title) === index);
-  const critical = buildPriorityCriticalMetrics(args.metrics, args.view).filter((metric) => !isEvaluationHiddenMetric(metric.title));
+  const compactCritical = buildPriorityCriticalMetrics(args.metrics, args.view).filter(
+    (metric) => !isEvaluationHiddenMetric(metric.title)
+  );
+  const critical = compactCritical.slice(0, 4);
   const actualOnly = args.metrics
     .filter(
       (metric) =>
@@ -614,6 +620,10 @@ function buildCoachingText(args: {
     const needed = dailyNeeded(metric);
     return `- ${metric.title}: ay sonu ${formatPercent(metric.projectedPercent ?? metric.actualPercent)} seviyesinde kalır. Hedefi kapatmak için kalan günlerde günlük en az ${formatNumber(needed)} üretmen lazım.`;
   });
+  const compactDailyTargetLines = compactCritical.map((metric) => {
+    const needed = dailyNeeded(metric);
+    return `- ${metric.title}: ay sonu ${formatPercent(metric.projectedPercent ?? metric.actualPercent)} seviyesinde kalÄ±r. Hedefi kapatmak iÃ§in kalan gÃ¼nlerde gÃ¼nlÃ¼k en az ${formatNumber(needed)} Ã¼retmen lazÄ±m.`;
+  });
   const developmentLines = [
     ...critical.map(
       (metric) =>
@@ -625,7 +635,7 @@ function buildCoachingText(args: {
   if (useCompactCoachingText) {
     const compactFocusItems = new Map<string, string>();
 
-    critical.forEach((metric) => {
+    compactCritical.forEach((metric) => {
       compactFocusItems.set(
         metric.title,
         `- ${metric.title}: hedef temposunun altindasin. Ay sonu ${formatPercent(metric.projectedPercent ?? metric.actualPercent)} seviyesinde kalir.`
@@ -659,8 +669,8 @@ function buildCoachingText(args: {
         : ["- Hedefin ve firma ortalamasinin altinda belirgin bir kalem gorunmuyor."]),
       "",
       "Gunluk minimum ihtiyaclarin:",
-      ...(dailyTargetLines.length
-        ? dailyTargetLines
+      ...(compactDailyTargetLines.length
+        ? compactDailyTargetLines
         : ["- Bugun icin ek gunluk minimum ihtiyac gorunmuyor. Mevcut tempoyu koruyalim."])
     ].join("\n");
   }

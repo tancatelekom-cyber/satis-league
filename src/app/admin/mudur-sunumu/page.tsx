@@ -59,6 +59,8 @@ type PresentationCategoryTableRow = {
 type PresentationCategoryTable = {
   audience: "store" | "employee";
   title: string;
+  parentTitle?: string;
+  hasTarget: boolean;
   rows: PresentationCategoryTableRow[];
   totalRow: PresentationCategoryTableRow;
 };
@@ -490,6 +492,7 @@ function buildStoreCategoryTables(rows: GoalStoreRow[], workedDays: number, tota
       return {
         audience: "store",
         title,
+        hasTarget: totalRow.target !== null && totalRow.target > 0,
         rows: rowsForTable,
         totalRow
       } satisfies PresentationCategoryTable;
@@ -548,6 +551,141 @@ function buildEmployeeCategoryTables(rows: GoalActualRow[], workedDays: number, 
       return {
         audience: "employee",
         title,
+        hasTarget: totalRow.target !== null && totalRow.target > 0,
+        rows: rowsForTable,
+        totalRow
+      } satisfies PresentationCategoryTable;
+    });
+}
+
+function buildStoreSubcategoryTables(rows: GoalStoreRow[], workedDays: number, totalDays: number, remainingDays: number) {
+  const categoryMap = new Map<string, GoalStoreRow[]>();
+
+  rows
+    .filter((row) => Boolean(row.subCategory))
+    .forEach((row) => {
+      const key = `${row.mainCategory}__${row.subCategory}`;
+      const current = categoryMap.get(key) ?? [];
+      current.push(row);
+      categoryMap.set(key, current);
+    });
+
+  const companyRows = buildCompanyRows(rows);
+
+  return Array.from(categoryMap.entries())
+    .sort((left, right) => left[0].localeCompare(right[0], "tr"))
+    .map(([key, subcategoryRows]) => {
+      const [parentTitle, title] = key.split("__");
+      const storeMap = new Map<string, GoalStoreRow[]>();
+
+      subcategoryRows.forEach((row) => {
+        const current = storeMap.get(row.storeCode) ?? [];
+        current.push(row);
+        storeMap.set(row.storeCode, current);
+      });
+
+      const rowsForTable = Array.from(storeMap.entries())
+        .map(([label, storeRows]) => {
+          const summary = buildStoreMetricSummary(storeRows, workedDays, totalDays);
+
+          return {
+            label,
+            target: summary.target,
+            actual: summary.actual,
+            remaining: summary.remaining,
+            actualPercent: summary.actualPercent,
+            projectedActual: summary.projectedActual,
+            projectedPercent: summary.projectedPercent,
+            dailyNeeds: buildNeedTargets(summary.target, summary.actual, remainingDays)
+          } satisfies PresentationCategoryTableRow;
+        })
+        .sort((left, right) => (left.projectedPercent ?? left.actualPercent ?? 0) - (right.projectedPercent ?? right.actualPercent ?? 0));
+
+      const companySummary = buildStoreMetricSummary(
+        companyRows.filter((row) => row.mainCategory === parentTitle && row.subCategory === title),
+        workedDays,
+        totalDays
+      );
+      const totalRow = {
+        label: "FIRMA",
+        target: companySummary.target,
+        actual: companySummary.actual,
+        remaining: companySummary.remaining,
+        actualPercent: companySummary.actualPercent,
+        projectedActual: companySummary.projectedActual,
+        projectedPercent: companySummary.projectedPercent,
+        dailyNeeds: buildNeedTargets(companySummary.target, companySummary.actual, remainingDays)
+      } satisfies PresentationCategoryTableRow;
+
+      return {
+        audience: "store",
+        parentTitle,
+        title,
+        hasTarget: totalRow.target !== null && totalRow.target > 0,
+        rows: rowsForTable,
+        totalRow
+      } satisfies PresentationCategoryTable;
+    });
+}
+
+function buildEmployeeSubcategoryTables(rows: GoalActualRow[], workedDays: number, totalDays: number, remainingDays: number) {
+  const categoryMap = new Map<string, GoalActualRow[]>();
+
+  rows
+    .filter((row) => Boolean(row.subCategory))
+    .forEach((row) => {
+      const key = `${row.mainCategory}__${row.subCategory}`;
+      const current = categoryMap.get(key) ?? [];
+      current.push(row);
+      categoryMap.set(key, current);
+    });
+
+  return Array.from(categoryMap.entries())
+    .sort((left, right) => left[0].localeCompare(right[0], "tr"))
+    .map(([key, subcategoryRows]) => {
+      const [parentTitle, title] = key.split("__");
+      const employeeMap = new Map<string, GoalActualRow[]>();
+
+      subcategoryRows.forEach((row) => {
+        const current = employeeMap.get(row.employeeName) ?? [];
+        current.push(row);
+        employeeMap.set(row.employeeName, current);
+      });
+
+      const rowsForTable = Array.from(employeeMap.entries())
+        .map(([label, employeeRows]) => {
+          const summary = buildEmployeeMetricSummary(employeeRows, workedDays, totalDays);
+
+          return {
+            label,
+            target: summary.target,
+            actual: summary.actual,
+            remaining: summary.remaining,
+            actualPercent: summary.actualPercent,
+            projectedActual: summary.projectedActual,
+            projectedPercent: summary.projectedPercent,
+            dailyNeeds: buildNeedTargets(summary.target, summary.actual, remainingDays)
+          } satisfies PresentationCategoryTableRow;
+        })
+        .sort((left, right) => (left.projectedPercent ?? left.actualPercent ?? 0) - (right.projectedPercent ?? right.actualPercent ?? 0));
+
+      const totalSummary = buildEmployeeMetricSummary(subcategoryRows, workedDays, totalDays);
+      const totalRow = {
+        label: "TOPLAM",
+        target: totalSummary.target,
+        actual: totalSummary.actual,
+        remaining: totalSummary.remaining,
+        actualPercent: totalSummary.actualPercent,
+        projectedActual: totalSummary.projectedActual,
+        projectedPercent: totalSummary.projectedPercent,
+        dailyNeeds: buildNeedTargets(totalSummary.target, totalSummary.actual, remainingDays)
+      } satisfies PresentationCategoryTableRow;
+
+      return {
+        audience: "employee",
+        parentTitle,
+        title,
+        hasTarget: totalRow.target !== null && totalRow.target > 0,
         rows: rowsForTable,
         totalRow
       } satisfies PresentationCategoryTable;
@@ -649,7 +787,14 @@ export default async function ManagerBriefingPage() {
   const topEmployees = [...employeeHealthSnapshots].sort((left, right) => right.averagePercent - left.averagePercent).slice(0, 4);
   const riskEmployees = [...employeeHealthSnapshots].sort((left, right) => left.averagePercent - right.averagePercent).slice(0, 4);
   const storeCategoryTables = buildStoreCategoryTables(filteredStoreRows, dayStats.workedDays, dayStats.totalDays, dayStats.remainingDays);
+  const storeSubcategoryTables = buildStoreSubcategoryTables(filteredStoreRows, dayStats.workedDays, dayStats.totalDays, dayStats.remainingDays);
   const employeeCategoryTables = buildEmployeeCategoryTables(
+    filteredEmployeeRows,
+    dayStats.workedDays,
+    dayStats.totalDays,
+    dayStats.remainingDays
+  );
+  const employeeSubcategoryTables = buildEmployeeSubcategoryTables(
     filteredEmployeeRows,
     dayStats.workedDays,
     dayStats.totalDays,
@@ -690,6 +835,8 @@ export default async function ManagerBriefingPage() {
         topStores={topStores}
         storeCategoryTables={storeCategoryTables}
         employeeCategoryTables={employeeCategoryTables}
+        storeSubcategoryTables={storeSubcategoryTables}
+        employeeSubcategoryTables={employeeSubcategoryTables}
         zeroItems={zeroItems}
       />
     </main>

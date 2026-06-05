@@ -47,6 +47,8 @@ type PresentationCategoryTableRow = {
 type PresentationCategoryTable = {
   audience: "store" | "employee";
   title: string;
+  parentTitle?: string;
+  hasTarget: boolean;
   rows: PresentationCategoryTableRow[];
   totalRow: PresentationCategoryTableRow;
 };
@@ -66,6 +68,8 @@ type ManagerPresentationProps = {
   riskEmployees: HealthSnapshot[];
   storeCategoryTables: PresentationCategoryTable[];
   employeeCategoryTables: PresentationCategoryTable[];
+  storeSubcategoryTables: PresentationCategoryTable[];
+  employeeSubcategoryTables: PresentationCategoryTable[];
 };
 
 function chunk<T>(items: T[], size: number) {
@@ -103,7 +107,9 @@ export function ManagerPresentation({
   topEmployees,
   riskEmployees,
   storeCategoryTables,
-  employeeCategoryTables
+  employeeCategoryTables,
+  storeSubcategoryTables,
+  employeeSubcategoryTables
 }: ManagerPresentationProps) {
   const stageRef = useRef<HTMLDivElement | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -117,6 +123,115 @@ export function ManagerPresentation({
       body: ReactNode;
       layout?: "default" | "compact";
     }> = [];
+
+    function renderCategoryTable(table: PresentationCategoryTable, group: PresentationCategoryTableRow[]) {
+      return (
+        <div className="presentation-panel-stack">
+          <section className="presentation-table-panel">
+            <div className="presentation-panel-head">
+              <span>{table.audience === "store" ? "Magaza Bazli Tablo" : "Calisan Bazli Tablo"}</span>
+              <strong>
+                {table.parentTitle ? `${table.parentTitle} / ${table.title}` : table.title}{" "}
+                {table.audience === "store" ? "kategorisinde magazalarin" : "kategorisinde calisanlarin"} anlik durumu
+              </strong>
+            </div>
+
+            <div className="presentation-table-wrap">
+              <table className="presentation-table">
+                <thead>
+                  <tr>
+                    <th>{table.title}</th>
+                    {table.hasTarget ? (
+                      <>
+                        <th>Hedef</th>
+                        <th>Gerc.</th>
+                        <th>Kalan</th>
+                        <th>Anlik %</th>
+                        <th>Ay Sonu</th>
+                        <th>Ay Sonu %</th>
+                      </>
+                    ) : (
+                      <th>Gerc.</th>
+                    )}
+                  </tr>
+                </thead>
+                <tbody>
+                  {group.map((row) => (
+                    <tr key={`${table.parentTitle ?? table.title}-${row.label}`}>
+                      <td>{row.label}</td>
+                      {table.hasTarget ? (
+                        <>
+                          <td>{row.target?.toLocaleString("tr-TR") ?? "-"}</td>
+                          <td>{row.actual.toLocaleString("tr-TR")}</td>
+                          <td>{row.remaining?.toLocaleString("tr-TR") ?? "-"}</td>
+                          <td>{formatPercent(row.actualPercent)}</td>
+                          <td>{row.projectedActual?.toLocaleString("tr-TR") ?? "-"}</td>
+                          <td className={(row.projectedPercent ?? 0) < 100 ? "presentation-table-alert" : ""}>
+                            {formatPercent(row.projectedPercent)}
+                          </td>
+                        </>
+                      ) : (
+                        <td>{row.actual.toLocaleString("tr-TR")}</td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td>{table.totalRow.label}</td>
+                    {table.hasTarget ? (
+                      <>
+                        <td>{table.totalRow.target?.toLocaleString("tr-TR") ?? "-"}</td>
+                        <td>{table.totalRow.actual.toLocaleString("tr-TR")}</td>
+                        <td>{table.totalRow.remaining?.toLocaleString("tr-TR") ?? "-"}</td>
+                        <td>{formatPercent(table.totalRow.actualPercent)}</td>
+                        <td>{table.totalRow.projectedActual?.toLocaleString("tr-TR") ?? "-"}</td>
+                        <td className={(table.totalRow.projectedPercent ?? 0) < 100 ? "presentation-table-alert" : ""}>
+                          {formatPercent(table.totalRow.projectedPercent)}
+                        </td>
+                      </>
+                    ) : (
+                      <td>{table.totalRow.actual.toLocaleString("tr-TR")}</td>
+                    )}
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            {table.audience === "store" && table.hasTarget ? (
+              <div className="presentation-need-board">
+                {group.map((row) => (
+                  <article key={`store-need-${table.parentTitle ?? table.title}-${row.label}`} className="presentation-need-card">
+                    <strong>{row.label}</strong>
+                    <div className="presentation-need-grid">
+                      {row.dailyNeeds.map((need) => (
+                        <span key={`${row.label}-${need.threshold}`} className="presentation-need-pill">
+                          %{need.threshold}: {need.dailyRequired}
+                        </span>
+                      ))}
+                    </div>
+                  </article>
+                ))}
+
+                <article
+                  key={`store-need-total-${table.parentTitle ?? table.title}`}
+                  className="presentation-need-card presentation-need-card-total"
+                >
+                  <strong>{table.totalRow.label}</strong>
+                  <div className="presentation-need-grid">
+                    {table.totalRow.dailyNeeds.map((need) => (
+                      <span key={`${table.totalRow.label}-${need.threshold}`} className="presentation-need-pill">
+                        %{need.threshold}: {need.dailyRequired}
+                      </span>
+                    ))}
+                  </div>
+                </article>
+              </div>
+            ) : null}
+          </section>
+        </div>
+      );
+    }
 
     items.push({
       id: "cover",
@@ -312,86 +427,19 @@ export function ManagerPresentation({
           title: `${table.title} MAGAZA TABLOSU`,
           subtitle: `Kategori bazli magaza hedef-gerceklesen tablosu | Sayfa ${index + 1}/${list.length}`,
           layout: "compact",
-          body: (
-            <div className="presentation-panel-stack">
-              <section className="presentation-table-panel">
-                <div className="presentation-panel-head">
-                  <span>Magaza Bazli Tablo</span>
-                  <strong>{table.title} kategorisinde magazalarin anlik durumu</strong>
-                </div>
+          body: renderCategoryTable(table, group)
+        });
+      });
+    });
 
-                <div className="presentation-table-wrap">
-                  <table className="presentation-table">
-                    <thead>
-                      <tr>
-                        <th>{table.title}</th>
-                        <th>Hedef</th>
-                        <th>Gerc.</th>
-                        <th>Kalan</th>
-                        <th>Anlik %</th>
-                        <th>Ay Sonu</th>
-                        <th>Ay Sonu %</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {group.map((row) => (
-                        <tr key={`${table.title}-${row.label}`}>
-                          <td>{row.label}</td>
-                          <td>{row.target?.toLocaleString("tr-TR") ?? "-"}</td>
-                          <td>{row.actual.toLocaleString("tr-TR")}</td>
-                          <td>{row.remaining?.toLocaleString("tr-TR") ?? "-"}</td>
-                          <td>{formatPercent(row.actualPercent)}</td>
-                          <td>{row.projectedActual?.toLocaleString("tr-TR") ?? "-"}</td>
-                          <td className={(row.projectedPercent ?? 0) < 100 ? "presentation-table-alert" : ""}>
-                            {formatPercent(row.projectedPercent)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                    <tfoot>
-                      <tr>
-                        <td>{table.totalRow.label}</td>
-                        <td>{table.totalRow.target?.toLocaleString("tr-TR") ?? "-"}</td>
-                        <td>{table.totalRow.actual.toLocaleString("tr-TR")}</td>
-                        <td>{table.totalRow.remaining?.toLocaleString("tr-TR") ?? "-"}</td>
-                        <td>{formatPercent(table.totalRow.actualPercent)}</td>
-                        <td>{table.totalRow.projectedActual?.toLocaleString("tr-TR") ?? "-"}</td>
-                        <td className={(table.totalRow.projectedPercent ?? 0) < 100 ? "presentation-table-alert" : ""}>
-                          {formatPercent(table.totalRow.projectedPercent)}
-                        </td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
-
-                <div className="presentation-need-board">
-                  {group.map((row) => (
-                    <article key={`store-need-${table.title}-${row.label}`} className="presentation-need-card">
-                      <strong>{row.label}</strong>
-                      <div className="presentation-need-grid">
-                        {row.dailyNeeds.map((need) => (
-                          <span key={`${row.label}-${need.threshold}`} className="presentation-need-pill">
-                            %{need.threshold}: {need.dailyRequired}
-                          </span>
-                        ))}
-                      </div>
-                    </article>
-                  ))}
-
-                  <article key={`store-need-total-${table.title}`} className="presentation-need-card presentation-need-card-total">
-                    <strong>{table.totalRow.label}</strong>
-                    <div className="presentation-need-grid">
-                      {table.totalRow.dailyNeeds.map((need) => (
-                        <span key={`${table.totalRow.label}-${need.threshold}`} className="presentation-need-pill">
-                          %{need.threshold}: {need.dailyRequired}
-                        </span>
-                      ))}
-                    </div>
-                  </article>
-                </div>
-              </section>
-            </div>
-          )
+    storeSubcategoryTables.forEach((table) => {
+      chunk(table.rows, 8).forEach((group, index, list) => {
+        items.push({
+          id: `store-sub-table-${table.parentTitle}-${table.title}-${index}`,
+          title: `${table.parentTitle} / ${table.title} ALT KATEGORI`,
+          subtitle: `Alt kategori bazli magaza hedef-gerceklesen tablosu | Sayfa ${index + 1}/${list.length}`,
+          layout: "compact",
+          body: renderCategoryTable(table, group)
         });
       });
     });
@@ -433,60 +481,19 @@ export function ManagerPresentation({
           title: `${table.title} CALISAN TABLOSU`,
           subtitle: `Kategori bazli calisan hedef-gerceklesen tablosu | Sayfa ${index + 1}/${list.length}`,
           layout: "compact",
-          body: (
-            <div className="presentation-panel-stack">
-              <section className="presentation-table-panel">
-                <div className="presentation-panel-head">
-                  <span>Calisan Bazli Tablo</span>
-                  <strong>{table.title} kategorisinde calisanlarin anlik durumu</strong>
-                </div>
+          body: renderCategoryTable(table, group)
+        });
+      });
+    });
 
-                <div className="presentation-table-wrap">
-                  <table className="presentation-table">
-                    <thead>
-                      <tr>
-                        <th>{table.title}</th>
-                        <th>Hedef</th>
-                        <th>Gerc.</th>
-                        <th>Kalan</th>
-                        <th>Anlik %</th>
-                        <th>Ay Sonu</th>
-                        <th>Ay Sonu %</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {group.map((row) => (
-                        <tr key={`${table.title}-${row.label}`}>
-                          <td>{row.label}</td>
-                          <td>{row.target?.toLocaleString("tr-TR") ?? "-"}</td>
-                          <td>{row.actual.toLocaleString("tr-TR")}</td>
-                          <td>{row.remaining?.toLocaleString("tr-TR") ?? "-"}</td>
-                          <td>{formatPercent(row.actualPercent)}</td>
-                          <td>{row.projectedActual?.toLocaleString("tr-TR") ?? "-"}</td>
-                          <td className={(row.projectedPercent ?? 0) < 100 ? "presentation-table-alert" : ""}>
-                            {formatPercent(row.projectedPercent)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                    <tfoot>
-                      <tr>
-                        <td>{table.totalRow.label}</td>
-                        <td>{table.totalRow.target?.toLocaleString("tr-TR") ?? "-"}</td>
-                        <td>{table.totalRow.actual.toLocaleString("tr-TR")}</td>
-                        <td>{table.totalRow.remaining?.toLocaleString("tr-TR") ?? "-"}</td>
-                        <td>{formatPercent(table.totalRow.actualPercent)}</td>
-                        <td>{table.totalRow.projectedActual?.toLocaleString("tr-TR") ?? "-"}</td>
-                        <td className={(table.totalRow.projectedPercent ?? 0) < 100 ? "presentation-table-alert" : ""}>
-                          {formatPercent(table.totalRow.projectedPercent)}
-                        </td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
-              </section>
-            </div>
-          )
+    employeeSubcategoryTables.forEach((table) => {
+      chunk(table.rows, 8).forEach((group, index, list) => {
+        items.push({
+          id: `employee-sub-table-${table.parentTitle}-${table.title}-${index}`,
+          title: `${table.parentTitle} / ${table.title} ALT KATEGORI`,
+          subtitle: `Alt kategori bazli calisan hedef-gerceklesen tablosu | Sayfa ${index + 1}/${list.length}`,
+          layout: "compact",
+          body: renderCategoryTable(table, group)
         });
       });
     });
@@ -542,10 +549,12 @@ export function ManagerPresentation({
     riskStores,
     storeFocusItems,
     storeCategoryTables,
+    storeSubcategoryTables,
     summaryCards,
     topEmployees,
     topStores,
     employeeCategoryTables,
+    employeeSubcategoryTables,
     zeroItems
   ]);
 

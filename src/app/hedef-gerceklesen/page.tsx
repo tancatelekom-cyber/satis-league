@@ -601,6 +601,25 @@ function buildStoreZeroActualItems(rows: GoalStoreRow[]) {
     });
 }
 
+function buildCompanyZeroActualItems(rows: GoalStoreRow[]) {
+  const seen = new Set<string>();
+
+  return buildCompanyRows(rows)
+    .filter((row) => !isEntryCount(row.mainCategory) && row.actual === 0)
+    .map((row) => ({
+      key: `Firma-${row.mainCategory}-${row.subCategory || "main"}`,
+      label: row.subCategory || row.mainCategory
+    }))
+    .filter((item) => {
+      if (seen.has(item.label)) {
+        return false;
+      }
+
+      seen.add(item.label);
+      return true;
+    });
+}
+
 function toCoachingMetric(summary: GoalCategorySummary): CoachingMetric {
   return {
     title: summary.title,
@@ -1106,7 +1125,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
       ? buildEmployeeZeroActualItems(activeEmployeeRows)
       : effectiveView === "store"
         ? buildStoreZeroActualItems(activeStoreRows)
-        : [];
+        : buildCompanyZeroActualItems(filteredStoreRows);
   const detailCardTitle =
     effectiveView === "company" ? "FIRMA" : effectiveView === "store" ? activeStoreName || "MAGAZA" : activeEmployeeName || "CALISAN";
 

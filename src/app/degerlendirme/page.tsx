@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+﻿import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { CopyCoachingButton } from "@/components/evaluation/copy-coaching-button";
 import { SpeakCoachingButton } from "@/components/evaluation/speak-coaching-button";
@@ -421,22 +421,22 @@ function buildProductionChannelNotes(metrics: Metric[]) {
   const activationWeight = activationMetric.actual / 3;
 
   if (terminalWeight <= 0 && activationWeight <= 0) {
-    return ["- Üretim puanı tarafında terminal ve aktivasyon katkısı henüz net oluşmamış. Kalan günlerde iki kanalı da günlük takip edelim."];
+    return ["- Ãœretim puanÄ± tarafÄ±nda terminal ve aktivasyon katkÄ±sÄ± henÃ¼z net oluÅŸmamÄ±ÅŸ. Kalan gÃ¼nlerde iki kanalÄ± da gÃ¼nlÃ¼k takip edelim."];
   }
 
   if (terminalWeight < activationWeight * 0.7) {
     return [
-      "- Üretim puanında ağırlık aktivasyon tarafına kaymış görünüyor. Puan dengesini güçlendirmek için terminal tarafını geliştirmelisin; kalan günlerde terminal görüşmelerini ayrıca takip edelim."
+      "- Ãœretim puanÄ±nda aÄŸÄ±rlÄ±k aktivasyon tarafÄ±na kaymÄ±ÅŸ gÃ¶rÃ¼nÃ¼yor. Puan dengesini gÃ¼Ã§lendirmek iÃ§in terminal tarafÄ±nÄ± geliÅŸtirmelisin; kalan gÃ¼nlerde terminal gÃ¶rÃ¼ÅŸmelerini ayrÄ±ca takip edelim."
     ];
   }
 
   if (activationWeight < terminalWeight * 0.7) {
     return [
-      "- Üretim puanında ağırlık terminal tarafına kaymış görünüyor. Puanın daha dengeli ilerlemesi için aktivasyon tarafını geliştirmelisin; kalan günlerde aktivasyon aksiyonlarını öne alalım."
+      "- Ãœretim puanÄ±nda aÄŸÄ±rlÄ±k terminal tarafÄ±na kaymÄ±ÅŸ gÃ¶rÃ¼nÃ¼yor. PuanÄ±n daha dengeli ilerlemesi iÃ§in aktivasyon tarafÄ±nÄ± geliÅŸtirmelisin; kalan gÃ¼nlerde aktivasyon aksiyonlarÄ±nÄ± Ã¶ne alalÄ±m."
     ];
   }
 
-  return ["- Üretim puanında terminal ve aktivasyon dengesi kabul edilebilir seviyede. Bu dengeyi bozmadan toplam puanı büyütmeye odaklanalım."];
+  return ["- Ãœretim puanÄ±nda terminal ve aktivasyon dengesi kabul edilebilir seviyede. Bu dengeyi bozmadan toplam puanÄ± bÃ¼yÃ¼tmeye odaklanalÄ±m."];
 }
 
 function buildEntryConversionNotes(metrics: Metric[]) {
@@ -452,7 +452,7 @@ function buildEntryConversionNotes(metrics: Metric[]) {
   const conversion = (salesTotal / entryMetric.actual) * 100;
 
   return [
-    `- Giriş sayısını ayrı hedef kalemi gibi değerlendirmiyorum; burada müşteri trafiğine dönüşüm olarak bakıyorum. İçeri giren müşterilerin yaklaşık ${formatPercent(conversion)} kadarında aktivasyon, terminal veya rekontratlama satışı oluşmuş. Bu oranı yukarı taşımak için giriş yapan müşteride ihtiyaç analizi ve kapanış takibini sıklaştıralım.`
+    `- GiriÅŸ sayÄ±sÄ±nÄ± ayrÄ± hedef kalemi gibi deÄŸerlendirmiyorum; burada mÃ¼ÅŸteri trafiÄŸine dÃ¶nÃ¼ÅŸÃ¼m olarak bakÄ±yorum. Ä°Ã§eri giren mÃ¼ÅŸterilerin yaklaÅŸÄ±k ${formatPercent(conversion)} kadarÄ±nda aktivasyon, terminal veya rekontratlama satÄ±ÅŸÄ± oluÅŸmuÅŸ. Bu oranÄ± yukarÄ± taÅŸÄ±mak iÃ§in giriÅŸ yapan mÃ¼ÅŸteride ihtiyaÃ§ analizi ve kapanÄ±ÅŸ takibini sÄ±klaÅŸtÄ±ralÄ±m.`
   ];
 }
 
@@ -469,16 +469,16 @@ function buildProductionPointScaleNotes(metrics: Metric[], remainingDays: number
 
   if (nextScale >= 10000 && currentScale >= 10000) {
     return [
-      `- Üretim puanında ay sonu gidişatın ${formatNumber(currentScale)} skalasına denk geliyor. Bu en üst skala olduğu için burada amaç tempoyu korumak ve kanal dengesini bozmamak.`
+      `- Ãœretim puanÄ±nda ay sonu gidiÅŸatÄ±n ${formatNumber(currentScale)} skalasÄ±na denk geliyor. Bu en Ã¼st skala olduÄŸu iÃ§in burada amaÃ§ tempoyu korumak ve kanal dengesini bozmamak.`
     ];
   }
 
   const neededForNextScale = Math.max(nextScale - productionPointMetric.actual, 0);
   const dailyNeed = remainingDays > 0 ? Math.ceil(neededForNextScale / remainingDays) : neededForNextScale;
-  const scaleText = currentScale > 0 ? `${formatNumber(currentScale)} skalasına` : "400 skalasının altına";
+  const scaleText = currentScale > 0 ? `${formatNumber(currentScale)} skalasÄ±na` : "400 skalasÄ±nÄ±n altÄ±na";
 
   return [
-    `- Üretim puanında mevcut gidişat ay sonu ${scaleText} denk geliyor. Bir üst skala olan ${formatNumber(nextScale)} için kalan günlerde günlük en az ${formatNumber(dailyNeed)} üretim puanı yapman gerekiyor.`
+    `- Ãœretim puanÄ±nda mevcut gidiÅŸat ay sonu ${scaleText} denk geliyor. Bir Ã¼st skala olan ${formatNumber(nextScale)} iÃ§in kalan gÃ¼nlerde gÃ¼nlÃ¼k en az ${formatNumber(dailyNeed)} Ã¼retim puanÄ± yapman gerekiyor.`
   ];
 }
 
@@ -499,7 +499,7 @@ function buildProductionPointDevelopmentLines(metrics: Metric[], remainingDays: 
   const dailyNeed = remainingDays > 0 ? Math.ceil(neededForFirstScale / remainingDays) : neededForFirstScale;
 
   return [
-    `- ${productionPointMetric.title}: ay sonu gidişat 400 puanlık ilk prim skalasının altında kalıyor. İlk skalaya girmek için kalan günlerde günlük en az ${formatNumber(dailyNeed)} üretim puanı yapman gerekiyor.`
+    `- ${productionPointMetric.title}: ay sonu gidiÅŸat 400 puanlÄ±k ilk prim skalasÄ±nÄ±n altÄ±nda kalÄ±yor. Ä°lk skalaya girmek iÃ§in kalan gÃ¼nlerde gÃ¼nlÃ¼k en az ${formatNumber(dailyNeed)} Ã¼retim puanÄ± yapman gerekiyor.`
   ];
 }
 
@@ -519,13 +519,13 @@ function buildActivationCountNotes(metrics: Metric[], workedDays: number, remain
     }
 
     return [
-      `- ${activationMetric.title}: bu kalem hedefsiz takip ediliyor. Şu an ${formatNumber(activationMetric.actual)} gerçekleşen var; günlük ortalama ${formatNumber(pace)} seviyesinde. Toplam aktivasyon adedindeki bu tempoyu koruyup düşüş olursa aynı gün müdahale edelim.`
+      `- ${activationMetric.title}: bu kalem hedefsiz takip ediliyor. Åu an ${formatNumber(activationMetric.actual)} gerÃ§ekleÅŸen var; gÃ¼nlÃ¼k ortalama ${formatNumber(pace)} seviyesinde. Toplam aktivasyon adedindeki bu tempoyu koruyup dÃ¼ÅŸÃ¼ÅŸ olursa aynÄ± gÃ¼n mÃ¼dahale edelim.`
     ];
   }
 
   if ((projectedPercent ?? 0) >= 100) {
     return [
-      `- ${activationMetric.title}: aktivasyon adedinde mevcut tempo hedefi taşıyor. Şu an ${formatNumber(activationMetric.actual)} gerçekleşen var; bu tempo ay sonu ${formatPercent(projectedPercent)} seviyesine ulaşıyor. Toplam adet ritmini korumaya odaklanalım.`
+      `- ${activationMetric.title}: aktivasyon adedinde mevcut tempo hedefi taÅŸÄ±yor. Åu an ${formatNumber(activationMetric.actual)} gerÃ§ekleÅŸen var; bu tempo ay sonu ${formatPercent(projectedPercent)} seviyesine ulaÅŸÄ±yor. Toplam adet ritmini korumaya odaklanalÄ±m.`
     ];
   }
 
@@ -535,7 +535,7 @@ function buildActivationCountNotes(metrics: Metric[], workedDays: number, remain
       : activationMetric.remaining ?? 0;
 
   return [
-    `- ${activationMetric.title}: aktivasyon adedinde mevcut tempo ay sonu ${formatPercent(projectedPercent)} seviyesinde kalıyor. Hedefi kapatmak için kalan günlerde günlük en az ${formatNumber(needed)} aktivasyon gerekiyor. Bu kalemi toplam adet üzerinden günlük takip edelim.`
+    `- ${activationMetric.title}: aktivasyon adedinde mevcut tempo ay sonu ${formatPercent(projectedPercent)} seviyesinde kalÄ±yor. Hedefi kapatmak iÃ§in kalan gÃ¼nlerde gÃ¼nlÃ¼k en az ${formatNumber(needed)} aktivasyon gerekiyor. Bu kalemi toplam adet Ã¼zerinden gÃ¼nlÃ¼k takip edelim.`
   ];
 }
 
@@ -551,11 +551,11 @@ function buildQualityLimitNotes(metrics: Metric[], view: ViewMode) {
   if (satisfactionMetric && satisfactionMetric.actual > 0) {
     if (satisfactionMetric.actual < 4.4) {
       notes.push(
-        `- Memnuniyet skoru ${formatNumber(satisfactionMetric.actual)}. Alt limit 4,40 olduğu için karşılama, ihtiyaç analizi ve işlem sonrası teyit günlük takip edilmeli.`
+        `- Memnuniyet skoru ${formatNumber(satisfactionMetric.actual)}. Alt limit 4,40 olduÄŸu iÃ§in karÅŸÄ±lama, ihtiyaÃ§ analizi ve iÅŸlem sonrasÄ± teyit gÃ¼nlÃ¼k takip edilmeli.`
       );
     } else if (satisfactionMetric.actual < 4.5) {
       notes.push(
-        `- Memnuniyet skoru ${formatNumber(satisfactionMetric.actual)} ile alt limite yakın. Düşüş yaşamamak için müşteri deneyimi her gün kontrol edilmeli.`
+        `- Memnuniyet skoru ${formatNumber(satisfactionMetric.actual)} ile alt limite yakÄ±n. DÃ¼ÅŸÃ¼ÅŸ yaÅŸamamak iÃ§in mÃ¼ÅŸteri deneyimi her gÃ¼n kontrol edilmeli.`
       );
     }
   }
@@ -565,11 +565,11 @@ function buildQualityLimitNotes(metrics: Metric[], view: ViewMode) {
 
     if (pinPercent <= 70) {
       notes.push(
-        `- PIN oranı ${formatPercent(pinPercent)}. %70 sınırında veya altında olduğu için PIN kullanım adımları ekipte tekrar hatırlatılmalı.`
+        `- PIN oranÄ± ${formatPercent(pinPercent)}. %70 sÄ±nÄ±rÄ±nda veya altÄ±nda olduÄŸu iÃ§in PIN kullanÄ±m adÄ±mlarÄ± ekipte tekrar hatÄ±rlatÄ±lmalÄ±.`
       );
     } else if (pinPercent <= 75) {
       notes.push(
-        `- PIN oranı ${formatPercent(pinPercent)} ile alt limite yakın. Bu oranın düşmemesi için PIN kullanım takibi sıklaştırılmalı.`
+        `- PIN oranÄ± ${formatPercent(pinPercent)} ile alt limite yakÄ±n. Bu oranÄ±n dÃ¼ÅŸmemesi iÃ§in PIN kullanÄ±m takibi sÄ±klaÅŸtÄ±rÄ±lmalÄ±.`
       );
     }
   }
@@ -616,14 +616,12 @@ function buildCoachingText(args: {
   const dailyNeeded = (metric: Metric) =>
     args.remainingDays > 0 && metric.remaining !== null ? Math.ceil(metric.remaining / args.remainingDays) : metric.remaining ?? 0;
   const dailyCurrentPace = (metric: Metric) => (args.workedDays > 0 ? metric.actual / args.workedDays : metric.actual);
-  const dailyTargetLines = critical.slice(0, 4).map((metric) => {
+  const dailyTargetLineForMetric = (metric: Metric) => {
     const needed = dailyNeeded(metric);
     return `- ${metric.title}: ay sonu ${formatPercent(metric.projectedPercent ?? metric.actualPercent)} seviyesinde kalır. Hedefi kapatmak için kalan günlerde günlük en az ${formatNumber(needed)} üretmen lazım.`;
-  });
-  const compactDailyTargetLines = compactCritical.map((metric) => {
-    const needed = dailyNeeded(metric);
-    return `- ${metric.title}: ay sonu ${formatPercent(metric.projectedPercent ?? metric.actualPercent)} seviyesinde kalÄ±r. Hedefi kapatmak iÃ§in kalan gÃ¼nlerde gÃ¼nlÃ¼k en az ${formatNumber(needed)} Ã¼retmen lazÄ±m.`;
-  });
+  };
+  const dailyTargetLines = critical.map(dailyTargetLineForMetric);
+  const compactDailyTargetLines = compactCritical.map(dailyTargetLineForMetric);
   const developmentLines = [
     ...critical.map(
       (metric) =>
@@ -632,13 +630,14 @@ function buildCoachingText(args: {
     ...productionPointDevelopmentLines
   ];
   const useCompactCoachingText = ["employee", "store"].includes(args.view);
+
   if (useCompactCoachingText) {
     const compactFocusItems = new Map<string, string>();
 
     compactCritical.forEach((metric) => {
       compactFocusItems.set(
         metric.title,
-        `- ${metric.title}: hedef temposunun altindasin. Ay sonu ${formatPercent(metric.projectedPercent ?? metric.actualPercent)} seviyesinde kalir.`
+        `- ${metric.title}: hedef temposunun altındasın. Ay sonu ${formatPercent(metric.projectedPercent ?? metric.actualPercent)} seviyesinde kalır.`
       );
     });
 
@@ -647,7 +646,7 @@ function buildCoachingText(args: {
         if (!compactFocusItems.has(note.title)) {
           compactFocusItems.set(
             note.title,
-            `- ${note.title}: firma ortalamasi ${formatNumber(note.average)}, sende ${formatNumber(note.actual)}. Fark ${formatNumber(note.gap)}.`
+            `- ${note.title}: firma ortalaması ${formatNumber(note.average)}, sende ${formatNumber(note.actual)}. Fark ${formatNumber(note.gap)}.`
           );
         }
       });
@@ -663,15 +662,15 @@ function buildCoachingText(args: {
     }
 
     return [
-      "Hedefin ve firma ortalamasinin altinda kaldigin kalemler:",
+      "Hedefin ve firma ortalamasının altında kaldığın kalemler:",
       ...(compactFocusItems.size
         ? Array.from(compactFocusItems.values())
-        : ["- Hedefin ve firma ortalamasinin altinda belirgin bir kalem gorunmuyor."]),
+        : ["- Hedefin ve firma ortalamasının altında belirgin bir kalem görünmüyor."]),
       "",
-      "Gunluk minimum ihtiyaclarin:",
+      "Günlük minimum ihtiyaçların:",
       ...(compactDailyTargetLines.length
         ? compactDailyTargetLines
-        : ["- Bugun icin ek gunluk minimum ihtiyac gorunmuyor. Mevcut tempoyu koruyalim."])
+        : ["- Bugün için ek günlük minimum ihtiyaç görünmüyor. Mevcut tempoyu koruyalım."])
     ].join("\n");
   }
 
@@ -722,14 +721,12 @@ function buildCoachingText(args: {
             return `- ${metric.title}: bu kalemde hedef temposu yakalanıyor. Şu an ${formatNumber(metric.actual)} gerçekleşen var; mevcut tempo ay sonu ${formatPercent(metric.projectedPercent)} seviyesine taşır. Günlük ortalama ${formatNumber(pace)} üretimi korumalısın.`;
           }
 
-          return `- ${metric.title}: hedef tanımı yok ama ${formatNumber(metric.actual)} gerçekleşen var. Bu kalemi güçlü takip kalemi olarak koruyalım.`;
+          return `- ${metric.title}: hedef tanımı yok ama şu an ${formatNumber(metric.actual)} gerçekleşen var. Bu kalemi güçlü takip kalemi olarak koruyalım.`;
         })
       : ["- Hedefe giden güçlü bir hedefli kalem henüz netleşmemiş. Bu yüzden odağı hedef açığı olan kalemlere çevirmeliyiz."]),
     "",
     "Geliştirmemiz gereken alanlar:",
-    ...(developmentLines.length
-      ? developmentLines
-      : ["- Hedefli kalemlerde şu an belirgin risk yok. Bu iyi bir alan; aynı disiplini koruyalım."]),
+    ...(developmentLines.length ? developmentLines : ["- Hedefli kalemlerde şu an belirgin risk yok. Bu iyi bir alan; aynı disiplini koruyalım."]),
     ...averageFocusSection,
     ...qualityLimitSection,
     "",
@@ -759,7 +756,6 @@ function buildCoachingText(args: {
 
   return lines.join("\n");
 }
-
 async function refreshEvaluationAction(formData: FormData) {
   "use server";
 
@@ -958,7 +954,6 @@ export default async function EvaluationPage({ searchParams }: EvaluationPagePro
               <article className="evaluation-card evaluation-card-wide">
                 <div className="evaluation-card-head">
                   <div>
-                    <span>Secili Alan</span>
                     <strong>{selectedTitle || "Veri yok"}</strong>
                   </div>
                 </div>
@@ -1031,3 +1026,6 @@ export default async function EvaluationPage({ searchParams }: EvaluationPagePro
     </main>
   );
 }
+
+
+

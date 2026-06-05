@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -150,7 +150,7 @@ export function SpeakCoachingButton({ text }: { text: string }) {
 
   return (
     <button className="button-secondary evaluation-speak-button" type="button" onClick={handleToggle}>
-      {speaking ? "Okumayi Durdur" : "Sesli Oku"}
+      {speaking ? "Okumayı Durdur" : "Sesli Oku"}
     </button>
   );
 }

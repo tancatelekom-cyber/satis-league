@@ -623,16 +623,45 @@ function buildCoachingText(args: {
   ];
   const useCompactCoachingText = ["employee", "store"].includes(args.view);
   if (useCompactCoachingText) {
+    const compactFocusItems = new Map<string, string>();
+
+    critical.forEach((metric) => {
+      compactFocusItems.set(
+        metric.title,
+        `- ${metric.title}: hedef temposunun altindasin. Ay sonu ${formatPercent(metric.projectedPercent ?? metric.actualPercent)} seviyesinde kalir.`
+      );
+    });
+
+    if (args.view === "employee") {
+      args.employeeAverageNotes.forEach((note) => {
+        if (!compactFocusItems.has(note.title)) {
+          compactFocusItems.set(
+            note.title,
+            `- ${note.title}: firma ortalamasi ${formatNumber(note.average)}, sende ${formatNumber(note.actual)}. Fark ${formatNumber(note.gap)}.`
+          );
+        }
+      });
+    }
+
+    if (args.view === "store") {
+      args.storeAverageNotes.forEach((note) => {
+        const title = note.split(":")[0]?.trim() || note;
+        if (!compactFocusItems.has(title)) {
+          compactFocusItems.set(title, `- ${note}`);
+        }
+      });
+    }
+
     return [
-      "Gelistirmesi gereken alanlar:",
-      ...(developmentLines.length
-        ? developmentLines
-        : ["- Hedefli kalemlerde su an belirgin risk yok. Ayni disiplini koruyalim."]),
+      "Hedefin ve firma ortalamasinin altinda kaldigin kalemler:",
+      ...(compactFocusItems.size
+        ? Array.from(compactFocusItems.values())
+        : ["- Hedefin ve firma ortalamasinin altinda belirgin bir kalem gorunmuyor."]),
       "",
-      "Gunluk uretim ihtiyaclari:",
+      "Gunluk minimum ihtiyaclarin:",
       ...(dailyTargetLines.length
         ? dailyTargetLines
-        : ["- Bugun icin ek gunluk uretim ihtiyaci gorunmuyor. Mevcut tempoyu koruyalim."])
+        : ["- Bugun icin ek gunluk minimum ihtiyac gorunmuyor. Mevcut tempoyu koruyalim."])
     ].join("\n");
   }
 

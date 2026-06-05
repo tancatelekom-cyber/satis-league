@@ -2047,9 +2047,18 @@ textarea::placeholder {
   gap: 26px;
 }
 
+.presentation-slide-compact {
+  padding: clamp(18px, 2.2vw, 28px);
+  gap: 14px;
+}
+
 .presentation-slide-head {
   display: grid;
   gap: 12px;
+}
+
+.presentation-slide-head-compact {
+  gap: 6px;
 }
 
 .presentation-kicker {
@@ -2077,8 +2086,22 @@ textarea::placeholder {
   max-width: 14ch;
 }
 
+.presentation-slide-head-compact h1 {
+  font-size: clamp(1.55rem, 2.3vw, 2.3rem);
+  max-width: none;
+}
+
+.presentation-slide-head-compact .presentation-kicker {
+  padding: 6px 10px;
+  font-size: 0.78rem;
+}
+
 .presentation-slide-body {
   min-height: 0;
+}
+
+.presentation-slide-compact .presentation-slide-body {
+  overflow: auto;
 }
 
 .presentation-cover-grid,
@@ -2194,6 +2217,10 @@ textarea::placeholder {
   line-height: 1.18;
 }
 
+.presentation-slide-compact .presentation-panel-head strong {
+  font-size: clamp(1rem, 1.35vw, 1.35rem);
+}
+
 .presentation-health-list,
 .presentation-chip-cloud,
 .presentation-action-stack {
@@ -2246,7 +2273,7 @@ textarea::placeholder {
 }
 
 .presentation-table-panel {
-  padding: 24px 26px;
+  padding: 18px 20px;
   border-radius: 28px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.08);
@@ -2264,16 +2291,16 @@ textarea::placeholder {
 .presentation-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 980px;
+  min-width: 720px;
   color: #10203b;
 }
 
 .presentation-table th,
 .presentation-table td {
-  padding: 14px 16px;
+  padding: 10px 12px;
   border: 1px solid rgba(16, 32, 59, 0.14);
   text-align: right;
-  font-size: 1.05rem;
+  font-size: 0.92rem;
 }
 
 .presentation-table th:first-child,
@@ -2284,7 +2311,7 @@ textarea::placeholder {
 .presentation-table thead th {
   background: #dbe8f5;
   color: #08111f;
-  font-size: 1rem;
+  font-size: 0.88rem;
   font-weight: 900;
 }
 
@@ -2304,12 +2331,12 @@ textarea::placeholder {
 
 .presentation-need-board {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px;
 }
 
 .presentation-need-card {
-  padding: 16px 18px;
+  padding: 12px 14px;
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.92);
   color: #10203b;
@@ -2318,9 +2345,9 @@ textarea::placeholder {
 
 .presentation-need-card strong {
   display: block;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   color: #10203b;
-  font-size: 1rem;
+  font-size: 0.92rem;
 }
 
 .presentation-need-card-total {
@@ -2330,19 +2357,20 @@ textarea::placeholder {
 .presentation-need-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 
 .presentation-need-pill {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 44px;
-  padding: 8px 10px;
+  min-height: 36px;
+  padding: 6px 8px;
   border-radius: 14px;
   background: rgba(16, 32, 59, 0.08);
   color: #10203b;
   font-weight: 800;
+  font-size: 0.82rem;
 }
 
 .presentation-focus-card {

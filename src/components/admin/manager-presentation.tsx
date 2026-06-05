@@ -115,6 +115,7 @@ export function ManagerPresentation({
       title: string;
       subtitle: string;
       body: ReactNode;
+      layout?: "default" | "compact";
     }> = [];
 
     items.push({
@@ -310,6 +311,7 @@ export function ManagerPresentation({
           id: `store-table-${table.title}-${index}`,
           title: `${table.title} MAGAZA TABLOSU`,
           subtitle: `Kategori bazli magaza hedef-gerceklesen tablosu | Sayfa ${index + 1}/${list.length}`,
+          layout: "compact",
           body: (
             <div className="presentation-panel-stack">
               <section className="presentation-table-panel">
@@ -430,6 +432,7 @@ export function ManagerPresentation({
           id: `employee-table-${table.title}-${index}`,
           title: `${table.title} CALISAN TABLOSU`,
           subtitle: `Kategori bazli calisan hedef-gerceklesen tablosu | Sayfa ${index + 1}/${list.length}`,
+          layout: "compact",
           body: (
             <div className="presentation-panel-stack">
               <section className="presentation-table-panel">
@@ -624,8 +627,8 @@ export function ManagerPresentation({
       </div>
 
       <section ref={stageRef} className="presentation-stage">
-        <article className="presentation-slide">
-          <div className="presentation-slide-head">
+        <article className={`presentation-slide ${activeSlide.layout === "compact" ? "presentation-slide-compact" : ""}`}>
+          <div className={`presentation-slide-head ${activeSlide.layout === "compact" ? "presentation-slide-head-compact" : ""}`}>
             <span className="presentation-kicker">{activeSlide.subtitle}</span>
             <h1>{activeSlide.title}</h1>
           </div>

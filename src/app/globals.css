@@ -5603,6 +5603,7 @@ textarea::placeholder {
 
 .evaluation-line {
   margin: 0;
+  color: #08152a;
 }
 
 .evaluation-line + .evaluation-line {
@@ -5613,10 +5614,12 @@ textarea::placeholder {
   margin-bottom: 8px;
   font-size: 1.02rem;
   line-height: 1.5;
+  color: #08152a;
 }
 
 .evaluation-line-heading strong {
   font-weight: 900;
+  color: #08152a;
 }
 
 .evaluation-line-spacer {
@@ -5631,6 +5634,11 @@ textarea::placeholder {
 
 .evaluation-line-bullet {
   color: #08152a;
+}
+
+.evaluation-copy-text span,
+.evaluation-copy-text strong {
+  color: inherit;
 }
 
 .evaluation-zero-alert {

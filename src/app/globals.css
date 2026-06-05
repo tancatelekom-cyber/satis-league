@@ -5595,11 +5595,42 @@ textarea::placeholder {
   padding: 18px;
   max-height: 560px;
   overflow: auto;
-  white-space: pre-wrap;
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.92);
   color: #08152a;
-  font: 800 0.98rem/1.55 inherit;
+  font: 500 0.98rem/1.62 inherit;
+}
+
+.evaluation-line {
+  margin: 0;
+}
+
+.evaluation-line + .evaluation-line {
+  margin-top: 4px;
+}
+
+.evaluation-line-heading {
+  margin-bottom: 8px;
+  font-size: 1.02rem;
+  line-height: 1.5;
+}
+
+.evaluation-line-heading strong {
+  font-weight: 900;
+}
+
+.evaluation-line-spacer {
+  height: 18px;
+}
+
+.evaluation-line-key,
+.evaluation-line-need {
+  font-weight: 900;
+  color: #07101f;
+}
+
+.evaluation-line-bullet {
+  color: #08152a;
 }
 
 .evaluation-zero-alert {

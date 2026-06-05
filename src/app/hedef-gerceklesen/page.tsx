@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import { redirect } from "next/navigation";
 import { CopyCoachingButton } from "@/components/evaluation/copy-coaching-button";
+import { FormattedCoachingText } from "@/components/evaluation/formatted-coaching-text";
 import { SpeakCoachingButton } from "@/components/evaluation/speak-coaching-button";
 import { FilterSelectNav } from "@/components/ui/filter-select-nav";
 import { GoalActualRow, GoalStoreRow, fetchGoalActualRows, fetchGoalDayStats, fetchGoalStoreRows } from "@/lib/goal-actuals";
@@ -1324,7 +1325,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                       <strong>{detailCardTitle}</strong>
                     </div>
 
-                    <pre className="evaluation-copy-text">{detailCoachingText}</pre>
+                    <FormattedCoachingText text={detailCoachingText} />
 
                     <div className="evaluation-card-actions evaluation-card-actions-bottom">
                       <SpeakCoachingButton text={detailCoachingText} />

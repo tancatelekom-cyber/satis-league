@@ -621,6 +621,21 @@ function buildCoachingText(args: {
     ),
     ...productionPointDevelopmentLines
   ];
+  const useCompactCoachingText = ["employee", "store"].includes(args.view);
+  if (useCompactCoachingText) {
+    return [
+      "Gelistirmesi gereken alanlar:",
+      ...(developmentLines.length
+        ? developmentLines
+        : ["- Hedefli kalemlerde su an belirgin risk yok. Ayni disiplini koruyalim."]),
+      "",
+      "Gunluk uretim ihtiyaclari:",
+      ...(dailyTargetLines.length
+        ? dailyTargetLines
+        : ["- Bugun icin ek gunluk uretim ihtiyaci gorunmuyor. Mevcut tempoyu koruyalim."])
+    ].join("\n");
+  }
+
   const storeAverageSection = args.storeAverageNotes.length
     ? [
         "",

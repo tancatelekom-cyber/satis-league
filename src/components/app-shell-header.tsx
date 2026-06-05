@@ -48,7 +48,7 @@ export function AppShellHeader({ initialIsAdmin = false, initialCanEvaluate = fa
   }, [initialCanEvaluate, initialIsAdmin]);
 
   const primaryTabs = useMemo(() => {
-    const wanted = ["/kampanyalar", "/aylik-kampanyalar", "/lig", "/tarifeler", "/cihaz-fiyat-listesi"];
+    const wanted = ["/kampanyalar", "/aylik-kampanyalar", "/lig", "/hedef-gerceklesen", "/tarifeler", "/cihaz-fiyat-listesi"];
     return navItems.filter((item) => wanted.includes(item.href));
   }, [navItems]);
 

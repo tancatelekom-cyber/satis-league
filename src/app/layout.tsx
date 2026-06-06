@@ -16,6 +16,7 @@ export default async function RootLayout({
 }>) {
   let isAdmin = false;
   let canEvaluate = false;
+  let canOpenEvaluationPresentation = false;
 
   try {
     const supabase = await createClient();
@@ -34,17 +35,25 @@ export default async function RootLayout({
       canEvaluate =
         profile?.approval === "approved" &&
         (profile.role === "admin" || profile.role === "management" || profile.role === "manager" || profile.role === "employee");
+      canOpenEvaluationPresentation =
+        profile?.approval === "approved" &&
+        (profile.role === "admin" || profile.role === "management" || profile.role === "manager");
     }
   } catch {
     isAdmin = false;
     canEvaluate = false;
+    canOpenEvaluationPresentation = false;
   }
 
   return (
     <html lang="tr">
       <body>
         <div className="page-shell">
-          <AppShellHeader initialIsAdmin={isAdmin} initialCanEvaluate={canEvaluate} />
+          <AppShellHeader
+            initialIsAdmin={isAdmin}
+            initialCanEvaluate={canEvaluate}
+            initialCanOpenEvaluationPresentation={canOpenEvaluationPresentation}
+          />
 
           <AuthGate>{children}</AuthGate>
         </div>

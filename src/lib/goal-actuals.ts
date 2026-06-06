@@ -1,5 +1,6 @@
 export type GoalActualRow = {
   employeeName: string;
+  storeName: string;
   mainCategory: string;
   subCategory: string;
   target: number | null;
@@ -134,6 +135,7 @@ async function fetchGoalActualRowsFromSheet() {
       const subCategory = normalizeText(row[2] ?? "");
       const targetRaw = normalizeText(row[3] ?? "");
       const actualRaw = normalizeText(row[4] ?? "");
+      const storeName = normalizeText(row[5] ?? "");
 
       if (!employeeName) {
         return null;
@@ -144,6 +146,7 @@ async function fetchGoalActualRowsFromSheet() {
 
       return {
         employeeName,
+        storeName,
         mainCategory: mainCategory || "Genel",
         subCategory,
         target: target && target > 0 ? target : null,

@@ -14,14 +14,14 @@ type NavItem = {
 
 const baseNavItems: NavItem[] = [
   { href: "/", label: "Ana Sayfa" },
-  { href: "/kampanyalar", label: "Gunluk Kampanyalar", mobileLabel: "Kampanya", icon: "⚡" },
-  { href: "/aylik-kampanyalar", label: "Aylik Kampanyalar", mobileLabel: "Aylik", icon: "🖼" },
-  { href: "/lig", label: "Yildizlar Kulubu", mobileLabel: "Lig", icon: "⭐" },
-  { href: "/hedef-gerceklesen", label: "Hedef Gerceklesen", mobileLabel: "Hedef", icon: "🎯" },
-  { href: "/tarifeler", label: "Tarifeler", mobileLabel: "Tarife", icon: "📊" },
-  { href: "/cihaz-fiyat-listesi", label: "Cihaz Fiyat Listesi", mobileLabel: "Cihaz", icon: "📱" },
-  { href: "/stok-bilgisi", label: "Stok Bilgisi", mobileLabel: "Stok", icon: "📦" },
-  { href: "/hesabim", label: "Hesabim", mobileLabel: "Hesap", icon: "👤" }
+  { href: "/kampanyalar", label: "Gunluk Kampanyalar", mobileLabel: "Kampanya", icon: "K" },
+  { href: "/aylik-kampanyalar", label: "Aylik Kampanyalar", mobileLabel: "Aylik", icon: "A" },
+  { href: "/lig", label: "Yildizlar Kulubu", mobileLabel: "Lig", icon: "L" },
+  { href: "/hedef-gerceklesen", label: "Hedef Gerceklesen", mobileLabel: "Hedef", icon: "H" },
+  { href: "/tarifeler", label: "Tarifeler", mobileLabel: "Tarife", icon: "T" },
+  { href: "/cihaz-fiyat-listesi", label: "Cihaz Fiyat Listesi", mobileLabel: "Cihaz", icon: "C" },
+  { href: "/stok-bilgisi", label: "Stok Bilgisi", mobileLabel: "Stok", icon: "S" },
+  { href: "/hesabim", label: "Hesabim", mobileLabel: "Hesap", icon: "P" }
 ];
 
 function isActive(pathname: string, href: string) {
@@ -32,24 +32,40 @@ function isActive(pathname: string, href: string) {
 type AppShellHeaderProps = {
   initialIsAdmin?: boolean;
   initialCanEvaluate?: boolean;
+  initialCanOpenEvaluationPresentation?: boolean;
 };
 
-export function AppShellHeader({ initialIsAdmin = false, initialCanEvaluate = false }: AppShellHeaderProps) {
+export function AppShellHeader({
+  initialIsAdmin = false,
+  initialCanEvaluate = false,
+  initialCanOpenEvaluationPresentation = false
+}: AppShellHeaderProps) {
   const pathname = usePathname() ?? "/";
   const [menuOpen, setMenuOpen] = useState(false);
 
   const navItems = useMemo(() => {
     const items = false && initialCanEvaluate
-      ? [...baseNavItems, { href: "/degerlendirme", label: "Degerlendirme", mobileLabel: "Deger", icon: "🧭" }]
+      ? [...baseNavItems, { href: "/degerlendirme", label: "Degerlendirme", mobileLabel: "Deger", icon: "D" }]
       : baseNavItems;
 
-    return initialIsAdmin
-      ? [...items, { href: "/admin", label: "Admin Paneli", mobileLabel: "Admin", icon: "⚙" }]
+    const itemsWithPresentation = initialCanOpenEvaluationPresentation
+      ? [...items, { href: "/degerlendirme-sunumu", label: "Degerlendirme Sunumu", mobileLabel: "Sunum", icon: "U" }]
       : items;
-  }, [initialCanEvaluate, initialIsAdmin]);
+
+    return initialIsAdmin
+      ? [...itemsWithPresentation, { href: "/admin", label: "Admin Paneli", mobileLabel: "Admin", icon: "Y" }]
+      : itemsWithPresentation;
+  }, [initialCanEvaluate, initialCanOpenEvaluationPresentation, initialIsAdmin]);
 
   const primaryTabs = useMemo(() => {
-    const wanted = ["/kampanyalar", "/aylik-kampanyalar", "/lig", "/hedef-gerceklesen", "/tarifeler", "/cihaz-fiyat-listesi"];
+    const wanted = [
+      "/kampanyalar",
+      "/aylik-kampanyalar",
+      "/lig",
+      "/hedef-gerceklesen",
+      "/tarifeler",
+      "/cihaz-fiyat-listesi"
+    ];
     return navItems.filter((item) => wanted.includes(item.href));
   }, [navItems]);
 

@@ -14,12 +14,18 @@ type EmployeeSnapshot = {
   name: string;
   totalActual: number;
   totalTarget: number | null;
+  productionPointActual: number;
   sharePercent: number;
   projectedPercent: number | null;
   belowTargetCount: number;
   strongestMetric: string;
   primaryRisk: string;
   dailyNeed: number;
+  targetMisses: Array<{
+    metric: string;
+    projectedPercent: number | null;
+    dailyNeed: number;
+  }>;
 };
 
 type CategorySummaryRow = {
@@ -30,6 +36,7 @@ type CategorySummaryRow = {
   actualPercent: number | null;
   projectedActual: number | null;
   projectedPercent: number | null;
+  dailyNeed?: number;
 };
 
 type EmployeeCategoryTableRow = CategorySummaryRow;
@@ -161,25 +168,6 @@ export function StoreEvaluationPresentation({
                     </tr>
                   ))}
                 </tbody>
-                <tfoot>
-                  <tr>
-                    <td>{table.totalRow.label}</td>
-                    {table.hasTarget ? (
-                      <>
-                        <td>{formatNumber(table.totalRow.target)}</td>
-                        <td>{formatNumber(table.totalRow.actual)}</td>
-                        <td>{formatNumber(table.totalRow.remaining)}</td>
-                        <td>{formatPercent(table.totalRow.actualPercent)}</td>
-                        <td>{formatNumber(table.totalRow.projectedActual)}</td>
-                        <td className={(table.totalRow.projectedPercent ?? 0) < 100 ? "presentation-table-alert" : ""}>
-                          {formatPercent(table.totalRow.projectedPercent)}
-                        </td>
-                      </>
-                    ) : (
-                      <td>{formatNumber(table.totalRow.actual)}</td>
-                    )}
-                  </tr>
-                </tfoot>
               </table>
             </div>
           </section>
@@ -262,6 +250,22 @@ export function StoreEvaluationPresentation({
                 </tbody>
               </table>
             </div>
+
+            <div className="presentation-need-board">
+              {storeCategoryRows
+                .filter((row) => row.target !== null && (row.projectedPercent ?? row.actualPercent ?? 0) < 100)
+                .map((row) => {
+                  return (
+                    <article key={`store-risk-${row.label}`} className="presentation-need-card presentation-need-card-total">
+                      <strong>{row.label}</strong>
+                      <div className="presentation-need-grid">
+                        <span className="presentation-need-pill">Ay sonu: {formatPercent(row.projectedPercent ?? row.actualPercent)}</span>
+                        <span className="presentation-need-pill">Gunluk: {formatNumber(row.dailyNeed ?? 0)} uretim</span>
+                      </div>
+                    </article>
+                  );
+                })}
+            </div>
           </section>
         </div>
       )
@@ -287,11 +291,22 @@ export function StoreEvaluationPresentation({
 
                 <ul className="presentation-bullet-list">
                   <li>Toplam gerceklesen: {formatNumber(employee.totalActual)}</li>
+                  <li>Uretim puani: {formatNumber(employee.productionPointActual)}</li>
                   <li>Hedef altinda kalan kategori: {employee.belowTargetCount}</li>
                   <li>En guclu alan: {employee.strongestMetric}</li>
                   <li>Birincil risk: {employee.primaryRisk}</li>
                   <li>Gunluk minimum ihtiyac: {formatNumber(employee.dailyNeed)}</li>
                 </ul>
+
+                {employee.targetMisses.length ? (
+                  <div className="presentation-chip-cloud">
+                    {employee.targetMisses.map((item) => (
+                      <span key={`${employee.name}-${item.metric}`} className="presentation-chip presentation-chip-alert">
+                        {item.metric} | {formatPercent(item.projectedPercent)} | Gunluk {formatNumber(item.dailyNeed)}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
               </article>
             ))}
           </div>
@@ -322,6 +337,16 @@ export function StoreEvaluationPresentation({
                   <li>Gunluk minimum ihtiyac: {formatNumber(employee.dailyNeed)}</li>
                   <li>En guclu kategori: {employee.strongestMetric}</li>
                 </ul>
+
+                {employee.targetMisses.length ? (
+                  <div className="presentation-chip-cloud">
+                    {employee.targetMisses.map((item) => (
+                      <span key={`${employee.name}-risk-${item.metric}`} className="presentation-chip presentation-chip-alert">
+                        {item.metric} | {formatPercent(item.projectedPercent)} | Gunluk {formatNumber(item.dailyNeed)}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
               </article>
             ))}
           </div>

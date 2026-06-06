@@ -42,18 +42,25 @@ type CategorySummaryRow = {
   actualPercent: number | null;
   projectedActual: number | null;
   projectedPercent: number | null;
+  dailyNeed?: number;
 };
 
 type EmployeeSnapshot = {
   name: string;
   totalActual: number;
   totalTarget: number | null;
+  productionPointActual: number;
   sharePercent: number;
   projectedPercent: number | null;
   belowTargetCount: number;
   strongestMetric: string;
   primaryRisk: string;
   dailyNeed: number;
+  targetMisses: Array<{
+    metric: string;
+    projectedPercent: number | null;
+    dailyNeed: number;
+  }>;
 };
 
 type EmployeeCategoryTableRow = CategorySummaryRow;
@@ -103,6 +110,10 @@ function isAggregateCategoryLabel(value: string | null | undefined) {
 
 function isEntryCount(title: string) {
   return normalizeCategoryKey(title).includes("GIRIS SAY");
+}
+
+function isProductionPointMetric(title: string) {
+  return normalizeCategoryKey(title).includes("URETIM PUAN");
 }
 
 function average(values: number[]) {
@@ -177,7 +188,9 @@ function buildStoreCategoryRows(rows: GoalActualRow[], dayStats: GoalDayStats) {
       remaining: metric.remaining,
       actualPercent: metric.actualPercent,
       projectedActual: metric.projectedActual,
-      projectedPercent: metric.projectedPercent
+      projectedPercent: metric.projectedPercent,
+      dailyNeed:
+        dayStats.remainingDays > 0 && metric.remaining !== null ? Math.ceil(metric.remaining / dayStats.remainingDays) : metric.remaining ?? 0
     }));
 }
 
@@ -191,6 +204,9 @@ function buildEmployeeSnapshots(rows: GoalActualRow[], dayStats: GoalDayStats) {
   });
 
   const storeTotalActual = rows.reduce((sum, row) => sum + row.actual, 0);
+  const storeTotalProductionPointActual = rows
+    .filter((row) => isProductionPointMetric(row.mainCategory))
+    .reduce((sum, row) => sum + row.actual, 0);
 
   return Array.from(employeeMap.entries())
     .map(([name, employeeRows]) => {
@@ -207,17 +223,35 @@ function buildEmployeeSnapshots(rows: GoalActualRow[], dayStats: GoalDayStats) {
       const primaryRisk = sortedMetrics[0];
       const dailyNeed =
         dayStats.remainingDays > 0 && primaryRisk?.remaining ? Math.ceil(primaryRisk.remaining / dayStats.remainingDays) : primaryRisk?.remaining ?? 0;
+      const productionPointActual = employeeRows
+        .filter((row) => isProductionPointMetric(row.mainCategory))
+        .reduce((sum, row) => sum + row.actual, 0);
+      const targetMisses = metrics
+        .filter((metric) => (metric.projectedPercent ?? metric.actualPercent ?? 0) < 100)
+        .map((metric) => ({
+          metric: metric.title,
+          projectedPercent: metric.projectedPercent ?? metric.actualPercent,
+          dailyNeed:
+            dayStats.remainingDays > 0 && metric.remaining !== null ? Math.ceil(metric.remaining / dayStats.remainingDays) : metric.remaining ?? 0
+        }));
 
       return {
         name,
         totalActual: totalSummary.actual,
         totalTarget: totalSummary.target,
-        sharePercent: storeTotalActual > 0 ? (totalSummary.actual / storeTotalActual) * 100 : 0,
+        productionPointActual,
+        sharePercent:
+          storeTotalProductionPointActual > 0
+            ? (productionPointActual / storeTotalProductionPointActual) * 100
+            : storeTotalActual > 0
+              ? (totalSummary.actual / storeTotalActual) * 100
+              : 0,
         projectedPercent: totalSummary.projectedPercent ?? totalSummary.actualPercent,
         belowTargetCount: metrics.filter((metric) => (metric.projectedPercent ?? metric.actualPercent ?? 0) < 100).length,
         strongestMetric: strongestMetric?.title ?? "-",
         primaryRisk: primaryRisk?.title ?? "-",
-        dailyNeed
+        dailyNeed,
+        targetMisses
       } satisfies EmployeeSnapshot;
     })
     .sort((left, right) => right.sharePercent - left.sharePercent);
@@ -392,7 +426,7 @@ function buildStoreNarrative(storeName: string, storeCategoryRows: CategorySumma
     return `${storeName} icin su an gosterilecek kategori bazli veri bulunamiyor.`;
   }
 
-  return `${storeName} subesinde en kritik alan ${criticalCategory.label}, en guclu alan ${strongestCategory?.label ?? "-"}. Sube ici payda en yuksek katki ${topContributor?.name ?? "-"} tarafinda uretiliyor.`;
+  return `${storeName} subesinde en kritik alan ${criticalCategory.label}, en guclu alan ${strongestCategory?.label ?? "-"}. Sube ici pay, uretim puani katkisine gore bakildiginda en yuksek katki ${topContributor?.name ?? "-"} tarafinda uretiliyor.`;
 }
 
 function buildActionLines(storeCategoryRows: CategorySummaryRow[], employeeSnapshots: EmployeeSnapshot[], dayStats: GoalDayStats) {

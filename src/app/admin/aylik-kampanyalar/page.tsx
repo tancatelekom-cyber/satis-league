@@ -55,7 +55,11 @@ export default async function MonthlyCampaignAdminPage({
           </div>
         </div>
 
-        <form action={uploadMonthlyCampaignSlideAction} className="admin-media-upload-form">
+        <form
+          action={uploadMonthlyCampaignSlideAction}
+          className="admin-media-upload-form"
+          encType="multipart/form-data"
+        >
           <input accept="image/png,image/jpeg,image/webp" name="image" required type="file" />
           <button className="button-primary" type="submit">
             Resim Yukle
@@ -91,7 +95,11 @@ export default async function MonthlyCampaignAdminPage({
                 Gorseli Ac / Indir
               </a>
 
-              <form action={replaceMonthlyCampaignSlideAction} className="admin-media-action-form">
+              <form
+                action={replaceMonthlyCampaignSlideAction}
+                className="admin-media-action-form"
+                encType="multipart/form-data"
+              >
                 <input name="slideId" type="hidden" value={slide.id} />
                 <input accept="image/png,image/jpeg,image/webp" name="image" required type="file" />
                 <button className="button-secondary" type="submit">

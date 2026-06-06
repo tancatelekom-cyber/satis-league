@@ -41,6 +41,15 @@ type SummaryCard = {
   detail: string;
 };
 
+type ActionItem = {
+  title: string;
+  owner: string;
+  summary: string;
+  reason: string;
+  dailyTarget: string;
+  followUp: string;
+};
+
 type CategorySummaryRow = {
   label: string;
   target: number | null;
@@ -58,6 +67,8 @@ type CategoryShareRow = {
   sharePercent: number;
   projectedPercent: number | null;
   dailyNeed: number;
+  companyAverage: number;
+  belowCompanyAverage: boolean;
 };
 
 type CategoryShareTable = {
@@ -122,6 +133,15 @@ function isEntryCount(title: string) {
 
 function isProductionPointMetric(title: string) {
   return normalizeCategoryKey(title).includes("URETIM PUAN");
+}
+
+function isSatisfactionScore(title: string) {
+  return normalizeCategoryKey(title).includes("MEMNUNIYET");
+}
+
+function isPinRatio(title: string) {
+  const key = normalizeCategoryKey(title);
+  return key.includes("PIN") && key.includes("ORAN");
 }
 
 function formatNumber(value: number | null | undefined) {
@@ -377,7 +397,14 @@ function buildEmployeeSubcategoryTables(rows: GoalActualRow[], dayStats: GoalDay
     });
 }
 
-function buildCategoryShareTables(rows: GoalActualRow[], dayStats: GoalDayStats) {
+function buildCategoryShareTables(rows: GoalActualRow[], allEmployeeRows: GoalActualRow[], dayStats: GoalDayStats) {
+  const companyCategoryMap = new Map<string, GoalActualRow[]>();
+  allEmployeeRows.forEach((row) => {
+    const current = companyCategoryMap.get(row.mainCategory) ?? [];
+    current.push(row);
+    companyCategoryMap.set(row.mainCategory, current);
+  });
+
   const categoryMap = new Map<string, GoalActualRow[]>();
 
   rows.forEach((row) => {
@@ -390,6 +417,8 @@ function buildCategoryShareTables(rows: GoalActualRow[], dayStats: GoalDayStats)
     .sort((left, right) => left[0].localeCompare(right[0], "tr"))
     .map(([title, categoryRows]) => {
       const employeeMap = new Map<string, GoalActualRow[]>();
+      const companyAverage =
+        average((companyCategoryMap.get(title) ?? []).map((row) => row.actual).filter((value) => value > 0)) || 0;
 
       categoryRows.forEach((row) => {
         const current = employeeMap.get(row.employeeName) ?? [];
@@ -408,7 +437,9 @@ function buildCategoryShareTables(rows: GoalActualRow[], dayStats: GoalDayStats)
             sharePercent: categoryTotalActual > 0 ? (summary.actual / categoryTotalActual) * 100 : 0,
             projectedPercent: summary.projectedPercent ?? summary.actualPercent,
             dailyNeed:
-              dayStats.remainingDays > 0 && summary.remaining !== null ? Math.ceil(summary.remaining / dayStats.remainingDays) : summary.remaining ?? 0
+              dayStats.remainingDays > 0 && summary.remaining !== null ? Math.ceil(summary.remaining / dayStats.remainingDays) : summary.remaining ?? 0,
+            companyAverage,
+            belowCompanyAverage: companyAverage > 0 && summary.actual < companyAverage
           } satisfies CategoryShareRow;
         })
         .sort((left, right) => right.sharePercent - left.sharePercent);
@@ -420,7 +451,17 @@ function buildCategoryShareTables(rows: GoalActualRow[], dayStats: GoalDayStats)
     });
 }
 
-function buildSubcategoryShareTables(rows: GoalActualRow[], dayStats: GoalDayStats) {
+function buildSubcategoryShareTables(rows: GoalActualRow[], allEmployeeRows: GoalActualRow[], dayStats: GoalDayStats) {
+  const companyCategoryMap = new Map<string, GoalActualRow[]>();
+  allEmployeeRows
+    .filter((row) => Boolean(row.subCategory))
+    .forEach((row) => {
+      const key = `${row.mainCategory}__${row.subCategory}`;
+      const current = companyCategoryMap.get(key) ?? [];
+      current.push(row);
+      companyCategoryMap.set(key, current);
+    });
+
   const categoryMap = new Map<string, GoalActualRow[]>();
 
   rows
@@ -437,6 +478,8 @@ function buildSubcategoryShareTables(rows: GoalActualRow[], dayStats: GoalDaySta
     .map(([key, subcategoryRows]) => {
       const [parentTitle, title] = key.split("__");
       const employeeMap = new Map<string, GoalActualRow[]>();
+      const companyAverage =
+        average((companyCategoryMap.get(key) ?? []).map((row) => row.actual).filter((value) => value > 0)) || 0;
 
       subcategoryRows.forEach((row) => {
         const current = employeeMap.get(row.employeeName) ?? [];
@@ -455,7 +498,9 @@ function buildSubcategoryShareTables(rows: GoalActualRow[], dayStats: GoalDaySta
             sharePercent: categoryTotalActual > 0 ? (summary.actual / categoryTotalActual) * 100 : 0,
             projectedPercent: summary.projectedPercent ?? summary.actualPercent,
             dailyNeed:
-              dayStats.remainingDays > 0 && summary.remaining !== null ? Math.ceil(summary.remaining / dayStats.remainingDays) : summary.remaining ?? 0
+              dayStats.remainingDays > 0 && summary.remaining !== null ? Math.ceil(summary.remaining / dayStats.remainingDays) : summary.remaining ?? 0,
+            companyAverage,
+            belowCompanyAverage: companyAverage > 0 && summary.actual < companyAverage
           } satisfies CategoryShareRow;
         })
         .sort((left, right) => right.sharePercent - left.sharePercent);
@@ -469,11 +514,12 @@ function buildSubcategoryShareTables(rows: GoalActualRow[], dayStats: GoalDaySta
 }
 
 function buildSummaryCards(storeName: string, employeeRows: GoalActualRow[], dayStats: GoalDayStats, storeCategoryRows: CategorySummaryRow[]) {
-  const strongestCategory = [...storeCategoryRows].sort((left, right) => (right.projectedPercent ?? 0) - (left.projectedPercent ?? 0))[0];
-  const criticalCategory = [...storeCategoryRows].sort((left, right) => (left.projectedPercent ?? 0) - (right.projectedPercent ?? 0))[0];
+  const visibleCriticalRows = storeCategoryRows.filter((row) => !isEntryCount(row.label));
+  const strongestCategory = [...visibleCriticalRows].sort((left, right) => (right.projectedPercent ?? 0) - (left.projectedPercent ?? 0))[0];
+  const criticalCategory = [...visibleCriticalRows].sort((left, right) => (left.projectedPercent ?? 0) - (right.projectedPercent ?? 0))[0];
   const branchAverage = average(
-    storeCategoryRows
-      .filter((row) => row.target !== null && !isEntryCount(row.label))
+    visibleCriticalRows
+      .filter((row) => row.target !== null)
       .map((row) => row.projectedPercent ?? row.actualPercent ?? 0)
       .filter((value) => value > 0)
   );
@@ -513,8 +559,9 @@ function buildSummaryCards(storeName: string, employeeRows: GoalActualRow[], day
 }
 
 function buildStoreNarrative(storeName: string, storeCategoryRows: CategorySummaryRow[], employeeSnapshots: EmployeeSnapshot[]) {
-  const criticalCategory = [...storeCategoryRows].sort((left, right) => (left.projectedPercent ?? 0) - (right.projectedPercent ?? 0))[0];
-  const strongestCategory = [...storeCategoryRows].sort((left, right) => (right.projectedPercent ?? 0) - (left.projectedPercent ?? 0))[0];
+  const visibleCriticalRows = storeCategoryRows.filter((row) => !isEntryCount(row.label));
+  const criticalCategory = [...visibleCriticalRows].sort((left, right) => (left.projectedPercent ?? 0) - (right.projectedPercent ?? 0))[0];
+  const strongestCategory = [...visibleCriticalRows].sort((left, right) => (right.projectedPercent ?? 0) - (left.projectedPercent ?? 0))[0];
   const topContributor = [...employeeSnapshots].sort((left, right) => right.sharePercent - left.sharePercent)[0];
 
   if (!criticalCategory) {
@@ -524,29 +571,108 @@ function buildStoreNarrative(storeName: string, storeCategoryRows: CategorySumma
   return `${storeName} subesinde magaza hedefi baz alindiginda en kritik alan ${criticalCategory.label}, en guclu alan ${strongestCategory?.label ?? "-"}. Uretim puani katkisi en yuksek isim ${topContributor?.name ?? "-"} olarak gorunuyor.`;
 }
 
-function buildActionLines(storeCategoryRows: CategorySummaryRow[], categoryShareTables: CategoryShareTable[]) {
-  const lines: string[] = [];
+function buildSpecialWarningItems(storeCategoryRows: CategorySummaryRow[], employeeCategoryTables: EmployeeCategoryTable[]) {
+  const items: ActionItem[] = [];
 
-  storeCategoryRows
-    .filter((row) => row.target !== null && (row.projectedPercent ?? row.actualPercent ?? 0) < 100)
-    .slice(0, 4)
-    .forEach((row) => {
-      lines.push(`${row.label}: magaza hedefinde ay sonu ${formatPercent(row.projectedPercent ?? row.actualPercent)} gorunuyor. Kalan gunlerde gunde en az ${formatNumber(row.dailyNeed ?? 0)} uretim gerekli.`);
-    });
+  storeCategoryRows.forEach((row) => {
+    if (isPinRatio(row.label) && row.actual <= 70) {
+      items.push({
+        title: `${row.label} Uyarisi`,
+        owner: "Sube",
+        summary: `${row.label} ${formatPercent(row.actual)} seviyesinde ve alt limit olan %70'in altinda ya da esiginde.`,
+        reason: "PIN kullanim adimlari ekip rutininde zayif kalirsa kapanis ve kalite etkilenir.",
+        dailyTarget: "Her vardiyada PIN kullanim adimlari tekrar edilmeli ve gun ici oransal takip yapilmali.",
+        followUp: "Kasada kontrol listesi, vardiya ortasi oransal geri bildirim ve gun sonu sapma raporu uygulanmali."
+      });
+    }
 
-  categoryShareTables.slice(0, 4).forEach((table) => {
-    const criticalEmployee = table.rows
-      .filter((row) => (row.projectedPercent ?? 0) < 100)
-      .sort((left, right) => (left.projectedPercent ?? 0) - (right.projectedPercent ?? 0))[0];
-
-    if (criticalEmployee) {
-      lines.push(
-        `${criticalEmployee.label} / ${table.title}: calisan hedefinde ay sonu ${formatPercent(criticalEmployee.projectedPercent)} seviyesinde. Gunde en az ${formatNumber(criticalEmployee.dailyNeed)} uretim gerekli.`
-      );
+    if (isSatisfactionScore(row.label) && row.actual <= 4.4) {
+      items.push({
+        title: `${row.label} Uyarisi`,
+        owner: "Sube",
+        summary: `${row.label} skoru ${formatNumber(row.actual)} ve alt limit olan 4,40 seviyesinde ya da altinda.`,
+        reason: "Musteri deneyimi dususu capraz satis ve tekrarli tercih performansini zayiflatir.",
+        dailyTarget: "Karsilama, ihtiyac analizi ve islem sonu teyit her musteride standart olarak uygulanmali.",
+        followUp: "Yonetici gun icinde gozlem yapmali, olumsuz anlar ayni vardiyada geri bildirimle duzeltilmeli."
+      });
     }
   });
 
-  return lines;
+  employeeCategoryTables.forEach((table) => {
+    table.rows.forEach((row) => {
+      if (isPinRatio(table.title) && row.actual <= 70) {
+        items.push({
+          title: `${row.label} PIN Uyarisi`,
+          owner: table.title,
+          summary: `${row.label} icin ${table.title} ${formatPercent(row.actual)} seviyesinde.`,
+          reason: "PIN orani bireysel kullanim disiplinine bagli oldugu icin anlik geri bildirim gerektiriyor.",
+          dailyTarget: "Personelle ayni vardiyada PIN kullanimi tekrar edilmeli ve her islemde dogru akisin kullanildigi teyit edilmeli.",
+          followUp: "Gun ortasi oran kontrol edilmeli, dusukse bire bir koçlukla ayni gun toparlanmali."
+        });
+      }
+
+      if (isSatisfactionScore(table.title) && row.actual <= 4.4) {
+        items.push({
+          title: `${row.label} Memnuniyet Uyarisi`,
+          owner: table.title,
+          summary: `${row.label} icin ${table.title} skoru ${formatNumber(row.actual)} seviyesinde.`,
+          reason: "Dusuk memnuniyet, iletisim ve surec kalitesinde anlik mudahale gerektirir.",
+          dailyTarget: "Her musteri gorusmesinde karsilama, net ihtiyac analizi ve kapanis teyidi zorunlu uygulanmali.",
+          followUp: "Vardiya sonunda kisa geribildirim oturumu yapilip ertesi vardiya icin net davranis hedefi verilmeli."
+        });
+      }
+    });
+  });
+
+  return items;
+}
+
+function buildActionLines(storeCategoryRows: CategorySummaryRow[], categoryShareTables: CategoryShareTable[], employeeCategoryTables: EmployeeCategoryTable[]) {
+  const lines: ActionItem[] = [];
+
+  storeCategoryRows
+    .filter((row) => !isEntryCount(row.label) && row.target !== null && (row.projectedPercent ?? row.actualPercent ?? 0) < 100)
+    .slice(0, 4)
+    .forEach((row) => {
+      lines.push({
+        title: `${row.label} Magaza Aksiyonu`,
+        owner: "Sube",
+        summary: `${row.label} kategorisinde magaza hedefi ay sonu ${formatPercent(row.projectedPercent ?? row.actualPercent)} seviyesinde gorunuyor.`,
+        reason: `Mevcut tabloda kalan acik ${formatNumber(row.remaining)} ve hedef temposu kritik seviyede.`,
+        dailyTarget: `Kalan gunlerde gunde en az ${formatNumber(row.dailyNeed ?? 0)} uretim alinmali.`,
+        followUp: "Vardiya basi kategori hedefi paylasilip gun ortasi ve kapanista kontrol edilmeli."
+      });
+    });
+
+  categoryShareTables.slice(0, 4).forEach((table) => {
+    if (isEntryCount(table.title)) {
+      return;
+    }
+
+    const criticalEmployees = table.rows
+      .filter((row) => (row.projectedPercent ?? 0) < 100 || row.belowCompanyAverage)
+      .sort((left, right) => (left.projectedPercent ?? 0) - (right.projectedPercent ?? 0))
+      .slice(0, 5);
+
+    if (criticalEmployees.length) {
+      const names = criticalEmployees.map((row) => row.label).join(", ");
+      const lowAverageNames = criticalEmployees.filter((row) => row.belowCompanyAverage).map((row) => row.label).join(", ");
+      const dailyTargets = criticalEmployees.map((row) => `${row.label}: ${formatNumber(row.dailyNeed)}`).join(" | ");
+
+      lines.push({
+        title: `${table.title} Personel Aksiyonu`,
+        owner: table.title,
+        summary: `${table.title} kategorisinde hedefe gitmeyen veya firma ortalamasinin altinda kalan kisiler: ${names}.`,
+        reason: lowAverageNames
+          ? `Bu grupta firma ortalamasinin altinda kalan isimler de var: ${lowAverageNames}. Magaza ici iyi gorunen bir kisi bile firma ortalamasinin gerisinde olabilir.`
+          : "Bu grupta mevcut tempo kategori hedefini kapatmaya yetmiyor.",
+        dailyTarget: `Gunluk minimum beklenti: ${dailyTargets}.`,
+        followUp: "Bu isimlerle bire bir takip yapilip gun ortasi kontrol verilmeli; vardiya sonunda fark kapatma sonucu tekrar kontrol edilmeli."
+      });
+    }
+  });
+
+  return [...buildSpecialWarningItems(storeCategoryRows, employeeCategoryTables), ...lines];
 }
 
 export const dynamic = "force-dynamic";
@@ -647,11 +773,11 @@ export default async function EvaluationPresentationPage({ searchParams }: PageP
   const employeeSnapshots = buildEmployeeSnapshots(selectedEmployeeRows);
   const employeeCategoryTables = buildEmployeeCategoryTables(selectedEmployeeRows, dayStats);
   const employeeSubcategoryTables = buildEmployeeSubcategoryTables(selectedEmployeeRows, dayStats);
-  const categoryShareTables = buildCategoryShareTables(selectedEmployeeRows, dayStats);
-  const subcategoryShareTables = buildSubcategoryShareTables(selectedEmployeeRows, dayStats);
+  const categoryShareTables = buildCategoryShareTables(selectedEmployeeRows, filteredEmployeeRows, dayStats);
+  const subcategoryShareTables = buildSubcategoryShareTables(selectedEmployeeRows, filteredEmployeeRows, dayStats);
   const summaryCards = buildSummaryCards(selectedStore, selectedEmployeeRows, dayStats, storeCategoryRows);
   const storeNarrative = buildStoreNarrative(selectedStore, storeCategoryRows, employeeSnapshots);
-  const actionLines = buildActionLines(storeCategoryRows, categoryShareTables);
+  const actionLines = buildActionLines(storeCategoryRows, categoryShareTables, employeeCategoryTables);
 
   return (
     <main>
@@ -687,7 +813,7 @@ export default async function EvaluationPresentationPage({ searchParams }: PageP
       </section>
 
       <StoreEvaluationPresentation
-        actionLines={actionLines}
+        actionItems={actionLines}
         categoryShareTables={categoryShareTables}
         employeeCategoryTables={employeeCategoryTables}
         employeeSubcategoryTables={employeeSubcategoryTables}

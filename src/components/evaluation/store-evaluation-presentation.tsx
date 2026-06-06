@@ -10,6 +10,15 @@ type SummaryCard = {
   detail: string;
 };
 
+type ActionItem = {
+  title: string;
+  owner: string;
+  summary: string;
+  reason: string;
+  dailyTarget: string;
+  followUp: string;
+};
+
 type CategorySummaryRow = {
   label: string;
   target: number | null;
@@ -27,6 +36,8 @@ type CategoryShareRow = {
   sharePercent: number;
   projectedPercent: number | null;
   dailyNeed: number;
+  companyAverage: number;
+  belowCompanyAverage: boolean;
 };
 
 type EmployeeCategoryTable = {
@@ -52,7 +63,7 @@ type StoreEvaluationPresentationProps = {
   employeeSubcategoryTables: EmployeeCategoryTable[];
   categoryShareTables: CategoryShareTable[];
   subcategoryShareTables: CategoryShareTable[];
-  actionLines: string[];
+  actionItems: ActionItem[];
 };
 
 function formatPercent(value: number | null | undefined) {
@@ -97,7 +108,7 @@ export function StoreEvaluationPresentation({
   employeeSubcategoryTables,
   categoryShareTables,
   subcategoryShareTables,
-  actionLines
+  actionItems
 }: StoreEvaluationPresentationProps) {
   const stageRef = useRef<HTMLDivElement | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -128,18 +139,25 @@ export function StoreEvaluationPresentation({
                 <tr>
                   <th>Calisan</th>
                   <th>Gerc.</th>
+                  <th>Firma Ort.</th>
                   <th>Pay %</th>
                   <th>Ay Sonu %</th>
+                  <th>Durum</th>
                   <th>Gunluk Min.</th>
                 </tr>
               </thead>
               <tbody>
                 {table.rows.map((row) => (
-                  <tr key={`${table.parentTitle ?? table.title}-share-${row.label}`}>
+                  <tr
+                    key={`${table.parentTitle ?? table.title}-share-${row.label}`}
+                    className={row.belowCompanyAverage ? "presentation-table-row-alert" : ""}
+                  >
                     <td>{row.label}</td>
                     <td>{formatNumber(row.actual)}</td>
+                    <td>{row.companyAverage > 0 ? formatNumber(row.companyAverage) : "-"}</td>
                     <td>{formatPercent(row.sharePercent)}</td>
                     <td className={(row.projectedPercent ?? 0) < 100 ? "presentation-table-alert" : ""}>{formatPercent(row.projectedPercent)}</td>
+                    <td>{row.belowCompanyAverage ? "Firma ort. alti" : "Normal"}</td>
                     <td>{row.dailyNeed > 0 ? formatNumber(row.dailyNeed) : "-"}</td>
                   </tr>
                 ))}
@@ -318,19 +336,23 @@ export function StoreEvaluationPresentation({
         });
     });
 
-    chunk(actionLines, 5).forEach((group, index, list) => {
+    chunk(actionItems, 4).forEach((group, index, list) => {
       items.push({
         id: `actions-${index}`,
         title: "ALINMASI GEREKEN AKSIYONLAR",
         subtitle: `Sube ve personel bazli kapanis plani | Sayfa ${index + 1}/${list.length}`,
         body: (
           <div className="presentation-action-stack">
-            {group.map((line, itemIndex) => (
-              <article key={line} className="presentation-action-card">
-                <span className="presentation-action-order">{index * 5 + itemIndex + 1}</span>
-                <div>
-                  <strong>Aksiyon</strong>
-                  <p>{line}</p>
+            {group.map((item, itemIndex) => (
+              <article key={`${item.title}-${item.owner}`} className="presentation-action-card">
+                <span className="presentation-action-order">{index * 4 + itemIndex + 1}</span>
+                <div className="presentation-action-copy">
+                  <strong>{item.title}</strong>
+                  <span className="presentation-action-owner">{item.owner}</span>
+                  <p>{item.summary}</p>
+                  <p>{item.reason}</p>
+                  <p className="presentation-action-target">{item.dailyTarget}</p>
+                  <p>{item.followUp}</p>
                 </div>
               </article>
             ))}
@@ -357,7 +379,7 @@ export function StoreEvaluationPresentation({
 
     return items;
   }, [
-    actionLines,
+    actionItems,
     categoryShareTables,
     employeeCategoryTables,
     employeeSubcategoryTables,

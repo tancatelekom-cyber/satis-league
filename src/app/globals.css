@@ -2031,6 +2031,7 @@ textarea::placeholder {
 
 .presentation-stage {
   min-height: calc(100vh - 126px);
+  overflow: hidden;
 }
 
 .presentation-slide {
@@ -2099,9 +2100,30 @@ textarea::placeholder {
 
 .presentation-slide-body {
   min-height: 0;
+  overflow: auto;
+  padding-right: 6px;
 }
 
 .presentation-slide-compact .presentation-slide-body {
+  overflow: auto;
+}
+
+.presentation-stage:fullscreen {
+  min-height: 100vh;
+  height: 100vh;
+  overflow: auto;
+  padding: 12px;
+  background:
+    radial-gradient(circle at top left, rgba(126, 241, 211, 0.18), transparent 28%),
+    radial-gradient(circle at top right, rgba(255, 209, 102, 0.2), transparent 26%),
+    linear-gradient(180deg, #061d34, #0a3f53 54%, #0e6d72);
+}
+
+.presentation-stage:fullscreen .presentation-slide {
+  min-height: calc(100vh - 24px);
+}
+
+.presentation-stage:fullscreen .presentation-slide-body {
   overflow: auto;
 }
 

@@ -363,16 +363,13 @@ export function StoreEvaluationPresentation({
 
     items.push({
       id: "closing",
-      title: "TOPLANTI MESAJI",
-      subtitle: `${storeName} icin kapanis vurgusu`,
+      title: "TESEKKURLER",
+      subtitle: `${storeName} sunumu kapanisi`,
       body: (
         <div className="presentation-closing-card">
-          <span className="presentation-kicker">Ekibe aktarilacak mesaj</span>
-          <h2>Magaza hedefi sube tablosundan, bireysel beklenti ise personel dagilimindan takip edilmeli.</h2>
-          <p>
-            Her calisan kendi kategorisindeki gunluk minimum ihtiyaci bilerek vardiyaya cikmali; magaza hedefini kapatmak icin personel dagilimi
-            bilincli sekilde yonetilmeli.
-          </p>
+          <span className="presentation-kicker">Kapanis</span>
+          <h2>TESEKKURLER</h2>
+          <p>BOL SATISLAR</p>
         </div>
       )
     });

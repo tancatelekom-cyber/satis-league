@@ -10,24 +10,6 @@ type SummaryCard = {
   detail: string;
 };
 
-type EmployeeSnapshot = {
-  name: string;
-  totalActual: number;
-  totalTarget: number | null;
-  productionPointActual: number;
-  sharePercent: number;
-  projectedPercent: number | null;
-  belowTargetCount: number;
-  strongestMetric: string;
-  primaryRisk: string;
-  dailyNeed: number;
-  targetMisses: Array<{
-    metric: string;
-    projectedPercent: number | null;
-    dailyNeed: number;
-  }>;
-};
-
 type CategorySummaryRow = {
   label: string;
   target: number | null;
@@ -39,14 +21,25 @@ type CategorySummaryRow = {
   dailyNeed?: number;
 };
 
-type EmployeeCategoryTableRow = CategorySummaryRow;
+type CategoryShareRow = {
+  label: string;
+  actual: number;
+  sharePercent: number;
+  projectedPercent: number | null;
+  dailyNeed: number;
+};
 
 type EmployeeCategoryTable = {
   title: string;
   parentTitle?: string;
   hasTarget: boolean;
-  rows: EmployeeCategoryTableRow[];
-  totalRow: EmployeeCategoryTableRow;
+  rows: CategorySummaryRow[];
+};
+
+type CategoryShareTable = {
+  title: string;
+  parentTitle?: string;
+  rows: CategoryShareRow[];
 };
 
 type StoreEvaluationPresentationProps = {
@@ -55,21 +48,12 @@ type StoreEvaluationPresentationProps = {
   storeNarrative: string;
   summaryCards: SummaryCard[];
   storeCategoryRows: CategorySummaryRow[];
-  employeeSnapshots: EmployeeSnapshot[];
   employeeCategoryTables: EmployeeCategoryTable[];
   employeeSubcategoryTables: EmployeeCategoryTable[];
+  categoryShareTables: CategoryShareTable[];
+  subcategoryShareTables: CategoryShareTable[];
   actionLines: string[];
 };
-
-function chunk<T>(items: T[], size: number) {
-  const result: T[][] = [];
-
-  for (let index = 0; index < items.length; index += size) {
-    result.push(items.slice(index, index + size));
-  }
-
-  return result;
-}
 
 function formatPercent(value: number | null | undefined) {
   if (value === null || value === undefined || Number.isNaN(value)) {
@@ -93,15 +77,26 @@ function formatNumber(value: number | null | undefined) {
   });
 }
 
+function chunk<T>(items: T[], size: number) {
+  const result: T[][] = [];
+
+  for (let index = 0; index < items.length; index += size) {
+    result.push(items.slice(index, index + size));
+  }
+
+  return result;
+}
+
 export function StoreEvaluationPresentation({
   storeName,
   generatedAt,
   storeNarrative,
   summaryCards,
   storeCategoryRows,
-  employeeSnapshots,
   employeeCategoryTables,
   employeeSubcategoryTables,
+  categoryShareTables,
+  subcategoryShareTables,
   actionLines
 }: StoreEvaluationPresentationProps) {
   const stageRef = useRef<HTMLDivElement | null>(null);
@@ -117,7 +112,49 @@ export function StoreEvaluationPresentation({
       layout?: "default" | "compact";
     }> = [];
 
+    function renderShareTable(table: CategoryShareTable) {
+      return (
+        <section className="presentation-table-panel">
+          <div className="presentation-panel-head">
+            <span>Sube Ici Paylar</span>
+            <strong>
+              {table.parentTitle ? `${table.parentTitle} / ${table.title}` : table.title} kategorisinde personel payi ve gunluk minimum ihtiyac
+            </strong>
+          </div>
+
+          <div className="presentation-table-wrap">
+            <table className="presentation-table">
+              <thead>
+                <tr>
+                  <th>Calisan</th>
+                  <th>Gerc.</th>
+                  <th>Pay %</th>
+                  <th>Ay Sonu %</th>
+                  <th>Gunluk Min.</th>
+                </tr>
+              </thead>
+              <tbody>
+                {table.rows.map((row) => (
+                  <tr key={`${table.parentTitle ?? table.title}-share-${row.label}`}>
+                    <td>{row.label}</td>
+                    <td>{formatNumber(row.actual)}</td>
+                    <td>{formatPercent(row.sharePercent)}</td>
+                    <td className={(row.projectedPercent ?? 0) < 100 ? "presentation-table-alert" : ""}>{formatPercent(row.projectedPercent)}</td>
+                    <td>{row.dailyNeed > 0 ? formatNumber(row.dailyNeed) : "-"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      );
+    }
+
     function renderEmployeeTable(table: EmployeeCategoryTable) {
+      const shareTable =
+        categoryShareTables.find((item) => item.title === table.title && !item.parentTitle) ??
+        subcategoryShareTables.find((item) => item.title === table.title && item.parentTitle === table.parentTitle);
+
       return (
         <div className="presentation-panel-stack">
           <section className="presentation-table-panel">
@@ -171,6 +208,8 @@ export function StoreEvaluationPresentation({
               </table>
             </div>
           </section>
+
+          {shareTable ? renderShareTable(shareTable) : null}
         </div>
       );
     }
@@ -183,7 +222,7 @@ export function StoreEvaluationPresentation({
         <div className="presentation-cover-grid">
           <div className="presentation-cover-copy">
             <span className="presentation-kicker">Sube Ozeti</span>
-            <h2>{storeName} ekibinin guncel durumu, pay dagilimi ve hedef kapatma plani</h2>
+            <h2>{storeName} ekibinin guncel durumu, magaza hedefleri ve personel dagilimi</h2>
             <p>{storeNarrative}</p>
           </div>
 
@@ -203,7 +242,7 @@ export function StoreEvaluationPresentation({
     items.push({
       id: "store-status",
       title: "SUBE DURUMU",
-      subtitle: `${storeName} ana kategorilerde hedef gerceklesen tablosu`,
+      subtitle: `${storeName} ana kategorilerde magaza hedef gerceklesen tablosu`,
       layout: "compact",
       body: (
         <div className="presentation-panel-stack">
@@ -217,7 +256,7 @@ export function StoreEvaluationPresentation({
           <section className="presentation-table-panel">
             <div className="presentation-panel-head">
               <span>Sube Hedef Gerceklesenleri</span>
-              <strong>{storeName} icin kategori bazli anlik durum</strong>
+              <strong>{storeName} icin magaza hedefi bazli anlik durum</strong>
             </div>
 
             <div className="presentation-table-wrap">
@@ -231,6 +270,7 @@ export function StoreEvaluationPresentation({
                     <th>Anlik %</th>
                     <th>Ay Sonu</th>
                     <th>Ay Sonu %</th>
+                    <th>Gunluk Min.</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -245,120 +285,22 @@ export function StoreEvaluationPresentation({
                       <td className={(row.projectedPercent ?? 0) < 100 ? "presentation-table-alert" : ""}>
                         {formatPercent(row.projectedPercent)}
                       </td>
+                      <td>{row.dailyNeed && row.dailyNeed > 0 ? formatNumber(row.dailyNeed) : "-"}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-            </div>
-
-            <div className="presentation-need-board">
-              {storeCategoryRows
-                .filter((row) => row.target !== null && (row.projectedPercent ?? row.actualPercent ?? 0) < 100)
-                .map((row) => {
-                  return (
-                    <article key={`store-risk-${row.label}`} className="presentation-need-card presentation-need-card-total">
-                      <strong>{row.label}</strong>
-                      <div className="presentation-need-grid">
-                        <span className="presentation-need-pill">Ay sonu: {formatPercent(row.projectedPercent ?? row.actualPercent)}</span>
-                        <span className="presentation-need-pill">Gunluk: {formatNumber(row.dailyNeed ?? 0)} uretim</span>
-                      </div>
-                    </article>
-                  );
-                })}
             </div>
           </section>
         </div>
       )
     });
 
-    chunk(employeeSnapshots, 8).forEach((group, index, list) => {
-      items.push({
-        id: `shares-${index}`,
-        title: "SUBEDEKI PAYLAR",
-        subtitle: `Calisanlarin sube icindeki pay dagilimi | Sayfa ${index + 1}/${list.length}`,
-        body: (
-          <div className="presentation-grid-2">
-            {group.map((employee) => (
-              <article key={`${employee.name}-${employee.primaryRisk}`} className="presentation-focus-card presentation-focus-card-wide">
-                <div className="presentation-focus-head">
-                  <div>
-                    <span className="presentation-card-tag">Calisan</span>
-                    <strong>{employee.name}</strong>
-                    <h3>Sube ici pay: {formatPercent(employee.sharePercent)}</h3>
-                  </div>
-                  <span className="presentation-score-pill">{formatPercent(employee.projectedPercent)}</span>
-                </div>
-
-                <ul className="presentation-bullet-list">
-                  <li>Toplam gerceklesen: {formatNumber(employee.totalActual)}</li>
-                  <li>Uretim puani: {formatNumber(employee.productionPointActual)}</li>
-                  <li>Hedef altinda kalan kategori: {employee.belowTargetCount}</li>
-                  <li>En guclu alan: {employee.strongestMetric}</li>
-                  <li>Birincil risk: {employee.primaryRisk}</li>
-                  <li>Gunluk minimum ihtiyac: {formatNumber(employee.dailyNeed)}</li>
-                </ul>
-
-                {employee.targetMisses.length ? (
-                  <div className="presentation-chip-cloud">
-                    {employee.targetMisses.map((item) => (
-                      <span key={`${employee.name}-${item.metric}`} className="presentation-chip presentation-chip-alert">
-                        {item.metric} | {formatPercent(item.projectedPercent)} | Gunluk {formatNumber(item.dailyNeed)}
-                      </span>
-                    ))}
-                  </div>
-                ) : null}
-              </article>
-            ))}
-          </div>
-        )
-      });
-    });
-
-    chunk(employeeSnapshots.filter((item) => item.belowTargetCount > 0), 4).forEach((group, index, list) => {
-      items.push({
-        id: `employee-risks-${index}`,
-        title: "PERSONEL DURUMLARI",
-        subtitle: `Bire bir takip gerektiren calisanlar | Sayfa ${index + 1}/${list.length}`,
-        body: (
-          <div className="presentation-grid-2">
-            {group.map((employee) => (
-              <article key={`${employee.name}-risk`} className="presentation-focus-card presentation-focus-card-wide">
-                <div className="presentation-focus-head">
-                  <div>
-                    <span className="presentation-card-tag">Yakindan Takip</span>
-                    <strong>{employee.name}</strong>
-                    <h3>{employee.primaryRisk}</h3>
-                  </div>
-                  <span className="presentation-score-pill">{formatPercent(employee.projectedPercent)}</span>
-                </div>
-                <ul className="presentation-bullet-list">
-                  <li>Sube payi: {formatPercent(employee.sharePercent)}</li>
-                  <li>Toplam gerceklesen: {formatNumber(employee.totalActual)}</li>
-                  <li>Gunluk minimum ihtiyac: {formatNumber(employee.dailyNeed)}</li>
-                  <li>En guclu kategori: {employee.strongestMetric}</li>
-                </ul>
-
-                {employee.targetMisses.length ? (
-                  <div className="presentation-chip-cloud">
-                    {employee.targetMisses.map((item) => (
-                      <span key={`${employee.name}-risk-${item.metric}`} className="presentation-chip presentation-chip-alert">
-                        {item.metric} | {formatPercent(item.projectedPercent)} | Gunluk {formatNumber(item.dailyNeed)}
-                      </span>
-                    ))}
-                  </div>
-                ) : null}
-              </article>
-            ))}
-          </div>
-        )
-      });
-    });
-
     employeeCategoryTables.forEach((table) => {
       items.push({
         id: `employee-table-${table.title}`,
         title: `${table.title} PERSONEL TABLOSU`,
-        subtitle: "Kategori bazli tum calisan hedef gerceklesenleri",
+        subtitle: "Kategori bazli tum calisan hedef gerceklesenleri ve sube ici paylar",
         layout: "compact",
         body: renderEmployeeTable(table)
       });
@@ -369,7 +311,7 @@ export function StoreEvaluationPresentation({
           items.push({
             id: `employee-sub-table-${subtable.parentTitle}-${subtable.title}`,
             title: `${subtable.parentTitle} / ${subtable.title} ALT KATEGORI`,
-            subtitle: "Alt kategori bazli tum calisan hedef gerceklesenleri",
+            subtitle: "Alt kategori bazli calisan durumlari ve sube ici paylar",
             layout: "compact",
             body: renderEmployeeTable(subtable)
           });
@@ -404,10 +346,10 @@ export function StoreEvaluationPresentation({
       body: (
         <div className="presentation-closing-card">
           <span className="presentation-kicker">Ekibe aktarilacak mesaj</span>
-          <h2>Her calisan kendi gunluk minimum ihtiyacini bilerek vardiyaya cikmali ve sube ici payini bilincli sekilde buyutmeli.</h2>
+          <h2>Magaza hedefi sube tablosundan, bireysel beklenti ise personel dagilimindan takip edilmeli.</h2>
           <p>
-            Hedef altindaki alanlarda bire bir takip, guclu alanlarda tempo koruma ve sube ici pay dagilimini dengeleme ayni gun icinde
-            yonetilecek temel aksiyonlar olarak uygulanmali.
+            Her calisan kendi kategorisindeki gunluk minimum ihtiyaci bilerek vardiyaya cikmali; magaza hedefini kapatmak icin personel dagilimi
+            bilincli sekilde yonetilmeli.
           </p>
         </div>
       )
@@ -416,13 +358,14 @@ export function StoreEvaluationPresentation({
     return items;
   }, [
     actionLines,
+    categoryShareTables,
     employeeCategoryTables,
-    employeeSnapshots,
     employeeSubcategoryTables,
     generatedAt,
     storeCategoryRows,
     storeName,
     storeNarrative,
+    subcategoryShareTables,
     summaryCards
   ]);
 
@@ -439,16 +382,6 @@ export function StoreEvaluationPresentation({
       if (event.key === "ArrowLeft" || event.key === "PageUp") {
         event.preventDefault();
         setActiveIndex((current) => Math.max(current - 1, 0));
-      }
-
-      if (event.key === "Home") {
-        event.preventDefault();
-        setActiveIndex(0);
-      }
-
-      if (event.key === "End") {
-        event.preventDefault();
-        setActiveIndex(slides.length - 1);
       }
     }
 

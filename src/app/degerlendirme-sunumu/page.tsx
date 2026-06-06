@@ -1,7 +1,14 @@
 import { redirect } from "next/navigation";
 import { StoreEvaluationPresentation } from "@/components/evaluation/store-evaluation-presentation";
 import { requireUser } from "@/lib/auth/require-user";
-import { fetchGoalActualRows, fetchGoalDayStats, type GoalActualRow, type GoalDayStats } from "@/lib/goal-actuals";
+import {
+  fetchGoalActualRows,
+  fetchGoalDayStats,
+  fetchGoalStoreRows,
+  type GoalActualRow,
+  type GoalDayStats,
+  type GoalStoreRow
+} from "@/lib/goal-actuals";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
@@ -45,32 +52,33 @@ type CategorySummaryRow = {
   dailyNeed?: number;
 };
 
+type CategoryShareRow = {
+  label: string;
+  actual: number;
+  sharePercent: number;
+  projectedPercent: number | null;
+  dailyNeed: number;
+};
+
+type CategoryShareTable = {
+  title: string;
+  parentTitle?: string;
+  rows: CategoryShareRow[];
+};
+
 type EmployeeSnapshot = {
   name: string;
   totalActual: number;
-  totalTarget: number | null;
   productionPointActual: number;
   sharePercent: number;
-  projectedPercent: number | null;
-  belowTargetCount: number;
   strongestMetric: string;
-  primaryRisk: string;
-  dailyNeed: number;
-  targetMisses: Array<{
-    metric: string;
-    projectedPercent: number | null;
-    dailyNeed: number;
-  }>;
 };
-
-type EmployeeCategoryTableRow = CategorySummaryRow;
 
 type EmployeeCategoryTable = {
   title: string;
   parentTitle?: string;
   hasTarget: boolean;
-  rows: EmployeeCategoryTableRow[];
-  totalRow: EmployeeCategoryTableRow;
+  rows: CategorySummaryRow[];
 };
 
 type PageProps = {
@@ -116,14 +124,6 @@ function isProductionPointMetric(title: string) {
   return normalizeCategoryKey(title).includes("URETIM PUAN");
 }
 
-function average(values: number[]) {
-  if (!values.length) {
-    return 0;
-  }
-
-  return values.reduce((sum, value) => sum + value, 0) / values.length;
-}
-
 function formatNumber(value: number | null | undefined) {
   if (value === null || value === undefined || Number.isNaN(value)) {
     return "-";
@@ -146,6 +146,18 @@ function formatPercent(value: number | null | undefined) {
   })}`;
 }
 
+function average(values: number[]) {
+  if (!values.length) {
+    return 0;
+  }
+
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+function sameStore(left: string, right: string) {
+  return normalizeCategoryKey(left) === normalizeCategoryKey(right);
+}
+
 function buildEmployeeMetricSummary(rows: GoalActualRow[], workedDays: number, totalDays: number): MetricSummary {
   const totalTarget = rows.reduce((sum, row) => sum + (row.target ?? 0), 0);
   const actual = rows.reduce((sum, row) => sum + row.actual, 0);
@@ -164,6 +176,25 @@ function buildEmployeeMetricSummary(rows: GoalActualRow[], workedDays: number, t
   };
 }
 
+function buildStoreMetricSummary(rows: GoalStoreRow[], workedDays: number, totalDays: number): MetricSummary {
+  const totalTarget = rows.reduce((sum, row) => sum + (row.target ?? 0), 0);
+  const actual = rows.reduce((sum, row) => sum + row.actual, 0);
+  const hasTarget = totalTarget > 0;
+  const showProjection = rows.every((row) => row.includeProjection);
+  const projectedActual = showProjection ? (workedDays > 0 ? Math.floor((actual / workedDays) * totalDays) : actual) : null;
+
+  return {
+    title: rows[0]?.mainCategory ?? "Genel",
+    target: hasTarget ? totalTarget : null,
+    actual,
+    actualPercent: hasTarget ? (actual / totalTarget) * 100 : null,
+    remaining: hasTarget ? Math.max(totalTarget - actual, 0) : null,
+    projectedActual,
+    projectedPercent: hasTarget && projectedActual !== null ? (projectedActual / totalTarget) * 100 : null,
+    hasTarget
+  };
+}
+
 function buildEmployeeCategorySummaries(rows: GoalActualRow[], workedDays: number, totalDays: number) {
   const map = new Map<string, GoalActualRow[]>();
 
@@ -178,23 +209,37 @@ function buildEmployeeCategorySummaries(rows: GoalActualRow[], workedDays: numbe
     .sort((left, right) => (left.projectedPercent ?? left.actualPercent ?? 0) - (right.projectedPercent ?? right.actualPercent ?? 0));
 }
 
-function buildStoreCategoryRows(rows: GoalActualRow[], dayStats: GoalDayStats) {
-  return buildEmployeeCategorySummaries(rows, dayStats.workedDays, dayStats.totalDays)
-    .filter((metric) => !isEntryCount(metric.title))
-    .map((metric) => ({
-      label: metric.title,
-      target: metric.target,
-      actual: metric.actual,
-      remaining: metric.remaining,
-      actualPercent: metric.actualPercent,
-      projectedActual: metric.projectedActual,
-      projectedPercent: metric.projectedPercent,
-      dailyNeed:
-        dayStats.remainingDays > 0 && metric.remaining !== null ? Math.ceil(metric.remaining / dayStats.remainingDays) : metric.remaining ?? 0
-    }));
+function buildStoreCategoryRows(rows: GoalStoreRow[], dayStats: GoalDayStats) {
+  const categoryMap = new Map<string, GoalStoreRow[]>();
+
+  rows
+    .filter((row) => !isAggregateCategoryLabel(row.mainCategory))
+    .forEach((row) => {
+      const current = categoryMap.get(row.mainCategory) ?? [];
+      current.push(row);
+      categoryMap.set(row.mainCategory, current);
+    });
+
+  return Array.from(categoryMap.entries())
+    .sort((left, right) => left[0].localeCompare(right[0], "tr"))
+    .map(([label, categoryRows]) => {
+      const summary = buildStoreMetricSummary(categoryRows, dayStats.workedDays, dayStats.totalDays);
+
+      return {
+        label,
+        target: summary.target,
+        actual: summary.actual,
+        remaining: summary.remaining,
+        actualPercent: summary.actualPercent,
+        projectedActual: summary.projectedActual,
+        projectedPercent: summary.projectedPercent ?? summary.actualPercent,
+        dailyNeed:
+          dayStats.remainingDays > 0 && summary.remaining !== null ? Math.ceil(summary.remaining / dayStats.remainingDays) : summary.remaining ?? 0
+      } satisfies CategorySummaryRow;
+    });
 }
 
-function buildEmployeeSnapshots(rows: GoalActualRow[], dayStats: GoalDayStats) {
+function buildEmployeeSnapshots(rows: GoalActualRow[]) {
   const employeeMap = new Map<string, GoalActualRow[]>();
 
   rows.forEach((row) => {
@@ -203,55 +248,33 @@ function buildEmployeeSnapshots(rows: GoalActualRow[], dayStats: GoalDayStats) {
     employeeMap.set(row.employeeName, current);
   });
 
-  const storeTotalActual = rows.reduce((sum, row) => sum + row.actual, 0);
-  const storeTotalProductionPointActual = rows
+  const storeProductionPointActual = rows
     .filter((row) => isProductionPointMetric(row.mainCategory))
     .reduce((sum, row) => sum + row.actual, 0);
+  const storeTotalActual = rows.reduce((sum, row) => sum + row.actual, 0);
 
   return Array.from(employeeMap.entries())
     .map(([name, employeeRows]) => {
-      const totalSummary = buildEmployeeMetricSummary(employeeRows, dayStats.workedDays, dayStats.totalDays);
-      const metrics = buildEmployeeCategorySummaries(employeeRows, dayStats.workedDays, dayStats.totalDays).filter(
-        (metric) => metric.hasTarget && !isEntryCount(metric.title)
-      );
-      const sortedMetrics = [...metrics].sort(
-        (left, right) => (left.projectedPercent ?? left.actualPercent ?? 0) - (right.projectedPercent ?? right.actualPercent ?? 0)
-      );
-      const strongestMetric = [...metrics].sort(
-        (left, right) => (right.projectedPercent ?? right.actualPercent ?? 0) - (left.projectedPercent ?? left.actualPercent ?? 0)
-      )[0];
-      const primaryRisk = sortedMetrics[0];
-      const dailyNeed =
-        dayStats.remainingDays > 0 && primaryRisk?.remaining ? Math.ceil(primaryRisk.remaining / dayStats.remainingDays) : primaryRisk?.remaining ?? 0;
       const productionPointActual = employeeRows
         .filter((row) => isProductionPointMetric(row.mainCategory))
         .reduce((sum, row) => sum + row.actual, 0);
-      const targetMisses = metrics
-        .filter((metric) => (metric.projectedPercent ?? metric.actualPercent ?? 0) < 100)
-        .map((metric) => ({
-          metric: metric.title,
-          projectedPercent: metric.projectedPercent ?? metric.actualPercent,
-          dailyNeed:
-            dayStats.remainingDays > 0 && metric.remaining !== null ? Math.ceil(metric.remaining / dayStats.remainingDays) : metric.remaining ?? 0
-        }));
+      const totalActual = employeeRows.reduce((sum, row) => sum + row.actual, 0);
+      const strongestMetric =
+        buildEmployeeCategorySummaries(employeeRows, 1, 1).sort(
+          (left, right) => (right.actualPercent ?? right.actual ?? 0) - (left.actualPercent ?? left.actual ?? 0)
+        )[0]?.title ?? "-";
 
       return {
         name,
-        totalActual: totalSummary.actual,
-        totalTarget: totalSummary.target,
+        totalActual,
         productionPointActual,
         sharePercent:
-          storeTotalProductionPointActual > 0
-            ? (productionPointActual / storeTotalProductionPointActual) * 100
+          storeProductionPointActual > 0
+            ? (productionPointActual / storeProductionPointActual) * 100
             : storeTotalActual > 0
-              ? (totalSummary.actual / storeTotalActual) * 100
+              ? (totalActual / storeTotalActual) * 100
               : 0,
-        projectedPercent: totalSummary.projectedPercent ?? totalSummary.actualPercent,
-        belowTargetCount: metrics.filter((metric) => (metric.projectedPercent ?? metric.actualPercent ?? 0) < 100).length,
-        strongestMetric: strongestMetric?.title ?? "-",
-        primaryRisk: primaryRisk?.title ?? "-",
-        dailyNeed,
-        targetMisses
+        strongestMetric
       } satisfies EmployeeSnapshot;
     })
     .sort((left, right) => right.sharePercent - left.sharePercent);
@@ -289,7 +312,7 @@ function buildEmployeeCategoryTables(rows: GoalActualRow[], dayStats: GoalDaySta
             actualPercent: summary.actualPercent,
             projectedActual: summary.projectedActual,
             projectedPercent: summary.projectedPercent
-          } satisfies EmployeeCategoryTableRow;
+          } satisfies CategorySummaryRow;
         })
         .sort((left, right) => left.label.localeCompare(right.label, "tr"));
 
@@ -298,16 +321,7 @@ function buildEmployeeCategoryTables(rows: GoalActualRow[], dayStats: GoalDaySta
       return {
         title,
         hasTarget: totalSummary.target !== null && totalSummary.target > 0,
-        rows: rowsForTable,
-        totalRow: {
-          label: "SUBE",
-          target: totalSummary.target,
-          actual: totalSummary.actual,
-          remaining: totalSummary.remaining,
-          actualPercent: totalSummary.actualPercent,
-          projectedActual: totalSummary.projectedActual,
-          projectedPercent: totalSummary.projectedPercent
-        }
+        rows: rowsForTable
       } satisfies EmployeeCategoryTable;
     });
 }
@@ -348,7 +362,7 @@ function buildEmployeeSubcategoryTables(rows: GoalActualRow[], dayStats: GoalDay
             actualPercent: summary.actualPercent,
             projectedActual: summary.projectedActual,
             projectedPercent: summary.projectedPercent
-          } satisfies EmployeeCategoryTableRow;
+          } satisfies CategorySummaryRow;
         })
         .sort((left, right) => left.label.localeCompare(right.label, "tr"));
 
@@ -358,22 +372,103 @@ function buildEmployeeSubcategoryTables(rows: GoalActualRow[], dayStats: GoalDay
         title,
         parentTitle,
         hasTarget: totalSummary.target !== null && totalSummary.target > 0,
-        rows: rowsForTable,
-        totalRow: {
-          label: "SUBE",
-          target: totalSummary.target,
-          actual: totalSummary.actual,
-          remaining: totalSummary.remaining,
-          actualPercent: totalSummary.actualPercent,
-          projectedActual: totalSummary.projectedActual,
-          projectedPercent: totalSummary.projectedPercent
-        }
+        rows: rowsForTable
       } satisfies EmployeeCategoryTable;
     });
 }
 
-function buildSummaryCards(storeName: string, rows: GoalActualRow[], dayStats: GoalDayStats, employeeSnapshots: EmployeeSnapshot[], storeCategoryRows: CategorySummaryRow[]) {
-  const riskCount = employeeSnapshots.filter((item) => item.belowTargetCount > 0).length;
+function buildCategoryShareTables(rows: GoalActualRow[], dayStats: GoalDayStats) {
+  const categoryMap = new Map<string, GoalActualRow[]>();
+
+  rows.forEach((row) => {
+    const current = categoryMap.get(row.mainCategory) ?? [];
+    current.push(row);
+    categoryMap.set(row.mainCategory, current);
+  });
+
+  return Array.from(categoryMap.entries())
+    .sort((left, right) => left[0].localeCompare(right[0], "tr"))
+    .map(([title, categoryRows]) => {
+      const employeeMap = new Map<string, GoalActualRow[]>();
+
+      categoryRows.forEach((row) => {
+        const current = employeeMap.get(row.employeeName) ?? [];
+        current.push(row);
+        employeeMap.set(row.employeeName, current);
+      });
+
+      const categoryTotalActual = categoryRows.reduce((sum, row) => sum + row.actual, 0);
+      const rowsForTable = Array.from(employeeMap.entries())
+        .map(([label, employeeRows]) => {
+          const summary = buildEmployeeMetricSummary(employeeRows, dayStats.workedDays, dayStats.totalDays);
+
+          return {
+            label,
+            actual: summary.actual,
+            sharePercent: categoryTotalActual > 0 ? (summary.actual / categoryTotalActual) * 100 : 0,
+            projectedPercent: summary.projectedPercent ?? summary.actualPercent,
+            dailyNeed:
+              dayStats.remainingDays > 0 && summary.remaining !== null ? Math.ceil(summary.remaining / dayStats.remainingDays) : summary.remaining ?? 0
+          } satisfies CategoryShareRow;
+        })
+        .sort((left, right) => right.sharePercent - left.sharePercent);
+
+      return {
+        title,
+        rows: rowsForTable
+      } satisfies CategoryShareTable;
+    });
+}
+
+function buildSubcategoryShareTables(rows: GoalActualRow[], dayStats: GoalDayStats) {
+  const categoryMap = new Map<string, GoalActualRow[]>();
+
+  rows
+    .filter((row) => Boolean(row.subCategory))
+    .forEach((row) => {
+      const key = `${row.mainCategory}__${row.subCategory}`;
+      const current = categoryMap.get(key) ?? [];
+      current.push(row);
+      categoryMap.set(key, current);
+    });
+
+  return Array.from(categoryMap.entries())
+    .sort((left, right) => left[0].localeCompare(right[0], "tr"))
+    .map(([key, subcategoryRows]) => {
+      const [parentTitle, title] = key.split("__");
+      const employeeMap = new Map<string, GoalActualRow[]>();
+
+      subcategoryRows.forEach((row) => {
+        const current = employeeMap.get(row.employeeName) ?? [];
+        current.push(row);
+        employeeMap.set(row.employeeName, current);
+      });
+
+      const categoryTotalActual = subcategoryRows.reduce((sum, row) => sum + row.actual, 0);
+      const rowsForTable = Array.from(employeeMap.entries())
+        .map(([label, employeeRows]) => {
+          const summary = buildEmployeeMetricSummary(employeeRows, dayStats.workedDays, dayStats.totalDays);
+
+          return {
+            label,
+            actual: summary.actual,
+            sharePercent: categoryTotalActual > 0 ? (summary.actual / categoryTotalActual) * 100 : 0,
+            projectedPercent: summary.projectedPercent ?? summary.actualPercent,
+            dailyNeed:
+              dayStats.remainingDays > 0 && summary.remaining !== null ? Math.ceil(summary.remaining / dayStats.remainingDays) : summary.remaining ?? 0
+          } satisfies CategoryShareRow;
+        })
+        .sort((left, right) => right.sharePercent - left.sharePercent);
+
+      return {
+        title,
+        parentTitle,
+        rows: rowsForTable
+      } satisfies CategoryShareTable;
+    });
+}
+
+function buildSummaryCards(storeName: string, employeeRows: GoalActualRow[], dayStats: GoalDayStats, storeCategoryRows: CategorySummaryRow[]) {
   const strongestCategory = [...storeCategoryRows].sort((left, right) => (right.projectedPercent ?? 0) - (left.projectedPercent ?? 0))[0];
   const criticalCategory = [...storeCategoryRows].sort((left, right) => (left.projectedPercent ?? 0) - (right.projectedPercent ?? 0))[0];
   const branchAverage = average(
@@ -391,7 +486,7 @@ function buildSummaryCards(storeName: string, rows: GoalActualRow[], dayStats: G
     },
     {
       label: "Calisan Sayisi",
-      value: String(new Set(rows.map((row) => row.employeeName)).size),
+      value: String(new Set(employeeRows.map((row) => row.employeeName)).size),
       detail: "Sunumdaki aktif personel adedi."
     },
     {
@@ -410,9 +505,9 @@ function buildSummaryCards(storeName: string, rows: GoalActualRow[], dayStats: G
       detail: `En guclu alan ${strongestCategory?.label ?? "-"}, en kritik alan ${criticalCategory?.label ?? "-"}.`
     },
     {
-      label: "Riskli Personel",
-      value: String(riskCount),
-      detail: "Bire bir takip gerektiren calisan sayisi."
+      label: "Kritik Kategori",
+      value: criticalCategory?.label ?? "-",
+      detail: `Gunluk minimum ihtiyac ${formatNumber(criticalCategory?.dailyNeed ?? 0)}.`
     }
   ] satisfies SummaryCard[];
 }
@@ -426,30 +521,29 @@ function buildStoreNarrative(storeName: string, storeCategoryRows: CategorySumma
     return `${storeName} icin su an gosterilecek kategori bazli veri bulunamiyor.`;
   }
 
-  return `${storeName} subesinde en kritik alan ${criticalCategory.label}, en guclu alan ${strongestCategory?.label ?? "-"}. Sube ici pay, uretim puani katkisine gore bakildiginda en yuksek katki ${topContributor?.name ?? "-"} tarafinda uretiliyor.`;
+  return `${storeName} subesinde magaza hedefi baz alindiginda en kritik alan ${criticalCategory.label}, en guclu alan ${strongestCategory?.label ?? "-"}. Uretim puani katkisi en yuksek isim ${topContributor?.name ?? "-"} olarak gorunuyor.`;
 }
 
-function buildActionLines(storeCategoryRows: CategorySummaryRow[], employeeSnapshots: EmployeeSnapshot[], dayStats: GoalDayStats) {
+function buildActionLines(storeCategoryRows: CategorySummaryRow[], categoryShareTables: CategoryShareTable[]) {
   const lines: string[] = [];
 
   storeCategoryRows
     .filter((row) => row.target !== null && (row.projectedPercent ?? row.actualPercent ?? 0) < 100)
     .slice(0, 4)
     .forEach((row) => {
-      const dailyNeed = dayStats.remainingDays > 0 && row.remaining !== null ? Math.ceil(row.remaining / dayStats.remainingDays) : row.remaining ?? 0;
-      lines.push(`${row.label}: kalan gunlerde gunde en az ${formatNumber(dailyNeed)} ek uretim hedefiyle vardiya takip listesine alinmali.`);
+      lines.push(`${row.label}: magaza hedefinde ay sonu ${formatPercent(row.projectedPercent ?? row.actualPercent)} gorunuyor. Kalan gunlerde gunde en az ${formatNumber(row.dailyNeed ?? 0)} uretim gerekli.`);
     });
 
-  employeeSnapshots
-    .filter((item) => item.belowTargetCount > 0)
-    .slice(0, 4)
-    .forEach((employee) => {
-      lines.push(`${employee.name}: ${employee.primaryRisk} alaninda bire bir takip yapilip gunde en az ${formatNumber(employee.dailyNeed)} ek uretim beklenmeli.`);
-    });
+  categoryShareTables.slice(0, 4).forEach((table) => {
+    const criticalEmployee = table.rows
+      .filter((row) => (row.projectedPercent ?? 0) < 100)
+      .sort((left, right) => (left.projectedPercent ?? 0) - (right.projectedPercent ?? 0))[0];
 
-  const lowShareEmployees = [...employeeSnapshots].sort((left, right) => left.sharePercent - right.sharePercent).slice(0, 2);
-  lowShareEmployees.forEach((employee) => {
-    lines.push(`${employee.name}: sube ici payi ${formatPercent(employee.sharePercent)} seviyesinde. Guclu oldugu ${employee.strongestMetric} alanindan ekstra katkı istenmeli.`);
+    if (criticalEmployee) {
+      lines.push(
+        `${criticalEmployee.label} / ${table.title}: calisan hedefinde ay sonu ${formatPercent(criticalEmployee.projectedPercent)} seviyesinde. Gunde en az ${formatNumber(criticalEmployee.dailyNeed)} uretim gerekli.`
+      );
+    }
   });
 
   return lines;
@@ -488,9 +582,17 @@ export default async function EvaluationPresentationPage({ searchParams }: PageP
     redirect("/hesabim");
   }
 
-  const [employeeRows, dayStats] = await Promise.all([fetchGoalActualRows(), fetchGoalDayStats().catch(() => EMPTY_DAYS)]);
-  const filteredRows = employeeRows.filter((row) => row.storeName && !isAggregateCategoryLabel(row.mainCategory));
-  const allStoreNames = Array.from(new Set(filteredRows.map((row) => row.storeName))).sort((left, right) => left.localeCompare(right, "tr"));
+  const [employeeRows, storeRows, dayStats] = await Promise.all([
+    fetchGoalActualRows(),
+    fetchGoalStoreRows().catch(() => [] as GoalStoreRow[]),
+    fetchGoalDayStats().catch(() => EMPTY_DAYS)
+  ]);
+
+  const filteredEmployeeRows = employeeRows.filter((row) => row.storeName && !isAggregateCategoryLabel(row.mainCategory));
+  const filteredStoreRows = storeRows.filter((row) => row.storeCode && !isAggregateCategoryLabel(row.mainCategory));
+  const allStoreNames = Array.from(
+    new Set([...filteredEmployeeRows.map((row) => row.storeName), ...filteredStoreRows.map((row) => row.storeCode)])
+  ).sort((left, right) => left.localeCompare(right, "tr"));
   const ownStoreName = safeProfile.store?.name?.trim() ?? "";
   const allowedStoreNames =
     safeProfile.role === "manager"
@@ -508,7 +610,8 @@ export default async function EvaluationPresentationPage({ searchParams }: PageP
 
   const requestedStore = String(params?.store ?? "").trim();
   const selectedStore = allowedStoreNames.includes(requestedStore) ? requestedStore : allowedStoreNames[0];
-  const selectedRows = filteredRows.filter((row) => row.storeName === selectedStore);
+  const selectedEmployeeRows = filteredEmployeeRows.filter((row) => sameStore(row.storeName, selectedStore));
+  const selectedStoreRows = filteredStoreRows.filter((row) => sameStore(row.storeCode, selectedStore));
   const generatedAt = new Intl.DateTimeFormat("tr-TR", {
     day: "2-digit",
     month: "long",
@@ -517,7 +620,7 @@ export default async function EvaluationPresentationPage({ searchParams }: PageP
     minute: "2-digit"
   }).format(new Date());
 
-  if (!selectedRows.length) {
+  if (!selectedEmployeeRows.length) {
     return (
       <main>
         <h1 className="page-title">Degerlendirme Sunumu</h1>
@@ -526,13 +629,29 @@ export default async function EvaluationPresentationPage({ searchParams }: PageP
     );
   }
 
-  const storeCategoryRows = buildStoreCategoryRows(selectedRows, dayStats);
-  const employeeSnapshots = buildEmployeeSnapshots(selectedRows, dayStats);
-  const employeeCategoryTables = buildEmployeeCategoryTables(selectedRows, dayStats);
-  const employeeSubcategoryTables = buildEmployeeSubcategoryTables(selectedRows, dayStats);
-  const summaryCards = buildSummaryCards(selectedStore, selectedRows, dayStats, employeeSnapshots, storeCategoryRows);
+  const storeCategoryRows = selectedStoreRows.length
+    ? buildStoreCategoryRows(selectedStoreRows, dayStats)
+    : buildEmployeeCategorySummaries(selectedEmployeeRows, dayStats.workedDays, dayStats.totalDays)
+        .filter((metric) => !isEntryCount(metric.title))
+        .map((metric) => ({
+          label: metric.title,
+          target: metric.target,
+          actual: metric.actual,
+          remaining: metric.remaining,
+          actualPercent: metric.actualPercent,
+          projectedActual: metric.projectedActual,
+          projectedPercent: metric.projectedPercent ?? metric.actualPercent,
+          dailyNeed:
+            dayStats.remainingDays > 0 && metric.remaining !== null ? Math.ceil(metric.remaining / dayStats.remainingDays) : metric.remaining ?? 0
+        }));
+  const employeeSnapshots = buildEmployeeSnapshots(selectedEmployeeRows);
+  const employeeCategoryTables = buildEmployeeCategoryTables(selectedEmployeeRows, dayStats);
+  const employeeSubcategoryTables = buildEmployeeSubcategoryTables(selectedEmployeeRows, dayStats);
+  const categoryShareTables = buildCategoryShareTables(selectedEmployeeRows, dayStats);
+  const subcategoryShareTables = buildSubcategoryShareTables(selectedEmployeeRows, dayStats);
+  const summaryCards = buildSummaryCards(selectedStore, selectedEmployeeRows, dayStats, storeCategoryRows);
   const storeNarrative = buildStoreNarrative(selectedStore, storeCategoryRows, employeeSnapshots);
-  const actionLines = buildActionLines(storeCategoryRows, employeeSnapshots, dayStats);
+  const actionLines = buildActionLines(storeCategoryRows, categoryShareTables);
 
   return (
     <main>
@@ -569,13 +688,14 @@ export default async function EvaluationPresentationPage({ searchParams }: PageP
 
       <StoreEvaluationPresentation
         actionLines={actionLines}
+        categoryShareTables={categoryShareTables}
         employeeCategoryTables={employeeCategoryTables}
-        employeeSnapshots={employeeSnapshots}
         employeeSubcategoryTables={employeeSubcategoryTables}
         generatedAt={generatedAt}
         storeCategoryRows={storeCategoryRows}
         storeName={selectedStore}
         storeNarrative={storeNarrative}
+        subcategoryShareTables={subcategoryShareTables}
         summaryCards={summaryCards}
       />
     </main>

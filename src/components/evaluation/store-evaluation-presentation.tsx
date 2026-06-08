@@ -687,6 +687,24 @@ export function StoreEvaluationPresentation({
             </div>
 
             <div className="presentation-slide-body">{activeSlide.body}</div>
+
+            <div className="presentation-slide-nav">
+              <button className="presentation-bottom-arrow" type="button" onClick={goToPreviousSlide}>
+                <span className="presentation-bottom-arrow-icon">{"<-"}</span>
+                <span>Geri</span>
+              </button>
+
+              <div className="presentation-slide-nav-meta">
+                <span>
+                  {activeIndex + 1} / {slides.length}
+                </span>
+              </div>
+
+              <button className="presentation-bottom-arrow presentation-bottom-arrow-next" type="button" onClick={goToNextSlide}>
+                <span>Ileri</span>
+                <span className="presentation-bottom-arrow-icon">{"->"}</span>
+              </button>
+            </div>
           </article>
         </div>
       </section>
@@ -700,18 +718,6 @@ export function StoreEvaluationPresentation({
             onClick={() => setActiveIndex(index)}
           />
         ))}
-      </div>
-
-      <div className="presentation-bottom-nav">
-        <button className="presentation-bottom-arrow" type="button" onClick={goToPreviousSlide}>
-          <span className="presentation-bottom-arrow-icon">{"<-"}</span>
-          <span>Geri</span>
-        </button>
-
-        <button className="presentation-bottom-arrow presentation-bottom-arrow-next" type="button" onClick={goToNextSlide}>
-          <span>Ileri</span>
-          <span className="presentation-bottom-arrow-icon">{"->"}</span>
-        </button>
       </div>
     </main>
   );

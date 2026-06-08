@@ -2061,7 +2061,7 @@ textarea::placeholder {
     radial-gradient(circle at top right, rgba(126, 241, 211, 0.12), transparent 24%);
   box-shadow: 0 28px 60px rgba(5, 18, 36, 0.32);
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
   gap: 26px;
 }
 
@@ -2712,11 +2712,32 @@ textarea::placeholder {
   background: linear-gradient(135deg, #ffd166, #7ef1d3);
 }
 
-.presentation-bottom-nav {
-  margin-top: 14px;
-  display: flex;
-  justify-content: space-between;
+.presentation-slide-nav {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
   gap: 16px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.presentation-slide-nav-meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+
+.presentation-slide-nav-meta span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #dff7ff;
+  font-size: 0.92rem;
+  font-weight: 800;
 }
 
 .presentation-bottom-arrow {
@@ -3038,15 +3059,20 @@ textarea::placeholder {
     width: 22px;
   }
 
-  .presentation-bottom-nav {
-    margin-top: 10px;
+  .presentation-slide-nav {
     gap: 10px;
+    padding-top: 6px;
   }
 
   .presentation-bottom-arrow {
     min-width: 124px;
     padding: 10px 14px;
     font-size: 0.88rem;
+  }
+
+  .presentation-slide-nav-meta span {
+    padding: 8px 10px;
+    font-size: 0.78rem;
   }
 }
 

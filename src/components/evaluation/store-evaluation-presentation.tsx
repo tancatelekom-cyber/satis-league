@@ -425,6 +425,39 @@ export function StoreEvaluationPresentation({
     });
 
     items.push({
+      id: "store-daily-needs",
+      title: "SUBE GUNLUK IHTIYACLARI",
+      subtitle: `${storeName} hedef gerceklesenine gore kategori bazli gunluk minimum beklenti`,
+      layout: "compact",
+      body: (
+        <section className="presentation-panel-stack">
+          <section className="presentation-panel presentation-panel-hero">
+            <div className="presentation-panel-head">
+              <span>Gunluk Takip</span>
+              <strong>Kalan gunlerde kategori bazli minimum uretim ihtiyaci</strong>
+            </div>
+          </section>
+
+          <div className="presentation-need-board">
+            {storeCategoryRows
+              .filter((row) => row.target !== null && !isNaN(row.dailyNeed ?? NaN))
+              .map((row) => (
+                <article key={`daily-need-${row.label}`} className="presentation-need-card">
+                  <strong>{row.label}</strong>
+                  <div className="presentation-need-grid">
+                    <span className="presentation-need-pill">Gunluk: {formatNumber(row.dailyNeed ?? 0)}</span>
+                    <span className="presentation-need-pill">Kalan: {formatNumber(row.remaining)}</span>
+                    <span className="presentation-need-pill">Anlik: {formatPercent(row.actualPercent)}</span>
+                    <span className="presentation-need-pill">Ay Sonu: {formatPercent(row.projectedPercent)}</span>
+                  </div>
+                </article>
+              ))}
+          </div>
+        </section>
+      )
+    });
+
+    items.push({
       id: "closing",
       title: "TESEKKURLER",
       subtitle: `${storeName} sunumu kapanisi`,

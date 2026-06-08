@@ -102,6 +102,7 @@ function chunk<T>(items: T[], size: number) {
 
 const EMPLOYEE_ROWS_PER_SLIDE = 5;
 const SHARE_ROWS_PER_SLIDE = 6;
+const ACTION_ITEMS_PER_SLIDE = 3;
 
 function renderCols(widths: string[]) {
   return (
@@ -400,7 +401,7 @@ export function StoreEvaluationPresentation({
         });
     });
 
-    chunk(actionItems, 4).forEach((group, index, list) => {
+    chunk(actionItems, ACTION_ITEMS_PER_SLIDE).forEach((group, index, list) => {
       items.push({
         id: `actions-${index}`,
         title: "ALINMASI GEREKEN AKSIYONLAR",
@@ -409,7 +410,7 @@ export function StoreEvaluationPresentation({
           <div className="presentation-action-stack">
             {group.map((item, itemIndex) => (
               <article key={`${item.title}-${item.owner}`} className="presentation-action-card">
-                <span className="presentation-action-order">{index * 4 + itemIndex + 1}</span>
+                <span className="presentation-action-order">{index * ACTION_ITEMS_PER_SLIDE + itemIndex + 1}</span>
                 <div className="presentation-action-copy">
                   <strong>{item.title}</strong>
                   <span className="presentation-action-owner">{item.owner}</span>
@@ -514,12 +515,6 @@ export function StoreEvaluationPresentation({
 
       setTableFitScale(nextTableFitScale);
 
-      if (mobileLandscape) {
-        setSlideScale(1);
-        setSlideFrameHeight(null);
-        return;
-      }
-
       const measuredWidths = [
         slideRef.current.scrollWidth,
         ...Array.from(
@@ -532,7 +527,7 @@ export function StoreEvaluationPresentation({
       const naturalHeight = Math.max(slideRef.current.scrollHeight, 1);
       const widthScale = availableWidth / naturalWidth;
       const heightScale = availableHeight / naturalHeight;
-      const nextScale = Math.min(1, mobileLandscape ? widthScale : Math.min(widthScale, heightScale));
+      const nextScale = Math.min(1, mobileLandscape ? heightScale : Math.min(widthScale, heightScale));
 
       setSlideScale(nextScale);
       setSlideFrameHeight(Math.ceil(naturalHeight * nextScale));

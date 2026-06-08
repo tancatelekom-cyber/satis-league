@@ -145,6 +145,22 @@ function isPinRatio(title: string) {
   return key.includes("PIN") && key.includes("ORAN");
 }
 
+function shouldTreatAsCriticalMetric(title: string, actual: number) {
+  if (isEntryCount(title)) {
+    return false;
+  }
+
+  if (isPinRatio(title)) {
+    return actual <= 70;
+  }
+
+  if (isSatisfactionScore(title)) {
+    return actual <= 4.4;
+  }
+
+  return true;
+}
+
 function formatNumber(value: number | null | undefined) {
   if (value === null || value === undefined || Number.isNaN(value)) {
     return "-";
@@ -515,7 +531,7 @@ function buildSubcategoryShareTables(rows: GoalActualRow[], allEmployeeRows: Goa
 }
 
 function buildSummaryCards(storeName: string, employeeRows: GoalActualRow[], dayStats: GoalDayStats, storeCategoryRows: CategorySummaryRow[]) {
-  const visibleCriticalRows = storeCategoryRows.filter((row) => !isEntryCount(row.label));
+  const visibleCriticalRows = storeCategoryRows.filter((row) => shouldTreatAsCriticalMetric(row.label, row.actual));
   const strongestCategory = [...visibleCriticalRows].sort((left, right) => (right.projectedPercent ?? 0) - (left.projectedPercent ?? 0))[0];
   const criticalCategory = [...visibleCriticalRows].sort((left, right) => (left.projectedPercent ?? 0) - (right.projectedPercent ?? 0))[0];
   const branchAverage = average(
@@ -560,7 +576,7 @@ function buildSummaryCards(storeName: string, employeeRows: GoalActualRow[], day
 }
 
 function buildStoreNarrative(storeName: string, storeCategoryRows: CategorySummaryRow[], employeeSnapshots: EmployeeSnapshot[]) {
-  const visibleCriticalRows = storeCategoryRows.filter((row) => !isEntryCount(row.label));
+  const visibleCriticalRows = storeCategoryRows.filter((row) => shouldTreatAsCriticalMetric(row.label, row.actual));
   const criticalCategory = [...visibleCriticalRows].sort((left, right) => (left.projectedPercent ?? 0) - (right.projectedPercent ?? 0))[0];
   const strongestCategory = [...visibleCriticalRows].sort((left, right) => (right.projectedPercent ?? 0) - (left.projectedPercent ?? 0))[0];
   const topContributor = [...employeeSnapshots].sort((left, right) => right.sharePercent - left.sharePercent)[0];
@@ -632,7 +648,12 @@ function buildActionLines(storeCategoryRows: CategorySummaryRow[], categoryShare
   const lines: ActionItem[] = [];
 
   storeCategoryRows
-    .filter((row) => !isEntryCount(row.label) && row.target !== null && (row.projectedPercent ?? row.actualPercent ?? 0) < 100)
+    .filter(
+      (row) =>
+        shouldTreatAsCriticalMetric(row.label, row.actual) &&
+        row.target !== null &&
+        (row.projectedPercent ?? row.actualPercent ?? 0) < 100
+    )
     .slice(0, 4)
     .forEach((row) => {
       lines.push({
@@ -646,7 +667,7 @@ function buildActionLines(storeCategoryRows: CategorySummaryRow[], categoryShare
     });
 
   categoryShareTables.slice(0, 4).forEach((table) => {
-    if (isEntryCount(table.title)) {
+    if (isEntryCount(table.title) || isPinRatio(table.title) || isSatisfactionScore(table.title)) {
       return;
     }
 

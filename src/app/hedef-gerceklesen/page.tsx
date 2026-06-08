@@ -668,7 +668,7 @@ function buildStoreAverageGapNotes(metrics: CoachingMetric[], rows: GoalStoreRow
     const categoryAverage = average(categoryRows.map((row) => row.actual).filter((value) => value > 0));
 
     if (categoryAverage > 0 && metric.actual < categoryAverage) {
-      notes.push(`${metric.title}: firma ortalamasi ${formatNumber(categoryAverage)}, mevcut ${formatNumber(metric.actual)}.`);
+      notes.push(`${metric.title}: firma ortalaması ${formatNumber(categoryAverage)}, mevcut ${formatNumber(metric.actual)}.`);
     }
   });
 
@@ -691,7 +691,7 @@ function buildGoalActualCoachingText(args: {
   criticalMetrics.forEach((metric) => {
     focusItems.set(
       metric.title,
-      `- ${metric.title}: hedef temposunun altindasin. Ay sonu ${formatPercent(metric.projectedPercent ?? metric.actualPercent)} seviyesinde kalir.`
+      `- ${metric.title}: hedef temposunun altındasın. Ay sonu ${formatPercent(metric.projectedPercent ?? metric.actualPercent)} seviyesinde kalır.`
     );
   });
 

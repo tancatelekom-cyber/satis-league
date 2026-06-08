@@ -27,8 +27,66 @@ function pickBestTurkishVoice(voices: SpeechSynthesisVoice[]) {
     .sort((left, right) => scoreVoice(right) - scoreVoice(left))[0] ?? null;
 }
 
+const TURKISH_SPEECH_FIXES: Array<[string, string]> = [
+  ["altindasin", "altındasın"],
+  ["altinda", "altında"],
+  ["ayni", "aynı"],
+  ["bugun", "bugün"],
+  ["calisan", "çalışan"],
+  ["firmanin", "firmanın"],
+  ["firma", "firma"],
+  ["gorecegin", "göreceğin"],
+  ["gorunmuyor", "görünmüyor"],
+  ["gozden", "gözden"],
+  ["gun", "gün"],
+  ["gunde", "günde"],
+  ["gunlerde", "günlerde"],
+  ["gunluk", "günlük"],
+  ["için", "için"],
+  ["icin", "için"],
+  ["ihtiyac", "ihtiyaç"],
+  ["kacirdigin", "kaçırdığın"],
+  ["kaldiği", "kaldığı"],
+  ["kaldigi", "kaldığı"],
+  ["kaldigin", "kaldığın"],
+  ["kalir", "kalır"],
+  ["koruyalim", "koruyalım"],
+  ["lazim", "lazım"],
+  ["magaza", "mağaza"],
+  ["minimum", "minimum"],
+  ["ortalamasi", "ortalaması"],
+  ["ortalamasinin", "ortalamasının"],
+  ["gerceklesen", "gerçekleşen"],
+  ["gercekleseni", "gerçekleşeni"],
+  ["sube", "şube"],
+  ["uretim", "üretim"],
+  ["uretmen", "üretmen"],
+  ["urun", "ürün"],
+  ["yonlendirme", "yönlendirme"],
+  ["yuzde", "yüzde"]
+];
+
+function matchCase(source: string, replacement: string) {
+  if (source === source.toLocaleUpperCase("tr-TR")) {
+    return replacement.toLocaleUpperCase("tr-TR");
+  }
+
+  if (source[0] === source[0]?.toLocaleUpperCase("tr-TR")) {
+    return `${replacement[0]?.toLocaleUpperCase("tr-TR") ?? ""}${replacement.slice(1)}`;
+  }
+
+  return replacement;
+}
+
+function normalizeTurkishSpeech(text: string) {
+  return TURKISH_SPEECH_FIXES.reduce((current, [search, replacement]) => {
+    const pattern = new RegExp(`\\b${search}\\b`, "giu");
+    return current.replace(pattern, (match) => matchCase(match, replacement));
+  }, text);
+}
+
 function buildSpeechText(text: string) {
-  const normalized = text.replace(/\s+/g, " ").trim();
+  const normalized = normalizeTurkishSpeech(text).replace(/\s+/g, " ").trim();
 
   return normalized
     .replace(/:\s*/g, ". ")

@@ -15,12 +15,12 @@ type NavItem = {
 
 const baseNavItems: NavItem[] = [
   { href: "/", label: "Ana Sayfa" },
-  { href: "/kampanyalar", label: "Gunluk Kampanyalar", mobileLabel: "Kampanya", icon: "K" },
-  { href: "/aylik-kampanyalar", label: "Aylik Kampanyalar", mobileLabel: "Aylik", icon: "A" },
-  { href: "/lig", label: "Yildizlar Kulubu", mobileLabel: "Lig", icon: "L" },
   { href: "/hedef-gerceklesen", label: "Hedef Gerceklesen", mobileLabel: "Hedef", icon: "H" },
   { href: "/tarifeler", label: "Tarifeler", mobileLabel: "Tarife", icon: "T" },
   { href: "/cihaz-fiyat-listesi", label: "Cihaz Fiyat Listesi", mobileLabel: "Cihaz", icon: "C" },
+  { href: "/kampanyalar", label: "Gunluk Kampanyalar", mobileLabel: "Kampanya", icon: "K" },
+  { href: "/aylik-kampanyalar", label: "Aylik Kampanyalar", mobileLabel: "Aylik", icon: "A" },
+  { href: "/lig", label: "Yildizlar Kulubu", mobileLabel: "Lig", icon: "L" },
   { href: "/stok-bilgisi", label: "Stok Bilgisi", mobileLabel: "Stok", icon: "S" },
   { href: "/hesabim", label: "Hesabim", mobileLabel: "Hesap", icon: "P" }
 ];
@@ -152,14 +152,14 @@ export function AppShellHeader({
 
   const primaryTabs = useMemo(() => {
     const wanted = [
-      "/kampanyalar",
-      "/aylik-kampanyalar",
-      "/lig",
       "/hedef-gerceklesen",
       "/tarifeler",
-      "/cihaz-fiyat-listesi"
+      "/cihaz-fiyat-listesi",
+      "/kampanyalar",
+      "/aylik-kampanyalar",
+      "/lig"
     ];
-    return navItems.filter((item) => wanted.includes(item.href));
+    return wanted.map((href) => navItems.find((item) => item.href === href)).filter((item): item is NavItem => Boolean(item));
   }, [navItems]);
 
   function scrollMobileTabs(direction: "left" | "right") {

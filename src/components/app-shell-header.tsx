@@ -18,6 +18,7 @@ const baseNavItems: NavItem[] = [
   { href: "/hedef-gerceklesen", label: "Hedef Gerceklesen", mobileLabel: "Hedef", icon: "H" },
   { href: "/tarifeler", label: "Tarifeler", mobileLabel: "Tarife", icon: "T" },
   { href: "/cihaz-fiyat-listesi", label: "Cihaz Fiyat Listesi", mobileLabel: "Cihaz", icon: "C" },
+  { href: "/haftalik-calisma-programi", label: "Haftalik Calisma Programi", mobileLabel: "Program", icon: "W" },
   { href: "/kampanyalar", label: "Gunluk Kampanyalar", mobileLabel: "Kampanya", icon: "K" },
   { href: "/aylik-kampanyalar", label: "Aylik Kampanyalar", mobileLabel: "Aylik", icon: "A" },
   { href: "/lig", label: "Yildizlar Kulubu", mobileLabel: "Lig", icon: "L" },
@@ -115,6 +116,16 @@ function MobileTabIcon({ kind }: { kind?: string }) {
         <path d="M12 4.5 6.5 7.5v4.5c0 3.3 2.1 6.2 5.5 7.5 3.4-1.3 5.5-4.2 5.5-7.5V7.5L12 4.5Z" />
         <path d="M9.5 12.2 11.2 14l3.3-3.5" />
       </svg>
+    ),
+    W: (
+      <svg {...sharedProps}>
+        <rect x="4.5" y="5.5" width="15" height="14" rx="2.5" />
+        <path d="M8 3.5v4" />
+        <path d="M16 3.5v4" />
+        <path d="M4.5 10h15" />
+        <path d="M8 13.5h3" />
+        <path d="M13 13.5h3" />
+      </svg>
     )
   };
 
@@ -125,12 +136,14 @@ type AppShellHeaderProps = {
   initialIsAdmin?: boolean;
   initialCanEvaluate?: boolean;
   initialCanOpenEvaluationPresentation?: boolean;
+  initialCanOpenWorkSchedule?: boolean;
 };
 
 export function AppShellHeader({
   initialIsAdmin = false,
   initialCanEvaluate = false,
-  initialCanOpenEvaluationPresentation = false
+  initialCanOpenEvaluationPresentation = false,
+  initialCanOpenWorkSchedule = false
 }: AppShellHeaderProps) {
   const pathname = usePathname() ?? "/";
   const [menuOpen, setMenuOpen] = useState(false);
@@ -141,14 +154,18 @@ export function AppShellHeader({
       ? [...baseNavItems, { href: "/degerlendirme", label: "Degerlendirme", mobileLabel: "Deger", icon: "D" }]
       : baseNavItems;
 
+    const itemsWithWorkSchedule = initialCanOpenWorkSchedule
+      ? items
+      : items.filter((item) => item.href !== "/haftalik-calisma-programi");
+
     const itemsWithPresentation = initialCanOpenEvaluationPresentation
-      ? [...items, { href: "/degerlendirme-sunumu", label: "Degerlendirme Sunumu", mobileLabel: "Sunum", icon: "U" }]
-      : items;
+      ? [...itemsWithWorkSchedule, { href: "/degerlendirme-sunumu", label: "Degerlendirme Sunumu", mobileLabel: "Sunum", icon: "U" }]
+      : itemsWithWorkSchedule;
 
     return initialIsAdmin
       ? [...itemsWithPresentation, { href: "/admin", label: "Admin Paneli", mobileLabel: "Admin", icon: "Y" }]
       : itemsWithPresentation;
-  }, [initialCanEvaluate, initialCanOpenEvaluationPresentation, initialIsAdmin]);
+  }, [initialCanEvaluate, initialCanOpenEvaluationPresentation, initialCanOpenWorkSchedule, initialIsAdmin]);
 
   const primaryTabs = useMemo(() => {
     const wanted = [

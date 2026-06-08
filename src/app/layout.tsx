@@ -17,6 +17,7 @@ export default async function RootLayout({
   let isAdmin = false;
   let canEvaluate = false;
   let canOpenEvaluationPresentation = false;
+  let canOpenWorkSchedule = false;
 
   try {
     const supabase = await createClient();
@@ -38,11 +39,13 @@ export default async function RootLayout({
       canOpenEvaluationPresentation =
         profile?.approval === "approved" &&
         (profile.role === "admin" || profile.role === "management" || profile.role === "manager");
+      canOpenWorkSchedule = profile?.approval === "approved";
     }
   } catch {
     isAdmin = false;
     canEvaluate = false;
     canOpenEvaluationPresentation = false;
+    canOpenWorkSchedule = false;
   }
 
   return (
@@ -53,6 +56,7 @@ export default async function RootLayout({
             initialIsAdmin={isAdmin}
             initialCanEvaluate={canEvaluate}
             initialCanOpenEvaluationPresentation={canOpenEvaluationPresentation}
+            initialCanOpenWorkSchedule={canOpenWorkSchedule}
           />
 
           <AuthGate>{children}</AuthGate>

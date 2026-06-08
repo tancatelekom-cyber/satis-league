@@ -281,6 +281,42 @@ create table if not exists public.monthly_campaign_slides (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.weekly_work_schedules (
+  id uuid primary key default gen_random_uuid(),
+  profile_id uuid not null references public.profiles(id) on delete cascade,
+  store_id uuid not null references public.stores(id) on delete cascade,
+  week_start date not null,
+  day_of_week smallint not null check (day_of_week between 0 and 6),
+  status text not null default 'off' check (status in ('work', 'leave', 'off')),
+  start_time time,
+  end_time time,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint weekly_work_schedules_profile_week_day_key unique (profile_id, week_start, day_of_week),
+  constraint weekly_work_schedules_time_check check (
+    (
+      status = 'work'
+      and start_time is not null
+      and end_time is not null
+      and start_time < end_time
+    )
+    or (
+      status in ('leave', 'off')
+      and start_time is null
+      and end_time is null
+    )
+  )
+);
+
+create index if not exists weekly_work_schedules_week_start_idx
+  on public.weekly_work_schedules (week_start);
+
+create index if not exists weekly_work_schedules_store_week_idx
+  on public.weekly_work_schedules (store_id, week_start);
+
+create index if not exists weekly_work_schedules_profile_week_idx
+  on public.weekly_work_schedules (profile_id, week_start);
+
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (
   'monthly-campaigns',
@@ -386,6 +422,7 @@ alter table public.season_sales_entries enable row level security;
 alter table public.notifications enable row level security;
 alter table public.popup_announcements enable row level security;
 alter table public.popup_announcement_dismissals enable row level security;
+alter table public.weekly_work_schedules enable row level security;
 
 drop policy if exists "active stores are visible to everyone" on public.stores;
 create policy "active stores are visible to everyone" on public.stores
@@ -449,3 +486,19 @@ for select using (auth.uid() = profile_id);
 drop policy if exists "users can create popup dismissals" on public.popup_announcement_dismissals;
 create policy "users can create popup dismissals" on public.popup_announcement_dismissals
 for insert with check (auth.uid() = profile_id);
+
+drop policy if exists "approved users can view weekly work schedules" on public.weekly_work_schedules;
+create policy "approved users can view weekly work schedules" on public.weekly_work_schedules
+for select using (
+  exists (
+    select 1
+    from public.profiles p
+    where p.id = auth.uid()
+      and p.approval = 'approved'
+  )
+);
+
+drop policy if exists "users can manage their own weekly work schedules" on public.weekly_work_schedules;
+create policy "users can manage their own weekly work schedules" on public.weekly_work_schedules
+for all using (auth.uid() = profile_id)
+with check (auth.uid() = profile_id);

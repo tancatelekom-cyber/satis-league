@@ -3236,6 +3236,304 @@ textarea::placeholder {
   }
 }
 
+.schedule-shell {
+  display: grid;
+  gap: 18px;
+  margin-top: 20px;
+}
+
+.schedule-hero,
+.schedule-section-card,
+.schedule-summary-card,
+.schedule-editor-card,
+.schedule-day-card,
+.schedule-daily-card {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 28px;
+  background: linear-gradient(180deg, rgba(5, 78, 82, 0.9), rgba(5, 52, 57, 0.84));
+  box-shadow: var(--shadow);
+  color: #f5f8ff;
+}
+
+.schedule-hero,
+.schedule-section-card {
+  padding: 22px;
+}
+
+.schedule-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.schedule-kicker,
+.schedule-section-head span,
+.schedule-summary-card span,
+.schedule-day-card-head span,
+.schedule-daily-card-head span {
+  color: #9fd9ff;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.schedule-hero-copy h1,
+.schedule-section-head h2 {
+  margin: 8px 0 10px;
+  color: #ffffff;
+}
+
+.schedule-hero-copy h1 {
+  font-size: clamp(1.8rem, 3vw, 2.8rem);
+}
+
+.schedule-hero-copy p,
+.schedule-section-head p,
+.schedule-summary-card p,
+.schedule-day-card-note,
+.schedule-daily-card p,
+.schedule-daily-card small {
+  margin: 0;
+  color: #d5e7f8;
+  line-height: 1.5;
+}
+
+.schedule-filter-form,
+.schedule-editor-grid,
+.schedule-summary-grid,
+.schedule-daily-grid,
+.schedule-time-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.schedule-filter-form {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+}
+
+.schedule-field {
+  display: grid;
+  gap: 6px;
+}
+
+.schedule-field span {
+  color: #dff3ff;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.schedule-field input,
+.schedule-field select {
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.94);
+  color: #132847;
+}
+
+.schedule-filter-form .button-secondary {
+  align-self: end;
+}
+
+.schedule-summary-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.schedule-summary-card {
+  padding: 18px;
+}
+
+.schedule-summary-card strong {
+  display: block;
+  margin: 8px 0 6px;
+  color: #ffffff;
+  font-size: 1.45rem;
+}
+
+.schedule-section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.schedule-section-head h2 {
+  font-size: 1.45rem;
+}
+
+.schedule-section-head p {
+  max-width: 420px;
+}
+
+.schedule-editor-card {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.schedule-editor-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.schedule-day-card {
+  padding: 16px;
+}
+
+.schedule-day-card-head,
+.schedule-daily-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.schedule-day-card-head strong,
+.schedule-daily-card-head strong {
+  color: #ffffff;
+  font-size: 1.05rem;
+}
+
+.schedule-time-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.schedule-editor-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+
+.schedule-status-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.schedule-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.schedule-pill-work {
+  background: rgba(126, 241, 211, 0.2);
+  color: #b9ffeb;
+}
+
+.schedule-pill-leave {
+  background: rgba(255, 209, 102, 0.22);
+  color: #ffe39a;
+}
+
+.schedule-pill-off {
+  background: rgba(255, 255, 255, 0.12);
+  color: #d7e5f6;
+}
+
+.schedule-daily-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.schedule-daily-card {
+  padding: 16px;
+  display: grid;
+  gap: 10px;
+}
+
+.schedule-table-wrap {
+  overflow: auto;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.schedule-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 960px;
+  color: #163252;
+}
+
+.schedule-table th,
+.schedule-table td {
+  padding: 12px 10px;
+  border-bottom: 1px solid rgba(19, 40, 71, 0.08);
+  vertical-align: top;
+  text-align: left;
+}
+
+.schedule-table th {
+  background: rgba(211, 226, 245, 0.95);
+  color: #17385b;
+  font-size: 0.86rem;
+}
+
+.schedule-table th span {
+  color: #5a7391;
+  font-size: 0.74rem;
+}
+
+.schedule-table td strong {
+  display: block;
+  color: #10203b;
+}
+
+.schedule-table td span,
+.schedule-table td small {
+  display: block;
+  margin-top: 6px;
+  color: #596f8b;
+}
+
+@media (max-width: 980px) {
+  .schedule-hero,
+  .schedule-summary-grid,
+  .schedule-editor-grid,
+  .schedule-daily-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .schedule-filter-form {
+    grid-template-columns: 1fr;
+  }
+
+  .schedule-section-head {
+    display: grid;
+  }
+}
+
+@media (max-width: 640px) {
+  .schedule-hero,
+  .schedule-section-card {
+    padding: 16px;
+    border-radius: 22px;
+  }
+
+  .schedule-time-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .schedule-summary-card strong {
+    font-size: 1.2rem;
+  }
+
+  .schedule-table {
+    min-width: 760px;
+  }
+}
+
 .player-spotlight,
 .mission-card {
   padding: 24px;

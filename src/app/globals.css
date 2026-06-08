@@ -2039,6 +2039,8 @@ textarea::placeholder {
   position: relative;
   width: 100%;
   min-height: calc(100vh - 126px);
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
   overflow: hidden;
   touch-action: pan-x pan-y pinch-zoom;
 }
@@ -2046,7 +2048,7 @@ textarea::placeholder {
 .presentation-slide-fit-frame {
   position: relative;
   width: 100%;
-  min-height: inherit;
+  min-height: 0;
 }
 
 .presentation-slide-fit-frame-active {
@@ -2145,7 +2147,6 @@ textarea::placeholder {
   min-height: 0;
   overflow: auto;
   padding-right: 6px;
-  padding-bottom: 50px;
   touch-action: pan-x pan-y pinch-zoom;
 }
 
@@ -2166,13 +2167,13 @@ textarea::placeholder {
 }
 
 .presentation-stage:fullscreen .presentation-slide-fit-frame {
-  min-height: 100vh;
-  height: 100vh;
+  min-height: 0;
+  height: 100%;
 }
 
 .presentation-stage:fullscreen .presentation-slide {
-  min-height: 100vh;
-  height: 100vh;
+  min-height: 0;
+  height: 100%;
   border-radius: 0;
   border: 0;
   box-shadow: none;
@@ -2180,7 +2181,6 @@ textarea::placeholder {
 
 .presentation-stage:fullscreen .presentation-slide-body {
   overflow: auto;
-  padding-bottom: 44px;
 }
 
 .presentation-rotate-hint {
@@ -2740,17 +2740,16 @@ textarea::placeholder {
 }
 
 .presentation-slide-nav {
-  position: absolute;
-  left: clamp(14px, 2vw, 24px);
-  right: clamp(14px, 2vw, 24px);
-  bottom: clamp(4px, 0.8vw, 8px);
+  position: relative;
+  margin-top: 4px;
+  padding-inline: clamp(6px, 1vw, 12px);
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 4px;
   padding-top: 2px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
-  background: linear-gradient(180deg, rgba(6, 52, 67, 0), rgba(6, 52, 67, 0.94) 28%, rgba(6, 52, 67, 0.98));
+  background: rgba(6, 52, 67, 0.98);
 }
 
 .presentation-slide-nav-meta {
@@ -2863,13 +2862,13 @@ textarea::placeholder {
   }
 
   .presentation-stage:fullscreen .presentation-slide-fit-frame {
-    min-height: 100vh;
-    height: 100vh;
+    min-height: 0;
+    height: 100%;
   }
 
   .presentation-stage:fullscreen .presentation-slide {
-    min-height: 100vh;
-    height: 100vh;
+    min-height: 0;
+    height: 100%;
   }
 
   .presentation-stage:fullscreen .presentation-slide-body {

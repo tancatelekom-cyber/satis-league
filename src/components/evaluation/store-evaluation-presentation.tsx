@@ -137,6 +137,7 @@ export function StoreEvaluationPresentation({
   autoFullscreen = false
 }: StoreEvaluationPresentationProps) {
   const stageRef = useRef<HTMLDivElement | null>(null);
+  const stageNavRef = useRef<HTMLDivElement | null>(null);
   const slideRef = useRef<HTMLElement | null>(null);
   const touchStartRef = useRef<{ x: number; y: number; interactive: boolean } | null>(null);
   const autoFullscreenAttemptedRef = useRef(false);
@@ -505,7 +506,11 @@ export function StoreEvaluationPresentation({
       const mobileLandscape = window.innerWidth > window.innerHeight;
       const stageRect = stageRef.current.getBoundingClientRect();
       const availableWidth = Math.max(stageRef.current.clientWidth, 1);
-      const availableHeight = Math.max(fullscreen ? stageRef.current.clientHeight : window.innerHeight - stageRect.top - 18, 320);
+      const navHeight = stageNavRef.current?.offsetHeight ?? 0;
+      const availableHeight = Math.max(
+        (fullscreen ? stageRef.current.clientHeight : window.innerHeight - stageRect.top - 18) - navHeight - 6,
+        320
+      );
       const slideHead = slideRef.current.querySelector<HTMLElement>(".presentation-slide-head");
       const slideBody = slideRef.current.querySelector<HTMLElement>(".presentation-slide-body");
       const slideStyles = window.getComputedStyle(slideRef.current);
@@ -569,6 +574,9 @@ export function StoreEvaluationPresentation({
       resizeObserver.observe(slideRef.current);
       if (stageRef.current) {
         resizeObserver.observe(stageRef.current);
+      }
+      if (stageNavRef.current) {
+        resizeObserver.observe(stageNavRef.current);
       }
     }
 
@@ -774,24 +782,25 @@ export function StoreEvaluationPresentation({
 
             <div className="presentation-slide-body">{activeSlide.body}</div>
 
-            <div className="presentation-slide-nav">
-              <button className="presentation-bottom-arrow" type="button" onClick={goToPreviousSlide}>
-                <span className="presentation-bottom-arrow-icon">{"<-"}</span>
-                <span>Geri</span>
-              </button>
-
-              <div className="presentation-slide-nav-meta">
-                <span>
-                  {activeIndex + 1} / {slides.length}
-                </span>
-              </div>
-
-              <button className="presentation-bottom-arrow presentation-bottom-arrow-next" type="button" onClick={goToNextSlide}>
-                <span>Ileri</span>
-                <span className="presentation-bottom-arrow-icon">{"->"}</span>
-              </button>
-            </div>
           </article>
+        </div>
+
+        <div ref={stageNavRef} className="presentation-slide-nav">
+          <button className="presentation-bottom-arrow" type="button" onClick={goToPreviousSlide}>
+            <span className="presentation-bottom-arrow-icon">{"<-"}</span>
+            <span>Geri</span>
+          </button>
+
+          <div className="presentation-slide-nav-meta">
+            <span>
+              {activeIndex + 1} / {slides.length}
+            </span>
+          </div>
+
+          <button className="presentation-bottom-arrow presentation-bottom-arrow-next" type="button" onClick={goToNextSlide}>
+            <span>Ileri</span>
+            <span className="presentation-bottom-arrow-icon">{"->"}</span>
+          </button>
         </div>
       </section>
 

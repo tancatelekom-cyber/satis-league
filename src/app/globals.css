@@ -2051,6 +2051,11 @@ textarea::placeholder {
   min-height: 0;
 }
 
+.presentation-slide-fit-frame-stretch {
+  height: 100%;
+  min-height: 0;
+}
+
 .presentation-slide-fit-frame-active {
   overflow: hidden;
 }
@@ -2170,6 +2175,7 @@ textarea::placeholder {
   display: grid;
   align-content: stretch;
   height: 100%;
+  min-height: 0;
 }
 
 .presentation-slide-table .presentation-panel-stack {
@@ -2188,6 +2194,7 @@ textarea::placeholder {
   height: 100%;
   display: flex;
   min-height: 0;
+  flex: 1 1 auto;
 }
 
 .presentation-slide-table .presentation-table {
@@ -2206,6 +2213,23 @@ textarea::placeholder {
 .presentation-slide-needs .presentation-slide-body-needs {
   display: grid;
   align-content: stretch;
+  height: 100%;
+  min-height: 0;
+}
+
+.presentation-slide-needs .presentation-panel-stack {
+  height: 100%;
+  min-height: 0;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.presentation-slide-needs .presentation-need-board {
+  height: 100%;
+  align-content: stretch;
+}
+
+.presentation-slide-needs .presentation-need-card {
+  height: 100%;
 }
 
 .presentation-stage:fullscreen {
@@ -2221,6 +2245,12 @@ textarea::placeholder {
 }
 
 .presentation-stage:fullscreen .presentation-slide-fit-frame {
+  min-height: 0;
+  height: 100%;
+}
+
+.presentation-stage:fullscreen .presentation-slide-fit-frame-stretch > .presentation-slide,
+.presentation-slide-fit-frame-stretch > .presentation-slide {
   min-height: 0;
   height: 100%;
 }
@@ -2906,7 +2936,7 @@ textarea::placeholder {
     overflow: visible;
     max-height: none;
     padding-right: 0;
-    padding-bottom: 70px;
+    padding-bottom: 0;
   }
 
   .presentation-stage:fullscreen {
@@ -2927,7 +2957,7 @@ textarea::placeholder {
 
   .presentation-stage:fullscreen .presentation-slide-body {
     overflow: auto;
-    padding-bottom: 76px;
+    padding-bottom: 0;
   }
 
   .presentation-summary-grid {
@@ -3070,6 +3100,22 @@ textarea::placeholder {
     padding: calc(7px * var(--presentation-table-fit-scale)) calc(8px * var(--presentation-table-fit-scale));
     font-size: calc(1.08rem * var(--presentation-table-fit-scale));
     line-height: 1.14;
+  }
+
+  .presentation-slide-table .presentation-table tbody tr {
+    height: clamp(34px, calc((100dvh - 240px) / var(--presentation-table-row-count, 1)), 76px);
+  }
+
+  .presentation-slide-table .presentation-table-panel {
+    gap: 10px;
+  }
+
+  .presentation-slide-table .presentation-table-wrap {
+    flex: 1 1 auto;
+  }
+
+  .presentation-slide-needs .presentation-need-board {
+    grid-auto-rows: minmax(0, 1fr);
   }
 
   .presentation-table thead th {

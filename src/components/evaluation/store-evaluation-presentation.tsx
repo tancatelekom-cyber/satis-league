@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { ReactNode } from "react";
+import type { ReactNode, TouchEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 type SummaryCard = {
@@ -111,6 +111,7 @@ export function StoreEvaluationPresentation({
   actionItems
 }: StoreEvaluationPresentationProps) {
   const stageRef = useRef<HTMLDivElement | null>(null);
+  const touchStartRef = useRef<{ x: number; y: number; interactive: boolean } | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [fullscreen, setFullscreen] = useState(false);
 
@@ -446,6 +447,54 @@ export function StoreEvaluationPresentation({
     }
   }
 
+  function goToPreviousSlide() {
+    setActiveIndex((current) => Math.max(current - 1, 0));
+  }
+
+  function goToNextSlide() {
+    setActiveIndex((current) => Math.min(current + 1, slides.length - 1));
+  }
+
+  function handleTouchStart(event: TouchEvent<HTMLElement>) {
+    const target = event.target as HTMLElement | null;
+    const interactive = Boolean(target?.closest(".presentation-table-wrap, .presentation-dots, .presentation-control-actions"));
+    const touch = event.touches[0];
+
+    touchStartRef.current = {
+      x: touch.clientX,
+      y: touch.clientY,
+      interactive
+    };
+  }
+
+  function handleTouchEnd(event: TouchEvent<HTMLElement>) {
+    if (!touchStartRef.current) {
+      return;
+    }
+
+    const { x, y, interactive } = touchStartRef.current;
+    touchStartRef.current = null;
+
+    if (interactive) {
+      return;
+    }
+
+    const touch = event.changedTouches[0];
+    const deltaX = touch.clientX - x;
+    const deltaY = touch.clientY - y;
+
+    if (Math.abs(deltaX) < 70 || Math.abs(deltaX) <= Math.abs(deltaY) * 1.2) {
+      return;
+    }
+
+    if (deltaX < 0) {
+      goToNextSlide();
+      return;
+    }
+
+    goToPreviousSlide();
+  }
+
   return (
     <main className="presentation-shell">
       <div className="presentation-control-bar">
@@ -460,10 +509,10 @@ export function StoreEvaluationPresentation({
           <Link className="button-secondary" href="/hedef-gerceklesen">
             Hedefe Don
           </Link>
-          <button className="button-secondary" type="button" onClick={() => setActiveIndex((current) => Math.max(current - 1, 0))}>
+          <button className="button-secondary" type="button" onClick={goToPreviousSlide}>
             Geri
           </button>
-          <button className="button-primary" type="button" onClick={() => setActiveIndex((current) => Math.min(current + 1, slides.length - 1))}>
+          <button className="button-primary" type="button" onClick={goToNextSlide}>
             Ileri
           </button>
           <button className="button-secondary" type="button" onClick={toggleFullscreen}>
@@ -472,7 +521,7 @@ export function StoreEvaluationPresentation({
         </div>
       </div>
 
-      <section ref={stageRef} className="presentation-stage">
+      <section ref={stageRef} className="presentation-stage" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
         <div className={`presentation-rotate-hint ${fullscreen ? "presentation-rotate-hint-visible" : ""}`} aria-hidden={!fullscreen}>
           <div className="presentation-rotate-card">
             <div className="presentation-rotate-phones">

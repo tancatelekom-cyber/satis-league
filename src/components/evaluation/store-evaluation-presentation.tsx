@@ -413,7 +413,15 @@ export function StoreEvaluationPresentation({
       const stageRect = stageRef.current.getBoundingClientRect();
       const availableWidth = Math.max(stageRef.current.clientWidth, 1);
       const availableHeight = Math.max(window.innerHeight - stageRect.top - 18, 320);
-      const naturalWidth = Math.max(slideRef.current.scrollWidth, 1);
+      const measuredWidths = [
+        slideRef.current.scrollWidth,
+        ...Array.from(
+          slideRef.current.querySelectorAll<HTMLElement>(
+            ".presentation-table, .presentation-table-wrap, .presentation-summary-grid, .presentation-need-board, .presentation-action-stack"
+          )
+        ).map((element) => element.scrollWidth)
+      ];
+      const naturalWidth = Math.max(...measuredWidths, 1);
       const naturalHeight = Math.max(slideRef.current.scrollHeight, 1);
       const nextScale = Math.min(1, availableWidth / naturalWidth, availableHeight / naturalHeight);
 

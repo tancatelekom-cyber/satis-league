@@ -2042,6 +2042,15 @@ textarea::placeholder {
   touch-action: pan-x pan-y pinch-zoom;
 }
 
+.presentation-slide-fit-frame {
+  position: relative;
+  width: 100%;
+}
+
+.presentation-slide-fit-frame-active {
+  overflow: hidden;
+}
+
 .presentation-slide {
   min-height: calc(100vh - 126px);
   padding: clamp(28px, 4vw, 52px);

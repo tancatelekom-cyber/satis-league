@@ -113,10 +113,13 @@ export function StoreEvaluationPresentation({
   autoFullscreen = false
 }: StoreEvaluationPresentationProps) {
   const stageRef = useRef<HTMLDivElement | null>(null);
+  const slideRef = useRef<HTMLElement | null>(null);
   const touchStartRef = useRef<{ x: number; y: number; interactive: boolean } | null>(null);
   const autoFullscreenAttemptedRef = useRef(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [fullscreen, setFullscreen] = useState(false);
+  const [slideScale, setSlideScale] = useState(1);
+  const [slideFrameHeight, setSlideFrameHeight] = useState<number | null>(null);
 
   const slides = useMemo(() => {
     const items: Array<{
@@ -396,6 +399,43 @@ export function StoreEvaluationPresentation({
   const compactSlide = activeSlide.layout === "compact" || activeSlide.title.length > 22;
 
   useEffect(() => {
+    function syncMobileSlideFit() {
+      if (typeof window === "undefined" || !stageRef.current || !slideRef.current) {
+        return;
+      }
+
+      if (window.innerWidth > 860) {
+        setSlideScale(1);
+        setSlideFrameHeight(null);
+        return;
+      }
+
+      const stageRect = stageRef.current.getBoundingClientRect();
+      const availableWidth = Math.max(stageRef.current.clientWidth, 1);
+      const availableHeight = Math.max(window.innerHeight - stageRect.top - 18, 320);
+      const naturalWidth = Math.max(slideRef.current.scrollWidth, 1);
+      const naturalHeight = Math.max(slideRef.current.scrollHeight, 1);
+      const nextScale = Math.min(1, availableWidth / naturalWidth, availableHeight / naturalHeight);
+
+      setSlideScale(nextScale);
+      setSlideFrameHeight(Math.ceil(naturalHeight * nextScale));
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(syncMobileSlideFit);
+    });
+
+    window.addEventListener("resize", syncMobileSlideFit);
+    window.addEventListener("orientationchange", syncMobileSlideFit);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("resize", syncMobileSlideFit);
+      window.removeEventListener("orientationchange", syncMobileSlideFit);
+    };
+  }, [activeIndex, compactSlide, fullscreen, slides.length]);
+
+  useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "ArrowRight" || event.key === "PageDown" || event.key === " ") {
         event.preventDefault();
@@ -537,14 +577,33 @@ export function StoreEvaluationPresentation({
             <p>Tam ekran sunum mobilde yatay konumda daha okunakli gorunur.</p>
           </div>
         </div>
-        <article className={`presentation-slide ${compactSlide ? "presentation-slide-compact" : ""}`}>
-          <div className={`presentation-slide-head ${compactSlide ? "presentation-slide-head-compact" : ""}`}>
-            <span className="presentation-kicker">{activeSlide.subtitle}</span>
-            <h1>{activeSlide.title}</h1>
-          </div>
+        <div
+          className={`presentation-slide-fit-frame ${slideScale < 0.999 ? "presentation-slide-fit-frame-active" : ""}`}
+          style={slideFrameHeight ? { height: `${slideFrameHeight}px` } : undefined}
+        >
+          <article
+            ref={slideRef}
+            className={`presentation-slide ${compactSlide ? "presentation-slide-compact" : ""}`}
+            style={
+              slideScale < 0.999
+                ? {
+                    position: "absolute",
+                    left: "50%",
+                    top: 0,
+                    transform: `translateX(-50%) scale(${slideScale})`,
+                    transformOrigin: "top center"
+                  }
+                : undefined
+            }
+          >
+            <div className={`presentation-slide-head ${compactSlide ? "presentation-slide-head-compact" : ""}`}>
+              <span className="presentation-kicker">{activeSlide.subtitle}</span>
+              <h1>{activeSlide.title}</h1>
+            </div>
 
-          <div className="presentation-slide-body">{activeSlide.body}</div>
-        </article>
+            <div className="presentation-slide-body">{activeSlide.body}</div>
+          </article>
+        </div>
       </section>
 
       <div className="presentation-dots" aria-hidden="true">

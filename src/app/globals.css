@@ -2037,6 +2037,7 @@ textarea::placeholder {
 
 .presentation-stage {
   position: relative;
+  width: 100%;
   min-height: calc(100vh - 126px);
   overflow: hidden;
   touch-action: pan-x pan-y pinch-zoom;
@@ -2045,6 +2046,7 @@ textarea::placeholder {
 .presentation-slide-fit-frame {
   position: relative;
   width: 100%;
+  min-height: inherit;
 }
 
 .presentation-slide-fit-frame-active {
@@ -2151,16 +2153,26 @@ textarea::placeholder {
 .presentation-stage:fullscreen {
   min-height: 100vh;
   height: 100vh;
-  overflow: auto;
-  padding: 12px;
+  width: 100vw;
+  overflow: hidden;
+  padding: 0;
   background:
     radial-gradient(circle at top left, rgba(126, 241, 211, 0.18), transparent 28%),
     radial-gradient(circle at top right, rgba(255, 209, 102, 0.2), transparent 26%),
     linear-gradient(180deg, #061d34, #0a3f53 54%, #0e6d72);
 }
 
+.presentation-stage:fullscreen .presentation-slide-fit-frame {
+  min-height: 100vh;
+  height: 100vh;
+}
+
 .presentation-stage:fullscreen .presentation-slide {
-  min-height: calc(100vh - 24px);
+  min-height: 100vh;
+  height: 100vh;
+  border-radius: 0;
+  border: 0;
+  box-shadow: none;
 }
 
 .presentation-stage:fullscreen .presentation-slide-body {
@@ -2812,7 +2824,7 @@ textarea::placeholder {
   .presentation-slide {
     min-height: auto;
     height: auto;
-    grid-template-rows: auto auto;
+    grid-template-rows: auto auto auto;
   }
 
   .presentation-slide-body,
@@ -2823,18 +2835,23 @@ textarea::placeholder {
   }
 
   .presentation-stage:fullscreen {
-    height: auto;
+    height: 100vh;
     min-height: 100vh;
-    overflow: auto;
+    overflow: hidden;
+  }
+
+  .presentation-stage:fullscreen .presentation-slide-fit-frame {
+    min-height: 100vh;
+    height: 100vh;
   }
 
   .presentation-stage:fullscreen .presentation-slide {
-    min-height: auto;
-    height: auto;
+    min-height: 100vh;
+    height: 100vh;
   }
 
   .presentation-stage:fullscreen .presentation-slide-body {
-    overflow: visible;
+    overflow: auto;
   }
 
   .presentation-summary-grid {

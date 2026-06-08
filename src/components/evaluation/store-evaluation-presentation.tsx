@@ -112,6 +112,15 @@ function renderCols(widths: string[]) {
   );
 }
 
+function responsiveTableLabel(full: string, short: string) {
+  return (
+    <>
+      <span className="presentation-table-label-full">{full}</span>
+      <span className="presentation-table-label-short">{short}</span>
+    </>
+  );
+}
+
 export function StoreEvaluationPresentation({
   storeName,
   generatedAt,
@@ -166,13 +175,13 @@ export function StoreEvaluationPresentation({
               {renderCols(["24%", "10%", "12%", "10%", "12%", "20%", "12%"])}
               <thead>
                 <tr>
-                  <th>Calisan</th>
-                  <th>Gerc.</th>
-                  <th>Firma Ort.</th>
-                  <th>Pay %</th>
-                  <th>Ay Sonu %</th>
-                  <th>Durum</th>
-                  <th>Gunluk Min.</th>
+                  <th>{responsiveTableLabel("Calisan", "Calisan")}</th>
+                  <th>{responsiveTableLabel("Gerc.", "Gerc.")}</th>
+                  <th>{responsiveTableLabel("Firma Ort.", "Ort.")}</th>
+                  <th>{responsiveTableLabel("Pay %", "Pay")}</th>
+                  <th>{responsiveTableLabel("Ay Sonu %", "Ay %")}</th>
+                  <th>{responsiveTableLabel("Durum", "Durum")}</th>
+                  <th>{responsiveTableLabel("Gunluk Min.", "Min.")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -214,18 +223,18 @@ export function StoreEvaluationPresentation({
                 : renderCols(["72%", "28%"])}
               <thead>
                 <tr>
-                  <th>{table.title}</th>
+                  <th>{responsiveTableLabel(table.title, table.title)}</th>
                   {table.hasTarget ? (
                     <>
-                      <th>Hedef</th>
-                      <th>Gerc.</th>
-                      <th>Kalan</th>
-                      <th>Anlik %</th>
-                      <th>Ay Sonu</th>
-                      <th>Ay Sonu %</th>
+                      <th>{responsiveTableLabel("Hedef", "Hdf")}</th>
+                      <th>{responsiveTableLabel("Gerc.", "Grc")}</th>
+                      <th>{responsiveTableLabel("Kalan", "Kln")}</th>
+                      <th>{responsiveTableLabel("Anlik %", "Anl %")}</th>
+                      <th>{responsiveTableLabel("Ay Sonu", "Ay Sn")}</th>
+                      <th>{responsiveTableLabel("Ay Sonu %", "Ay %")}</th>
                     </>
                   ) : (
-                    <th>Gerc.</th>
+                    <th>{responsiveTableLabel("Gerc.", "Grc")}</th>
                   )}
                 </tr>
               </thead>
@@ -336,14 +345,14 @@ export function StoreEvaluationPresentation({
                 {renderCols(["24%", "10%", "9%", "10%", "10%", "11%", "11%", "15%"])}
                 <thead>
                   <tr>
-                    <th>Kategori</th>
-                    <th>Hedef</th>
-                    <th>Gerc.</th>
-                    <th>Kalan</th>
-                    <th>Anlik %</th>
-                    <th>Ay Sonu</th>
-                    <th>Ay Sonu %</th>
-                    <th>Gunluk Min.</th>
+                    <th>{responsiveTableLabel("Kategori", "Kategori")}</th>
+                    <th>{responsiveTableLabel("Hedef", "Hdf")}</th>
+                    <th>{responsiveTableLabel("Gerc.", "Grc")}</th>
+                    <th>{responsiveTableLabel("Kalan", "Kln")}</th>
+                    <th>{responsiveTableLabel("Anlik %", "Anl %")}</th>
+                    <th>{responsiveTableLabel("Ay Sonu", "Ay Sn")}</th>
+                    <th>{responsiveTableLabel("Ay Sonu %", "Ay %")}</th>
+                    <th>{responsiveTableLabel("Gunluk Min.", "Min.")}</th>
                   </tr>
                 </thead>
                 <tbody>

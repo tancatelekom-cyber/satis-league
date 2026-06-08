@@ -102,6 +102,16 @@ function chunk<T>(items: T[], size: number) {
 const EMPLOYEE_ROWS_PER_SLIDE = 5;
 const SHARE_ROWS_PER_SLIDE = 6;
 
+function renderCols(widths: string[]) {
+  return (
+    <colgroup>
+      {widths.map((width, index) => (
+        <col key={`${width}-${index}`} style={{ width }} />
+      ))}
+    </colgroup>
+  );
+}
+
 export function StoreEvaluationPresentation({
   storeName,
   generatedAt,
@@ -152,7 +162,8 @@ export function StoreEvaluationPresentation({
           </div>
 
           <div className="presentation-table-wrap">
-            <table className="presentation-table">
+            <table className="presentation-table presentation-table-fixed presentation-table-share">
+              {renderCols(["24%", "10%", "12%", "10%", "12%", "20%", "12%"])}
               <thead>
                 <tr>
                   <th>Calisan</th>
@@ -197,7 +208,10 @@ export function StoreEvaluationPresentation({
           </div>
 
           <div className="presentation-table-wrap">
-            <table className="presentation-table">
+            <table className="presentation-table presentation-table-fixed presentation-table-employee">
+              {table.hasTarget
+                ? renderCols(["28%", "12%", "10%", "12%", "12%", "13%", "13%"])
+                : renderCols(["72%", "28%"])}
               <thead>
                 <tr>
                   <th>{table.title}</th>
@@ -318,7 +332,8 @@ export function StoreEvaluationPresentation({
             </div>
 
             <div className="presentation-table-wrap">
-              <table className="presentation-table">
+              <table className="presentation-table presentation-table-fixed presentation-table-store">
+                {renderCols(["24%", "10%", "9%", "10%", "10%", "11%", "11%", "15%"])}
                 <thead>
                   <tr>
                     <th>Kategori</th>

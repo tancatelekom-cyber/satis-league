@@ -2398,6 +2398,7 @@ textarea::placeholder {
   overflow: auto;
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.96);
+  width: 100%;
 }
 
 .presentation-table {
@@ -2443,6 +2444,29 @@ textarea::placeholder {
 .presentation-table-alert {
   color: #d92525;
   font-weight: 900;
+}
+
+.presentation-table-fixed {
+  min-width: 100%;
+  table-layout: fixed;
+}
+
+.presentation-table-fixed th,
+.presentation-table-fixed td {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.presentation-table-fixed th:first-child,
+.presentation-table-fixed td:first-child,
+.presentation-table-share td:nth-child(6),
+.presentation-table-share th:nth-child(6),
+.presentation-table-store td:last-child,
+.presentation-table-store th:last-child {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .presentation-need-board {
@@ -2818,18 +2842,18 @@ textarea::placeholder {
   }
 
   .presentation-kicker {
-    padding: 5px 9px;
-    font-size: 0.7rem;
+    padding: 6px 10px;
+    font-size: 0.84rem;
   }
 
   .presentation-slide-head h1 {
-    font-size: clamp(1.2rem, 4vw, 1.7rem);
+    font-size: clamp(1.7rem, 5vw, 2.4rem);
     max-width: 100%;
     line-height: 1.05;
   }
 
   .presentation-slide-head-compact h1 {
-    font-size: clamp(1rem, 3.2vw, 1.35rem);
+    font-size: clamp(1.3rem, 3.9vw, 1.8rem);
     max-width: 100%;
   }
 
@@ -2846,7 +2870,7 @@ textarea::placeholder {
   .presentation-panel-head strong,
   .presentation-cover-copy h2,
   .presentation-closing-card h2 {
-    font-size: clamp(1rem, 3vw, 1.3rem);
+    font-size: clamp(1.28rem, 3.7vw, 1.7rem);
     max-width: 100%;
   }
 
@@ -2855,22 +2879,23 @@ textarea::placeholder {
   .presentation-focus-card p,
   .presentation-closing-card p,
   .presentation-action-card p {
-    font-size: 0.78rem;
-    line-height: 1.35;
+    font-size: 1rem;
+    line-height: 1.48;
   }
 
   .presentation-table {
-    min-width: 620px;
+    min-width: 100%;
   }
 
   .presentation-table th,
   .presentation-table td {
     padding: 7px 8px;
-    font-size: 0.76rem;
+    font-size: 0.84rem;
+    line-height: 1.2;
   }
 
   .presentation-table thead th {
-    font-size: 0.72rem;
+    font-size: 0.78rem;
   }
 
   .presentation-stat-card {
@@ -2880,17 +2905,17 @@ textarea::placeholder {
 
   .presentation-stat-card span {
     margin-bottom: 4px;
-    font-size: 0.68rem;
+    font-size: 0.84rem;
   }
 
   .presentation-stat-card strong {
     margin-bottom: 4px;
-    font-size: 1.05rem;
+    font-size: 1.45rem;
   }
 
   .presentation-stat-card p {
-    font-size: 0.66rem;
-    line-height: 1.2;
+    font-size: 0.84rem;
+    line-height: 1.34;
   }
 
   .presentation-health-card,
@@ -2908,7 +2933,7 @@ textarea::placeholder {
   }
 
   .presentation-focus-head h3 {
-    font-size: 1.1rem;
+    font-size: 1.42rem;
   }
 
   .presentation-action-order {
@@ -2919,7 +2944,7 @@ textarea::placeholder {
   }
 
   .presentation-action-owner {
-    font-size: 0.68rem;
+    font-size: 0.84rem;
   }
 
   .presentation-dots {

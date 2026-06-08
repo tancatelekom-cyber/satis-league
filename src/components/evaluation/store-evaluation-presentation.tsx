@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import type { ReactNode, TouchEvent } from "react";
+import type { CSSProperties, ReactNode, TouchEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 type SummaryCard = {
@@ -143,6 +143,7 @@ export function StoreEvaluationPresentation({
   const [fullscreen, setFullscreen] = useState(false);
   const [slideScale, setSlideScale] = useState(1);
   const [slideFrameHeight, setSlideFrameHeight] = useState<number | null>(null);
+  const [tableFitScale, setTableFitScale] = useState(1);
 
   const slides = useMemo(() => {
     const items: Array<{
@@ -496,6 +497,7 @@ export function StoreEvaluationPresentation({
       if (window.innerWidth > 860) {
         setSlideScale(1);
         setSlideFrameHeight(null);
+        setTableFitScale(1);
         return;
       }
 
@@ -503,6 +505,21 @@ export function StoreEvaluationPresentation({
       const stageRect = stageRef.current.getBoundingClientRect();
       const availableWidth = Math.max(stageRef.current.clientWidth, 1);
       const availableHeight = Math.max(window.innerHeight - stageRect.top - 18, 320);
+      const widestTableWidth = Math.max(
+        0,
+        ...Array.from(slideRef.current.querySelectorAll<HTMLElement>(".presentation-table")).map((element) => element.scrollWidth)
+      );
+      const nextTableFitScale =
+        widestTableWidth > 0 ? Math.min(1, Math.max(availableWidth / widestTableWidth, mobileLandscape ? 0.78 : 0.72)) : 1;
+
+      setTableFitScale(nextTableFitScale);
+
+      if (mobileLandscape) {
+        setSlideScale(1);
+        setSlideFrameHeight(null);
+        return;
+      }
+
       const measuredWidths = [
         slideRef.current.scrollWidth,
         ...Array.from(
@@ -720,18 +737,22 @@ export function StoreEvaluationPresentation({
           <article
             ref={slideRef}
             className={`presentation-slide ${compactSlide ? "presentation-slide-compact" : ""}`}
-            style={
-              slideScale < 0.999
-                ? {
-                    position: "absolute",
-                    left: 0,
-                    top: 0,
-                    width: `${100 / slideScale}%`,
-                    transform: `scale(${slideScale})`,
-                    transformOrigin: "top left"
-                  }
-                : undefined
-            }
+            style={(() => {
+              const style = {
+                "--presentation-table-fit-scale": String(tableFitScale)
+              } as CSSProperties & Record<string, string | number>;
+
+              if (slideScale < 0.999) {
+                style.position = "absolute";
+                style.left = 0;
+                style.top = 0;
+                style.width = `${100 / slideScale}%`;
+                style.transform = `scale(${slideScale})`;
+                style.transformOrigin = "top left";
+              }
+
+              return style;
+            })()}
           >
             <div className={`presentation-slide-head ${compactSlide ? "presentation-slide-head-compact" : ""}`}>
               <div className="presentation-slide-head-main">

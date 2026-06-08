@@ -2174,20 +2174,29 @@ textarea::placeholder {
 
 .presentation-slide-table .presentation-panel-stack {
   height: 100%;
+  min-height: 0;
+  grid-template-rows: auto minmax(0, 1fr);
 }
 
 .presentation-slide-table .presentation-table-panel {
   height: 100%;
+  min-height: 0;
   grid-template-rows: auto minmax(0, 1fr);
 }
 
 .presentation-slide-table .presentation-table-wrap {
   height: 100%;
   display: flex;
+  min-height: 0;
 }
 
 .presentation-slide-table .presentation-table {
   height: 100%;
+}
+
+.presentation-slide-table .presentation-panel.presentation-panel-hero {
+  align-content: start;
+  padding-bottom: 12px;
 }
 
 .presentation-slide-table .presentation-table tbody tr {

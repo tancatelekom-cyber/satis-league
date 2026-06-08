@@ -2145,7 +2145,7 @@ textarea::placeholder {
   min-height: 0;
   overflow: auto;
   padding-right: 6px;
-  padding-bottom: 94px;
+  padding-bottom: 74px;
   touch-action: pan-x pan-y pinch-zoom;
 }
 
@@ -2180,7 +2180,7 @@ textarea::placeholder {
 
 .presentation-stage:fullscreen .presentation-slide-body {
   overflow: auto;
-  padding-bottom: 108px;
+  padding-bottom: 82px;
 }
 
 .presentation-rotate-hint {
@@ -2747,8 +2747,8 @@ textarea::placeholder {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 16px;
-  padding-top: 10px;
+  gap: 10px;
+  padding-top: 8px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   background: linear-gradient(180deg, rgba(6, 52, 67, 0), rgba(6, 52, 67, 0.94) 28%, rgba(6, 52, 67, 0.98));
 }
@@ -2764,11 +2764,11 @@ textarea::placeholder {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 10px 14px;
+  padding: 8px 12px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.08);
   color: #dff7ff;
-  font-size: 0.92rem;
+  font-size: 0.82rem;
   font-weight: 800;
 }
 
@@ -2776,14 +2776,15 @@ textarea::placeholder {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  min-width: 148px;
-  padding: 12px 16px;
+  gap: 8px;
+  min-width: 112px;
+  padding: 9px 12px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 999px;
   background: rgba(6, 37, 58, 0.9);
   color: #f7fbff;
   box-shadow: 0 16px 28px rgba(4, 16, 31, 0.18);
+  font-size: 0.88rem;
   font-weight: 800;
   cursor: pointer;
 }
@@ -2794,7 +2795,7 @@ textarea::placeholder {
 }
 
 .presentation-bottom-arrow-icon {
-  font-size: 1rem;
+  font-size: 0.88rem;
   font-weight: 900;
   line-height: 1;
 }
@@ -2852,7 +2853,7 @@ textarea::placeholder {
     overflow: visible;
     max-height: none;
     padding-right: 0;
-    padding-bottom: 92px;
+    padding-bottom: 70px;
   }
 
   .presentation-stage:fullscreen {
@@ -2873,7 +2874,7 @@ textarea::placeholder {
 
   .presentation-stage:fullscreen .presentation-slide-body {
     overflow: auto;
-    padding-bottom: 96px;
+    padding-bottom: 76px;
   }
 
   .presentation-summary-grid {
@@ -3102,18 +3103,18 @@ textarea::placeholder {
     left: 10px;
     right: 10px;
     bottom: 10px;
-    padding-top: 8px;
+    padding-top: 6px;
   }
 
   .presentation-bottom-arrow {
-    min-width: 124px;
-    padding: 9px 12px;
-    font-size: 0.88rem;
+    min-width: 96px;
+    padding: 7px 10px;
+    font-size: 0.78rem;
   }
 
   .presentation-slide-nav-meta span {
-    padding: 8px 10px;
-    font-size: 0.78rem;
+    padding: 6px 9px;
+    font-size: 0.72rem;
   }
 }
 

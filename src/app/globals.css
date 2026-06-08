@@ -2034,6 +2034,7 @@ textarea::placeholder {
 }
 
 .presentation-stage {
+  position: relative;
   min-height: calc(100vh - 126px);
   overflow: hidden;
 }
@@ -2129,6 +2130,77 @@ textarea::placeholder {
 
 .presentation-stage:fullscreen .presentation-slide-body {
   overflow: auto;
+}
+
+.presentation-rotate-hint {
+  display: none;
+}
+
+.presentation-rotate-card {
+  display: grid;
+  gap: 16px;
+  justify-items: center;
+  width: min(320px, calc(100vw - 48px));
+  padding: 22px 20px;
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(7, 25, 43, 0.94);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  text-align: center;
+}
+
+.presentation-rotate-card strong {
+  color: #f7fbff;
+  font-size: 1.2rem;
+  line-height: 1.15;
+}
+
+.presentation-rotate-card p {
+  margin: 0;
+  color: #d7e8fb;
+  font-size: 0.96rem;
+  line-height: 1.55;
+}
+
+.presentation-rotate-phones {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.presentation-rotate-phone {
+  position: relative;
+  display: inline-block;
+  border: 3px solid #f6fbff;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(126, 241, 211, 0.24), rgba(255, 209, 102, 0.24));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.presentation-rotate-phone::after {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  border-radius: 8px;
+  background: rgba(246, 251, 255, 0.14);
+}
+
+.presentation-rotate-phone-portrait {
+  width: 38px;
+  height: 66px;
+}
+
+.presentation-rotate-phone-landscape {
+  width: 66px;
+  height: 38px;
+}
+
+.presentation-rotate-arrow {
+  color: #ffd166;
+  font-size: 1.8rem;
+  font-weight: 900;
+  line-height: 1;
 }
 
 .presentation-cover-grid,
@@ -2628,6 +2700,166 @@ textarea::placeholder {
   .presentation-focus-head,
   .presentation-focus-footer {
     display: grid;
+  }
+}
+
+@media (max-width: 860px) and (orientation: landscape) {
+  .presentation-shell {
+    padding: 8px 8px 12px;
+  }
+
+  .presentation-control-bar {
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .presentation-control-copy strong {
+    font-size: 0.95rem;
+  }
+
+  .presentation-control-copy span {
+    font-size: 0.8rem;
+  }
+
+  .presentation-control-actions {
+    gap: 8px;
+  }
+
+  .presentation-control-actions .button-primary,
+  .presentation-control-actions .button-secondary {
+    padding: 10px 12px;
+    font-size: 0.84rem;
+  }
+
+  .presentation-stage,
+  .presentation-slide {
+    min-height: calc(100vh - 110px);
+  }
+
+  .presentation-slide,
+  .presentation-slide-compact {
+    padding: 14px 16px;
+    gap: 10px;
+    border-radius: 22px;
+  }
+
+  .presentation-kicker {
+    padding: 5px 9px;
+    font-size: 0.7rem;
+  }
+
+  .presentation-slide-head h1 {
+    font-size: clamp(1.2rem, 4vw, 1.7rem);
+    max-width: 100%;
+    line-height: 1.05;
+  }
+
+  .presentation-slide-head-compact h1 {
+    font-size: clamp(1rem, 3.2vw, 1.35rem);
+    max-width: 100%;
+  }
+
+  .presentation-cover-copy,
+  .presentation-panel,
+  .presentation-closing-card,
+  .presentation-table-panel,
+  .presentation-focus-card,
+  .presentation-action-card {
+    padding: 14px 16px;
+    border-radius: 18px;
+  }
+
+  .presentation-panel-head strong,
+  .presentation-cover-copy h2,
+  .presentation-closing-card h2 {
+    font-size: clamp(1rem, 3vw, 1.3rem);
+    max-width: 100%;
+  }
+
+  .presentation-cover-copy p,
+  .presentation-panel p,
+  .presentation-focus-card p,
+  .presentation-closing-card p,
+  .presentation-action-card p {
+    font-size: 0.84rem;
+    line-height: 1.45;
+  }
+
+  .presentation-table {
+    min-width: 620px;
+  }
+
+  .presentation-table th,
+  .presentation-table td {
+    padding: 7px 8px;
+    font-size: 0.76rem;
+  }
+
+  .presentation-table thead th {
+    font-size: 0.72rem;
+  }
+
+  .presentation-stat-card {
+    padding: 14px;
+    border-radius: 18px;
+  }
+
+  .presentation-stat-card span {
+    margin-bottom: 6px;
+    font-size: 0.78rem;
+  }
+
+  .presentation-stat-card strong {
+    margin-bottom: 6px;
+    font-size: 1.35rem;
+  }
+
+  .presentation-stat-card p {
+    font-size: 0.78rem;
+    line-height: 1.35;
+  }
+
+  .presentation-action-order {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    font-size: 1.05rem;
+  }
+
+  .presentation-action-owner {
+    font-size: 0.74rem;
+  }
+
+  .presentation-dots {
+    margin-top: 10px;
+  }
+
+  .presentation-dot {
+    width: 9px;
+    height: 9px;
+  }
+
+  .presentation-dot-active {
+    width: 22px;
+  }
+}
+
+@media (max-width: 860px) and (orientation: portrait) {
+  .presentation-stage:fullscreen .presentation-rotate-hint-visible {
+    position: absolute;
+    inset: 0;
+    z-index: 6;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: rgba(5, 18, 36, 0.84);
+    backdrop-filter: blur(10px);
+  }
+
+  .presentation-stage:fullscreen .presentation-slide {
+    filter: blur(4px);
+    pointer-events: none;
+    user-select: none;
   }
 }
 

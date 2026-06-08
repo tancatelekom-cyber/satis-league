@@ -422,12 +422,28 @@ export function StoreEvaluationPresentation({
       return;
     }
 
+    const orientationApi = screen.orientation as ScreenOrientation & {
+      lock?: (orientation: string) => Promise<void>;
+      unlock?: () => void;
+    };
+
     if (document.fullscreenElement) {
+      if (orientationApi.unlock) {
+        orientationApi.unlock();
+      }
       await document.exitFullscreen();
       return;
     }
 
     await stageRef.current.requestFullscreen();
+
+    if (orientationApi.lock) {
+      try {
+        await orientationApi.lock("landscape");
+      } catch {
+        // Some mobile browsers block orientation lock without a gesture or support.
+      }
+    }
   }
 
   return (
@@ -457,6 +473,17 @@ export function StoreEvaluationPresentation({
       </div>
 
       <section ref={stageRef} className="presentation-stage">
+        <div className={`presentation-rotate-hint ${fullscreen ? "presentation-rotate-hint-visible" : ""}`} aria-hidden={!fullscreen}>
+          <div className="presentation-rotate-card">
+            <div className="presentation-rotate-phones">
+              <span className="presentation-rotate-phone presentation-rotate-phone-portrait" />
+              <span className="presentation-rotate-arrow">{"->"}</span>
+              <span className="presentation-rotate-phone presentation-rotate-phone-landscape" />
+            </div>
+            <strong>Telefonu Yatay Moda Cevir</strong>
+            <p>Tam ekran sunum mobilde yatay konumda daha okunakli gorunur.</p>
+          </div>
+        </div>
         <article className={`presentation-slide ${compactSlide ? "presentation-slide-compact" : ""}`}>
           <div className={`presentation-slide-head ${compactSlide ? "presentation-slide-head-compact" : ""}`}>
             <span className="presentation-kicker">{activeSlide.subtitle}</span>

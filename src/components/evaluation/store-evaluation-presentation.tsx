@@ -410,6 +410,7 @@ export function StoreEvaluationPresentation({
         return;
       }
 
+      const mobileLandscape = window.innerWidth > window.innerHeight;
       const stageRect = stageRef.current.getBoundingClientRect();
       const availableWidth = Math.max(stageRef.current.clientWidth, 1);
       const availableHeight = Math.max(window.innerHeight - stageRect.top - 18, 320);
@@ -423,7 +424,9 @@ export function StoreEvaluationPresentation({
       ];
       const naturalWidth = Math.max(...measuredWidths, 1);
       const naturalHeight = Math.max(slideRef.current.scrollHeight, 1);
-      const nextScale = Math.min(1, availableWidth / naturalWidth, availableHeight / naturalHeight);
+      const widthScale = availableWidth / naturalWidth;
+      const heightScale = availableHeight / naturalHeight;
+      const nextScale = Math.min(1, mobileLandscape ? widthScale : Math.min(widthScale, heightScale));
 
       setSlideScale(nextScale);
       setSlideFrameHeight(Math.ceil(naturalHeight * nextScale));
@@ -607,10 +610,11 @@ export function StoreEvaluationPresentation({
               slideScale < 0.999
                 ? {
                     position: "absolute",
-                    left: "50%",
+                    left: 0,
                     top: 0,
-                    transform: `translateX(-50%) scale(${slideScale})`,
-                    transformOrigin: "top center"
+                    width: `${100 / slideScale}%`,
+                    transform: `scale(${slideScale})`,
+                    transformOrigin: "top left"
                   }
                 : undefined
             }

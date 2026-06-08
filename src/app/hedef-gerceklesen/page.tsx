@@ -700,7 +700,7 @@ function buildGoalActualCoachingText(args: {
       if (!focusItems.has(note.title)) {
         focusItems.set(
           note.title,
-          `- ${note.title}: firma ortalamasi ${formatNumber(note.average)}, sende ${formatNumber(note.actual)}. Fark ${formatNumber(note.gap)}.`
+          `- ${note.title}: firma ortalamas\u0131 ${formatNumber(note.average)}, sende ${formatNumber(note.actual)}. Fark ${formatNumber(note.gap)}.`
         );
       }
     });
@@ -717,19 +717,26 @@ function buildGoalActualCoachingText(args: {
 
   const dailyLines = criticalMetrics.map((metric) => {
     const remaining = args.remainingDays > 0 && metric.remaining !== null ? Math.ceil(metric.remaining / args.remainingDays) : metric.remaining ?? 0;
-    return `- ${metric.title}: ay sonu ${formatPercent(metric.projectedPercent ?? metric.actualPercent)} seviyesinde kalir. Hedefi kapatmak icin kalan gunlerde gunluk en az ${formatNumber(remaining)} uretmen lazim.`;
+    return `- ${metric.title}: ay sonu ${formatPercent(metric.projectedPercent ?? metric.actualPercent)} seviyesinde kal\u0131r. Hedefi kapatmak i\u00e7in kalan g\u00fcnlerde g\u00fcnl\u00fck en az ${formatNumber(remaining)} \u00fcretmen laz\u0131m.`;
   });
 
   const firstTitle =
-    args.view === "company" ? "FIRMANIN HEDEFIN ALTINDA KALDIGI KALEMLER:" : "HEDEFIN VE FIRMA ORTALAMASININ ALTINDA KALDIGIN KALEMLER:";
-  const secondTitle = args.view === "company" ? "GUNLUK MINIMUM IHTIYACLAR:" : "GUNLUK MINIMUM IHTIYACLARIN:";
+    args.view === "company"
+      ? "F\u0130RMANIN HEDEF\u0130N ALTINDA KALDI\u011eI KALEMLER:"
+      : "HEDEF\u0130N VE F\u0130RMA ORTALAMASININ ALTINDA KALDI\u011eIN KALEMLER:";
+  const secondTitle =
+    args.view === "company"
+      ? "G\u00dcNL\u00dcK M\u0130N\u0130MUM \u0130HT\u0130YA\u00c7LAR:"
+      : "G\u00dcNL\u00dcK M\u0130N\u0130MUM \u0130HT\u0130YA\u00c7LARIN:";
 
   return [
     firstTitle,
-    ...(focusItems.size ? Array.from(focusItems.values()) : ["- Belirgin bir kritik kalem gorunmuyor."]),
+    ...(focusItems.size ? Array.from(focusItems.values()) : ["- Belirgin bir kritik kalem g\u00f6r\u00fcnm\u00fcyor."]),
     "",
     secondTitle,
-    ...(dailyLines.length ? dailyLines : ["- Bugun icin ek gunluk minimum ihtiyac gorunmuyor. Mevcut tempoyu koruyalim."])
+    ...(dailyLines.length
+      ? dailyLines
+      : ["- Bug\u00fcn i\u00e7in ek g\u00fcnl\u00fck minimum ihtiya\u00e7 g\u00f6r\u00fcnm\u00fcyor. Mevcut tempoyu koruyal\u0131m."])
   ].join("\n");
 }
 

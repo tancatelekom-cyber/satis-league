@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 type NavItem = {
   href: string;
@@ -138,6 +138,7 @@ export function AppShellHeader({
 }: AppShellHeaderProps) {
   const pathname = usePathname() ?? "/";
   const [menuOpen, setMenuOpen] = useState(false);
+  const mobileTabbarRef = useRef<HTMLElement | null>(null);
 
   const navItems = useMemo(() => {
     const items = false && initialCanEvaluate
@@ -164,6 +165,13 @@ export function AppShellHeader({
     ];
     return navItems.filter((item) => wanted.includes(item.href));
   }, [navItems]);
+
+  function scrollMobileTabs(direction: "left" | "right") {
+    mobileTabbarRef.current?.scrollBy({
+      left: direction === "left" ? -160 : 160,
+      behavior: "smooth"
+    });
+  }
 
   return (
     <>
@@ -195,20 +203,38 @@ export function AppShellHeader({
         </div>
       </header>
 
-      <nav className="mobile-tabbar" aria-label="Hizli menu">
-        {primaryTabs.map((item) => (
-          <Link
-            key={item.href}
-            className={`mobile-tab ${isActive(pathname, item.href) ? "mobile-tab-active" : ""}`}
-            href={item.href}
-          >
-            <span className="mobile-tab-icon" aria-hidden="true">
-              <MobileTabIcon kind={item.icon} />
-            </span>
-            <span className="mobile-tab-label">{item.mobileLabel ?? item.label}</span>
-          </Link>
-        ))}
-      </nav>
+      <div className="mobile-tabbar-shell">
+        <button
+          className="mobile-tabbar-arrow mobile-tabbar-arrow-left"
+          type="button"
+          aria-label="Menüyü sola kaydır"
+          onClick={() => scrollMobileTabs("left")}
+        >
+          ‹
+        </button>
+        <nav ref={mobileTabbarRef} className="mobile-tabbar" aria-label="Hizli menu">
+          {primaryTabs.map((item) => (
+            <Link
+              key={item.href}
+              className={`mobile-tab ${isActive(pathname, item.href) ? "mobile-tab-active" : ""}`}
+              href={item.href}
+            >
+              <span className="mobile-tab-icon" aria-hidden="true">
+                <MobileTabIcon kind={item.icon} />
+              </span>
+              <span className="mobile-tab-label">{item.mobileLabel ?? item.label}</span>
+            </Link>
+          ))}
+        </nav>
+        <button
+          className="mobile-tabbar-arrow mobile-tabbar-arrow-right"
+          type="button"
+          aria-label="Menüyü sağa kaydır"
+          onClick={() => scrollMobileTabs("right")}
+        >
+          ›
+        </button>
+      </div>
     </>
   );
 }

@@ -514,6 +514,10 @@ button {
   display: none;
 }
 
+.mobile-tabbar-shell {
+  display: none;
+}
+
 .hero {
   display: grid;
   grid-template-columns: 1.1fr 0.9fr;
@@ -4527,15 +4531,22 @@ textarea::placeholder {
     display: inline-flex;
   }
 
-  .mobile-tabbar {
+  .mobile-tabbar-shell {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     position: fixed;
     left: 12px;
     right: 12px;
     bottom: 12px;
     z-index: 40;
+  }
+
+  .mobile-tabbar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1 1 auto;
     min-height: 58px;
     padding: 7px;
     overflow-x: auto;
@@ -4547,6 +4558,23 @@ textarea::placeholder {
     background: rgba(8, 16, 30, 0.94);
     backdrop-filter: blur(18px);
     box-shadow: 0 18px 40px rgba(0, 0, 0, 0.3);
+  }
+
+  .mobile-tabbar-arrow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 34px;
+    width: 34px;
+    height: 34px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+    background: rgba(8, 16, 30, 0.96);
+    color: #f4f7fb;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+    font-size: 1.25rem;
+    font-weight: 900;
+    line-height: 1;
   }
 
   .mobile-tabbar::-webkit-scrollbar {

@@ -505,7 +505,13 @@ export function StoreEvaluationPresentation({
       const mobileLandscape = window.innerWidth > window.innerHeight;
       const stageRect = stageRef.current.getBoundingClientRect();
       const availableWidth = Math.max(stageRef.current.clientWidth, 1);
-      const availableHeight = Math.max(window.innerHeight - stageRect.top - 18, 320);
+      const availableHeight = Math.max(fullscreen ? stageRef.current.clientHeight : window.innerHeight - stageRect.top - 18, 320);
+      const slideHead = slideRef.current.querySelector<HTMLElement>(".presentation-slide-head");
+      const slideBody = slideRef.current.querySelector<HTMLElement>(".presentation-slide-body");
+      const slideStyles = window.getComputedStyle(slideRef.current);
+      const slidePaddingTop = Number.parseFloat(slideStyles.paddingTop) || 0;
+      const slidePaddingBottom = Number.parseFloat(slideStyles.paddingBottom) || 0;
+      const slideGap = Number.parseFloat(slideStyles.rowGap || slideStyles.gap) || 0;
       const widestTableWidth = Math.max(
         0,
         ...Array.from(slideRef.current.querySelectorAll<HTMLElement>(".presentation-table")).map((element) => element.scrollWidth)
@@ -524,10 +530,16 @@ export function StoreEvaluationPresentation({
         ).map((element) => element.scrollWidth)
       ];
       const naturalWidth = Math.max(...measuredWidths, 1);
-      const naturalHeight = Math.max(slideRef.current.scrollHeight, 1);
+      const measuredNaturalHeight =
+        slidePaddingTop +
+        (slideHead?.offsetHeight ?? 0) +
+        slideGap +
+        (slideBody?.scrollHeight ?? slideRef.current.scrollHeight) +
+        slidePaddingBottom;
+      const naturalHeight = Math.max(measuredNaturalHeight, 1);
       const widthScale = availableWidth / naturalWidth;
       const heightScale = availableHeight / naturalHeight;
-      const nextScale = Math.min(1, mobileLandscape ? heightScale : Math.min(widthScale, heightScale));
+      const nextScale = Math.min(1, widthScale, heightScale);
 
       setSlideScale(nextScale);
       setSlideFrameHeight(Math.ceil(naturalHeight * nextScale));

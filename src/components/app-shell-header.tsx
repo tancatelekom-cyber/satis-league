@@ -45,54 +45,50 @@ function MobileTabIcon({ kind }: { kind?: string }) {
   const icons: Record<string, ReactNode> = {
     K: (
       <svg {...sharedProps}>
-        <path d="M5 7h14" />
-        <path d="M7 12h10" />
-        <path d="M9 17h6" />
+        <path d="M5 14.5V9.5a1.5 1.5 0 0 1 1.5-1.5h5l4.5-2v12l-4.5-2h-5A1.5 1.5 0 0 1 5 14.5Z" />
+        <path d="M18 10.5a3.5 3.5 0 0 1 0 5" />
+        <path d="M8 16.5v2" />
       </svg>
     ),
     A: (
       <svg {...sharedProps}>
-        <rect x="5" y="4.5" width="14" height="15" rx="2.5" />
-        <path d="M8 8h8" />
-        <path d="M8 12h8" />
-        <path d="M8 16h5" />
+        <rect x="4.5" y="5.5" width="15" height="13" rx="2.5" />
+        <path d="M8 9.5h8" />
+        <path d="M8 13h5" />
+        <path d="m11.5 5.5.8-2 .8 2" />
       </svg>
     ),
     L: (
       <svg {...sharedProps}>
-        <path d="M6 18V10" />
-        <path d="M12 18V6" />
-        <path d="M18 18v-4" />
+        <path d="m12 5 1.8 3.8 4.2.6-3 2.9.7 4.2-3.7-2-3.7 2 .7-4.2-3-2.9 4.2-.6L12 5Z" />
       </svg>
     ),
     H: (
       <svg {...sharedProps}>
-        <path d="M4.5 12h15" />
-        <path d="M12 4.5v15" />
         <circle cx="12" cy="12" r="7.5" />
+        <circle cx="12" cy="12" r="3.5" />
+        <path d="M12 4.5v3" />
+        <path d="M19.5 12h-3" />
       </svg>
     ),
     T: (
       <svg {...sharedProps}>
-        <path d="M4.5 7.5h15" />
-        <path d="M12 7.5v10" />
-        <path d="M8 18h8" />
+        <path d="M6 8h12l-3.5 5H9.5L6 8Z" />
+        <path d="M8 13v4.5h8V13" />
       </svg>
     ),
     C: (
       <svg {...sharedProps}>
-        <rect x="6" y="4.5" width="12" height="15" rx="2.5" />
-        <path d="M9 7.5h6" />
-        <path d="M10 16.5h4" />
+        <rect x="7" y="3.5" width="10" height="17" rx="2.5" />
+        <path d="M10 6.5h4" />
+        <path d="M11 17.5h2" />
       </svg>
     ),
     S: (
       <svg {...sharedProps}>
-        <path d="M6 7h12" />
-        <path d="M7.5 7v10" />
-        <path d="M16.5 7v10" />
-        <path d="M6 12h12" />
-        <path d="M9.5 17h5" />
+        <path d="M6 8.5h12v4H6z" />
+        <path d="M8 12.5h12v4H8z" />
+        <path d="M4 16.5h12v4H4z" />
       </svg>
     ),
     P: (
@@ -219,7 +215,7 @@ export function AppShellHeader({
               className={`mobile-tab ${isActive(pathname, item.href) ? "mobile-tab-active" : ""}`}
               href={item.href}
             >
-              <span className="mobile-tab-icon" aria-hidden="true">
+              <span className={`mobile-tab-icon mobile-tab-icon-${(item.icon ?? "default").toLowerCase()}`} aria-hidden="true">
                 <MobileTabIcon kind={item.icon} />
               </span>
               <span className="mobile-tab-label">{item.mobileLabel ?? item.label}</span>

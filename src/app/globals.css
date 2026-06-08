@@ -4609,15 +4609,71 @@ textarea::placeholder {
     width: 28px;
     height: 28px;
     border-radius: 10px;
-    background: rgba(255, 255, 255, 0.08);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.05));
     color: #f4f7fb;
     line-height: 1;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 8px 18px rgba(0, 0, 0, 0.18);
   }
 
   .mobile-tab-icon-svg {
     width: 18px;
     height: 18px;
     display: block;
+  }
+
+  .mobile-tab-icon-k {
+    background: linear-gradient(135deg, #6ff7cf, #25c9a2);
+    color: #043f3f;
+  }
+
+  .mobile-tab-icon-a {
+    background: linear-gradient(135deg, #ffe37a, #ffbb38);
+    color: #5b3500;
+  }
+
+  .mobile-tab-icon-l {
+    background: linear-gradient(135deg, #ffd978, #ff8f5a);
+    color: #5a2700;
+  }
+
+  .mobile-tab-icon-h {
+    background: linear-gradient(135deg, #7fd7ff, #3d8cff);
+    color: #062f68;
+  }
+
+  .mobile-tab-icon-t {
+    background: linear-gradient(135deg, #d3b3ff, #8f63ff);
+    color: #30115f;
+  }
+
+  .mobile-tab-icon-c {
+    background: linear-gradient(135deg, #9cf3ff, #39c4d6);
+    color: #053d4d;
+  }
+
+  .mobile-tab-icon-s {
+    background: linear-gradient(135deg, #b5f0b8, #48c774);
+    color: #114321;
+  }
+
+  .mobile-tab-icon-p {
+    background: linear-gradient(135deg, #ffc2d7, #ff7da7);
+    color: #6b1637;
+  }
+
+  .mobile-tab-icon-d {
+    background: linear-gradient(135deg, #aee4ff, #6ec5ff);
+    color: #123f6f;
+  }
+
+  .mobile-tab-icon-u {
+    background: linear-gradient(135deg, #ffe59a, #ffcb57);
+    color: #634300;
+  }
+
+  .mobile-tab-icon-y {
+    background: linear-gradient(135deg, #ffb0a8, #ff6b6b);
+    color: #651818;
   }
 
   .mobile-tab-icon-fallback {

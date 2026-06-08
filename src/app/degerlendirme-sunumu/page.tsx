@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { OpenEvaluationPresentationButton } from "@/components/evaluation/open-evaluation-presentation-button";
 import { StoreEvaluationPresentation } from "@/components/evaluation/store-evaluation-presentation";
 import { requireUser } from "@/lib/auth/require-user";
 import {
@@ -736,7 +737,7 @@ export default async function EvaluationPresentationPage({ searchParams }: PageP
 
   const requestedStore = String(params?.store ?? "").trim();
   const selectedStore = allowedStoreNames.includes(requestedStore) ? requestedStore : allowedStoreNames[0];
-  const autoFullscreen = safeProfile.role === "manager" || Boolean(requestedStore);
+  const autoFullscreen = false;
   const selectedEmployeeRows = filteredEmployeeRows.filter((row) => sameStore(row.storeName, selectedStore));
   const selectedStoreRows = filteredStoreRows.filter((row) => sameStore(row.storeCode, selectedStore));
   const generatedAt = new Intl.DateTimeFormat("tr-TR", {
@@ -807,10 +808,14 @@ export default async function EvaluationPresentationPage({ searchParams }: PageP
 
           {safeProfile.role !== "manager" ? (
             <button className="button-primary" type="submit">
-              Sunumu Ac
+              Subeyi Yukle
             </button>
           ) : null}
         </form>
+
+        <div className="cta-row">
+          <OpenEvaluationPresentationButton />
+        </div>
       </section>
 
       <StoreEvaluationPresentation

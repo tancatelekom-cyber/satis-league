@@ -494,6 +494,17 @@ export function StoreEvaluationPresentation({
     });
   }, [autoFullscreen]);
 
+  useEffect(() => {
+    function handleOpenRequest() {
+      void enterFullscreen().catch(() => {
+        // Mobile browsers may still reject fullscreen if the request chain is interrupted.
+      });
+    }
+
+    window.addEventListener("evaluation-presentation-open", handleOpenRequest);
+    return () => window.removeEventListener("evaluation-presentation-open", handleOpenRequest);
+  }, []);
+
   function goToPreviousSlide() {
     setActiveIndex((current) => Math.max(current - 1, 0));
   }

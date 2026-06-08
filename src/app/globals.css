@@ -2076,6 +2076,11 @@ textarea::placeholder {
   gap: 14px;
 }
 
+.presentation-slide-fitted {
+  min-height: auto !important;
+  height: auto !important;
+}
+
 .presentation-slide-head {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -2152,6 +2157,11 @@ textarea::placeholder {
 
 .presentation-slide-compact .presentation-slide-body {
   overflow: auto;
+}
+
+.presentation-slide-fitted .presentation-slide-body,
+.presentation-stage:fullscreen .presentation-slide-fitted .presentation-slide-body {
+  overflow: visible !important;
 }
 
 .presentation-stage:fullscreen {

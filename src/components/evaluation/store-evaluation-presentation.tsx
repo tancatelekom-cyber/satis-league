@@ -751,7 +751,7 @@ export function StoreEvaluationPresentation({
         >
           <article
             ref={slideRef}
-            className={`presentation-slide ${compactSlide ? "presentation-slide-compact" : ""}`}
+            className={`presentation-slide ${compactSlide ? "presentation-slide-compact" : ""} ${slideScale < 0.999 ? "presentation-slide-fitted" : ""}`}
             style={(() => {
               const style = {
                 "--presentation-table-fit-scale": String(tableFitScale)
@@ -762,6 +762,8 @@ export function StoreEvaluationPresentation({
                 style.left = 0;
                 style.top = 0;
                 style.width = `${100 / slideScale}%`;
+                style.height = "auto";
+                style.minHeight = "auto";
                 style.transform = `scale(${slideScale})`;
                 style.transformOrigin = "top left";
               }

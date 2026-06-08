@@ -2860,17 +2860,17 @@ textarea::placeholder {
   }
 
   .presentation-table {
-    min-width: 540px;
+    min-width: 620px;
   }
 
   .presentation-table th,
   .presentation-table td {
-    padding: 6px 7px;
-    font-size: 0.68rem;
+    padding: 7px 8px;
+    font-size: 0.76rem;
   }
 
   .presentation-table thead th {
-    font-size: 0.64rem;
+    font-size: 0.72rem;
   }
 
   .presentation-stat-card {

@@ -130,6 +130,14 @@ export function StoreEvaluationPresentation({
       layout?: "default" | "compact";
     }> = [];
 
+    function findShareTable(table: EmployeeCategoryTable) {
+      return (
+        categoryShareTables.find((item) => item.title === table.title && !item.parentTitle) ??
+        subcategoryShareTables.find((item) => item.title === table.title && item.parentTitle === table.parentTitle) ??
+        null
+      );
+    }
+
     function renderShareTable(table: CategoryShareTable) {
       return (
         <section className="presentation-table-panel">
@@ -176,67 +184,81 @@ export function StoreEvaluationPresentation({
     }
 
     function renderEmployeeTable(table: EmployeeCategoryTable) {
-      const shareTable =
-        categoryShareTables.find((item) => item.title === table.title && !item.parentTitle) ??
-        subcategoryShareTables.find((item) => item.title === table.title && item.parentTitle === table.parentTitle);
-
       return (
-        <div className="presentation-panel-stack">
-          <section className="presentation-table-panel">
-            <div className="presentation-panel-head">
-              <span>Calisan Hedef Gerceklesenleri</span>
-              <strong>
-                {table.parentTitle ? `${table.parentTitle} / ${table.title}` : table.title} kategorisinde tum calisanlarin durumu
-              </strong>
-            </div>
+        <section className="presentation-table-panel">
+          <div className="presentation-panel-head">
+            <span>Calisan Hedef Gerceklesenleri</span>
+            <strong>
+              {table.parentTitle ? `${table.parentTitle} / ${table.title}` : table.title} kategorisinde tum calisanlarin durumu
+            </strong>
+          </div>
 
-            <div className="presentation-table-wrap">
-              <table className="presentation-table">
-                <thead>
-                  <tr>
-                    <th>{table.title}</th>
+          <div className="presentation-table-wrap">
+            <table className="presentation-table">
+              <thead>
+                <tr>
+                  <th>{table.title}</th>
+                  {table.hasTarget ? (
+                    <>
+                      <th>Hedef</th>
+                      <th>Gerc.</th>
+                      <th>Kalan</th>
+                      <th>Anlik %</th>
+                      <th>Ay Sonu</th>
+                      <th>Ay Sonu %</th>
+                    </>
+                  ) : (
+                    <th>Gerc.</th>
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {table.rows.map((row) => (
+                  <tr key={`${table.parentTitle ?? table.title}-${row.label}`}>
+                    <td>{row.label}</td>
                     {table.hasTarget ? (
                       <>
-                        <th>Hedef</th>
-                        <th>Gerc.</th>
-                        <th>Kalan</th>
-                        <th>Anlik %</th>
-                        <th>Ay Sonu</th>
-                        <th>Ay Sonu %</th>
+                        <td>{formatNumber(row.target)}</td>
+                        <td>{formatNumber(row.actual)}</td>
+                        <td>{formatNumber(row.remaining)}</td>
+                        <td>{formatPercent(row.actualPercent)}</td>
+                        <td>{formatNumber(row.projectedActual)}</td>
+                        <td className={(row.projectedPercent ?? 0) < 100 ? "presentation-table-alert" : ""}>
+                          {formatPercent(row.projectedPercent)}
+                        </td>
                       </>
                     ) : (
-                      <th>Gerc.</th>
+                      <td>{formatNumber(row.actual)}</td>
                     )}
                   </tr>
-                </thead>
-                <tbody>
-                  {table.rows.map((row) => (
-                    <tr key={`${table.parentTitle ?? table.title}-${row.label}`}>
-                      <td>{row.label}</td>
-                      {table.hasTarget ? (
-                        <>
-                          <td>{formatNumber(row.target)}</td>
-                          <td>{formatNumber(row.actual)}</td>
-                          <td>{formatNumber(row.remaining)}</td>
-                          <td>{formatPercent(row.actualPercent)}</td>
-                          <td>{formatNumber(row.projectedActual)}</td>
-                          <td className={(row.projectedPercent ?? 0) < 100 ? "presentation-table-alert" : ""}>
-                            {formatPercent(row.projectedPercent)}
-                          </td>
-                        </>
-                      ) : (
-                        <td>{formatNumber(row.actual)}</td>
-                      )}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-
-          {shareTable ? renderShareTable(shareTable) : null}
-        </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
       );
+    }
+
+    function pushEmployeeSlides(table: EmployeeCategoryTable, idPrefix: string, title: string, subtitle: string) {
+      const shareTable = findShareTable(table);
+
+      items.push({
+        id: `${idPrefix}-employees`,
+        title,
+        subtitle,
+        layout: "compact",
+        body: renderEmployeeTable(table)
+      });
+
+      if (shareTable) {
+        items.push({
+          id: `${idPrefix}-shares`,
+          title: `${title} PAY DAGILIMI`,
+          subtitle: "Sube ici paylar ve gunluk minimum ihtiyac",
+          layout: "compact",
+          body: renderShareTable(shareTable)
+        });
+      }
     }
 
     items.push({
@@ -322,24 +344,22 @@ export function StoreEvaluationPresentation({
     });
 
     employeeCategoryTables.forEach((table) => {
-      items.push({
-        id: `employee-table-${table.title}`,
-        title: `${table.title} PERSONEL TABLOSU`,
-        subtitle: "Kategori bazli tum calisan hedef gerceklesenleri ve sube ici paylar",
-        layout: "compact",
-        body: renderEmployeeTable(table)
-      });
+      pushEmployeeSlides(
+        table,
+        `employee-table-${table.title}`,
+        `${table.title} PERSONEL TABLOSU`,
+        "Kategori bazli tum calisan hedef gerceklesenleri"
+      );
 
       employeeSubcategoryTables
         .filter((subtable) => subtable.parentTitle === table.title)
         .forEach((subtable) => {
-          items.push({
-            id: `employee-sub-table-${subtable.parentTitle}-${subtable.title}`,
-            title: `${subtable.parentTitle} / ${subtable.title} ALT KATEGORI`,
-            subtitle: "Alt kategori bazli calisan durumlari ve sube ici paylar",
-            layout: "compact",
-            body: renderEmployeeTable(subtable)
-          });
+          pushEmployeeSlides(
+            subtable,
+            `employee-sub-table-${subtable.parentTitle}-${subtable.title}`,
+            `${subtable.parentTitle} / ${subtable.title} ALT KATEGORI`,
+            "Alt kategori bazli calisan durumlari"
+          );
         });
     });
 

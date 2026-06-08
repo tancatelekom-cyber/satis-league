@@ -64,6 +64,7 @@ type StoreEvaluationPresentationProps = {
   categoryShareTables: CategoryShareTable[];
   subcategoryShareTables: CategoryShareTable[];
   actionItems: ActionItem[];
+  autoFullscreen?: boolean;
 };
 
 function formatPercent(value: number | null | undefined) {
@@ -108,10 +109,12 @@ export function StoreEvaluationPresentation({
   employeeSubcategoryTables,
   categoryShareTables,
   subcategoryShareTables,
-  actionItems
+  actionItems,
+  autoFullscreen = false
 }: StoreEvaluationPresentationProps) {
   const stageRef = useRef<HTMLDivElement | null>(null);
   const touchStartRef = useRef<{ x: number; y: number; interactive: boolean } | null>(null);
+  const autoFullscreenAttemptedRef = useRef(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [fullscreen, setFullscreen] = useState(false);
 
@@ -418,7 +421,7 @@ export function StoreEvaluationPresentation({
     return () => document.removeEventListener("fullscreenchange", syncFullscreen);
   }, []);
 
-  async function toggleFullscreen() {
+  async function enterFullscreen() {
     if (!stageRef.current) {
       return;
     }
@@ -427,14 +430,6 @@ export function StoreEvaluationPresentation({
       lock?: (orientation: string) => Promise<void>;
       unlock?: () => void;
     };
-
-    if (document.fullscreenElement) {
-      if (orientationApi.unlock) {
-        orientationApi.unlock();
-      }
-      await document.exitFullscreen();
-      return;
-    }
 
     await stageRef.current.requestFullscreen();
 
@@ -446,6 +441,18 @@ export function StoreEvaluationPresentation({
       }
     }
   }
+
+  useEffect(() => {
+    if (!autoFullscreen || autoFullscreenAttemptedRef.current) {
+      return;
+    }
+
+    autoFullscreenAttemptedRef.current = true;
+
+    void enterFullscreen().catch(() => {
+      // Browsers can reject fullscreen if they require a direct user gesture.
+    });
+  }, [autoFullscreen]);
 
   function goToPreviousSlide() {
     setActiveIndex((current) => Math.max(current - 1, 0));
@@ -514,9 +521,6 @@ export function StoreEvaluationPresentation({
           </button>
           <button className="button-primary" type="button" onClick={goToNextSlide}>
             Ileri
-          </button>
-          <button className="button-secondary" type="button" onClick={toggleFullscreen}>
-            {fullscreen ? "Tam Ekrandan Cik" : "Tam Ekran"}
           </button>
         </div>
       </div>

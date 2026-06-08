@@ -736,6 +736,7 @@ export default async function EvaluationPresentationPage({ searchParams }: PageP
 
   const requestedStore = String(params?.store ?? "").trim();
   const selectedStore = allowedStoreNames.includes(requestedStore) ? requestedStore : allowedStoreNames[0];
+  const autoFullscreen = safeProfile.role === "manager" || Boolean(requestedStore);
   const selectedEmployeeRows = filteredEmployeeRows.filter((row) => sameStore(row.storeName, selectedStore));
   const selectedStoreRows = filteredStoreRows.filter((row) => sameStore(row.storeCode, selectedStore));
   const generatedAt = new Intl.DateTimeFormat("tr-TR", {
@@ -814,6 +815,7 @@ export default async function EvaluationPresentationPage({ searchParams }: PageP
 
       <StoreEvaluationPresentation
         actionItems={actionLines}
+        autoFullscreen={autoFullscreen}
         categoryShareTables={categoryShareTables}
         employeeCategoryTables={employeeCategoryTables}
         employeeSubcategoryTables={employeeSubcategoryTables}

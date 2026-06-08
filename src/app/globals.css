@@ -2753,6 +2753,35 @@ textarea::placeholder {
     padding: 8px 8px 12px;
   }
 
+  .presentation-cover-grid {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .presentation-summary-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .presentation-two-column,
+  .presentation-grid-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .presentation-grid-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .presentation-need-board {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .presentation-panel-stack {
+    gap: 12px;
+  }
+
   .presentation-control-bar {
     gap: 10px;
     margin-bottom: 10px;
@@ -2810,7 +2839,7 @@ textarea::placeholder {
   .presentation-table-panel,
   .presentation-focus-card,
   .presentation-action-card {
-    padding: 14px 16px;
+    padding: 12px 14px;
     border-radius: 18px;
   }
 
@@ -2826,53 +2855,71 @@ textarea::placeholder {
   .presentation-focus-card p,
   .presentation-closing-card p,
   .presentation-action-card p {
-    font-size: 0.84rem;
-    line-height: 1.45;
-  }
-
-  .presentation-table {
-    min-width: 620px;
-  }
-
-  .presentation-table th,
-  .presentation-table td {
-    padding: 7px 8px;
-    font-size: 0.76rem;
-  }
-
-  .presentation-table thead th {
-    font-size: 0.72rem;
-  }
-
-  .presentation-stat-card {
-    padding: 14px;
-    border-radius: 18px;
-  }
-
-  .presentation-stat-card span {
-    margin-bottom: 6px;
-    font-size: 0.78rem;
-  }
-
-  .presentation-stat-card strong {
-    margin-bottom: 6px;
-    font-size: 1.35rem;
-  }
-
-  .presentation-stat-card p {
     font-size: 0.78rem;
     line-height: 1.35;
   }
 
-  .presentation-action-order {
-    width: 42px;
-    height: 42px;
-    border-radius: 14px;
+  .presentation-table {
+    min-width: 540px;
+  }
+
+  .presentation-table th,
+  .presentation-table td {
+    padding: 6px 7px;
+    font-size: 0.68rem;
+  }
+
+  .presentation-table thead th {
+    font-size: 0.64rem;
+  }
+
+  .presentation-stat-card {
+    padding: 10px 12px;
+    border-radius: 16px;
+  }
+
+  .presentation-stat-card span {
+    margin-bottom: 4px;
+    font-size: 0.68rem;
+  }
+
+  .presentation-stat-card strong {
+    margin-bottom: 4px;
     font-size: 1.05rem;
   }
 
+  .presentation-stat-card p {
+    font-size: 0.66rem;
+    line-height: 1.2;
+  }
+
+  .presentation-health-card,
+  .presentation-action-card {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 10px;
+    align-items: start;
+  }
+
+  .presentation-focus-head,
+  .presentation-focus-footer {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .presentation-focus-head h3 {
+    font-size: 1.1rem;
+  }
+
+  .presentation-action-order {
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    font-size: 0.92rem;
+  }
+
   .presentation-action-owner {
-    font-size: 0.74rem;
+    font-size: 0.68rem;
   }
 
   .presentation-dots {

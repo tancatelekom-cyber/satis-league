@@ -2,10 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
-const STORAGE_KEYS = {
-  voice: "evaluation-speech-voice"
-} as const;
-
 function isTurkishVoice(voice: SpeechSynthesisVoice) {
   return voice.lang.toLocaleLowerCase("tr-TR").startsWith("tr");
 }
@@ -46,7 +42,6 @@ export function SpeakCoachingButton({ text }: { text: string }) {
   const [supported, setSupported] = useState(false);
   const [speaking, setSpeaking] = useState(false);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
-  const [selectedVoiceUri, setSelectedVoiceUri] = useState("");
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
   const turkishVoices = useMemo(
@@ -66,12 +61,6 @@ export function SpeakCoachingButton({ text }: { text: string }) {
       return;
     }
 
-    const savedVoice = window.localStorage.getItem(STORAGE_KEYS.voice) ?? "";
-
-    if (savedVoice) {
-      setSelectedVoiceUri(savedVoice);
-    }
-
     const loadVoices = () => {
       const nextVoices = window.speechSynthesis.getVoices();
       setVoices(nextVoices);
@@ -86,24 +75,6 @@ export function SpeakCoachingButton({ text }: { text: string }) {
     };
   }, []);
 
-  useEffect(() => {
-    if (!supported || typeof window === "undefined") {
-      return;
-    }
-
-    if (selectedVoiceUri) {
-      return;
-    }
-
-    const preferredVoice = pickBestTurkishVoice(voices);
-    if (!preferredVoice) {
-      return;
-    }
-
-    setSelectedVoiceUri(preferredVoice.voiceURI);
-    window.localStorage.setItem(STORAGE_KEYS.voice, preferredVoice.voiceURI);
-  }, [supported, selectedVoiceUri, voices]);
-
   function handleToggle() {
     if (!supported || typeof window === "undefined") {
       return;
@@ -116,14 +87,15 @@ export function SpeakCoachingButton({ text }: { text: string }) {
       return;
     }
 
-    const selectedVoice =
-      turkishVoices.find((voice) => voice.voiceURI === selectedVoiceUri) ?? pickBestTurkishVoice(voices) ?? null;
+    const selectedVoice = turkishVoices[0] ?? pickBestTurkishVoice(voices) ?? null;
     const utterance = new SpeechSynthesisUtterance(buildSpeechText(text));
 
-    utterance.lang = selectedVoice?.lang || "tr-TR";
-    utterance.voice = selectedVoice;
-    utterance.rate = 1.35;
-    utterance.pitch = 1.1;
+    utterance.lang = "tr-TR";
+    if (selectedVoice && isTurkishVoice(selectedVoice)) {
+      utterance.voice = selectedVoice;
+    }
+    utterance.rate = 1;
+    utterance.pitch = 1;
     utterance.volume = 1;
     utterance.onend = () => {
       setSpeaking(false);

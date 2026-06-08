@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode, TouchEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -675,8 +676,14 @@ export function StoreEvaluationPresentation({
             }
           >
             <div className={`presentation-slide-head ${compactSlide ? "presentation-slide-head-compact" : ""}`}>
-              <span className="presentation-kicker">{activeSlide.subtitle}</span>
-              <h1>{activeSlide.title}</h1>
+              <div className="presentation-slide-head-main">
+                <span className="presentation-kicker">{activeSlide.subtitle}</span>
+                <h1>{activeSlide.title}</h1>
+              </div>
+
+              <div className="presentation-slide-brand" aria-hidden="true">
+                <Image alt="Tanca+" className="presentation-slide-brand-image" src="/tplus-logo.png" width={80} height={80} />
+              </div>
             </div>
 
             <div className="presentation-slide-body">{activeSlide.body}</div>
@@ -693,6 +700,18 @@ export function StoreEvaluationPresentation({
             onClick={() => setActiveIndex(index)}
           />
         ))}
+      </div>
+
+      <div className="presentation-bottom-nav">
+        <button className="presentation-bottom-arrow" type="button" onClick={goToPreviousSlide}>
+          <span className="presentation-bottom-arrow-icon">{"<-"}</span>
+          <span>Geri</span>
+        </button>
+
+        <button className="presentation-bottom-arrow presentation-bottom-arrow-next" type="button" onClick={goToNextSlide}>
+          <span>Ileri</span>
+          <span className="presentation-bottom-arrow-icon">{"->"}</span>
+        </button>
       </div>
     </main>
   );

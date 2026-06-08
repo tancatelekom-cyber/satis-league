@@ -2072,11 +2072,19 @@ textarea::placeholder {
 
 .presentation-slide-head {
   display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 12px;
+  align-items: start;
 }
 
 .presentation-slide-head-compact {
   gap: 6px;
+}
+
+.presentation-slide-head-main {
+  display: grid;
+  gap: inherit;
+  min-width: 0;
 }
 
 .presentation-kicker {
@@ -2113,6 +2121,20 @@ textarea::placeholder {
 .presentation-slide-head-compact .presentation-kicker {
   padding: 6px 10px;
   font-size: 0.78rem;
+}
+
+.presentation-slide-brand {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  min-width: 64px;
+}
+
+.presentation-slide-brand-image {
+  width: clamp(54px, 5vw, 80px);
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.24));
 }
 
 .presentation-slide-body {
@@ -2690,6 +2712,40 @@ textarea::placeholder {
   background: linear-gradient(135deg, #ffd166, #7ef1d3);
 }
 
+.presentation-bottom-nav {
+  margin-top: 14px;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.presentation-bottom-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: 148px;
+  padding: 14px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  background: rgba(6, 37, 58, 0.9);
+  color: #f7fbff;
+  box-shadow: 0 16px 28px rgba(4, 16, 31, 0.18);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.presentation-bottom-arrow-next {
+  background: linear-gradient(135deg, rgba(255, 209, 102, 0.96), rgba(126, 241, 211, 0.92));
+  color: #08111f;
+}
+
+.presentation-bottom-arrow-icon {
+  font-size: 1rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
 @media (max-width: 1280px) {
   .presentation-cover-grid,
   .presentation-two-column,
@@ -2861,6 +2917,10 @@ textarea::placeholder {
     max-width: 100%;
   }
 
+  .presentation-slide-brand-image {
+    width: 54px;
+  }
+
   .presentation-cover-copy,
   .presentation-panel,
   .presentation-closing-card,
@@ -2976,6 +3036,17 @@ textarea::placeholder {
 
   .presentation-dot-active {
     width: 22px;
+  }
+
+  .presentation-bottom-nav {
+    margin-top: 10px;
+    gap: 10px;
+  }
+
+  .presentation-bottom-arrow {
+    min-width: 124px;
+    padding: 10px 14px;
+    font-size: 0.88rem;
   }
 }
 

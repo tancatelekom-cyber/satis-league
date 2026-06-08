@@ -2166,6 +2166,39 @@ textarea::placeholder {
   align-self: start;
 }
 
+.presentation-slide-table .presentation-slide-body-table {
+  display: grid;
+  align-content: stretch;
+  height: 100%;
+}
+
+.presentation-slide-table .presentation-panel-stack {
+  height: 100%;
+}
+
+.presentation-slide-table .presentation-table-panel {
+  height: 100%;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.presentation-slide-table .presentation-table-wrap {
+  height: 100%;
+  display: flex;
+}
+
+.presentation-slide-table .presentation-table {
+  height: 100%;
+}
+
+.presentation-slide-table .presentation-table tbody tr {
+  height: calc(100% / var(--presentation-table-row-count, 1));
+}
+
+.presentation-slide-needs .presentation-slide-body-needs {
+  display: grid;
+  align-content: stretch;
+}
+
 .presentation-stage:fullscreen {
   min-height: 100vh;
   height: 100vh;

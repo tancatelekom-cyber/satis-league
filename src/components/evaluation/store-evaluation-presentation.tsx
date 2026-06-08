@@ -154,6 +154,7 @@ export function StoreEvaluationPresentation({
       subtitle: string;
       body: ReactNode;
       layout?: "default" | "compact";
+      variant?: "default" | "table" | "needs";
     }> = [];
 
     function findShareTable(table: EmployeeCategoryTable) {
@@ -175,7 +176,10 @@ export function StoreEvaluationPresentation({
           </div>
 
           <div className="presentation-table-wrap">
-            <table className="presentation-table presentation-table-fixed presentation-table-share">
+            <table
+              className="presentation-table presentation-table-fixed presentation-table-share"
+              style={{ ["--presentation-table-row-count" as "--presentation-table-row-count"]: rows.length } as CSSProperties & Record<string, string | number>}
+            >
               {renderCols(["24%", "10%", "12%", "10%", "12%", "20%", "12%"])}
               <thead>
                 <tr>
@@ -221,7 +225,10 @@ export function StoreEvaluationPresentation({
           </div>
 
           <div className="presentation-table-wrap">
-            <table className="presentation-table presentation-table-fixed presentation-table-employee">
+            <table
+              className="presentation-table presentation-table-fixed presentation-table-employee"
+              style={{ ["--presentation-table-row-count" as "--presentation-table-row-count"]: rows.length } as CSSProperties & Record<string, string | number>}
+            >
               {table.hasTarget
                 ? renderCols(["28%", "12%", "10%", "12%", "12%", "13%", "13%"])
                 : renderCols(["72%", "28%"])}
@@ -281,6 +288,7 @@ export function StoreEvaluationPresentation({
           title,
           subtitle: total > 1 ? `${subtitle} | Sayfa ${index + 1}/${total}` : subtitle,
           layout: "compact",
+          variant: "table",
           body: renderEmployeeTable(table, rows)
         });
       });
@@ -293,6 +301,7 @@ export function StoreEvaluationPresentation({
             title: `${title} PAY DAGILIMI`,
             subtitle: total > 1 ? `Sube ici paylar ve gunluk minimum ihtiyac | Sayfa ${index + 1}/${total}` : "Sube ici paylar ve gunluk minimum ihtiyac",
             layout: "compact",
+            variant: "table",
             body: renderShareTable(shareTable, rows)
           });
         });
@@ -329,6 +338,7 @@ export function StoreEvaluationPresentation({
       title: "SUBE DURUMU",
       subtitle: `${storeName} ana kategorilerde magaza hedef gerceklesen tablosu`,
       layout: "compact",
+      variant: "table",
       body: (
         <div className="presentation-panel-stack">
           <section className="presentation-panel presentation-panel-hero">
@@ -345,7 +355,10 @@ export function StoreEvaluationPresentation({
             </div>
 
             <div className="presentation-table-wrap">
-              <table className="presentation-table presentation-table-fixed presentation-table-store">
+              <table
+                className="presentation-table presentation-table-fixed presentation-table-store"
+                style={{ ["--presentation-table-row-count" as "--presentation-table-row-count"]: storeCategoryRows.length } as CSSProperties & Record<string, string | number>}
+              >
                 {renderCols(["24%", "10%", "9%", "10%", "10%", "11%", "11%", "15%"])}
                 <thead>
                   <tr>
@@ -427,24 +440,30 @@ export function StoreEvaluationPresentation({
       });
     });
 
-    items.push({
-      id: "store-daily-needs",
-      title: "SUBE GUNLUK IHTIYACLARI",
-      subtitle: `${storeName} hedef gerceklesenine gore kategori bazli gunluk minimum beklenti`,
-      layout: "compact",
-      body: (
-        <section className="presentation-panel-stack">
-          <section className="presentation-panel presentation-panel-hero">
-            <div className="presentation-panel-head">
-              <span>Gunluk Takip</span>
-              <strong>Kalan gunlerde kategori bazli minimum uretim ihtiyaci</strong>
-            </div>
-          </section>
+    const dailyNeedRows = storeCategoryRows.filter((row) => row.target !== null && !isNaN(row.dailyNeed ?? NaN));
+    const dailyNeedChunks = chunk(dailyNeedRows, Math.max(1, Math.ceil(dailyNeedRows.length / 2)));
 
-          <div className="presentation-need-board">
-            {storeCategoryRows
-              .filter((row) => row.target !== null && !isNaN(row.dailyNeed ?? NaN))
-              .map((row) => (
+    dailyNeedChunks.forEach((rows, index) => {
+      items.push({
+        id: `store-daily-needs-${index + 1}`,
+        title: "SUBE GUNLUK IHTIYACLARI",
+        subtitle:
+          dailyNeedChunks.length > 1
+            ? `${storeName} hedef gerceklesenine gore kategori bazli gunluk minimum beklenti | Sayfa ${index + 1}/${dailyNeedChunks.length}`
+            : `${storeName} hedef gerceklesenine gore kategori bazli gunluk minimum beklenti`,
+        layout: "compact",
+        variant: "needs",
+        body: (
+          <section className="presentation-panel-stack">
+            <section className="presentation-panel presentation-panel-hero">
+              <div className="presentation-panel-head">
+                <span>Gunluk Takip</span>
+                <strong>Kalan gunlerde kategori bazli minimum uretim ihtiyaci</strong>
+              </div>
+            </section>
+
+            <div className="presentation-need-board">
+              {rows.map((row) => (
                 <article key={`daily-need-${row.label}`} className="presentation-need-card">
                   <strong>{row.label}</strong>
                   <div className="presentation-need-grid">
@@ -455,9 +474,10 @@ export function StoreEvaluationPresentation({
                   </div>
                 </article>
               ))}
-          </div>
-        </section>
-      )
+            </div>
+          </section>
+        )
+      });
     });
 
     items.push({
@@ -489,6 +509,8 @@ export function StoreEvaluationPresentation({
 
   const activeSlide = slides[activeIndex];
   const compactSlide = activeSlide.layout === "compact" || activeSlide.title.length > 22;
+  const tableSlide = activeSlide.variant === "table";
+  const needSlide = activeSlide.variant === "needs";
 
   useEffect(() => {
     function syncMobileSlideFit() {
@@ -752,7 +774,9 @@ export function StoreEvaluationPresentation({
         >
           <article
             ref={slideRef}
-            className={`presentation-slide ${compactSlide ? "presentation-slide-compact" : ""} ${slideScale < 0.999 ? "presentation-slide-fitted" : ""}`}
+            className={`presentation-slide ${compactSlide ? "presentation-slide-compact" : ""} ${slideScale < 0.999 ? "presentation-slide-fitted" : ""} ${
+              tableSlide ? "presentation-slide-table" : ""
+            } ${needSlide ? "presentation-slide-needs" : ""}`}
             style={(() => {
               const style = {
                 "--presentation-table-fit-scale": String(tableFitScale)
@@ -783,7 +807,9 @@ export function StoreEvaluationPresentation({
               </div>
             </div>
 
-            <div className="presentation-slide-body">{activeSlide.body}</div>
+            <div className={`presentation-slide-body ${tableSlide ? "presentation-slide-body-table" : ""} ${needSlide ? "presentation-slide-body-needs" : ""}`}>
+              {activeSlide.body}
+            </div>
 
           </article>
         </div>

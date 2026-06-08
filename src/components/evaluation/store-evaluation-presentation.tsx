@@ -488,15 +488,40 @@ export function StoreEvaluationPresentation({
       setSlideFrameHeight(Math.ceil(naturalHeight * nextScale));
     }
 
-    const frame = window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(syncMobileSlideFit);
-    });
+    const rafIds: number[] = [];
+    const timeoutIds: number[] = [];
+    let resizeObserver: ResizeObserver | null = null;
+
+    const scheduleSync = () => {
+      rafIds.push(
+        window.requestAnimationFrame(() => {
+          rafIds.push(window.requestAnimationFrame(syncMobileSlideFit));
+        })
+      );
+    };
+
+    scheduleSync();
+    timeoutIds.push(window.setTimeout(syncMobileSlideFit, 120));
+    timeoutIds.push(window.setTimeout(syncMobileSlideFit, 320));
+
+    if (typeof ResizeObserver !== "undefined" && slideRef.current) {
+      resizeObserver = new ResizeObserver(() => {
+        scheduleSync();
+      });
+
+      resizeObserver.observe(slideRef.current);
+      if (stageRef.current) {
+        resizeObserver.observe(stageRef.current);
+      }
+    }
 
     window.addEventListener("resize", syncMobileSlideFit);
     window.addEventListener("orientationchange", syncMobileSlideFit);
 
     return () => {
-      window.cancelAnimationFrame(frame);
+      rafIds.forEach((id) => window.cancelAnimationFrame(id));
+      timeoutIds.forEach((id) => window.clearTimeout(id));
+      resizeObserver?.disconnect();
       window.removeEventListener("resize", syncMobileSlideFit);
       window.removeEventListener("orientationchange", syncMobileSlideFit);
     };

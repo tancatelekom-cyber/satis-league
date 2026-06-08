@@ -513,6 +513,7 @@ export function StoreEvaluationPresentation({
       );
       const slideHead = slideRef.current.querySelector<HTMLElement>(".presentation-slide-head");
       const slideBody = slideRef.current.querySelector<HTMLElement>(".presentation-slide-body");
+      const slideBodyInner = slideBody?.firstElementChild instanceof HTMLElement ? slideBody.firstElementChild : null;
       const slideStyles = window.getComputedStyle(slideRef.current);
       const slidePaddingTop = Number.parseFloat(slideStyles.paddingTop) || 0;
       const slidePaddingBottom = Number.parseFloat(slideStyles.paddingBottom) || 0;
@@ -539,7 +540,7 @@ export function StoreEvaluationPresentation({
         slidePaddingTop +
         (slideHead?.offsetHeight ?? 0) +
         slideGap +
-        (slideBody?.scrollHeight ?? slideRef.current.scrollHeight) +
+        Math.max(slideBodyInner?.scrollHeight ?? 0, slideBodyInner?.offsetHeight ?? 0, slideBody?.scrollHeight ?? 0) +
         slidePaddingBottom;
       const naturalHeight = Math.max(measuredNaturalHeight, 1);
       const widthScale = availableWidth / naturalWidth;

@@ -2079,6 +2079,7 @@ textarea::placeholder {
 .presentation-slide-fitted {
   min-height: auto !important;
   height: auto !important;
+  grid-template-rows: auto auto !important;
 }
 
 .presentation-slide-head {
@@ -2162,6 +2163,7 @@ textarea::placeholder {
 .presentation-slide-fitted .presentation-slide-body,
 .presentation-stage:fullscreen .presentation-slide-fitted .presentation-slide-body {
   overflow: visible !important;
+  align-self: start;
 }
 
 .presentation-stage:fullscreen {

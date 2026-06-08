@@ -2145,7 +2145,7 @@ textarea::placeholder {
   min-height: 0;
   overflow: auto;
   padding-right: 6px;
-  padding-bottom: 74px;
+  padding-bottom: 50px;
   touch-action: pan-x pan-y pinch-zoom;
 }
 
@@ -2180,7 +2180,7 @@ textarea::placeholder {
 
 .presentation-stage:fullscreen .presentation-slide-body {
   overflow: auto;
-  padding-bottom: 82px;
+  padding-bottom: 44px;
 }
 
 .presentation-rotate-hint {
@@ -2743,12 +2743,12 @@ textarea::placeholder {
   position: absolute;
   left: clamp(14px, 2vw, 24px);
   right: clamp(14px, 2vw, 24px);
-  bottom: clamp(12px, 2vw, 22px);
+  bottom: clamp(4px, 0.8vw, 8px);
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 10px;
-  padding-top: 8px;
+  gap: 4px;
+  padding-top: 2px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   background: linear-gradient(180deg, rgba(6, 52, 67, 0), rgba(6, 52, 67, 0.94) 28%, rgba(6, 52, 67, 0.98));
 }
@@ -2764,11 +2764,11 @@ textarea::placeholder {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 8px 12px;
+  padding: 3px 6px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.08);
   color: #dff7ff;
-  font-size: 0.82rem;
+  font-size: 0.62rem;
   font-weight: 800;
 }
 
@@ -2776,15 +2776,15 @@ textarea::placeholder {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  min-width: 112px;
-  padding: 9px 12px;
+  gap: 4px;
+  min-width: 66px;
+  padding: 4px 6px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 999px;
   background: rgba(6, 37, 58, 0.9);
   color: #f7fbff;
   box-shadow: 0 16px 28px rgba(4, 16, 31, 0.18);
-  font-size: 0.88rem;
+  font-size: 0.62rem;
   font-weight: 800;
   cursor: pointer;
 }
@@ -2795,7 +2795,7 @@ textarea::placeholder {
 }
 
 .presentation-bottom-arrow-icon {
-  font-size: 0.88rem;
+  font-size: 0.62rem;
   font-weight: 900;
   line-height: 1;
 }
@@ -2957,8 +2957,8 @@ textarea::placeholder {
 
   .presentation-slide,
   .presentation-slide-compact {
-    padding: 14px 16px;
-    gap: 10px;
+    padding: 8px 10px;
+    gap: 6px;
     border-radius: 22px;
   }
 
@@ -3099,22 +3099,22 @@ textarea::placeholder {
   }
 
   .presentation-slide-nav {
-    gap: 10px;
-    left: 10px;
-    right: 10px;
-    bottom: 10px;
-    padding-top: 6px;
+    gap: 4px;
+    left: 6px;
+    right: 6px;
+    bottom: 4px;
+    padding-top: 2px;
   }
 
   .presentation-bottom-arrow {
-    min-width: 96px;
-    padding: 7px 10px;
-    font-size: 0.78rem;
+    min-width: 58px;
+    padding: 3px 5px;
+    font-size: 0.58rem;
   }
 
   .presentation-slide-nav-meta span {
-    padding: 6px 9px;
-    font-size: 0.72rem;
+    padding: 2px 5px;
+    font-size: 0.56rem;
   }
 }
 

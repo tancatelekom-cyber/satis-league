@@ -1997,6 +1997,8 @@ textarea::placeholder {
 .presentation-shell {
   min-height: 100vh;
   padding: 18px 18px 22px;
+  overflow-x: hidden;
+  touch-action: pan-x pan-y pinch-zoom;
   background:
     radial-gradient(circle at top left, rgba(126, 241, 211, 0.18), transparent 28%),
     radial-gradient(circle at top right, rgba(255, 209, 102, 0.2), transparent 26%),
@@ -2037,6 +2039,7 @@ textarea::placeholder {
   position: relative;
   min-height: calc(100vh - 126px);
   overflow: hidden;
+  touch-action: pan-x pan-y pinch-zoom;
 }
 
 .presentation-slide {
@@ -2107,6 +2110,7 @@ textarea::placeholder {
   min-height: 0;
   overflow: auto;
   padding-right: 6px;
+  touch-action: pan-x pan-y pinch-zoom;
 }
 
 .presentation-slide-compact .presentation-slide-body {
@@ -2685,6 +2689,38 @@ textarea::placeholder {
   .presentation-stage,
   .presentation-slide {
     min-height: calc(100vh - 166px);
+  }
+
+  .presentation-stage {
+    overflow: visible;
+  }
+
+  .presentation-slide {
+    min-height: auto;
+    height: auto;
+    grid-template-rows: auto auto;
+  }
+
+  .presentation-slide-body,
+  .presentation-slide-compact .presentation-slide-body {
+    overflow: visible;
+    max-height: none;
+    padding-right: 0;
+  }
+
+  .presentation-stage:fullscreen {
+    height: auto;
+    min-height: 100vh;
+    overflow: auto;
+  }
+
+  .presentation-stage:fullscreen .presentation-slide {
+    min-height: auto;
+    height: auto;
+  }
+
+  .presentation-stage:fullscreen .presentation-slide-body {
+    overflow: visible;
   }
 
   .presentation-summary-grid {

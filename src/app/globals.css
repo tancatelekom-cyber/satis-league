@@ -4556,12 +4556,13 @@ textarea::placeholder {
   .mobile-tab {
     display: inline-flex;
     flex: 0 0 auto;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    gap: 5px;
     min-width: 68px;
-    min-height: 42px;
-    padding: 6px 9px;
+    min-height: 54px;
+    padding: 7px 10px;
     scroll-snap-align: center;
     border-radius: 15px;
     color: var(--muted);
@@ -4575,7 +4576,25 @@ textarea::placeholder {
   }
 
   .mobile-tab-icon {
-    font-size: 0.95rem;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #f4f7fb;
+    line-height: 1;
+  }
+
+  .mobile-tab-icon-svg {
+    width: 18px;
+    height: 18px;
+    display: block;
+  }
+
+  .mobile-tab-icon-fallback {
+    font-size: 0.9rem;
+    font-weight: 900;
     line-height: 1;
   }
 

@@ -99,6 +99,9 @@ function chunk<T>(items: T[], size: number) {
   return result;
 }
 
+const EMPLOYEE_ROWS_PER_SLIDE = 5;
+const SHARE_ROWS_PER_SLIDE = 6;
+
 export function StoreEvaluationPresentation({
   storeName,
   generatedAt,
@@ -138,7 +141,7 @@ export function StoreEvaluationPresentation({
       );
     }
 
-    function renderShareTable(table: CategoryShareTable) {
+    function renderShareTable(table: CategoryShareTable, rows: CategoryShareRow[] = table.rows) {
       return (
         <section className="presentation-table-panel">
           <div className="presentation-panel-head">
@@ -162,7 +165,7 @@ export function StoreEvaluationPresentation({
                 </tr>
               </thead>
               <tbody>
-                {table.rows.map((row) => (
+                {rows.map((row) => (
                   <tr
                     key={`${table.parentTitle ?? table.title}-share-${row.label}`}
                     className={row.belowCompanyAverage ? "presentation-table-row-alert" : ""}
@@ -183,7 +186,7 @@ export function StoreEvaluationPresentation({
       );
     }
 
-    function renderEmployeeTable(table: EmployeeCategoryTable) {
+    function renderEmployeeTable(table: EmployeeCategoryTable, rows: CategorySummaryRow[] = table.rows) {
       return (
         <section className="presentation-table-panel">
           <div className="presentation-panel-head">
@@ -213,7 +216,7 @@ export function StoreEvaluationPresentation({
                 </tr>
               </thead>
               <tbody>
-                {table.rows.map((row) => (
+                {rows.map((row) => (
                   <tr key={`${table.parentTitle ?? table.title}-${row.label}`}>
                     <td>{row.label}</td>
                     {table.hasTarget ? (
@@ -241,22 +244,30 @@ export function StoreEvaluationPresentation({
 
     function pushEmployeeSlides(table: EmployeeCategoryTable, idPrefix: string, title: string, subtitle: string) {
       const shareTable = findShareTable(table);
+      const employeeChunks = chunk(table.rows, EMPLOYEE_ROWS_PER_SLIDE);
+      const shareChunks = shareTable ? chunk(shareTable.rows, SHARE_ROWS_PER_SLIDE) : [];
 
-      items.push({
-        id: `${idPrefix}-employees`,
-        title,
-        subtitle,
-        layout: "compact",
-        body: renderEmployeeTable(table)
+      employeeChunks.forEach((rows, index) => {
+        const total = employeeChunks.length;
+        items.push({
+          id: `${idPrefix}-employees-${index + 1}`,
+          title,
+          subtitle: total > 1 ? `${subtitle} | Sayfa ${index + 1}/${total}` : subtitle,
+          layout: "compact",
+          body: renderEmployeeTable(table, rows)
+        });
       });
 
       if (shareTable) {
-        items.push({
-          id: `${idPrefix}-shares`,
-          title: `${title} PAY DAGILIMI`,
-          subtitle: "Sube ici paylar ve gunluk minimum ihtiyac",
-          layout: "compact",
-          body: renderShareTable(shareTable)
+        shareChunks.forEach((rows, index) => {
+          const total = shareChunks.length;
+          items.push({
+            id: `${idPrefix}-shares-${index + 1}`,
+            title: `${title} PAY DAGILIMI`,
+            subtitle: total > 1 ? `Sube ici paylar ve gunluk minimum ihtiyac | Sayfa ${index + 1}/${total}` : "Sube ici paylar ve gunluk minimum ihtiyac",
+            layout: "compact",
+            body: renderShareTable(shareTable, rows)
+          });
         });
       }
     }

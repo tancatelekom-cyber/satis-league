@@ -3801,6 +3801,11 @@ textarea::placeholder {
   background: rgba(255, 255, 255, 0.08);
 }
 
+.schedule-open-close-item-alert {
+  background: rgba(173, 35, 35, 0.28);
+  box-shadow: inset 0 0 0 1px rgba(255, 130, 130, 0.22);
+}
+
 .schedule-open-close-summary strong {
   font-size: 0.98rem;
 }

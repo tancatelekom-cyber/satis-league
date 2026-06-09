@@ -377,7 +377,12 @@ export default async function WeeklyWorkSchedulePage({ searchParams }: PageProps
             <div className="schedule-export-row">
               <div className="schedule-open-close-summary">
                 {weeklyOpenCloseSummary.map((day) => (
-                  <div key={`open-close-${day.key}`} className="schedule-open-close-item">
+                  <div
+                    key={`open-close-${day.key}`}
+                    className={`schedule-open-close-item ${
+                      day.openingCount < 2 || day.closingCount < 2 ? "schedule-open-close-item-alert" : ""
+                    }`}
+                  >
                     <strong>
                       {day.label} acilis: {day.openingCount} kisi
                     </strong>

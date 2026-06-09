@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { FilterSelectNav } from "@/components/ui/filter-select-nav";
 import { OpenEvaluationPresentationButton } from "@/components/evaluation/open-evaluation-presentation-button";
 import { StoreEvaluationPresentation } from "@/components/evaluation/store-evaluation-presentation";
 import { requireUser } from "@/lib/auth/require-user";
@@ -118,6 +119,16 @@ function normalizeCategoryKey(value: string) {
     .replace(/\u015E/g, "S")
     .replace(/\u00D6/g, "O")
     .replace(/\u00C7/g, "C");
+}
+
+function buildStorePresentationHref(store: string) {
+  const params = new URLSearchParams();
+
+  if (store) {
+    params.set("store", store);
+  }
+
+  return `/degerlendirme-sunumu${params.size ? `?${params.toString()}` : ""}`;
 }
 
 function isAggregateCategoryLabel(value: string | null | undefined) {
@@ -815,24 +826,34 @@ export default async function EvaluationPresentationPage({ searchParams }: PageP
           </div>
         </div>
 
-        <form className="admin-form" method="get">
-          <label className="field">
-            <span>Sube</span>
-            <select defaultValue={selectedStore} name="store" disabled={safeProfile.role === "manager"}>
-              {allowedStoreNames.map((storeName) => (
-                <option key={storeName} value={storeName}>
-                  {storeName}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          {safeProfile.role !== "manager" ? (
-            <button className="button-primary" type="submit">
-              Subeyi Yukle
-            </button>
-          ) : null}
-        </form>
+        {safeProfile.role === "manager" ? (
+          <div className="admin-form">
+            <label className="field">
+              <span>Sube</span>
+              <select value={selectedStore} disabled>
+                {allowedStoreNames.map((storeName) => (
+                  <option key={storeName} value={storeName}>
+                    {storeName}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        ) : (
+          <div className="admin-form">
+            <label className="field">
+              <span>Sube</span>
+              <FilterSelectNav
+                ariaLabel="Degerlendirme sunumu sube secimi"
+                value={buildStorePresentationHref(selectedStore)}
+                options={allowedStoreNames.map((storeName) => ({
+                  label: storeName,
+                  value: buildStorePresentationHref(storeName)
+                }))}
+              />
+            </label>
+          </div>
+        )}
 
         <div className="cta-row">
           <OpenEvaluationPresentationButton />

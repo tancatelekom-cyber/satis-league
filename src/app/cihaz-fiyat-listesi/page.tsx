@@ -474,6 +474,7 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
               <article key={item.id} className="device-cash-row">
                 <strong>{item.productName}</strong>
                 <span>Pesine Kontrat: {formatCurrency(item.contractCashPrice ?? item.totalPayable)}</span>
+                {canViewDeviceZeroPoint ? <span>Bayi Prim Tutari: {formatCurrency(item.dealerBonus)}</span> : null}
                 {canViewDeviceZeroPoint ? (
                   <span>Cihaz 0 Noktasi: {formatCurrency(getDeviceZeroPoint(item))}</span>
                 ) : null}
@@ -508,6 +509,12 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
                   </div>
                   {canViewDeviceZeroPoint ? (
                     <div className="device-card-kv">
+                      <span className="subtle">Bayi Prim Tutari</span>
+                      <strong>{formatCurrency(item.dealerBonus)}</strong>
+                    </div>
+                  ) : null}
+                  {canViewDeviceZeroPoint ? (
+                    <div className="device-card-kv">
                       <span className="subtle">Cihaz 0 Noktasi</span>
                       <strong>{formatCurrency(getDeviceZeroPoint(item))}</strong>
                     </div>
@@ -529,6 +536,7 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
                 <th>Marka</th>
                 <th>Urun Adi</th>
                 <th>Pesine Kontrat</th>
+                {canViewDeviceZeroPoint ? <th>Bayi Prim Tutari</th> : null}
                 {canViewDeviceZeroPoint ? <th>Cihaz 0 Noktasi</th> : null}
                 <th>Taksit Sayisi</th>
                 <th>Aylik Taksit</th>
@@ -538,7 +546,7 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
             <tbody>
               {filteredRows.length === 0 ? (
                 <tr>
-                  <td className="device-empty-row" colSpan={canViewDeviceZeroPoint ? 8 : 7}>
+                  <td className="device-empty-row" colSpan={canViewDeviceZeroPoint ? 9 : 7}>
                     {fetchError
                       ? "Cihaz listesi su an okunamiyor."
                       : effectiveBrand
@@ -555,6 +563,7 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
                       <strong>{item.productName}</strong>
                     </td>
                     <td>{formatCurrency(item.contractCashPrice)}</td>
+                    {canViewDeviceZeroPoint ? <td>{formatCurrency(item.dealerBonus)}</td> : null}
                     {canViewDeviceZeroPoint ? <td>{formatCurrency(getDeviceZeroPoint(item))}</td> : null}
                     <td>{item.installmentCount > 0 ? `${item.installmentCount} Ay` : "-"}</td>
                     <td>{isCashContractRow(item) ? "Pesin/Kontrat" : formatCurrency(item.monthlyInstallment)}</td>

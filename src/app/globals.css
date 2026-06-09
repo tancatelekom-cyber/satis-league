@@ -3639,6 +3639,11 @@ textarea::placeholder {
   color: #d7e5ff;
 }
 
+.schedule-pill-sick {
+  background: rgba(255, 154, 154, 0.22);
+  color: #ffd3d3;
+}
+
 .schedule-pill-leave {
   background: rgba(255, 209, 102, 0.22);
   color: #ffe39a;

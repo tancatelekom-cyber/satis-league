@@ -287,7 +287,7 @@ create table if not exists public.weekly_work_schedules (
   store_id uuid not null references public.stores(id) on delete cascade,
   week_start date not null,
   day_of_week smallint not null check (day_of_week between 0 and 6),
-  status text not null default 'off' check (status in ('work', 'training', 'leave', 'off')),
+  status text not null default 'off' check (status in ('work', 'training', 'sick', 'leave', 'off')),
   start_time time,
   end_time time,
   created_at timestamptz not null default now(),
@@ -301,7 +301,7 @@ create table if not exists public.weekly_work_schedules (
       and start_time < end_time
     )
     or (
-      status in ('training', 'leave', 'off')
+      status in ('training', 'sick', 'leave', 'off')
       and start_time is null
       and end_time is null
     )

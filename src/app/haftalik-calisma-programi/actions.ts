@@ -33,7 +33,7 @@ function buildRedirectTarget(weekStart: string, storeId: string, day: string, me
 }
 
 function isValidStatus(value: string): value is WorkScheduleStatus {
-  return value === "work" || value === "training" || value === "leave" || value === "off";
+  return value === "work" || value === "training" || value === "sick" || value === "leave" || value === "off";
 }
 
 export async function saveWeeklyWorkScheduleAction(formData: FormData) {

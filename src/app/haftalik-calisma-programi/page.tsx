@@ -77,6 +77,7 @@ function getEntryForDay(entries: WeeklyWorkScheduleRecord[], dayOfWeek: number) 
 function getStatusClass(status: WorkScheduleStatus) {
   if (status === "work") return "schedule-pill-work";
   if (status === "training") return "schedule-pill-training";
+  if (status === "sick") return "schedule-pill-sick";
   if (status === "leave") return "schedule-pill-leave";
   return "schedule-pill-off";
 }

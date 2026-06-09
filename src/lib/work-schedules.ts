@@ -11,6 +11,7 @@ export const WORK_SCHEDULE_DAY_LABELS = [
 export const WORK_SCHEDULE_STATUS_OPTIONS = [
   { value: "work", label: "Calisiyor" },
   { value: "training", label: "Egitimde" },
+  { value: "sick", label: "Raporlu" },
   { value: "leave", label: "Izinli" },
   { value: "off", label: "Bos" }
 ] as const;

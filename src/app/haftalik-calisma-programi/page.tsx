@@ -14,6 +14,7 @@ import {
   getWeekDates,
   mergeWeekEntries,
   normalizeWeekStart,
+  parseTimeToMinutes,
   type WeeklyWorkScheduleRecord,
   type WorkScheduleStatus
 } from "@/lib/work-schedules";
@@ -179,14 +180,44 @@ export default async function WeeklyWorkSchedulePage({ searchParams }: PageProps
     };
   });
 
-  const selectedDayMinutes = teamRows.reduce((sum, row) => {
-    if (row.selectedStatus !== "work") {
-      return sum;
-    }
+  const selectedDayWorkEntries = teamRows
+    .map((row) => {
+      const entry = getEntryForDay(row.entries, selectedDay);
 
-    const selectedEntry = getEntryForDay(row.entries, selectedDay);
-    return sum + getNetWorkedMinutes(selectedEntry?.start_time ?? null, selectedEntry?.end_time ?? null);
-  }, 0);
+      if (!entry || entry.status !== "work") {
+        return null;
+      }
+
+      const startMinutes = parseTimeToMinutes(entry.start_time);
+      const endMinutes = parseTimeToMinutes(entry.end_time);
+
+      if (startMinutes === null || endMinutes === null || endMinutes <= startMinutes) {
+        return null;
+      }
+
+      return {
+        id: row.id,
+        startMinutes,
+        endMinutes,
+        startLabel: entry.start_time?.slice(0, 5) ?? "--:--",
+        endLabel: entry.end_time?.slice(0, 5) ?? "--:--"
+      };
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null);
+  const openingMinute = selectedDayWorkEntries.length > 0 ? Math.min(...selectedDayWorkEntries.map((item) => item.startMinutes)) : null;
+  const closingMinute = selectedDayWorkEntries.length > 0 ? Math.max(...selectedDayWorkEntries.map((item) => item.endMinutes)) : null;
+  const openingCount =
+    openingMinute === null ? 0 : selectedDayWorkEntries.filter((item) => item.startMinutes === openingMinute).length;
+  const closingCount =
+    closingMinute === null ? 0 : selectedDayWorkEntries.filter((item) => item.endMinutes === closingMinute).length;
+  const openingLabel =
+    openingMinute === null
+      ? "Program yok"
+      : (selectedDayWorkEntries.find((item) => item.startMinutes === openingMinute)?.startLabel ?? "--:--");
+  const closingLabel =
+    closingMinute === null
+      ? "Program yok"
+      : (selectedDayWorkEntries.find((item) => item.endMinutes === closingMinute)?.endLabel ?? "--:--");
 
   const weekLabel = `${weekDates[0]?.shortDate ?? ""} - ${weekDates[6]?.shortDate ?? ""}`;
   const exportHref = `/haftalik-calisma-programi/excel?week=${encodeURIComponent(selectedWeek)}${
@@ -232,14 +263,14 @@ export default async function WeeklyWorkSchedulePage({ searchParams }: PageProps
           <p>{weekDates[selectedDay]?.shortDate}</p>
         </article>
         <article className="schedule-summary-card">
-          <span>Calisan Kisi</span>
-          <strong>{teamVisible ? teamProfiles.length : 1}</strong>
-          <p>{teamVisible ? "Secili magazadaki takip edilen personel sayisi." : "Kendi haftalik programin."}</p>
+          <span>Acilis</span>
+          <strong>{openingCount} kisi</strong>
+          <p>{openingLabel} saatinde baslayan ekip.</p>
         </article>
         <article className="schedule-summary-card">
-          <span>Gunluk Toplam</span>
-          <strong>{formatMinutesAsHours(selectedDayMinutes)}</strong>
-          <p>Secili gunde planlanan toplam vardiya suresi.</p>
+          <span>Kapanis</span>
+          <strong>{closingCount} kisi</strong>
+          <p>{closingLabel} saatine kadar calisan ekip.</p>
         </article>
       </section>
 
@@ -298,6 +329,16 @@ export default async function WeeklyWorkSchedulePage({ searchParams }: PageProps
             </div>
 
             <div className="schedule-export-row">
+              <div className="schedule-open-close-summary">
+                <strong>
+                  {weekDates[selectedDay]?.label} acilis: {openingCount} kisi
+                </strong>
+                <span>{openingLabel}</span>
+                <strong>
+                  {weekDates[selectedDay]?.label} kapanis: {closingCount} kisi
+                </strong>
+                <span>{closingLabel}</span>
+              </div>
               <a className="button-secondary export-link-button" href={exportHref}>
                 Excel'e Indir
               </a>

@@ -3778,8 +3778,31 @@ textarea::placeholder {
 
 .schedule-export-row {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
   margin-top: 16px;
+}
+
+.schedule-open-close-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  color: rgba(239, 249, 255, 0.95);
+}
+
+.schedule-open-close-summary strong {
+  font-size: 0.98rem;
+}
+
+.schedule-open-close-summary span {
+  color: rgba(223, 243, 255, 0.78);
+  font-size: 0.88rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 @media (max-width: 980px) {

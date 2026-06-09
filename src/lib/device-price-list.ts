@@ -155,12 +155,14 @@ async function fetchDevicePriceRowsFromSheet() {
   const productNameIndex = findHeaderIndex(headers, ["urun adi", "ürün adı", "urun", "ürün"]);
   const installmentCountIndex = findHeaderIndex(headers, ["taksit sayisi", "taksit sayısı"]);
   const monthlyInstallmentIndex = findHeaderIndex(headers, [
+    "aylik_taksit_bedeli",
     "aylik taksit bedeli",
     "aylık taksit bedeli",
+    "aylik_taksit",
     "aylik taksit",
     "aylık taksit"
   ]);
-  const olmIndex = findHeaderIndex(headers, ["olm"]);
+  const olmIndex = findHeaderIndex(headers, ["olm", "_olm_"]);
 
   const parsedRows = rows
     .slice(1)

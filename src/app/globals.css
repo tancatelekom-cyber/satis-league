@@ -2931,6 +2931,18 @@ textarea::placeholder {
     grid-template-rows: auto minmax(0, 1fr);
   }
 
+  .presentation-slide-fit-frame-stretch,
+  .presentation-stage:fullscreen .presentation-slide-fit-frame-stretch {
+    height: 100%;
+    min-height: 0;
+  }
+
+  .presentation-slide-fit-frame-stretch > .presentation-slide,
+  .presentation-stage:fullscreen .presentation-slide-fit-frame-stretch > .presentation-slide {
+    height: 100%;
+    min-height: 0;
+  }
+
   .presentation-slide-body,
   .presentation-slide-compact .presentation-slide-body {
     overflow: visible;
@@ -2958,6 +2970,33 @@ textarea::placeholder {
   .presentation-stage:fullscreen .presentation-slide-body {
     overflow: auto;
     padding-bottom: 0;
+  }
+
+  .presentation-slide-table .presentation-slide-body-table,
+  .presentation-slide-needs .presentation-slide-body-needs {
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    align-content: stretch;
+  }
+
+  .presentation-slide-table .presentation-panel-stack,
+  .presentation-slide-needs .presentation-panel-stack,
+  .presentation-slide-table .presentation-table-panel,
+  .presentation-slide-table .presentation-table-wrap,
+  .presentation-slide-table .presentation-table,
+  .presentation-slide-needs .presentation-need-board {
+    height: 100%;
+    min-height: 0;
+  }
+
+  .presentation-slide-table .presentation-table-wrap {
+    display: flex;
+    flex: 1 1 auto;
+  }
+
+  .presentation-slide-table .presentation-table {
+    min-height: 100%;
   }
 
   .presentation-summary-grid {
@@ -3038,6 +3077,10 @@ textarea::placeholder {
     min-height: calc(100vh - 110px);
   }
 
+  .presentation-stage {
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+
   .presentation-slide,
   .presentation-slide-compact {
     padding: 8px 10px;
@@ -3114,7 +3157,12 @@ textarea::placeholder {
     flex: 1 1 auto;
   }
 
+  .presentation-slide-needs .presentation-panel-stack {
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
   .presentation-slide-needs .presentation-need-board {
+    height: 100%;
     grid-auto-rows: minmax(0, 1fr);
   }
 

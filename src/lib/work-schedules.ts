@@ -177,11 +177,11 @@ export function getScheduleStatusLabel(status: WorkScheduleStatus) {
 }
 
 export function parseTimeToMinutes(value: string | null | undefined) {
-  if (!value || !/^\d{2}:\d{2}$/.test(value)) {
+  if (!value || !/^\d{2}:\d{2}(?::\d{2})?$/.test(value)) {
     return null;
   }
 
-  const [hour, minute] = value.split(":").map(Number);
+  const [hour, minute] = value.split(":").slice(0, 2).map(Number);
 
   if (!Number.isFinite(hour) || !Number.isFinite(minute)) {
     return null;

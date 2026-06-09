@@ -242,24 +242,6 @@ export default async function WeeklyWorkSchedulePage({ searchParams }: PageProps
         </article>
       </section>
 
-      {canManageTeamSchedules && teamProfiles.length > 0 ? (
-        <section className="schedule-section-card schedule-edit-trigger-card">
-          <WeeklyWorkScheduleEditor
-            initialEntriesByProfile={initialEntriesByProfile}
-            profiles={teamProfiles.map((person) => ({
-              id: person.id,
-              fullName: person.full_name ?? "Isimsiz Personel",
-              roleLabel: person.role === "manager" ? "Magaza Muduru" : "Personel"
-            }))}
-            redirectDay={String(selectedDay)}
-            redirectStoreId={selectedStoreId}
-            saveAction={saveWeeklyWorkScheduleAction}
-            weekDates={weekDates}
-            weekStart={selectedWeek}
-          />
-        </section>
-      ) : null}
-
       {teamVisible ? (
         <>
           <section className="schedule-section-card">
@@ -320,6 +302,24 @@ export default async function WeeklyWorkSchedulePage({ searchParams }: PageProps
               </a>
             </div>
           </section>
+
+          {canManageTeamSchedules && teamProfiles.length > 0 ? (
+            <section className="schedule-section-card schedule-edit-trigger-card">
+              <WeeklyWorkScheduleEditor
+                initialEntriesByProfile={initialEntriesByProfile}
+                profiles={teamProfiles.map((person) => ({
+                  id: person.id,
+                  fullName: person.full_name ?? "Isimsiz Personel",
+                  roleLabel: person.role === "manager" ? "Magaza Muduru" : "Personel"
+                }))}
+                redirectDay={String(selectedDay)}
+                redirectStoreId={selectedStoreId}
+                saveAction={saveWeeklyWorkScheduleAction}
+                weekDates={weekDates}
+                weekStart={selectedWeek}
+              />
+            </section>
+          ) : null}
         </>
       ) : null}
     </div>

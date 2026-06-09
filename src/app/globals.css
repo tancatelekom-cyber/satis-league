@@ -3591,6 +3591,11 @@ textarea::placeholder {
   padding-bottom: 18px;
 }
 
+.schedule-edit-trigger-card {
+  padding: 14px 18px;
+  min-height: auto;
+}
+
 .button-schedule-edit {
   min-height: 50px;
   padding: 0 24px;

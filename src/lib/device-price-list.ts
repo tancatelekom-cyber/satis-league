@@ -116,7 +116,7 @@ async function fetchDevicePriceRowsFromSheet() {
   const csv = await response.text();
   const rows = parseCsv(csv);
 
-  return rows
+  const parsedRows = rows
     .slice(1)
     .map((row, index): DevicePriceRow | null => {
       const category = normalizeText(row[0] ?? "");
@@ -148,6 +148,30 @@ async function fetchDevicePriceRowsFromSheet() {
       };
     })
     .filter((row): row is DevicePriceRow => Boolean(row));
+
+  const contractByProduct = new Map<string, number>();
+
+  parsedRows.forEach((row) => {
+    const productKey = `${row.category}__${row.brand}__${row.productName}`;
+
+    if (row.monthlyInstallment <= 0 && (row.contractCashPrice ?? row.totalPayable) > 0) {
+      contractByProduct.set(productKey, row.contractCashPrice ?? row.totalPayable);
+    }
+  });
+
+  return parsedRows.map((row) => {
+    const productKey = `${row.category}__${row.brand}__${row.productName}`;
+    const sharedContractPrice = contractByProduct.get(productKey) ?? null;
+
+    if (sharedContractPrice === null) {
+      return row;
+    }
+
+    return {
+      ...row,
+      contractCashPrice: row.contractCashPrice ?? sharedContractPrice
+    };
+  });
 }
 
 async function fetchCashDepotRowsFromSheet() {

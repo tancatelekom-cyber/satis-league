@@ -2650,6 +2650,57 @@ textarea::placeholder {
   font-size: 0.82rem;
 }
 
+.presentation-mobile-metric-list {
+  display: grid;
+  gap: 10px;
+}
+
+.presentation-mobile-metric-card {
+  padding: 14px 16px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.94);
+  color: #10203b;
+  box-shadow: 0 14px 28px rgba(4, 16, 31, 0.12);
+}
+
+.presentation-mobile-metric-card strong {
+  display: block;
+  margin-bottom: 12px;
+  color: #10203b;
+  font-size: 1.12rem;
+  line-height: 1.18;
+}
+
+.presentation-mobile-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.presentation-mobile-metric-item {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(16, 32, 59, 0.08);
+}
+
+.presentation-mobile-metric-item span {
+  color: #5b728e;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.presentation-mobile-metric-item b {
+  color: #10203b;
+  font-size: 1rem;
+  line-height: 1.15;
+}
+
+.presentation-mobile-metric-item-alert {
+  background: rgba(255, 209, 102, 0.22);
+}
+
 .presentation-focus-card {
   padding: 22px 24px;
   display: grid;
@@ -2990,6 +3041,15 @@ textarea::placeholder {
     min-height: 0;
   }
 
+  .presentation-mobile-metric-card {
+    padding: 12px 14px;
+    border-radius: 18px;
+  }
+
+  .presentation-mobile-metric-card strong {
+    font-size: 1.02rem;
+  }
+
   .presentation-slide-table .presentation-table-wrap {
     display: flex;
     flex: 1 1 auto;
@@ -3164,6 +3224,35 @@ textarea::placeholder {
   .presentation-slide-needs .presentation-need-board {
     height: 100%;
     grid-auto-rows: minmax(0, 1fr);
+  }
+
+  .presentation-mobile-metric-list {
+    gap: 8px;
+  }
+
+  .presentation-mobile-metric-card {
+    padding: 10px 12px;
+  }
+
+  .presentation-mobile-metric-card strong {
+    margin-bottom: 10px;
+    font-size: 1rem;
+  }
+
+  .presentation-mobile-metric-grid {
+    gap: 6px;
+  }
+
+  .presentation-mobile-metric-item {
+    padding: 8px 10px;
+  }
+
+  .presentation-mobile-metric-item span {
+    font-size: 0.76rem;
+  }
+
+  .presentation-mobile-metric-item b {
+    font-size: 0.95rem;
   }
 
   .presentation-table thead th {

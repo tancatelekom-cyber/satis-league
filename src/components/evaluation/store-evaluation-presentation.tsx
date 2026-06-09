@@ -146,6 +146,7 @@ export function StoreEvaluationPresentation({
   const [slideScale, setSlideScale] = useState(1);
   const [slideFrameHeight, setSlideFrameHeight] = useState<number | null>(null);
   const [tableFitScale, setTableFitScale] = useState(1);
+  const [mobileCards, setMobileCards] = useState(false);
 
   const slides = useMemo(() => {
     const items: Array<{
@@ -165,7 +166,49 @@ export function StoreEvaluationPresentation({
       );
     }
 
+    function renderMetricCard(title: string, items: Array<{ label: string; value: string; alert?: boolean }>) {
+      return (
+        <article className="presentation-mobile-metric-card" key={title}>
+          <strong>{title}</strong>
+          <div className="presentation-mobile-metric-grid">
+            {items.map((item) => (
+              <div key={`${title}-${item.label}`} className={`presentation-mobile-metric-item ${item.alert ? "presentation-mobile-metric-item-alert" : ""}`}>
+                <span>{item.label}</span>
+                <b>{item.value}</b>
+              </div>
+            ))}
+          </div>
+        </article>
+      );
+    }
+
     function renderShareTable(table: CategoryShareTable, rows: CategoryShareRow[] = table.rows) {
+      if (mobileCards) {
+        return (
+          <section className="presentation-table-panel">
+            <div className="presentation-panel-head">
+              <span>Sube Ici Paylar</span>
+              <strong>
+                {table.parentTitle ? `${table.parentTitle} / ${table.title}` : table.title} kategorisinde personel payi ve gunluk minimum ihtiyac
+              </strong>
+            </div>
+
+            <div className="presentation-mobile-metric-list">
+              {rows.map((row) =>
+                renderMetricCard(row.label, [
+                  { label: "Gerc.", value: formatNumber(row.actual) },
+                  { label: "Firma Ort.", value: row.companyAverage > 0 ? formatNumber(row.companyAverage) : "-" },
+                  { label: "Pay %", value: formatPercent(row.sharePercent) },
+                  { label: "Ay Sonu %", value: formatPercent(row.projectedPercent), alert: (row.projectedPercent ?? 0) < 100 },
+                  { label: "Durum", value: row.belowCompanyAverage ? "Firma ort. alti" : "Normal", alert: row.belowCompanyAverage },
+                  { label: "Gunluk Min.", value: row.dailyNeed > 0 ? formatNumber(row.dailyNeed) : "-" }
+                ])
+              )}
+            </div>
+          </section>
+        );
+      }
+
       return (
         <section className="presentation-table-panel">
           <div className="presentation-panel-head">
@@ -215,6 +258,37 @@ export function StoreEvaluationPresentation({
     }
 
     function renderEmployeeTable(table: EmployeeCategoryTable, rows: CategorySummaryRow[] = table.rows) {
+      if (mobileCards) {
+        return (
+          <section className="presentation-table-panel">
+            <div className="presentation-panel-head">
+              <span>Calisan Hedef Gerceklesenleri</span>
+              <strong>
+                {table.parentTitle ? `${table.parentTitle} / ${table.title}` : table.title} kategorisinde tum calisanlarin durumu
+              </strong>
+            </div>
+
+            <div className="presentation-mobile-metric-list">
+              {rows.map((row) =>
+                renderMetricCard(
+                  row.label,
+                  table.hasTarget
+                    ? [
+                        { label: "Hedef", value: formatNumber(row.target) },
+                        { label: "Gerc.", value: formatNumber(row.actual) },
+                        { label: "Kalan", value: formatNumber(row.remaining) },
+                        { label: "Anlik %", value: formatPercent(row.actualPercent) },
+                        { label: "Ay Sonu", value: formatNumber(row.projectedActual) },
+                        { label: "Ay Sonu %", value: formatPercent(row.projectedPercent), alert: (row.projectedPercent ?? 0) < 100 }
+                      ]
+                    : [{ label: "Gerc.", value: formatNumber(row.actual) }]
+                )
+              )}
+            </div>
+          </section>
+        );
+      }
+
       return (
         <section className="presentation-table-panel">
           <div className="presentation-panel-head">
@@ -354,42 +428,58 @@ export function StoreEvaluationPresentation({
               <strong>{storeName} icin magaza hedefi bazli anlik durum</strong>
             </div>
 
-            <div className="presentation-table-wrap">
-              <table
-                className="presentation-table presentation-table-fixed presentation-table-store"
-                style={{ ["--presentation-table-row-count" as "--presentation-table-row-count"]: storeCategoryRows.length } as CSSProperties & Record<string, string | number>}
-              >
-                {renderCols(["24%", "10%", "9%", "10%", "10%", "11%", "11%", "15%"])}
-                <thead>
-                  <tr>
-                    <th>{responsiveTableLabel("Kategori", "Kategori")}</th>
-                    <th>{responsiveTableLabel("Hedef", "Hdf")}</th>
-                    <th>{responsiveTableLabel("Gerc.", "Grc")}</th>
-                    <th>{responsiveTableLabel("Kalan", "Kln")}</th>
-                    <th>{responsiveTableLabel("Anlik %", "Anl %")}</th>
-                    <th>{responsiveTableLabel("Ay Sonu", "Ay Sn")}</th>
-                    <th>{responsiveTableLabel("Ay Sonu %", "Ay %")}</th>
-                    <th>{responsiveTableLabel("Gunluk Min.", "Min.")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {storeCategoryRows.map((row) => (
-                    <tr key={row.label}>
-                      <td>{row.label}</td>
-                      <td>{formatNumber(row.target)}</td>
-                      <td>{formatNumber(row.actual)}</td>
-                      <td>{formatNumber(row.remaining)}</td>
-                      <td>{formatPercent(row.actualPercent)}</td>
-                      <td>{formatNumber(row.projectedActual)}</td>
-                      <td className={(row.projectedPercent ?? 0) < 100 ? "presentation-table-alert" : ""}>
-                        {formatPercent(row.projectedPercent)}
-                      </td>
-                      <td>{row.dailyNeed && row.dailyNeed > 0 ? formatNumber(row.dailyNeed) : "-"}</td>
+            {mobileCards ? (
+              <div className="presentation-mobile-metric-list">
+                {storeCategoryRows.map((row) =>
+                  renderMetricCard(row.label, [
+                    { label: "Hedef", value: formatNumber(row.target) },
+                    { label: "Gerc.", value: formatNumber(row.actual) },
+                    { label: "Kalan", value: formatNumber(row.remaining) },
+                    { label: "Anlik %", value: formatPercent(row.actualPercent) },
+                    { label: "Ay Sonu", value: formatNumber(row.projectedActual) },
+                    { label: "Ay Sonu %", value: formatPercent(row.projectedPercent), alert: (row.projectedPercent ?? 0) < 100 },
+                    { label: "Gunluk Min.", value: row.dailyNeed && row.dailyNeed > 0 ? formatNumber(row.dailyNeed) : "-" }
+                  ])
+                )}
+              </div>
+            ) : (
+              <div className="presentation-table-wrap">
+                <table
+                  className="presentation-table presentation-table-fixed presentation-table-store"
+                  style={{ ["--presentation-table-row-count" as "--presentation-table-row-count"]: storeCategoryRows.length } as CSSProperties & Record<string, string | number>}
+                >
+                  {renderCols(["24%", "10%", "9%", "10%", "10%", "11%", "11%", "15%"])}
+                  <thead>
+                    <tr>
+                      <th>{responsiveTableLabel("Kategori", "Kategori")}</th>
+                      <th>{responsiveTableLabel("Hedef", "Hdf")}</th>
+                      <th>{responsiveTableLabel("Gerc.", "Grc")}</th>
+                      <th>{responsiveTableLabel("Kalan", "Kln")}</th>
+                      <th>{responsiveTableLabel("Anlik %", "Anl %")}</th>
+                      <th>{responsiveTableLabel("Ay Sonu", "Ay Sn")}</th>
+                      <th>{responsiveTableLabel("Ay Sonu %", "Ay %")}</th>
+                      <th>{responsiveTableLabel("Gunluk Min.", "Min.")}</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {storeCategoryRows.map((row) => (
+                      <tr key={row.label}>
+                        <td>{row.label}</td>
+                        <td>{formatNumber(row.target)}</td>
+                        <td>{formatNumber(row.actual)}</td>
+                        <td>{formatNumber(row.remaining)}</td>
+                        <td>{formatPercent(row.actualPercent)}</td>
+                        <td>{formatNumber(row.projectedActual)}</td>
+                        <td className={(row.projectedPercent ?? 0) < 100 ? "presentation-table-alert" : ""}>
+                          {formatPercent(row.projectedPercent)}
+                        </td>
+                        <td>{row.dailyNeed && row.dailyNeed > 0 ? formatNumber(row.dailyNeed) : "-"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </section>
         </div>
       )
@@ -505,12 +595,34 @@ export function StoreEvaluationPresentation({
     storeNarrative,
     subcategoryShareTables,
     summaryCards
+    ,
+    mobileCards
   ]);
+
+  useEffect(() => {
+    function syncMobileCards() {
+      if (typeof window === "undefined") {
+        return;
+      }
+
+      setMobileCards(window.innerWidth <= 860);
+    }
+
+    syncMobileCards();
+    window.addEventListener("resize", syncMobileCards);
+    window.addEventListener("orientationchange", syncMobileCards);
+
+    return () => {
+      window.removeEventListener("resize", syncMobileCards);
+      window.removeEventListener("orientationchange", syncMobileCards);
+    };
+  }, []);
 
   const activeSlide = slides[activeIndex];
   const compactSlide = activeSlide.layout === "compact" || activeSlide.title.length > 22;
   const tableSlide = activeSlide.variant === "table";
   const needSlide = activeSlide.variant === "needs";
+  const stretchSlide = tableSlide || needSlide;
 
   useEffect(() => {
     function syncMobileSlideFit() {
@@ -548,6 +660,12 @@ export function StoreEvaluationPresentation({
         widestTableWidth > 0 ? Math.min(1, Math.max(availableWidth / widestTableWidth, mobileLandscape ? 0.78 : 0.72)) : 1;
 
       setTableFitScale(nextTableFitScale);
+
+      if (stretchSlide) {
+        setSlideScale(1);
+        setSlideFrameHeight(null);
+        return;
+      }
 
       const measuredWidths = [
         slideRef.current.scrollWidth,
@@ -613,7 +731,7 @@ export function StoreEvaluationPresentation({
       window.removeEventListener("resize", syncMobileSlideFit);
       window.removeEventListener("orientationchange", syncMobileSlideFit);
     };
-  }, [activeIndex, compactSlide, fullscreen, slides.length]);
+  }, [activeIndex, compactSlide, fullscreen, slides.length, stretchSlide]);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -769,12 +887,12 @@ export function StoreEvaluationPresentation({
           </div>
         </div>
         <div
-          className={`presentation-slide-fit-frame ${slideScale < 0.999 ? "presentation-slide-fit-frame-active" : ""}`}
+          className={`presentation-slide-fit-frame ${slideScale < 0.999 ? "presentation-slide-fit-frame-active" : ""} ${stretchSlide ? "presentation-slide-fit-frame-stretch" : ""}`}
           style={slideFrameHeight ? { height: `${slideFrameHeight}px` } : undefined}
         >
           <article
             ref={slideRef}
-            className={`presentation-slide ${compactSlide ? "presentation-slide-compact" : ""} ${slideScale < 0.999 ? "presentation-slide-fitted" : ""} ${
+            className={`presentation-slide ${compactSlide ? "presentation-slide-compact" : ""} ${slideScale < 0.999 && !stretchSlide ? "presentation-slide-fitted" : ""} ${
               tableSlide ? "presentation-slide-table" : ""
             } ${needSlide ? "presentation-slide-needs" : ""}`}
             style={(() => {
@@ -782,7 +900,7 @@ export function StoreEvaluationPresentation({
                 "--presentation-table-fit-scale": String(tableFitScale)
               } as CSSProperties & Record<string, string | number>;
 
-              if (slideScale < 0.999) {
+              if (slideScale < 0.999 && !stretchSlide) {
                 style.position = "absolute";
                 style.left = 0;
                 style.top = 0;

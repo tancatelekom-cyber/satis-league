@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { ScheduleFiltersForm } from "@/components/schedule/schedule-filters-form";
 import { WeeklyWorkScheduleEditor } from "@/components/schedule/weekly-work-schedule-editor";
 import { requireUser } from "@/lib/auth/require-user";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -203,45 +204,13 @@ export default async function WeeklyWorkSchedulePage({ searchParams }: PageProps
           </p>
         </div>
 
-        <form className="schedule-filter-form" method="get">
-          <label className="schedule-field">
-            <span>Hafta secimi</span>
-            <input defaultValue={formatWeekInput(selectedWeek)} name="week" type="week" />
-            <small className="schedule-field-hint">
-              {weekDates[0]?.label} {weekDates[0]?.shortDate} - {weekDates[6]?.label} {weekDates[6]?.shortDate}
-            </small>
-          </label>
-
-          {canPickStore ? (
-            <label className="schedule-field">
-              <span>Magaza</span>
-              <select defaultValue={selectedStoreId} name="store">
-                {stores.map((store) => (
-                  <option key={store.id} value={store.id}>
-                    {store.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-          ) : (
-            <input name="store" type="hidden" value={selectedStoreId} />
-          )}
-
-          <label className="schedule-field">
-            <span>Gun ozeti</span>
-            <select defaultValue={String(selectedDay)} name="day">
-              {weekDates.map((day) => (
-                <option key={`day-option-${day.dayOfWeek}`} value={day.dayOfWeek}>
-                  {day.label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <button className="button-secondary" type="submit">
-            Haftayi Getir
-          </button>
-        </form>
+        <ScheduleFiltersForm
+          canPickStore={canPickStore}
+          selectedStoreId={selectedStoreId}
+          selectedWeek={formatWeekInput(selectedWeek)}
+          stores={stores}
+          weekRangeLabel={`${weekDates[0]?.label} ${weekDates[0]?.shortDate} - ${weekDates[6]?.label} ${weekDates[6]?.shortDate}`}
+        />
       </section>
 
       {params.message ? (

@@ -6,6 +6,7 @@ export type DevicePriceRow = {
   installmentCount: number;
   monthlyInstallment: number;
   contractCashPrice: number | null;
+  dealerBonus: number;
   totalPayable: number;
 };
 
@@ -163,6 +164,7 @@ async function fetchDevicePriceRowsFromSheet() {
     "aylık taksit"
   ]);
   const olmIndex = findHeaderIndex(headers, ["olm", "_olm_"]);
+  const dealerBonusIndex = findHeaderIndex(headers, ["bayi_primi", "bayi primi"]);
 
   const parsedRows = rows
     .slice(1)
@@ -177,6 +179,7 @@ async function fetchDevicePriceRowsFromSheet() {
         row[monthlyInstallmentIndex >= 0 ? monthlyInstallmentIndex : 9] ?? ""
       );
       const contractRaw = parseLocalizedNumber(row[olmIndex >= 0 ? olmIndex : 13] ?? "");
+      const dealerBonus = parseLocalizedNumber(row[dealerBonusIndex >= 0 ? dealerBonusIndex : -1] ?? "");
 
       if (!category || !brand || !productName) {
         return null;
@@ -195,6 +198,7 @@ async function fetchDevicePriceRowsFromSheet() {
         installmentCount,
         monthlyInstallment,
         contractCashPrice,
+        dealerBonus,
         totalPayable
       };
     })

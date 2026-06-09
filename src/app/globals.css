@@ -3770,6 +3770,40 @@ textarea::placeholder {
   font-size: 0.8rem;
 }
 
+.schedule-status-select {
+  font-weight: 800;
+}
+
+.schedule-status-select-work {
+  background: rgba(126, 241, 211, 0.26) !important;
+  border-color: rgba(126, 241, 211, 0.5) !important;
+  color: #0f4b41 !important;
+}
+
+.schedule-status-select-training {
+  background: rgba(146, 180, 255, 0.26) !important;
+  border-color: rgba(146, 180, 255, 0.52) !important;
+  color: #23457a !important;
+}
+
+.schedule-status-select-sick {
+  background: rgba(255, 120, 120, 0.24) !important;
+  border-color: rgba(255, 120, 120, 0.5) !important;
+  color: #7f1e1e !important;
+}
+
+.schedule-status-select-leave {
+  background: rgba(255, 209, 102, 0.26) !important;
+  border-color: rgba(255, 209, 102, 0.52) !important;
+  color: #7b5410 !important;
+}
+
+.schedule-status-select-off {
+  background: rgba(221, 230, 241, 0.9) !important;
+  border-color: rgba(126, 145, 168, 0.32) !important;
+  color: #425b78 !important;
+}
+
 .schedule-bulk-time-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

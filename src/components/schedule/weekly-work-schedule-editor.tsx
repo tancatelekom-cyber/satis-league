@@ -49,6 +49,14 @@ function buildFallbackEntries(weekDates: WeekDate[]) {
   }));
 }
 
+function getStatusSelectClass(status: WorkScheduleDayEntry["status"]) {
+  if (status === "work") return "schedule-status-select schedule-status-select-work";
+  if (status === "training") return "schedule-status-select schedule-status-select-training";
+  if (status === "sick") return "schedule-status-select schedule-status-select-sick";
+  if (status === "leave") return "schedule-status-select schedule-status-select-leave";
+  return "schedule-status-select schedule-status-select-off";
+}
+
 export function WeeklyWorkScheduleEditor({
   profiles,
   redirectDay,
@@ -147,6 +155,7 @@ export function WeeklyWorkScheduleEditor({
                         <td key={`bulk-cell-${profile.id}-${day.dayOfWeek}`}>
                           <div className="schedule-bulk-cell">
                             <select
+                              className={getStatusSelectClass(entry.status)}
                               name={`${profile.id}_${day.dayOfWeek}_status`}
                               value={entry.status}
                               onChange={(event) =>

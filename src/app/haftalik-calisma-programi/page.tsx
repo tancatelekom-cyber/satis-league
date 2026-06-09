@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth/require-user";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { UserRole } from "@/lib/types";
 import {
+  formatWeekInput,
   formatMinutesAsHours,
   formatScheduleRange,
   getDefaultWeekDay,
@@ -230,7 +231,10 @@ export default async function WeeklyWorkSchedulePage({ searchParams }: PageProps
         <form className="schedule-filter-form" method="get">
           <label className="schedule-field">
             <span>Hafta secimi</span>
-            <input defaultValue={selectedWeek} name="week" type="date" />
+            <input defaultValue={formatWeekInput(selectedWeek)} name="week" type="week" />
+            <small className="schedule-field-hint">
+              {weekDates[0]?.label} {weekDates[0]?.shortDate} - {weekDates[6]?.label} {weekDates[6]?.shortDate}
+            </small>
           </label>
 
           {canPickStore ? (

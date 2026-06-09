@@ -3462,6 +3462,12 @@ textarea::placeholder {
   font-weight: 700;
 }
 
+.schedule-field-hint {
+  color: rgba(223, 243, 255, 0.82);
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
 .schedule-field input,
 .schedule-field select {
   width: 100%;

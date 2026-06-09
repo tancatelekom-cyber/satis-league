@@ -52,10 +52,47 @@ export function startOfWeek(value: Date) {
   return next;
 }
 
+function parseWeekInput(value: string) {
+  const match = /^(\d{4})-W(\d{2})$/.exec(value.trim());
+
+  if (!match) {
+    return null;
+  }
+
+  const year = Number(match[1]);
+  const week = Number(match[2]);
+
+  if (!Number.isInteger(year) || !Number.isInteger(week) || week < 1 || week > 53) {
+    return null;
+  }
+
+  const januaryFourth = new Date(year, 0, 4);
+  const firstWeekStart = startOfWeek(januaryFourth);
+  const monday = new Date(firstWeekStart);
+  monday.setDate(firstWeekStart.getDate() + (week - 1) * 7);
+
+  return monday;
+}
+
 export function normalizeWeekStart(input?: string | null) {
-  const source = input ? new Date(`${input}T00:00:00`) : new Date();
+  const weekInput = input ? parseWeekInput(input) : null;
+  const source = weekInput ?? (input ? new Date(`${input}T00:00:00`) : new Date());
   const normalized = Number.isNaN(source.getTime()) ? new Date() : source;
   return toIsoDate(startOfWeek(normalized));
+}
+
+export function formatWeekInput(weekStart: string) {
+  const normalized = new Date(`${normalizeWeekStart(weekStart)}T00:00:00`);
+  const thursday = new Date(normalized);
+  thursday.setDate(normalized.getDate() + 3);
+
+  const isoYear = thursday.getFullYear();
+  const firstThursday = new Date(isoYear, 0, 4);
+  const firstWeekStart = startOfWeek(firstThursday);
+  const diff = thursday.getTime() - firstWeekStart.getTime();
+  const weekNumber = Math.floor(diff / (7 * 24 * 60 * 60 * 1000)) + 1;
+
+  return `${isoYear}-W${String(weekNumber).padStart(2, "0")}`;
 }
 
 export function getWeekDates(weekStart: string) {

@@ -201,10 +201,6 @@ export default async function WeeklyWorkSchedulePage({ searchParams }: PageProps
         <div className="schedule-hero-copy">
           <span className="schedule-kicker">Haftalik Calisma Programi</span>
           <h1>Calisma takvimi ve ekip ozeti</h1>
-          <p>
-            Pazartesiden pazara kadar haftalik planini olustur. Calisan ekip arkadaslarini gorebilir; mudur, yonetim ve admin ise
-            secilen magazanin gunluk durumunu ve haftalik ozetini takip eder.
-          </p>
         </div>
 
         <ScheduleFiltersForm

@@ -3463,9 +3463,14 @@ textarea::placeholder {
 }
 
 .schedule-field-hint {
-  color: rgba(223, 243, 255, 0.82);
-  font-size: 0.82rem;
-  line-height: 1.35;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+  padding: 8px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .schedule-field input,
@@ -3488,14 +3493,34 @@ textarea::placeholder {
 }
 
 .schedule-summary-card {
-  padding: 18px;
+  padding: 20px 22px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(7, 92, 98, 0.9), rgba(5, 67, 72, 0.82));
+  box-shadow: 0 18px 40px rgba(4, 22, 34, 0.18);
+}
+
+.schedule-summary-card span {
+  display: block;
+  color: rgba(214, 243, 255, 0.9);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .schedule-summary-card strong {
   display: block;
-  margin: 8px 0 6px;
+  margin: 10px 0 8px;
   color: #ffffff;
-  font-size: 1.45rem;
+  font-size: 1.65rem;
+  line-height: 1.05;
+}
+
+.schedule-summary-card p {
+  margin: 0;
+  color: rgba(239, 249, 255, 0.92);
+  font-size: 1rem;
+  line-height: 1.45;
 }
 
 .schedule-section-head {

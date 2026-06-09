@@ -3355,8 +3355,25 @@ textarea::placeholder {
 }
 
 @media (min-width: 981px) {
+  .presentation-slide-table .presentation-slide-body-table,
+  .presentation-slide-table .presentation-panel-stack,
+  .presentation-slide-table .presentation-table-panel,
+  .presentation-slide-table .presentation-table-wrap {
+    height: auto;
+    min-height: 0;
+  }
+
+  .presentation-slide-table .presentation-table-wrap {
+    display: block;
+    flex: 0 0 auto;
+  }
+
   .presentation-slide-table .presentation-table tbody tr {
     height: auto !important;
+  }
+
+  .presentation-slide-table .presentation-table {
+    align-self: flex-start;
   }
 
   .presentation-table th,

@@ -98,6 +98,39 @@ function normalizeText(value: string) {
   return String(value ?? "").replace(/\s+/g, " ").trim();
 }
 
+function normalizeHeader(value: string) {
+  return String(value ?? "")
+    .toLocaleLowerCase("tr-TR")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function findHeaderIndex(headers: string[], patterns: string[]) {
+  const normalizedHeaders = headers.map(normalizeHeader);
+
+  for (const pattern of patterns) {
+    const normalizedPattern = normalizeHeader(pattern);
+    const exactIndex = normalizedHeaders.findIndex((header) => header === normalizedPattern);
+
+    if (exactIndex >= 0) {
+      return exactIndex;
+    }
+  }
+
+  for (const pattern of patterns) {
+    const normalizedPattern = normalizeHeader(pattern);
+    const partialIndex = normalizedHeaders.findIndex((header) => header.includes(normalizedPattern));
+
+    if (partialIndex >= 0) {
+      return partialIndex;
+    }
+  }
+
+  return -1;
+}
+
 async function fetchDevicePriceRowsFromSheet() {
   const response = await fetch(DEVICE_SHEET_URL, {
     cache: "no-store",
@@ -115,25 +148,41 @@ async function fetchDevicePriceRowsFromSheet() {
 
   const csv = await response.text();
   const rows = parseCsv(csv);
+  const headers = rows[0] ?? [];
+
+  const categoryIndex = findHeaderIndex(headers, ["kategori"]);
+  const brandIndex = findHeaderIndex(headers, ["marka"]);
+  const productNameIndex = findHeaderIndex(headers, ["urun adi", "ürün adı", "urun", "ürün"]);
+  const installmentCountIndex = findHeaderIndex(headers, ["taksit sayisi", "taksit sayısı"]);
+  const monthlyInstallmentIndex = findHeaderIndex(headers, [
+    "aylik taksit bedeli",
+    "aylık taksit bedeli",
+    "aylik taksit",
+    "aylık taksit"
+  ]);
+  const olmIndex = findHeaderIndex(headers, ["olm"]);
 
   const parsedRows = rows
     .slice(1)
     .map((row, index): DevicePriceRow | null => {
-      const category = normalizeText(row[0] ?? "");
-      // Sheet mapping (0-indexed):
-      // A: kategori, C: marka, E: urun adi, H: taksit sayisi, J: aylik taksit, N: pesin/kontrat tutari
-      const brand = normalizeText(row[2] ?? "");
-      const productName = normalizeText(row[4] ?? "");
-      const installmentCount = Math.round(parseLocalizedNumber(row[7] ?? ""));
-      const monthlyInstallment = parseLocalizedNumber(row[9] ?? "");
-      const contractRaw = parseLocalizedNumber(row[13] ?? "");
+      const category = normalizeText(row[categoryIndex >= 0 ? categoryIndex : 0] ?? "");
+      const brand = normalizeText(row[brandIndex >= 0 ? brandIndex : 2] ?? "");
+      const productName = normalizeText(row[productNameIndex >= 0 ? productNameIndex : 4] ?? "");
+      const installmentCount = Math.round(
+        parseLocalizedNumber(row[installmentCountIndex >= 0 ? installmentCountIndex : 7] ?? "")
+      );
+      const monthlyInstallment = parseLocalizedNumber(
+        row[monthlyInstallmentIndex >= 0 ? monthlyInstallmentIndex : 9] ?? ""
+      );
+      const contractRaw = parseLocalizedNumber(row[olmIndex >= 0 ? olmIndex : 13] ?? "");
 
       if (!category || !brand || !productName) {
         return null;
       }
 
+      const isCashContractRow = monthlyInstallment <= 0;
       const hasInstallment = monthlyInstallment > 0 && installmentCount > 0;
-      const contractCashPrice = hasInstallment ? null : contractRaw > 0 ? contractRaw : null;
+      const contractCashPrice = isCashContractRow && contractRaw > 0 ? contractRaw : null;
       const totalPayable = hasInstallment ? installmentCount * monthlyInstallment : contractCashPrice ?? 0;
 
       return {

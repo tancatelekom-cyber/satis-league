@@ -104,15 +104,12 @@ export function WeeklyWorkScheduleEditor({
     <div className="schedule-editor-card">
       <div className="schedule-editor-toggle-row">
         <button
-          className="button-secondary"
+          className="button-schedule-edit"
           type="button"
           onClick={() => setIsEditing((current) => !current)}
         >
           {isEditing ? "Duzenlemeyi Gizle" : "Duzenle"}
         </button>
-        <p className="schedule-editor-toggle-note">
-          Duzenleme tablosu sadece butona basildiginda acilir.
-        </p>
       </div>
 
       {isEditing ? (

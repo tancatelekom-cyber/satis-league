@@ -49,10 +49,6 @@ function canViewTeam(role: UserRole) {
   return role === "employee" || role === "manager" || role === "management" || role === "admin";
 }
 
-function canEditOwnSchedule(role: UserRole) {
-  return role === "employee" || role === "manager";
-}
-
 function clampDay(value: string | undefined, weekStart: string) {
   const raw = Number(value ?? getDefaultWeekDay(weekStart));
 
@@ -104,7 +100,6 @@ export default async function WeeklyWorkSchedulePage({ searchParams }: PageProps
   const selectedDay = clampDay(params.day, selectedWeek);
   const canPickStore = profile.role === "management" || profile.role === "admin";
   const teamVisible = canViewTeam(profile.role);
-  const ownEditable = canEditOwnSchedule(profile.role);
   const canManageTeamSchedules = profile.role === "manager" || profile.role === "management" || profile.role === "admin";
 
   const stores = teamVisible
@@ -157,11 +152,6 @@ export default async function WeeklyWorkSchedulePage({ searchParams }: PageProps
           .order("day_of_week")).data as WeeklyWorkScheduleRecord[] | null) ?? [])
       : [];
 
-  const ownScheduleRecords = ownEditable
-    ? teamScheduleRecords.filter((item) => item.profile_id === profile.id)
-    : [];
-  const ownEntries = mergeWeekEntries(ownScheduleRecords);
-
   const recordsByProfile = new Map<string, WeeklyWorkScheduleRecord[]>();
   teamScheduleRecords.forEach((record) => {
     const current = recordsByProfile.get(record.profile_id) ?? [];
@@ -187,11 +177,11 @@ export default async function WeeklyWorkSchedulePage({ searchParams }: PageProps
     };
   });
 
-  const selectedDayRows = teamRows.filter((row) => row.selectedStatus === "work");
-  const selectedTrainingRows = teamRows.filter((row) => row.selectedStatus === "training");
-  const selectedLeaveRows = teamRows.filter((row) => row.selectedStatus === "leave");
-  const selectedOffRows = teamRows.filter((row) => row.selectedStatus === "off");
-  const selectedDayMinutes = selectedDayRows.reduce((sum, row) => {
+  const selectedDayMinutes = teamRows.reduce((sum, row) => {
+    if (row.selectedStatus !== "work") {
+      return sum;
+    }
+
     const selectedEntry = getEntryForDay(row.entries, selectedDay);
     return sum + getNetWorkedMinutes(selectedEntry?.start_time ?? null, selectedEntry?.end_time ?? null);
   }, 0);
@@ -285,17 +275,7 @@ export default async function WeeklyWorkSchedulePage({ searchParams }: PageProps
       </section>
 
       {canManageTeamSchedules && teamProfiles.length > 0 ? (
-        <section className="schedule-section-card">
-          <div className="schedule-section-head">
-            <div>
-              <span>Toplu Veri Girisi</span>
-              <h2>Secilen magazanin haftalik calisma tablosu</h2>
-            </div>
-            <p>
-              Magaza muduru, yonetici ve admin secilen hafta icin tum ekipteki durum ve saatleri bu tablo uzerinden gunceller.
-            </p>
-          </div>
-
+        <section className="schedule-section-card schedule-edit-trigger-card">
           <WeeklyWorkScheduleEditor
             initialEntriesByProfile={initialEntriesByProfile}
             profiles={teamProfiles.map((person) => ({
@@ -314,45 +294,6 @@ export default async function WeeklyWorkSchedulePage({ searchParams }: PageProps
 
       {teamVisible ? (
         <>
-          <section className="schedule-section-card">
-            <div className="schedule-section-head">
-              <div>
-                <span>Gunluk Ozet</span>
-                <h2>{weekDates[selectedDay]?.label} gunu ekip durumu</h2>
-              </div>
-              <p>Bu alanda secilen gunun tum personel dagilimi ve ekip programi gorunur.</p>
-            </div>
-
-            <div className="schedule-status-strip">
-              <span className="schedule-pill schedule-pill-work">Calisan: {selectedDayRows.length}</span>
-              <span className="schedule-pill schedule-pill-training">Egitimde: {selectedTrainingRows.length}</span>
-              <span className="schedule-pill schedule-pill-leave">Izinli: {selectedLeaveRows.length}</span>
-              <span className="schedule-pill schedule-pill-off">Bos: {selectedOffRows.length}</span>
-            </div>
-
-            <div className="schedule-daily-grid">
-              {teamRows.map((row) => (
-                <article key={`daily-${row.id}`} className="schedule-daily-card">
-                  <div className="schedule-daily-card-head">
-                    <strong>{row.name}</strong>
-                    <span>{row.roleLabel}</span>
-                  </div>
-                  <span className={`schedule-pill ${getStatusClass(row.selectedStatus)}`}>{getScheduleStatusLabel(row.selectedStatus)}</span>
-                  <p>
-                    {row.selectedStatus === "work"
-                      ? row.selectedRange
-                      : row.selectedStatus === "training"
-                        ? "Egitim gunu."
-                        : row.selectedStatus === "leave"
-                          ? "Izinli gun."
-                          : "Program girilmedi."}
-                  </p>
-                  <small>Haftalik toplam: {formatMinutesAsHours(row.weeklyMinutes)}</small>
-                </article>
-              ))}
-            </div>
-          </section>
-
           <section className="schedule-section-card">
             <div className="schedule-section-head">
               <div>

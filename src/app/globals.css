@@ -3557,15 +3557,29 @@ textarea::placeholder {
 .schedule-editor-toggle-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
+  justify-content: flex-start;
 }
 
-.schedule-editor-toggle-note {
-  margin: 0;
-  color: rgba(223, 243, 255, 0.82);
-  font-size: 0.88rem;
+.schedule-edit-trigger-card,
+.schedule-editor-card {
+  padding-top: 18px;
+  padding-bottom: 18px;
+}
+
+.button-schedule-edit {
+  min-height: 50px;
+  padding: 0 24px;
+  border: 0;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #ffb347 0%, #ff8c1a 100%);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 800;
+  box-shadow: 0 14px 28px rgba(255, 140, 26, 0.28);
+}
+
+.button-schedule-edit:hover {
+  filter: brightness(1.03);
 }
 
 .schedule-status-strip {

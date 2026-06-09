@@ -3206,7 +3206,7 @@ textarea::placeholder {
   }
 
   .presentation-slide-table .presentation-table tbody tr {
-    height: clamp(34px, calc((100dvh - 240px) / var(--presentation-table-row-count, 1)), 76px);
+    height: auto;
   }
 
   .presentation-slide-table .presentation-table-panel {
@@ -3351,6 +3351,22 @@ textarea::placeholder {
   .presentation-slide-nav-meta span {
     padding: 2px 5px;
     font-size: 0.56rem;
+  }
+}
+
+@media (min-width: 981px) {
+  .presentation-slide-table .presentation-table tbody tr {
+    height: auto !important;
+  }
+
+  .presentation-table th,
+  .presentation-table td {
+    padding: calc(5px * var(--presentation-table-fit-scale)) calc(7px * var(--presentation-table-fit-scale));
+    line-height: 1.06;
+  }
+
+  .presentation-slide-table .presentation-table-panel {
+    gap: 8px;
   }
 }
 

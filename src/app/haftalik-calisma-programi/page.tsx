@@ -79,6 +79,7 @@ function getEntryForDay(entries: WeeklyWorkScheduleRecord[], dayOfWeek: number) 
 
 function getStatusClass(status: WorkScheduleStatus) {
   if (status === "work") return "schedule-pill-work";
+  if (status === "training") return "schedule-pill-training";
   if (status === "leave") return "schedule-pill-leave";
   return "schedule-pill-off";
 }
@@ -187,6 +188,7 @@ export default async function WeeklyWorkSchedulePage({ searchParams }: PageProps
   });
 
   const selectedDayRows = teamRows.filter((row) => row.selectedStatus === "work");
+  const selectedTrainingRows = teamRows.filter((row) => row.selectedStatus === "training");
   const selectedLeaveRows = teamRows.filter((row) => row.selectedStatus === "leave");
   const selectedOffRows = teamRows.filter((row) => row.selectedStatus === "off");
   const selectedDayMinutes = selectedDayRows.reduce((sum, row) => {
@@ -323,6 +325,7 @@ export default async function WeeklyWorkSchedulePage({ searchParams }: PageProps
 
             <div className="schedule-status-strip">
               <span className="schedule-pill schedule-pill-work">Calisan: {selectedDayRows.length}</span>
+              <span className="schedule-pill schedule-pill-training">Egitimde: {selectedTrainingRows.length}</span>
               <span className="schedule-pill schedule-pill-leave">Izinli: {selectedLeaveRows.length}</span>
               <span className="schedule-pill schedule-pill-off">Bos: {selectedOffRows.length}</span>
             </div>
@@ -335,7 +338,15 @@ export default async function WeeklyWorkSchedulePage({ searchParams }: PageProps
                     <span>{row.roleLabel}</span>
                   </div>
                   <span className={`schedule-pill ${getStatusClass(row.selectedStatus)}`}>{getScheduleStatusLabel(row.selectedStatus)}</span>
-                  <p>{row.selectedStatus === "work" ? row.selectedRange : row.selectedStatus === "leave" ? "Izinli gun." : "Program girilmedi."}</p>
+                  <p>
+                    {row.selectedStatus === "work"
+                      ? row.selectedRange
+                      : row.selectedStatus === "training"
+                        ? "Egitim gunu."
+                        : row.selectedStatus === "leave"
+                          ? "Izinli gun."
+                          : "Program girilmedi."}
+                  </p>
                   <small>Haftalik toplam: {formatMinutesAsHours(row.weeklyMinutes)}</small>
                 </article>
               ))}

@@ -3590,6 +3590,11 @@ textarea::placeholder {
   color: #b9ffeb;
 }
 
+.schedule-pill-training {
+  background: rgba(146, 180, 255, 0.24);
+  color: #d7e5ff;
+}
+
 .schedule-pill-leave {
   background: rgba(255, 209, 102, 0.22);
   color: #ffe39a;

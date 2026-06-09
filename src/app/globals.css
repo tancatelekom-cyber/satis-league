@@ -2198,7 +2198,7 @@ textarea::placeholder {
 }
 
 .presentation-slide-table .presentation-table {
-  height: 100%;
+  height: auto;
 }
 
 .presentation-slide-table .presentation-panel.presentation-panel-hero {
@@ -2207,7 +2207,7 @@ textarea::placeholder {
 }
 
 .presentation-slide-table .presentation-table tbody tr {
-  height: calc(100% / var(--presentation-table-row-count, 1));
+  height: auto;
 }
 
 .presentation-slide-needs .presentation-slide-body-needs {

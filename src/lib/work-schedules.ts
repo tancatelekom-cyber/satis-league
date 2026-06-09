@@ -125,8 +125,12 @@ export function getDefaultWeekDay(weekStart: string) {
 export function buildHalfHourOptions() {
   const values: string[] = [];
 
-  for (let hour = 0; hour < 24; hour += 1) {
+  for (let hour = 8; hour <= 23; hour += 1) {
     for (const minute of [0, 30]) {
+      if (hour === 23 && minute === 30) {
+        continue;
+      }
+
       values.push(`${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`);
     }
   }
@@ -188,6 +192,17 @@ export function parseTimeToMinutes(value: string | null | undefined) {
   }
 
   return hour * 60 + minute;
+}
+
+export function getNetWorkedMinutes(startTime: string | null | undefined, endTime: string | null | undefined) {
+  const start = parseTimeToMinutes(startTime);
+  const end = parseTimeToMinutes(endTime);
+
+  if (start === null || end === null || end <= start) {
+    return 0;
+  }
+
+  return Math.max(0, end - start - 60);
 }
 
 export function formatMinutesAsHours(totalMinutes: number) {

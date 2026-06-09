@@ -8,11 +8,11 @@ import {
   formatMinutesAsHours,
   formatScheduleRange,
   getDefaultWeekDay,
+  getNetWorkedMinutes,
   getScheduleStatusLabel,
   getWeekDates,
   mergeWeekEntries,
   normalizeWeekStart,
-  parseTimeToMinutes,
   type WeeklyWorkScheduleRecord,
   type WorkScheduleStatus
 } from "@/lib/work-schedules";
@@ -69,14 +69,7 @@ function getWeeklyMinutes(entries: WeeklyWorkScheduleRecord[]) {
       return sum;
     }
 
-    const start = parseTimeToMinutes(entry.start_time);
-    const end = parseTimeToMinutes(entry.end_time);
-
-    if (start === null || end === null || end <= start) {
-      return sum;
-    }
-
-    return sum + (end - start);
+    return sum + getNetWorkedMinutes(entry.start_time, entry.end_time);
   }, 0);
 }
 
@@ -197,15 +190,8 @@ export default async function WeeklyWorkSchedulePage({ searchParams }: PageProps
   const selectedLeaveRows = teamRows.filter((row) => row.selectedStatus === "leave");
   const selectedOffRows = teamRows.filter((row) => row.selectedStatus === "off");
   const selectedDayMinutes = selectedDayRows.reduce((sum, row) => {
-    const [start, end] = row.selectedRange.split(" - ");
-    const startMinutes = parseTimeToMinutes(start);
-    const endMinutes = parseTimeToMinutes(end);
-
-    if (startMinutes === null || endMinutes === null || endMinutes <= startMinutes) {
-      return sum;
-    }
-
-    return sum + (endMinutes - startMinutes);
+    const selectedEntry = getEntryForDay(row.entries, selectedDay);
+    return sum + getNetWorkedMinutes(selectedEntry?.start_time ?? null, selectedEntry?.end_time ?? null);
   }, 0);
 
   const weekLabel = `${weekDates[0]?.shortDate ?? ""} - ${weekDates[6]?.shortDate ?? ""}`;

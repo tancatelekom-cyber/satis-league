@@ -3801,9 +3801,17 @@ textarea::placeholder {
   background: rgba(255, 255, 255, 0.08);
 }
 
-.schedule-open-close-item-alert {
-  background: rgba(173, 35, 35, 0.28);
-  box-shadow: inset 0 0 0 1px rgba(255, 130, 130, 0.22);
+.schedule-open-close-block {
+  display: grid;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.schedule-open-close-block-alert {
+  background: rgba(214, 34, 34, 0.42);
+  box-shadow: inset 0 0 0 1px rgba(255, 168, 168, 0.35);
 }
 
 .schedule-open-close-summary strong {

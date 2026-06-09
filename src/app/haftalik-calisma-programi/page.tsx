@@ -377,20 +377,19 @@ export default async function WeeklyWorkSchedulePage({ searchParams }: PageProps
             <div className="schedule-export-row">
               <div className="schedule-open-close-summary">
                 {weeklyOpenCloseSummary.map((day) => (
-                  <div
-                    key={`open-close-${day.key}`}
-                    className={`schedule-open-close-item ${
-                      day.openingCount < 2 || day.closingCount < 2 ? "schedule-open-close-item-alert" : ""
-                    }`}
-                  >
-                    <strong>
-                      {day.label} acilis: {day.openingCount} kisi
-                    </strong>
-                    <span>{day.openingLabel}</span>
-                    <strong>
-                      {day.label} kapanis: {day.closingCount} kisi
-                    </strong>
-                    <span>{day.closingLabel}</span>
+                  <div key={`open-close-${day.key}`} className="schedule-open-close-item">
+                    <div className={`schedule-open-close-block ${day.openingCount < 2 ? "schedule-open-close-block-alert" : ""}`}>
+                      <strong>
+                        {day.label} acilis: {day.openingCount} kisi
+                      </strong>
+                      <span>{day.openingLabel}</span>
+                    </div>
+                    <div className={`schedule-open-close-block ${day.closingCount < 2 ? "schedule-open-close-block-alert" : ""}`}>
+                      <strong>
+                        {day.label} kapanis: {day.closingCount} kisi
+                      </strong>
+                      <span>{day.closingLabel}</span>
+                    </div>
                   </div>
                 ))}
               </div>

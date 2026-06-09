@@ -49,6 +49,14 @@ function buildFallbackEntries(weekDates: WeekDate[]) {
   }));
 }
 
+function getAvailableEndTimes(startTime: string | null) {
+  if (!startTime) {
+    return WORK_SCHEDULE_TIME_OPTIONS;
+  }
+
+  return WORK_SCHEDULE_TIME_OPTIONS.filter((option) => option > startTime);
+}
+
 function getStatusSelectClass(status: WorkScheduleDayEntry["status"]) {
   if (status === "work") return "schedule-status-select schedule-status-select-work";
   if (status === "training") return "schedule-status-select schedule-status-select-training";
@@ -95,6 +103,10 @@ export function WeeklyWorkScheduleEditor({
 
         if (patch.status && patch.status !== "work") {
           next.startTime = null;
+          next.endTime = null;
+        }
+
+        if (patch.startTime && next.endTime && next.endTime <= patch.startTime) {
           next.endTime = null;
         }
 
@@ -150,6 +162,7 @@ export function WeeklyWorkScheduleEditor({
                     {weekDates.map((day) => {
                       const entry = getEntry(profile.id, day.dayOfWeek);
                       const isWorking = entry.status === "work";
+                      const availableEndTimes = getAvailableEndTimes(entry.startTime);
 
                       return (
                         <td key={`bulk-cell-${profile.id}-${day.dayOfWeek}`}>
@@ -201,7 +214,7 @@ export function WeeklyWorkScheduleEditor({
                                 }
                               >
                                 <option value="">Bitir</option>
-                                {WORK_SCHEDULE_TIME_OPTIONS.map((option) => (
+                                {availableEndTimes.map((option) => (
                                   <option key={`${profile.id}-${day.dayOfWeek}-end-${option}`} value={option}>
                                     {option}
                                   </option>

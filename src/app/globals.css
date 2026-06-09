@@ -3741,6 +3741,12 @@ textarea::placeholder {
   gap: 6px;
 }
 
+.schedule-export-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
 @media (max-width: 980px) {
   .schedule-hero,
   .schedule-summary-grid,

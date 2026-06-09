@@ -188,6 +188,9 @@ export default async function WeeklyWorkSchedulePage({ searchParams }: PageProps
   }, 0);
 
   const weekLabel = `${weekDates[0]?.shortDate ?? ""} - ${weekDates[6]?.shortDate ?? ""}`;
+  const exportHref = `/haftalik-calisma-programi/excel?week=${encodeURIComponent(selectedWeek)}${
+    selectedStoreId ? `&store=${encodeURIComponent(selectedStoreId)}` : ""
+  }`;
   const initialEntriesByProfile = Object.fromEntries(
     teamProfiles.map((person) => [person.id, mergeWeekEntries(recordsByProfile.get(person.id) ?? [])])
   );
@@ -313,6 +316,12 @@ export default async function WeeklyWorkSchedulePage({ searchParams }: PageProps
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            <div className="schedule-export-row">
+              <a className="button-secondary export-link-button" href={exportHref}>
+                Excel'e Indir
+              </a>
             </div>
           </section>
         </>

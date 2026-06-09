@@ -218,6 +218,52 @@ export default async function WeeklyWorkSchedulePage({ searchParams }: PageProps
     closingMinute === null
       ? "Program yok"
       : (selectedDayWorkEntries.find((item) => item.endMinutes === closingMinute)?.endLabel ?? "--:--");
+  const weeklyOpenCloseSummary = weekDates.map((day) => {
+    const dayWorkEntries = teamRows
+      .map((row) => {
+        const entry = getEntryForDay(row.entries, day.dayOfWeek);
+
+        if (!entry || entry.status !== "work") {
+          return null;
+        }
+
+        const startMinutes = parseTimeToMinutes(entry.start_time);
+        const endMinutes = parseTimeToMinutes(entry.end_time);
+
+        if (startMinutes === null || endMinutes === null || endMinutes <= startMinutes) {
+          return null;
+        }
+
+        return {
+          startMinutes,
+          endMinutes,
+          startLabel: entry.start_time?.slice(0, 5) ?? "--:--",
+          endLabel: entry.end_time?.slice(0, 5) ?? "--:--"
+        };
+      })
+      .filter((item): item is NonNullable<typeof item> => item !== null);
+
+    const dayOpeningMinute = dayWorkEntries.length > 0 ? Math.min(...dayWorkEntries.map((item) => item.startMinutes)) : null;
+    const dayClosingMinute = dayWorkEntries.length > 0 ? Math.max(...dayWorkEntries.map((item) => item.endMinutes)) : null;
+
+    return {
+      key: day.dayOfWeek,
+      label: day.label,
+      shortDate: day.shortDate,
+      openingCount:
+        dayOpeningMinute === null ? 0 : dayWorkEntries.filter((item) => item.startMinutes === dayOpeningMinute).length,
+      closingCount:
+        dayClosingMinute === null ? 0 : dayWorkEntries.filter((item) => item.endMinutes === dayClosingMinute).length,
+      openingLabel:
+        dayOpeningMinute === null
+          ? "Program yok"
+          : (dayWorkEntries.find((item) => item.startMinutes === dayOpeningMinute)?.startLabel ?? "--:--"),
+      closingLabel:
+        dayClosingMinute === null
+          ? "Program yok"
+          : (dayWorkEntries.find((item) => item.endMinutes === dayClosingMinute)?.endLabel ?? "--:--")
+    };
+  });
 
   const weekLabel = `${weekDates[0]?.shortDate ?? ""} - ${weekDates[6]?.shortDate ?? ""}`;
   const exportHref = `/haftalik-calisma-programi/excel?week=${encodeURIComponent(selectedWeek)}${
@@ -330,14 +376,18 @@ export default async function WeeklyWorkSchedulePage({ searchParams }: PageProps
 
             <div className="schedule-export-row">
               <div className="schedule-open-close-summary">
-                <strong>
-                  {weekDates[selectedDay]?.label} acilis: {openingCount} kisi
-                </strong>
-                <span>{openingLabel}</span>
-                <strong>
-                  {weekDates[selectedDay]?.label} kapanis: {closingCount} kisi
-                </strong>
-                <span>{closingLabel}</span>
+                {weeklyOpenCloseSummary.map((day) => (
+                  <div key={`open-close-${day.key}`} className="schedule-open-close-item">
+                    <strong>
+                      {day.label} acilis: {day.openingCount} kisi
+                    </strong>
+                    <span>{day.openingLabel}</span>
+                    <strong>
+                      {day.label} kapanis: {day.closingCount} kisi
+                    </strong>
+                    <span>{day.closingLabel}</span>
+                  </div>
+                ))}
               </div>
               <a className="button-secondary export-link-button" href={exportHref}>
                 Excel'e Indir

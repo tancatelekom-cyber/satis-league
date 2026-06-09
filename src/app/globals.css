@@ -3793,6 +3793,14 @@ textarea::placeholder {
   color: rgba(239, 249, 255, 0.95);
 }
 
+.schedule-open-close-item {
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
 .schedule-open-close-summary strong {
   font-size: 0.98rem;
 }

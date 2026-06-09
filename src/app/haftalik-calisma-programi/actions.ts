@@ -50,7 +50,10 @@ export async function saveWeeklyWorkScheduleAction(formData: FormData) {
   const weekStart = normalizeWeekStart(String(formData.get("weekStart") ?? ""));
   const redirectStoreId = String(formData.get("redirectStoreId") ?? "").trim();
   const redirectDay = String(formData.get("redirectDay") ?? "").trim();
-  const targetProfileId = String(formData.get("targetProfileId") ?? user.id).trim() || user.id;
+  const profileIds = String(formData.get("profileIds") ?? "")
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
 
   const { data: actor } = await admin
     .from("profiles")
@@ -62,95 +65,91 @@ export async function saveWeeklyWorkScheduleAction(formData: FormData) {
     redirect(buildRedirectTarget(weekStart, redirectStoreId, redirectDay, "Bu islemi yapmaya yetkiniz yok.", "error"));
   }
 
-  const { data: targetProfile } = await admin
-    .from("profiles")
-    .select("id, role, approval, store_id")
-    .eq("id", targetProfileId)
-    .single();
-
-  if (!targetProfile || targetProfile.approval !== "approved" || !targetProfile.store_id || !["employee", "manager"].includes(targetProfile.role)) {
-    redirect(buildRedirectTarget(weekStart, redirectStoreId, redirectDay, "Secilen personel icin kayit yapilamadi.", "error"));
+  if (!["manager", "management", "admin"].includes(actor.role)) {
+    redirect(buildRedirectTarget(weekStart, redirectStoreId, redirectDay, "Bu tabloyu sadece yetkili kullanicilar guncelleyebilir.", "error"));
   }
 
-  if (actor.role === "employee" && targetProfile.id !== actor.id) {
-    redirect(buildRedirectTarget(weekStart, redirectStoreId, redirectDay, "Calisan sadece kendi kaydini guncelleyebilir.", "error"));
+  if (profileIds.length === 0) {
+    redirect(buildRedirectTarget(weekStart, redirectStoreId, redirectDay, "Kaydedilecek personel bulunamadi.", "error"));
   }
 
-  if (actor.role === "manager" && targetProfile.store_id !== actor.store_id) {
-    redirect(buildRedirectTarget(weekStart, redirectStoreId, redirectDay, "Mudur sadece kendi magazasindaki personel icin giris yapabilir.", "error"));
+  const targetProfiles =
+    (((await admin
+      .from("profiles")
+      .select("id, role, approval, store_id")
+      .in("id", profileIds)).data as Array<{
+      id: string;
+      role: string;
+      approval: string;
+      store_id: string | null;
+    }> | null) ?? []);
+
+  if (targetProfiles.length !== profileIds.length) {
+    redirect(buildRedirectTarget(weekStart, redirectStoreId, redirectDay, "Secilen personellerin bir kismi bulunamadi.", "error"));
+  }
+
+  for (const targetProfile of targetProfiles) {
+    if (targetProfile.approval !== "approved" || !targetProfile.store_id || !["employee", "manager"].includes(targetProfile.role)) {
+      redirect(buildRedirectTarget(weekStart, redirectStoreId, redirectDay, "Secilen tablo kaydi guncellenemedi.", "error"));
+    }
+
+    if (actor.role === "manager" && targetProfile.store_id !== actor.store_id) {
+      redirect(buildRedirectTarget(weekStart, redirectStoreId, redirectDay, "Mudur sadece kendi magazasindaki personel icin giris yapabilir.", "error"));
+    }
   }
 
   const existingRows =
     (((await admin
       .from("weekly_work_schedules")
-      .select("day_of_week, status, start_time, end_time")
-      .eq("profile_id", targetProfile.id)
-      .eq("week_start", weekStart)).data as Array<{
+      .select("profile_id, day_of_week, status, start_time, end_time")
+      .eq("week_start", weekStart)
+      .in("profile_id", profileIds)).data as Array<{
+      profile_id: string;
       day_of_week: number;
       status: WorkScheduleStatus;
       start_time: string | null;
       end_time: string | null;
     }> | null) ?? []);
-  const existingByDay = new Map(existingRows.map((item) => [item.day_of_week, item]));
+  const existingByKey = new Map(existingRows.map((item) => [`${item.profile_id}-${item.day_of_week}`, item]));
 
   const rows = [];
 
-  for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek += 1) {
-    const statusInput = String(formData.get(`day_${dayOfWeek}_status`) ?? "off").trim();
-    const status = isValidStatus(statusInput) ? statusInput : "off";
-    const current = existingByDay.get(dayOfWeek);
-    let startTime = String(formData.get(`day_${dayOfWeek}_start`) ?? "").trim() || null;
-    let endTime = String(formData.get(`day_${dayOfWeek}_end`) ?? "").trim() || null;
+  for (const targetProfile of targetProfiles) {
+    for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek += 1) {
+      const prefix = `${targetProfile.id}_${dayOfWeek}`;
+      const statusInput = String(formData.get(`${prefix}_status`) ?? "off").trim();
+      const status = isValidStatus(statusInput) ? statusInput : "off";
+      let startTime = String(formData.get(`${prefix}_start`) ?? "").trim() || null;
+      let endTime = String(formData.get(`${prefix}_end`) ?? "").trim() || null;
 
-    if (actor.role === "employee") {
       if (status === "work") {
-        startTime = current?.start_time?.slice(0, 5) ?? null;
-        endTime = current?.end_time?.slice(0, 5) ?? null;
+        const startMinutes = parseTimeToMinutes(startTime);
+        const endMinutes = parseTimeToMinutes(endTime);
 
-        if (!startTime || !endTime) {
+        if (startMinutes === null || endMinutes === null || startMinutes >= endMinutes) {
           redirect(
             buildRedirectTarget(
               weekStart,
               redirectStoreId,
               redirectDay,
-              "Calisma saati sadece magaza muduru tarafindan belirlenir.",
+              "Calisma saatlerinde baslangic bitisten once olmali.",
               "error"
             )
           );
         }
-      } else {
-        startTime = null;
-        endTime = null;
       }
+
+      rows.push({
+        profile_id: targetProfile.id,
+        store_id: targetProfile.store_id,
+        week_start: weekStart,
+        day_of_week: dayOfWeek,
+        status,
+        start_time: status === "work" ? startTime : null,
+        end_time: status === "work" ? endTime : null,
+        updated_at: new Date().toISOString()
+      });
     }
-
-    if (status === "work") {
-      const startMinutes = parseTimeToMinutes(startTime);
-      const endMinutes = parseTimeToMinutes(endTime);
-
-      if (startMinutes === null || endMinutes === null || startMinutes >= endMinutes) {
-        redirect(
-          buildRedirectTarget(
-            weekStart,
-            redirectStoreId,
-            redirectDay,
-            "Calisma saatlerinde baslangic bitisten once olmali.",
-            "error"
-          )
-        );
-      }
-    }
-
-    rows.push({
-      profile_id: targetProfile.id,
-      store_id: targetProfile.store_id,
-      week_start: weekStart,
-      day_of_week: dayOfWeek,
-      status,
-      start_time: status === "work" ? startTime : null,
-      end_time: status === "work" ? endTime : null,
-      updated_at: new Date().toISOString()
-    });
   }
 
   const { error } = await admin.from("weekly_work_schedules").upsert(rows, {

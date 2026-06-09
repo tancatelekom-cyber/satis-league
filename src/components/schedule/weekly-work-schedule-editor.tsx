@@ -14,15 +14,20 @@ type WeekDate = {
   shortDate: string;
 };
 
+type TeamProfile = {
+  id: string;
+  fullName: string;
+  roleLabel: string;
+};
+
 type WeeklyWorkScheduleEditorProps = {
-  canEditTimes: boolean;
-  entries: WorkScheduleDayEntry[];
+  profiles: TeamProfile[];
   redirectDay: string;
   redirectStoreId: string;
   saveAction: (formData: FormData) => void | Promise<void>;
-  targetProfileId: string;
   weekDates: WeekDate[];
   weekStart: string;
+  initialEntriesByProfile: Record<string, WorkScheduleDayEntry[]>;
 };
 
 function SubmitButton() {
@@ -30,40 +35,49 @@ function SubmitButton() {
 
   return (
     <button className="button-primary" type="submit" disabled={pending}>
-      {pending ? "Kaydediliyor..." : "Programi Kaydet"}
+      {pending ? "Kaydediliyor..." : "Tum Programi Kaydet"}
     </button>
   );
 }
 
+function buildFallbackEntries(weekDates: WeekDate[]) {
+  return weekDates.map((day) => ({
+    dayOfWeek: day.dayOfWeek,
+    status: "off" as const,
+    startTime: null,
+    endTime: null
+  }));
+}
+
 export function WeeklyWorkScheduleEditor({
-  canEditTimes,
-  entries,
+  profiles,
   redirectDay,
   redirectStoreId,
   saveAction,
-  targetProfileId,
   weekDates,
-  weekStart
+  weekStart,
+  initialEntriesByProfile
 }: WeeklyWorkScheduleEditorProps) {
-  const [draft, setDraft] = useState(entries);
+  const [draft, setDraft] = useState<Record<string, WorkScheduleDayEntry[]>>(initialEntriesByProfile);
 
-  const rows = useMemo(
-    () =>
-      weekDates.map((day) => ({
-        ...day,
-        entry: draft.find((item) => item.dayOfWeek === day.dayOfWeek) ?? {
-          dayOfWeek: day.dayOfWeek,
-          status: "off" as const,
-          startTime: null,
-          endTime: null
-        }
-      })),
-    [draft, weekDates]
-  );
+  const fallbackEntries = useMemo(() => buildFallbackEntries(weekDates), [weekDates]);
 
-  function updateRow(dayOfWeek: number, patch: Partial<WorkScheduleDayEntry>) {
-    setDraft((current) =>
-      current.map((entry) => {
+  function getEntry(profileId: string, dayOfWeek: number) {
+    const entries = draft[profileId] ?? fallbackEntries;
+
+    return (
+      entries.find((item) => item.dayOfWeek === dayOfWeek) ?? {
+        dayOfWeek,
+        status: "off" as const,
+        startTime: null,
+        endTime: null
+      }
+    );
+  }
+
+  function updateRow(profileId: string, dayOfWeek: number, patch: Partial<WorkScheduleDayEntry>) {
+    setDraft((current) => {
+      const nextEntries = [...(current[profileId] ?? fallbackEntries)].map((entry) => {
         if (entry.dayOfWeek !== dayOfWeek) {
           return entry;
         }
@@ -76,8 +90,13 @@ export function WeeklyWorkScheduleEditor({
         }
 
         return next;
-      })
-    );
+      });
+
+      return {
+        ...current,
+        [profileId]: nextEntries
+      };
+    });
   }
 
   return (
@@ -85,92 +104,96 @@ export function WeeklyWorkScheduleEditor({
       <input type="hidden" name="weekStart" value={weekStart} />
       <input type="hidden" name="redirectStoreId" value={redirectStoreId} />
       <input type="hidden" name="redirectDay" value={redirectDay} />
-      <input type="hidden" name="targetProfileId" value={targetProfileId} />
+      <input type="hidden" name="profileIds" value={profiles.map((profile) => profile.id).join(",")} />
 
-      <div className="schedule-editor-grid">
-        {rows.map(({ dayOfWeek, label, shortDate, entry }) => {
-          const isWorking = entry.status === "work";
-          const statusOptions = canEditTimes
-            ? WORK_SCHEDULE_STATUS_OPTIONS
-            : WORK_SCHEDULE_STATUS_OPTIONS.filter((option) => option.value !== "work" || entry.status === "work");
+      <div className="schedule-bulk-table-wrap">
+        <table className="schedule-bulk-table">
+          <thead>
+            <tr>
+              <th>Personel</th>
+              {weekDates.map((day) => (
+                <th key={`bulk-head-${day.dayOfWeek}`}>
+                  {day.label}
+                  <span>{day.shortDate}</span>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {profiles.map((profile) => (
+              <tr key={`bulk-row-${profile.id}`}>
+                <td className="schedule-bulk-person-cell">
+                  <strong>{profile.fullName}</strong>
+                  <span>{profile.roleLabel}</span>
+                </td>
+                {weekDates.map((day) => {
+                  const entry = getEntry(profile.id, day.dayOfWeek);
+                  const isWorking = entry.status === "work";
 
-          return (
-            <section key={`editor-${dayOfWeek}`} className="schedule-day-card">
-              <div className="schedule-day-card-head">
-                <strong>{label}</strong>
-                <span>{shortDate}</span>
-              </div>
+                  return (
+                    <td key={`bulk-cell-${profile.id}-${day.dayOfWeek}`}>
+                      <div className="schedule-bulk-cell">
+                        <select
+                          name={`${profile.id}_${day.dayOfWeek}_status`}
+                          value={entry.status}
+                          onChange={(event) =>
+                            updateRow(profile.id, day.dayOfWeek, {
+                              status: event.target.value as WorkScheduleDayEntry["status"]
+                            })
+                          }
+                        >
+                          {WORK_SCHEDULE_STATUS_OPTIONS.map((option) => (
+                            <option key={`${profile.id}-${day.dayOfWeek}-${option.value}`} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
 
-              <label className="schedule-field">
-                <span>Durum</span>
-                <select
-                  name={`day_${dayOfWeek}_status`}
-                  value={entry.status}
-                  onChange={(event) => updateRow(dayOfWeek, { status: event.target.value as WorkScheduleDayEntry["status"] })}
-                >
-                  {statusOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                        <div className="schedule-bulk-time-grid">
+                          <select
+                            disabled={!isWorking}
+                            name={`${profile.id}_${day.dayOfWeek}_start`}
+                            value={entry.startTime ?? ""}
+                            onChange={(event) =>
+                              updateRow(profile.id, day.dayOfWeek, {
+                                startTime: event.target.value || null
+                              })
+                            }
+                          >
+                            <option value="">Basla</option>
+                            {WORK_SCHEDULE_TIME_OPTIONS.map((option) => (
+                              <option key={`${profile.id}-${day.dayOfWeek}-start-${option}`} value={option}>
+                                {option}
+                              </option>
+                            ))}
+                          </select>
 
-              {canEditTimes ? (
-                <div className="schedule-time-grid">
-                  <label className="schedule-field">
-                    <span>Baslangic</span>
-                    <select
-                      disabled={!isWorking}
-                      name={`day_${dayOfWeek}_start`}
-                      value={entry.startTime ?? ""}
-                      onChange={(event) => updateRow(dayOfWeek, { startTime: event.target.value || null })}
-                    >
-                      <option value="">Sec</option>
-                      {WORK_SCHEDULE_TIME_OPTIONS.map((option) => (
-                        <option key={`start-${dayOfWeek}-${option}`} value={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <label className="schedule-field">
-                    <span>Bitis</span>
-                    <select
-                      disabled={!isWorking}
-                      name={`day_${dayOfWeek}_end`}
-                      value={entry.endTime ?? ""}
-                      onChange={(event) => updateRow(dayOfWeek, { endTime: event.target.value || null })}
-                    >
-                      <option value="">Sec</option>
-                      {WORK_SCHEDULE_TIME_OPTIONS.map((option) => (
-                        <option key={`end-${dayOfWeek}-${option}`} value={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-              ) : (
-                <div className="schedule-day-card-static">
-                  <strong>{isWorking ? `${entry.startTime ?? "--:--"} - ${entry.endTime ?? "--:--"}` : "Saati mudur belirler"}</strong>
-                  <span>Calisma saati sadece magaza muduru tarafindan girilir.</span>
-                </div>
-              )}
-
-              <p className="schedule-day-card-note">
-                {!canEditTimes
-                  ? "Calisan bu alanda sadece gun durumunu gunceller; calisma saatini belirleyemez."
-                  : entry.status === "leave"
-                  ? "Bu gun izinli olarak isaretlenecek."
-                  : entry.status === "off"
-                    ? "Bu gun icin vardiya girilmeyecek."
-                    : "Yarim saatlik vardiya araligini sec."}
-              </p>
-            </section>
-          );
-        })}
+                          <select
+                            disabled={!isWorking}
+                            name={`${profile.id}_${day.dayOfWeek}_end`}
+                            value={entry.endTime ?? ""}
+                            onChange={(event) =>
+                              updateRow(profile.id, day.dayOfWeek, {
+                                endTime: event.target.value || null
+                              })
+                            }
+                          >
+                            <option value="">Bitir</option>
+                            {WORK_SCHEDULE_TIME_OPTIONS.map((option) => (
+                              <option key={`${profile.id}-${day.dayOfWeek}-end-${option}`} value={option}>
+                                {option}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       <div className="schedule-editor-actions">

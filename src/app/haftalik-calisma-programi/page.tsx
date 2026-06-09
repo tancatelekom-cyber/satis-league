@@ -209,12 +209,9 @@ export default async function WeeklyWorkSchedulePage({ searchParams }: PageProps
   }, 0);
 
   const weekLabel = `${weekDates[0]?.shortDate ?? ""} - ${weekDates[6]?.shortDate ?? ""}`;
-  const requestedEditableProfileId = String(params.profile ?? "").trim();
-  const selectedEditableProfile = canManageTeamSchedules
-    ? teamProfiles.find((item) => item.id === requestedEditableProfileId) ?? teamProfiles[0] ?? null
-    : profile;
-  const editableEntries = mergeWeekEntries(recordsByProfile.get(selectedEditableProfile?.id ?? profile.id) ?? ownScheduleRecords);
-  const canEditTimes = profile.role === "manager" || profile.role === "management" || profile.role === "admin";
+  const initialEntriesByProfile = Object.fromEntries(
+    teamProfiles.map((person) => [person.id, mergeWeekEntries(recordsByProfile.get(person.id) ?? [])])
+  );
 
   return (
     <div className="schedule-shell">
@@ -263,19 +260,6 @@ export default async function WeeklyWorkSchedulePage({ searchParams }: PageProps
             </select>
           </label>
 
-          {canManageTeamSchedules && teamProfiles.length > 0 ? (
-            <label className="schedule-field">
-              <span>Veri girilecek personel</span>
-              <select defaultValue={selectedEditableProfile?.id ?? ""} name="profile">
-                {teamProfiles.map((person) => (
-                  <option key={`picker-${person.id}`} value={person.id}>
-                    {person.full_name ?? "Isimsiz Personel"} {person.role === "manager" ? "(Mudur)" : ""}
-                  </option>
-                ))}
-              </select>
-            </label>
-          ) : null}
-
           <button className="button-secondary" type="submit">
             Haftayi Getir
           </button>
@@ -312,27 +296,28 @@ export default async function WeeklyWorkSchedulePage({ searchParams }: PageProps
         </article>
       </section>
 
-      {ownEditable || canManageTeamSchedules ? (
+      {canManageTeamSchedules && teamProfiles.length > 0 ? (
         <section className="schedule-section-card">
           <div className="schedule-section-head">
             <div>
-              <span>Kendi Programin</span>
-              <h2>{selectedEditableProfile?.full_name ?? profile.full_name ?? "Kullanici"} icin haftalik plan</h2>
+              <span>Toplu Veri Girisi</span>
+              <h2>Secilen magazanin haftalik calisma tablosu</h2>
             </div>
             <p>
-              {canEditTimes
-                ? 'Yetkili kullanici secili personel icin saat girebilir. Calisilmayan gunlerde "Izinli" secilebilir.'
-                : 'Calisan ekip programini gorur; kendi gun durumunu gunceller ama calisma saatini belirleyemez.'}
+              Magaza muduru, yonetici ve admin secilen hafta icin tum ekipteki durum ve saatleri bu tablo uzerinden gunceller.
             </p>
           </div>
 
           <WeeklyWorkScheduleEditor
-            canEditTimes={canEditTimes}
-            entries={editableEntries}
+            initialEntriesByProfile={initialEntriesByProfile}
+            profiles={teamProfiles.map((person) => ({
+              id: person.id,
+              fullName: person.full_name ?? "Isimsiz Personel",
+              roleLabel: person.role === "manager" ? "Magaza Muduru" : "Personel"
+            }))}
             redirectDay={String(selectedDay)}
             redirectStoreId={selectedStoreId}
             saveAction={saveWeeklyWorkScheduleAction}
-            targetProfileId={selectedEditableProfile?.id ?? profile.id}
             weekDates={weekDates}
             weekStart={selectedWeek}
           />

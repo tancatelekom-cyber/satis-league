@@ -38,13 +38,14 @@ type PageProps = {
     week?: string;
     store?: string;
     day?: string;
+    profile?: string;
     message?: string;
     type?: string;
   }>;
 };
 
 function canViewTeam(role: UserRole) {
-  return role === "manager" || role === "management" || role === "admin";
+  return role === "employee" || role === "manager" || role === "management" || role === "admin";
 }
 
 function canEditOwnSchedule(role: UserRole) {
@@ -109,6 +110,7 @@ export default async function WeeklyWorkSchedulePage({ searchParams }: PageProps
   const canPickStore = profile.role === "management" || profile.role === "admin";
   const teamVisible = canViewTeam(profile.role);
   const ownEditable = canEditOwnSchedule(profile.role);
+  const canManageTeamSchedules = profile.role === "manager" || profile.role === "management" || profile.role === "admin";
 
   const stores = teamVisible
     ? (((await admin.from("stores").select("id, name").eq("is_active", true).order("name")).data as StoreRow[] | null) ?? [])
@@ -119,7 +121,7 @@ export default async function WeeklyWorkSchedulePage({ searchParams }: PageProps
       return profile.store_id ?? "";
     }
 
-    if (profile.role === "manager") {
+    if (profile.role === "manager" || profile.role === "employee") {
       return profile.store_id ?? "";
     }
 
@@ -206,6 +208,12 @@ export default async function WeeklyWorkSchedulePage({ searchParams }: PageProps
   }, 0);
 
   const weekLabel = `${weekDates[0]?.shortDate ?? ""} - ${weekDates[6]?.shortDate ?? ""}`;
+  const requestedEditableProfileId = String(params.profile ?? "").trim();
+  const selectedEditableProfile = canManageTeamSchedules
+    ? teamProfiles.find((item) => item.id === requestedEditableProfileId) ?? teamProfiles[0] ?? null
+    : profile;
+  const editableEntries = mergeWeekEntries(recordsByProfile.get(selectedEditableProfile?.id ?? profile.id) ?? ownScheduleRecords);
+  const canEditTimes = profile.role === "manager" || profile.role === "management" || profile.role === "admin";
 
   return (
     <div className="schedule-shell">
@@ -214,8 +222,8 @@ export default async function WeeklyWorkSchedulePage({ searchParams }: PageProps
           <span className="schedule-kicker">Haftalik Calisma Programi</span>
           <h1>Calisma takvimi ve ekip ozeti</h1>
           <p>
-            Pazartesiden pazara kadar haftalik planini olustur. Mudur, yonetim ve admin ise secilen magazanin gunluk durumunu
-            ve haftalik ozetini gorebilir.
+            Pazartesiden pazara kadar haftalik planini olustur. Calisan ekip arkadaslarini gorebilir; mudur, yonetim ve admin ise
+            secilen magazanin gunluk durumunu ve haftalik ozetini takip eder.
           </p>
         </div>
 
@@ -250,6 +258,19 @@ export default async function WeeklyWorkSchedulePage({ searchParams }: PageProps
               ))}
             </select>
           </label>
+
+          {canManageTeamSchedules && teamProfiles.length > 0 ? (
+            <label className="schedule-field">
+              <span>Veri girilecek personel</span>
+              <select defaultValue={selectedEditableProfile?.id ?? ""} name="profile">
+                {teamProfiles.map((person) => (
+                  <option key={`picker-${person.id}`} value={person.id}>
+                    {person.full_name ?? "Isimsiz Personel"} {person.role === "manager" ? "(Mudur)" : ""}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
 
           <button className="button-secondary" type="submit">
             Haftayi Getir
@@ -287,21 +308,27 @@ export default async function WeeklyWorkSchedulePage({ searchParams }: PageProps
         </article>
       </section>
 
-      {ownEditable ? (
+      {ownEditable || canManageTeamSchedules ? (
         <section className="schedule-section-card">
           <div className="schedule-section-head">
             <div>
               <span>Kendi Programin</span>
-              <h2>{profile.full_name ?? "Kullanici"} icin haftalik plan</h2>
+              <h2>{selectedEditableProfile?.full_name ?? profile.full_name ?? "Kullanici"} icin haftalik plan</h2>
             </div>
-            <p>Mudur de bu alandan kendi saatlerini girebilir. Calisilmayan gunlerde "Izinli" secilebilir.</p>
+            <p>
+              {canEditTimes
+                ? 'Yetkili kullanici secili personel icin saat girebilir. Calisilmayan gunlerde "Izinli" secilebilir.'
+                : 'Calisan ekip programini gorur; kendi gun durumunu gunceller ama calisma saatini belirleyemez.'}
+            </p>
           </div>
 
           <WeeklyWorkScheduleEditor
-            entries={ownEntries}
+            canEditTimes={canEditTimes}
+            entries={editableEntries}
             redirectDay={String(selectedDay)}
             redirectStoreId={selectedStoreId}
             saveAction={saveWeeklyWorkScheduleAction}
+            targetProfileId={selectedEditableProfile?.id ?? profile.id}
             weekDates={weekDates}
             weekStart={selectedWeek}
           />
@@ -316,7 +343,7 @@ export default async function WeeklyWorkSchedulePage({ searchParams }: PageProps
                 <span>Gunluk Ozet</span>
                 <h2>{weekDates[selectedDay]?.label} gunu ekip durumu</h2>
               </div>
-              <p>Mudur, yonetim ve admin bu alanda secilen gunun tum personel dagilimini gorebilir.</p>
+              <p>Bu alanda secilen gunun tum personel dagilimi ve ekip programi gorunur.</p>
             </div>
 
             <div className="schedule-status-strip">
@@ -393,35 +420,7 @@ export default async function WeeklyWorkSchedulePage({ searchParams }: PageProps
             </div>
           </section>
         </>
-      ) : (
-        <section className="schedule-section-card">
-          <div className="schedule-section-head">
-            <div>
-              <span>Haftalik Ozet</span>
-              <h2>Kendi program gorunumu</h2>
-            </div>
-            <p>Bu alanda kendi haftalik dagilimini ve izinli gunlerini gorursun.</p>
-          </div>
-
-          <div className="schedule-daily-grid">
-            {weekDates.map((day) => {
-              const entry = ownEntries.find((item) => item.dayOfWeek === day.dayOfWeek);
-              const status = (entry?.status ?? "off") as WorkScheduleStatus;
-
-              return (
-                <article key={`self-${day.dayOfWeek}`} className="schedule-daily-card">
-                  <div className="schedule-daily-card-head">
-                    <strong>{day.label}</strong>
-                    <span>{day.shortDate}</span>
-                  </div>
-                  <span className={`schedule-pill ${getStatusClass(status)}`}>{getScheduleStatusLabel(status)}</span>
-                  <p>{status === "work" ? formatScheduleRange(entry?.startTime ?? null, entry?.endTime ?? null) : status === "leave" ? "Izinli gun." : "Bos gun."}</p>
-                </article>
-              );
-            })}
-          </div>
-        </section>
-      )}
+      ) : null}
     </div>
   );
 }

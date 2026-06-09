@@ -50,6 +50,7 @@ export async function saveWeeklyWorkScheduleAction(formData: FormData) {
   const weekStart = normalizeWeekStart(String(formData.get("weekStart") ?? ""));
   const redirectStoreId = String(formData.get("redirectStoreId") ?? "").trim();
   const redirectDay = String(formData.get("redirectDay") ?? "").trim();
+  const targetProfileId = String(formData.get("targetProfileId") ?? user.id).trim() || user.id;
 
   const { data: actor } = await admin
     .from("profiles")
@@ -57,17 +58,71 @@ export async function saveWeeklyWorkScheduleAction(formData: FormData) {
     .eq("id", user.id)
     .single();
 
-  if (!actor || actor.approval !== "approved" || !["employee", "manager"].includes(actor.role) || !actor.store_id) {
+  if (!actor || actor.approval !== "approved" || !["employee", "manager", "management", "admin"].includes(actor.role)) {
     redirect(buildRedirectTarget(weekStart, redirectStoreId, redirectDay, "Bu islemi yapmaya yetkiniz yok.", "error"));
   }
+
+  const { data: targetProfile } = await admin
+    .from("profiles")
+    .select("id, role, approval, store_id")
+    .eq("id", targetProfileId)
+    .single();
+
+  if (!targetProfile || targetProfile.approval !== "approved" || !targetProfile.store_id || !["employee", "manager"].includes(targetProfile.role)) {
+    redirect(buildRedirectTarget(weekStart, redirectStoreId, redirectDay, "Secilen personel icin kayit yapilamadi.", "error"));
+  }
+
+  if (actor.role === "employee" && targetProfile.id !== actor.id) {
+    redirect(buildRedirectTarget(weekStart, redirectStoreId, redirectDay, "Calisan sadece kendi kaydini guncelleyebilir.", "error"));
+  }
+
+  if (actor.role === "manager" && targetProfile.store_id !== actor.store_id) {
+    redirect(buildRedirectTarget(weekStart, redirectStoreId, redirectDay, "Mudur sadece kendi magazasindaki personel icin giris yapabilir.", "error"));
+  }
+
+  const existingRows =
+    (((await admin
+      .from("weekly_work_schedules")
+      .select("day_of_week, status, start_time, end_time")
+      .eq("profile_id", targetProfile.id)
+      .eq("week_start", weekStart)).data as Array<{
+      day_of_week: number;
+      status: WorkScheduleStatus;
+      start_time: string | null;
+      end_time: string | null;
+    }> | null) ?? []);
+  const existingByDay = new Map(existingRows.map((item) => [item.day_of_week, item]));
 
   const rows = [];
 
   for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek += 1) {
     const statusInput = String(formData.get(`day_${dayOfWeek}_status`) ?? "off").trim();
     const status = isValidStatus(statusInput) ? statusInput : "off";
-    const startTime = String(formData.get(`day_${dayOfWeek}_start`) ?? "").trim() || null;
-    const endTime = String(formData.get(`day_${dayOfWeek}_end`) ?? "").trim() || null;
+    const current = existingByDay.get(dayOfWeek);
+    let startTime = String(formData.get(`day_${dayOfWeek}_start`) ?? "").trim() || null;
+    let endTime = String(formData.get(`day_${dayOfWeek}_end`) ?? "").trim() || null;
+
+    if (actor.role === "employee") {
+      if (status === "work") {
+        startTime = current?.start_time?.slice(0, 5) ?? null;
+        endTime = current?.end_time?.slice(0, 5) ?? null;
+
+        if (!startTime || !endTime) {
+          redirect(
+            buildRedirectTarget(
+              weekStart,
+              redirectStoreId,
+              redirectDay,
+              "Calisma saati sadece magaza muduru tarafindan belirlenir.",
+              "error"
+            )
+          );
+        }
+      } else {
+        startTime = null;
+        endTime = null;
+      }
+    }
 
     if (status === "work") {
       const startMinutes = parseTimeToMinutes(startTime);
@@ -87,8 +142,8 @@ export async function saveWeeklyWorkScheduleAction(formData: FormData) {
     }
 
     rows.push({
-      profile_id: actor.id,
-      store_id: actor.store_id,
+      profile_id: targetProfile.id,
+      store_id: targetProfile.store_id,
       week_start: weekStart,
       day_of_week: dayOfWeek,
       status,

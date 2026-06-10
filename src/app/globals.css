@@ -377,6 +377,71 @@ button {
   color: #ffffff;
 }
 
+.press-copy-field {
+  position: relative;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  cursor: pointer;
+}
+
+.press-copy-field:focus-visible {
+  outline: 2px solid rgba(255, 209, 102, 0.92);
+  outline-offset: 3px;
+}
+
+.press-copy-field-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.press-copy-feedback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(4, 92, 96, 0.12);
+  color: #045c60;
+  font-size: 0.72rem;
+  font-style: normal;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.device-copy-inline {
+  min-height: 34px;
+  padding: 6px 10px;
+  border-radius: 14px;
+  background: rgba(9, 17, 31, 0.1);
+}
+
+.device-copy-inline strong,
+.device-copy-inline span {
+  margin: 0;
+}
+
+.device-copy-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-height: 34px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: rgba(4, 92, 96, 0.08);
+  color: #10203b;
+}
+
+.device-copy-cell strong {
+  margin: 0;
+  color: inherit;
+  font-size: 0.96rem;
+}
+
 .cash-depot-list {
   display: grid;
   gap: 12px;

@@ -472,30 +472,29 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
         ) : (
           filteredRows.map((item) =>
             isCashContractRow(item) ? (
-              <article key={item.id} className="device-cash-row">
-                <strong>{item.productName}</strong>
-                {canViewDeviceZeroPoint ? (
-                  <PressCopyField
-                    className="device-copy-inline"
-                    copyText={formatCurrency(item.contractCashPrice ?? item.totalPayable)}
-                    inline
-                    label="Pesine Kontrat:"
-                    value={formatCurrency(item.contractCashPrice ?? item.totalPayable)}
-                  />
-                ) : (
+              canViewDeviceZeroPoint ? (
+                <PressCopyField
+                  key={item.id}
+                  className="device-cash-row"
+                  copyText={[
+                    item.productName,
+                    `Pesine Kontrat: ${formatCurrency(item.contractCashPrice ?? item.totalPayable)}`,
+                    `Bayi Prim Tutari: ${formatCurrency(item.dealerBonus)}`,
+                    `Cihaz 0 Noktasi: ${formatCurrency(getDeviceZeroPoint(item))}`
+                  ].join("\n")}
+                  value={item.productName}
+                >
+                  <strong>{item.productName}</strong>
                   <span>Pesine Kontrat: {formatCurrency(item.contractCashPrice ?? item.totalPayable)}</span>
-                )}
-                {canViewDeviceZeroPoint ? <span>Bayi Prim Tutari: {formatCurrency(item.dealerBonus)}</span> : null}
-                {canViewDeviceZeroPoint ? (
-                  <PressCopyField
-                    className="device-copy-inline"
-                    copyText={formatCurrency(getDeviceZeroPoint(item))}
-                    inline
-                    label="Cihaz 0 Noktasi:"
-                    value={formatCurrency(getDeviceZeroPoint(item))}
-                  />
-                ) : null}
-              </article>
+                  <span>Bayi Prim Tutari: {formatCurrency(item.dealerBonus)}</span>
+                  <span>Cihaz 0 Noktasi: {formatCurrency(getDeviceZeroPoint(item))}</span>
+                </PressCopyField>
+              ) : (
+                <article key={item.id} className="device-cash-row">
+                  <strong>{item.productName}</strong>
+                  <span>Pesine Kontrat: {formatCurrency(item.contractCashPrice ?? item.totalPayable)}</span>
+                </article>
+              )
             ) : (
               <article key={item.id} className="device-card">
                 <div className="device-card-top">

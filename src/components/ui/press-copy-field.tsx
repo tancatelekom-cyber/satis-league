@@ -1,9 +1,11 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 
 type PressCopyFieldProps = {
   className?: string;
+  children?: ReactNode;
   copyText?: string | null;
   inline?: boolean;
   label?: string;
@@ -31,6 +33,7 @@ async function copyTextToClipboard(text: string) {
 
 export function PressCopyField({
   className = "",
+  children,
   copyText,
   inline = false,
   label,
@@ -132,8 +135,14 @@ export function PressCopyField({
       tabIndex={canCopy ? 0 : undefined}
       title={canCopy ? "Basili tutarak kopyala" : undefined}
     >
-      {label ? <span className={labelClassName}>{label}</span> : null}
-      <strong className={valueClassName}>{value}</strong>
+      {children ? (
+        children
+      ) : (
+        <>
+          {label ? <span className={labelClassName}>{label}</span> : null}
+          <strong className={valueClassName}>{value}</strong>
+        </>
+      )}
       {copied ? <em className="press-copy-feedback">Kopyalandi</em> : null}
     </div>
   );

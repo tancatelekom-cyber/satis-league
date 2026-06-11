@@ -157,7 +157,6 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
           `
         )
         .in("approval", ["approved", "rejected"])
-        .neq("role", "admin")
         .order("full_name", { ascending: true }),
       supabase
         .from("campaigns")

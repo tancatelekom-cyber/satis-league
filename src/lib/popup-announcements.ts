@@ -66,20 +66,7 @@ export async function getActivePopupAnnouncementForProfile(profile: {
     return null;
   }
 
-  const { data: dismissals } = await admin
-    .from("popup_announcement_dismissals")
-    .select("announcement_id")
-    .eq("profile_id", profile.id)
-    .in(
-      "announcement_id",
-      targetedRows.map((row) => row.id)
-    );
-
-  const dismissedIds = new Set(
-    ((dismissals as Array<{ announcement_id: string }> | null) ?? []).map((row) => row.announcement_id)
-  );
-
-  return targetedRows.find((row) => !dismissedIds.has(row.id)) ?? null;
+  return targetedRows[0] ?? null;
 }
 
 export async function getAdminPopupAnnouncements() {

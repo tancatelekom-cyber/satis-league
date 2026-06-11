@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import type { PopupAnnouncementRecord } from "@/lib/popup-announcements";
-import { dismissPopupAnnouncementAction } from "@/app/popup-announcement-actions";
 
 type HomePopupAnnouncementProps = {
   announcement: PopupAnnouncementRecord;
@@ -10,7 +9,6 @@ type HomePopupAnnouncementProps = {
 
 export function HomePopupAnnouncement({ announcement }: HomePopupAnnouncementProps) {
   const [isOpen, setIsOpen] = useState(true);
-  const [, startTransition] = useTransition();
 
   if (!isOpen) {
     return null;
@@ -18,9 +16,6 @@ export function HomePopupAnnouncement({ announcement }: HomePopupAnnouncementPro
 
   function closePopup() {
     setIsOpen(false);
-    startTransition(() => {
-      void dismissPopupAnnouncementAction(announcement.id);
-    });
   }
 
   return (

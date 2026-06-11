@@ -67,7 +67,7 @@ export default async function AdminPopupAnnouncementsPage({ searchParams }: Admi
         <div className="section-title compact-title">
           <div>
             <h2>Yeni Popup Bildirim</h2>
-            <p>Kapatildiginda kullanici ayni bildirimi tekrar gormez.</p>
+            <p>Bildirim, belirlenen tarih ve saat araliginda kullanici her giris yaptiginda yeniden gorunur.</p>
           </div>
         </div>
 

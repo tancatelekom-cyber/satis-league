@@ -7205,6 +7205,21 @@ textarea::placeholder {
   font-size: 0.9rem;
 }
 
+.admin-media-card .button-secondary {
+  width: 100%;
+  justify-content: center;
+  text-align: center;
+  color: #10203b;
+  background: linear-gradient(135deg, rgba(214, 243, 236, 0.98), rgba(255, 231, 170, 0.96));
+  border: 1px solid rgba(4, 92, 96, 0.18);
+  box-shadow: 0 10px 20px rgba(8, 22, 40, 0.08);
+}
+
+.admin-media-card .button-secondary:hover {
+  color: #09111f;
+  background: linear-gradient(135deg, rgba(196, 238, 229, 1), rgba(255, 222, 148, 0.98));
+}
+
 .admin-media-order-row {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -7216,8 +7231,12 @@ textarea::placeholder {
 }
 
 .admin-media-order-row .button-secondary[disabled] {
-  opacity: 0.48;
+  opacity: 0.72;
+  color: rgba(16, 32, 59, 0.65);
+  background: rgba(224, 232, 241, 0.95);
+  border-color: rgba(16, 32, 59, 0.12);
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .admin-media-action-form {

@@ -68,6 +68,41 @@ function revalidateMonthlyCampaignPages() {
   revalidatePath("/admin/aylik-kampanyalar");
 }
 
+async function getOrderedMonthlyCampaignSlides() {
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("monthly_campaign_slides")
+    .select("id, sort_order, created_at")
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new Error(`Gorsel sirasi okunamadi: ${error.message}`);
+  }
+
+  return (data ?? []) as Array<{
+    id: string;
+    sort_order: number;
+    created_at: string;
+  }>;
+}
+
+async function applyMonthlyCampaignSortOrder(slideIds: string[]) {
+  const admin = createAdminClient();
+
+  await Promise.all(
+    slideIds.map((slideId, index) =>
+      admin
+        .from("monthly_campaign_slides")
+        .update({
+          sort_order: index,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", slideId)
+    )
+  );
+}
+
 export async function uploadMonthlyCampaignSlideAction(formData: FormData) {
   const { user } = await requireAdminAccess();
 
@@ -156,6 +191,44 @@ export async function replaceMonthlyCampaignSlideAction(formData: FormData) {
   }
 }
 
+export async function moveMonthlyCampaignSlideAction(formData: FormData) {
+  await requireAdminAccess();
+
+  try {
+    const slideId = String(formData.get("slideId") ?? "").trim();
+    const direction = String(formData.get("direction") ?? "").trim();
+
+    if (!slideId || !["up", "down"].includes(direction)) {
+      throw new Error("Tasima bilgisi eksik.");
+    }
+
+    const orderedSlides = await getOrderedMonthlyCampaignSlides();
+    const currentIndex = orderedSlides.findIndex((slide) => slide.id === slideId);
+
+    if (currentIndex < 0) {
+      throw new Error("Gorsel kaydi bulunamadi.");
+    }
+
+    const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+
+    if (targetIndex < 0 || targetIndex >= orderedSlides.length) {
+      revalidateMonthlyCampaignPages();
+      redirectWithMessage("Gorsel zaten sinirda.");
+    }
+
+    const reorderedSlideIds = orderedSlides.map((slide) => slide.id);
+    const [movedSlideId] = reorderedSlideIds.splice(currentIndex, 1);
+    reorderedSlideIds.splice(targetIndex, 0, movedSlideId);
+
+    await applyMonthlyCampaignSortOrder(reorderedSlideIds);
+
+    revalidateMonthlyCampaignPages();
+    redirectWithMessage("Gorsel sirasi guncellendi.");
+  } catch (error) {
+    redirectWithMessage(error instanceof Error ? error.message : "Gorsel sirasi guncellenemedi.", "error");
+  }
+}
+
 export async function deleteMonthlyCampaignSlideAction(formData: FormData) {
   await requireAdminAccess();
 
@@ -184,6 +257,8 @@ export async function deleteMonthlyCampaignSlideAction(formData: FormData) {
     }
 
     await admin.storage.from(MONTHLY_CAMPAIGN_BUCKET).remove([slide.image_path]);
+    const orderedSlides = await getOrderedMonthlyCampaignSlides();
+    await applyMonthlyCampaignSortOrder(orderedSlides.map((item) => item.id));
 
     revalidateMonthlyCampaignPages();
     redirectWithMessage("Aylik kampanya gorseli silindi.");

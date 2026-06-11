@@ -5,6 +5,7 @@ import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
 import { AdminSetupNotice } from "@/components/admin/admin-setup-notice";
 import {
   deleteMonthlyCampaignSlideAction,
+  moveMonthlyCampaignSlideAction,
   replaceMonthlyCampaignSlideAction,
   uploadMonthlyCampaignSlideAction
 } from "./actions";
@@ -83,6 +84,23 @@ export default async function MonthlyCampaignAdminPage({
               <div className="admin-media-body">
                 <strong>{slide.title || `Gorsel ${index + 1}`}</strong>
                 <span>Sira: {slide.sortOrder + 1}</span>
+              </div>
+
+              <div className="admin-media-order-row">
+                <form action={moveMonthlyCampaignSlideAction}>
+                  <input name="slideId" type="hidden" value={slide.id} />
+                  <input name="direction" type="hidden" value="up" />
+                  <button className="button-secondary" disabled={index === 0} type="submit">
+                    Yukari Al
+                  </button>
+                </form>
+                <form action={moveMonthlyCampaignSlideAction}>
+                  <input name="slideId" type="hidden" value={slide.id} />
+                  <input name="direction" type="hidden" value="down" />
+                  <button className="button-secondary" disabled={index === slides.length - 1} type="submit">
+                    Asagi Al
+                  </button>
+                </form>
               </div>
 
               <a

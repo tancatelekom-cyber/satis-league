@@ -1,6 +1,10 @@
 import { TariffCategoryMode, TariffPreset, TariffRecord } from "@/lib/types";
 
 export function formatTariffDataGb(value: number) {
+  if (value > 0 && value < 1) {
+    return `${Math.round(value * 1024)} MB`;
+  }
+
   return `${Number(value).toFixed(value % 1 === 0 ? 0 : 1)} GB`;
 }
 

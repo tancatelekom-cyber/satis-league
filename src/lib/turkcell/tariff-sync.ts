@@ -88,6 +88,24 @@ function toNumber(value: unknown) {
   return normalized ? Number(normalized) : 0;
 }
 
+function convertInternetToGb(value: number, unit: string) {
+  const normalizedUnit = String(unit ?? "").toUpperCase();
+
+  if (normalizedUnit.includes("TB")) {
+    return value * 1024;
+  }
+
+  if (normalizedUnit.includes("MB")) {
+    return value / 1024;
+  }
+
+  if (normalizedUnit.includes("KB")) {
+    return value / (1024 * 1024);
+  }
+
+  return value;
+}
+
 function collectPackageArrays(value: unknown, collected: TurkcellPackage[][] = []) {
   if (!value || typeof value !== "object") {
     return collected;
@@ -248,8 +266,8 @@ function parseBenefits(benefits: TurkcellBenefit[] | null | undefined) {
     const unit = String(benefit.unitValue ?? "").toUpperCase();
     const value = toNumber(benefit.value);
 
-    if (type === "INTERNET" || unit.includes("GB")) {
-      dataGb += value;
+    if (type === "INTERNET" || unit.includes("GB") || unit.includes("MB") || unit.includes("KB") || unit.includes("TB")) {
+      dataGb += convertInternetToGb(value, unit);
       return;
     }
 
@@ -279,7 +297,7 @@ function buildFallbackPackageFromHtml(url: string, html: string): TurkcellPackag
     return null;
   }
 
-  const dataMatch = text.match(/(\d+(?:[.,]\d+)?)\s*GB/i);
+  const dataMatch = text.match(/(\d+(?:[.,]\d+)?)\s*(GB|MB|KB|TB)/i);
   const minuteMatch = text.match(/(\d[\d.,]*)\s*DK/i);
   const smsMatch = text.match(/(\d[\d.,]*)\s*SMS/i);
 
@@ -300,7 +318,11 @@ function buildFallbackPackageFromHtml(url: string, html: string): TurkcellPackag
     paymentType: "POSTPAID",
     cpcmTariffOfferId: url,
     benefits: [
-      { type: "INTERNET", unitValue: "GB", value: dataMatch?.[1] ? toNumber(dataMatch[1]) : 0 },
+      {
+        type: "INTERNET",
+        unitValue: dataMatch?.[2] ? String(dataMatch[2]).toUpperCase() : "GB",
+        value: dataMatch?.[1] ? toNumber(dataMatch[1]) : 0
+      },
       { type: "VOICE", unitValue: "DK", value: minuteMatch?.[1] ? toNumber(minuteMatch[1]) : 0 },
       { type: "SMS", unitValue: "SMS", value: smsMatch?.[1] ? toNumber(smsMatch[1]) : 0 }
     ],

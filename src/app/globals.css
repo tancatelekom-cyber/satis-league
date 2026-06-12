@@ -4490,6 +4490,11 @@ textarea::placeholder {
   animation: glowPulse 2.6s ease-in-out infinite;
 }
 
+.status-chip.approve {
+  background: rgba(16, 185, 129, 0.16);
+  color: #047857;
+}
+
 .product-list,
 .leaderboard-list,
 .approval-list,
@@ -4540,6 +4545,75 @@ textarea::placeholder {
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.82);
   box-shadow: 0 10px 22px rgba(8, 22, 40, 0.06);
+}
+
+.user-management-browser,
+.user-management-group,
+.user-management-detail-shell {
+  display: grid;
+  gap: 16px;
+}
+
+.user-management-group {
+  padding: 18px;
+  border-radius: 22px;
+  border: 1px solid rgba(4, 92, 96, 0.14);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.user-management-group-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.user-management-group-head h3,
+.user-management-group-head h4,
+.user-management-group-head p {
+  margin: 0;
+}
+
+.user-management-group-head h4 {
+  color: #10203b;
+  font-size: 1.06rem;
+}
+
+.user-management-group-head p {
+  margin-top: 4px;
+  color: #5d7290;
+}
+
+.user-management-pill-list {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.user-management-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(4, 92, 96, 0.12);
+  background: rgba(4, 92, 96, 0.08);
+  color: #10203b;
+  font-weight: 900;
+  white-space: nowrap;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.user-management-pill:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 18px rgba(8, 22, 40, 0.08);
+}
+
+.user-management-pill-active {
+  border-color: rgba(255, 209, 102, 0.48);
+  background: linear-gradient(135deg, rgba(4, 92, 96, 0.96), rgba(16, 128, 130, 0.92));
+  color: #ffffff;
+  box-shadow: 0 14px 24px rgba(8, 22, 40, 0.14);
 }
 
 .user-management-form {
@@ -4609,6 +4683,39 @@ textarea::placeholder {
   align-items: end;
   padding-top: 12px;
   border-top: 1px solid rgba(4, 92, 96, 0.12);
+}
+
+.user-login-table-wrap {
+  overflow-x: auto;
+  border: 1px solid rgba(4, 92, 96, 0.12);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.user-login-table {
+  width: 100%;
+  min-width: 640px;
+  border-collapse: collapse;
+}
+
+.user-login-table th,
+.user-login-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(4, 92, 96, 0.1);
+  color: #10203b;
+  text-align: left;
+}
+
+.user-login-table th {
+  background: rgba(4, 92, 96, 0.1);
+  font-size: 0.82rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.user-login-table tbody tr:last-child td {
+  border-bottom: 0;
 }
 
 .product-meta,
@@ -6873,6 +6980,7 @@ textarea::placeholder {
   .campaign-directory-meta,
   .detail-page-head,
   .ranking-focus-head,
+  .user-management-group-head,
   .user-management-head,
   .user-password-form,
   .product-header,
@@ -6896,6 +7004,15 @@ textarea::placeholder {
   .store-edit-form {
     display: grid;
     grid-template-columns: 1fr;
+  }
+
+  .user-management-pill-list {
+    gap: 8px;
+  }
+
+  .user-management-pill {
+    width: 100%;
+    justify-content: center;
   }
 
   .compact-sale-row,

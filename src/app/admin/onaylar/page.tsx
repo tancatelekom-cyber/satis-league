@@ -15,6 +15,7 @@ type ApprovalAdminPageProps = {
   searchParams?: Promise<{
     message?: string;
     type?: "success" | "error";
+    profile?: string;
   }>;
 };
 
@@ -49,6 +50,20 @@ export default async function ApprovalAdminPage({ searchParams }: ApprovalAdminP
   const roleOptions: UserRole[] = ["employee", "manager", "management", "admin"];
   const approvalOptions: Array<"pending" | "approved" | "rejected"> = ["pending", "approved", "rejected"];
   const storeOptions = data.storeRows.map((store) => ({ id: store.id, name: store.name }));
+  const selectedManagedProfileId = String(params?.profile ?? "").trim();
+  const activeManagedProfiles = data.managedProfileRows.filter(
+    (profile) => profile.approval === "approved" && !profile.is_on_leave
+  );
+  const passiveManagedProfiles = data.managedProfileRows.filter(
+    (profile) => profile.approval !== "approved" || profile.is_on_leave
+  );
+  const selectedManagedProfile =
+    data.managedProfileRows.find((profile) => profile.id === selectedManagedProfileId) ?? null;
+  const activeLoginRows = [...activeManagedProfiles].sort((left, right) => {
+    const leftTime = left.last_sign_in_at ? new Date(left.last_sign_in_at).getTime() : 0;
+    const rightTime = right.last_sign_in_at ? new Date(right.last_sign_in_at).getTime() : 0;
+    return rightTime - leftTime;
+  });
   const renderProfileEditor = (profile: AdminPendingProfile | AdminManagedProfile) => (
     <article key={profile.id} className="user-management-card">
       <form action={updateManagedProfileAction} className="user-management-form">
@@ -184,16 +199,117 @@ export default async function ApprovalAdminPage({ searchParams }: ApprovalAdminP
 
         <article className="admin-card">
           <h3>Aktif ve Pasif Kullanicilar</h3>
-          <div className="approval-list">
-            {data.managedProfileRows.length === 0 ? (
+          {data.managedProfileRows.length === 0 ? (
+            <div className="approval-list">
               <div className="step-item">
                 <strong>Kullanici bulunamadi</strong>
                 <span>Onaylanan veya pasife alinan kullanicilar burada listelenir.</span>
               </div>
-            ) : (
-              data.managedProfileRows.map((profile) => renderProfileEditor(profile))
-            )}
+            </div>
+          ) : (
+            <div className="user-management-browser">
+              <section className="user-management-group">
+                <div className="user-management-group-head">
+                  <div>
+                    <h4>Aktif Kullanicilar</h4>
+                    <p>Onayli ve aktif listede olan ekip.</p>
+                  </div>
+                  <span className="status-chip approve">{activeManagedProfiles.length}</span>
+                </div>
+                <div className="user-management-pill-list">
+                  {activeManagedProfiles.map((profile) => (
+                    <a
+                      key={profile.id}
+                      className={`user-management-pill ${selectedManagedProfileId === profile.id ? "user-management-pill-active" : ""}`}
+                      href={`/admin/onaylar?profile=${profile.id}#managed-editor`}
+                    >
+                      {profile.full_name}
+                    </a>
+                  ))}
+                </div>
+              </section>
+
+              <section className="user-management-group">
+                <div className="user-management-group-head">
+                  <div>
+                    <h4>Pasif Kullanicilar</h4>
+                    <p>Pasife alinan, reddedilen veya izinli kullanicilar.</p>
+                  </div>
+                  <span className="status-chip">{passiveManagedProfiles.length}</span>
+                </div>
+                <div className="user-management-pill-list">
+                  {passiveManagedProfiles.map((profile) => (
+                    <a
+                      key={profile.id}
+                      className={`user-management-pill ${selectedManagedProfileId === profile.id ? "user-management-pill-active" : ""}`}
+                      href={`/admin/onaylar?profile=${profile.id}#managed-editor`}
+                    >
+                      {profile.full_name}
+                    </a>
+                  ))}
+                </div>
+              </section>
+
+              <section id="managed-editor" className="user-management-detail-shell">
+                <div className="user-management-group-head">
+                  <div>
+                    <h4>Secili Kullanici</h4>
+                    <p>Listeden bir isim secince degistirme alanlari burada acilir.</p>
+                  </div>
+                </div>
+                {selectedManagedProfile ? (
+                  renderProfileEditor(selectedManagedProfile)
+                ) : (
+                  <div className="step-item">
+                    <strong>Kullanici secilmedi</strong>
+                    <span>Yukaridaki aktif veya pasif listeden bir kullanici secin.</span>
+                  </div>
+                )}
+              </section>
+            </div>
+          )}
+        </article>
+
+        <article className="admin-card">
+          <div className="user-management-group-head">
+            <div>
+              <h3>Aktif Kullanicilar Son Giris Listesi</h3>
+              <p>Son giris tarih ve saatlerini buradan takip edin ve Excele indirin.</p>
+            </div>
+            <a className="button-primary" href="/admin/onaylar/excel">
+              Excele Indir
+            </a>
           </div>
+
+          {activeLoginRows.length === 0 ? (
+            <div className="step-item">
+              <strong>Aktif kullanici bulunamadi</strong>
+              <span>Son giris listesi aktif kullanicilar oldugunda burada gorunur.</span>
+            </div>
+          ) : (
+            <div className="user-login-table-wrap">
+              <table className="user-login-table">
+                <thead>
+                  <tr>
+                    <th>Kullanici</th>
+                    <th>Rol</th>
+                    <th>Magaza</th>
+                    <th>Son Giris</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {activeLoginRows.map((profile) => (
+                    <tr key={profile.id}>
+                      <td>{profile.full_name}</td>
+                      <td>{roleLabels[profile.role]}</td>
+                      <td>{profile.store?.name ?? "Merkez"}</td>
+                      <td>{formatLastLogin(profile.last_sign_in_at)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </article>
       </section>
     </main>

@@ -971,6 +971,50 @@ function GoalCategoryCards({ categories }: { categories: GoalCategorySummary[] }
   );
 }
 
+function GoalActualOnlyCategoryCards({ categories }: { categories: GoalCategorySummary[] }) {
+  return (
+    <div className="goal-category-list">
+      {categories.map((category, index) => (
+        <details key={category.title} className="goal-category-card" open={index === 0}>
+          <summary className="goal-category-summary">
+            <div className="goal-category-title">
+              <strong>{category.title}</strong>
+              <span>{category.childCount > 0 ? `${category.childCount} alt kategori` : "Tek kalem kategori"}</span>
+            </div>
+
+            {category.childCount > 0 ? <span className="goal-category-caret">▼</span> : null}
+
+            <div className="goal-category-metrics">
+              <span>
+                <small>Gerceklesen</small>
+                <strong>{formatNumber(category.actual)}</strong>
+              </span>
+            </div>
+          </summary>
+
+          {category.children.length ? (
+            <div className="goal-category-body">
+              <div className="goal-child-list">
+                {category.children.map((child) => (
+                  <div key={`${category.title}-${child.title}`} className="goal-child-card">
+                    <div className="goal-child-head">
+                      <strong>{child.title}</strong>
+                      <span>{formatNumber(child.actual)}</span>
+                    </div>
+                    <div className="goal-child-meta">
+                      <span>Gerceklesen {formatNumber(child.actual)}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </details>
+      ))}
+    </div>
+  );
+}
+
 export default async function GoalActualPage({ searchParams }: GoalActualPageProps) {
   const params = searchParams ? await searchParams : undefined;
   const selectedView = String(params?.view ?? "employee").trim();
@@ -1422,24 +1466,10 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                           <span className="goal-rank-badge">{index + 1}</span>
                           <div className="goal-ranking-main">
                             <strong>{summary.name}</strong>
-                            <span>
-                              {summary.hasTarget && summary.actualPercent !== null
-                                ? `Gerceklesen ${formatPercent(summary.actualPercent)}${
-                                    summary.showProjection && summary.projectedPercent !== null
-                                      ? ` | Ay sonu ${formatPercent(summary.projectedPercent)}`
-                                      : ""
-                                  }`
-                                : `Gerceklesen ${formatNumber(summary.actual)}${
-                                    summary.showProjection && summary.projectedActual !== null
-                                      ? ` | Ay sonu ${formatNumber(summary.projectedActual)}`
-                                      : ""
-                                  }`}
-                            </span>
+                            <span>{`Gerceklesen ${formatNumber(summary.actual)}`}</span>
                           </div>
                           <strong className="goal-ranking-score">
-                            {summary.hasTarget && summary.actualPercent !== null
-                              ? formatPercent(summary.actualPercent)
-                              : formatNumber(summary.actual)}
+                            {formatNumber(summary.actual)}
                           </strong>
                         </a>
                       ))}
@@ -1513,7 +1543,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                       <h3>Canli Primler</h3>
                       <span>Bu alan sadece ayri gosterilir, degerlendirme ve diger hesaplara dahil edilmez.</span>
                     </div>
-                    <GoalCategoryCards categories={employeeLivePrimeCategorySummaries} />
+                    <GoalActualOnlyCategoryCards categories={employeeLivePrimeCategorySummaries} />
                   </div>
                 ) : null}
               </article>

@@ -71,7 +71,7 @@ export default async function AdminPopupAnnouncementsPage({ searchParams }: Admi
           </div>
         </div>
 
-        <form action={createPopupAnnouncementAction} className="popup-admin-form">
+        <form action={createPopupAnnouncementAction} className="popup-admin-form" encType="multipart/form-data">
           <label className="field">
             <span>Baslik</span>
             <input name="title" placeholder="Ornek: Bugunun odak duyurusu" required />
@@ -86,6 +86,11 @@ export default async function AdminPopupAnnouncementsPage({ searchParams }: Admi
               rows={5}
               required
             />
+          </label>
+
+          <label className="field">
+            <span>Gorsel</span>
+            <input accept="image/png,image/jpeg,image/webp" name="image" type="file" />
           </label>
 
           <div className="popup-target-card">
@@ -141,6 +146,11 @@ export default async function AdminPopupAnnouncementsPage({ searchParams }: Admi
                     {announcement.is_active ? "Aktif" : "Pasif"}
                   </span>
                 </div>
+                {announcement.imageUrl ? (
+                  <a className="popup-admin-image-link" href={announcement.imageUrl} target="_blank" rel="noreferrer">
+                    <img className="popup-admin-image" src={announcement.imageUrl} alt={announcement.title} />
+                  </a>
+                ) : null}
                 <p>{announcement.body}</p>
                 <div className="popup-admin-meta">
                   <span>{formatPopupTargets(announcement.target_roles)}</span>

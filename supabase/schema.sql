@@ -233,6 +233,7 @@ create table if not exists public.popup_announcements (
   id uuid primary key default gen_random_uuid(),
   title text not null,
   body text not null,
+  image_path text,
   target_roles text[] not null default '{}'::text[],
   show_from timestamptz not null,
   show_until timestamptz not null,
@@ -241,6 +242,9 @@ create table if not exists public.popup_announcements (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.popup_announcements
+  add column if not exists image_path text;
 
 create table if not exists public.popup_announcement_dismissals (
   id uuid primary key default gen_random_uuid(),
@@ -317,10 +321,46 @@ create index if not exists weekly_work_schedules_store_week_idx
 create index if not exists weekly_work_schedules_profile_week_idx
   on public.weekly_work_schedules (profile_id, week_start);
 
+create table if not exists public.manager_presentation_sections (
+  id uuid primary key default gen_random_uuid(),
+  section_key text not null unique,
+  label text not null,
+  sort_order integer not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+insert into public.manager_presentation_sections (section_key, label, sort_order)
+values
+  ('cover', 'Kapak ve Ozet', 0),
+  ('overview', 'Genel Gorunum', 1),
+  ('company', 'Firma Genel Durumu', 2),
+  ('storeFocus', 'Magaza Kritikleri', 3),
+  ('storeTables', 'Magaza Tablolari', 4),
+  ('employeeFocus', 'Calisan Kritikleri', 5),
+  ('employeeTables', 'Calisan Tablolari', 6),
+  ('actions', 'Aksiyon Plani', 7),
+  ('closing', 'Kapanis Mesaji', 8)
+on conflict (section_key) do nothing;
+
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (
   'monthly-campaigns',
   'monthly-campaigns',
+  true,
+  5242880,
+  array['image/jpeg', 'image/png', 'image/webp']
+)
+on conflict (id) do update
+set
+  public = excluded.public,
+  file_size_limit = excluded.file_size_limit,
+  allowed_mime_types = excluded.allowed_mime_types;
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'popup-announcements',
+  'popup-announcements',
   true,
   5242880,
   array['image/jpeg', 'image/png', 'image/webp']

@@ -8350,6 +8350,26 @@ textarea::placeholder {
   white-space: pre-line;
 }
 
+.home-popup-image-button {
+  display: block;
+  width: 100%;
+  margin: 0 0 16px;
+  padding: 0;
+  border: 0;
+  border-radius: 22px;
+  overflow: hidden;
+  background: rgba(10, 23, 48, 0.08);
+  cursor: pointer;
+}
+
+.home-popup-image {
+  display: block;
+  width: 100%;
+  max-height: 220px;
+  object-fit: contain;
+  background: linear-gradient(180deg, rgba(10, 23, 48, 0.04), rgba(38, 61, 93, 0.08));
+}
+
 .home-popup-kicker {
   display: inline-flex;
   width: fit-content;
@@ -8381,6 +8401,42 @@ textarea::placeholder {
   display: flex;
   justify-content: flex-end;
   margin-top: 22px;
+}
+
+.home-popup-image-viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 130;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(5, 14, 28, 0.92);
+}
+
+.home-popup-image-viewer-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 1.3rem;
+  font-weight: 900;
+}
+
+.home-popup-image-viewer-image {
+  display: block;
+  max-width: min(92vw, 1200px);
+  max-height: 88vh;
+  object-fit: contain;
+  border-radius: 24px;
+  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.34);
 }
 
 .popup-admin-panel {
@@ -8487,6 +8543,22 @@ textarea::placeholder {
   margin: 8px 0 12px;
   color: #294569;
   white-space: pre-line;
+}
+
+.popup-admin-image-link {
+  display: inline-flex;
+  margin: 10px 0 8px;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(4, 92, 96, 0.14);
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.popup-admin-image {
+  display: block;
+  width: min(220px, 100%);
+  max-height: 140px;
+  object-fit: contain;
 }
 
 .popup-admin-meta span,

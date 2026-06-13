@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireAdminAccess } from "@/lib/auth/require-admin";
+import { POPUP_ANNOUNCEMENT_BUCKET } from "@/lib/popup-announcements";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { UserRole } from "@/lib/types";
 
@@ -35,6 +36,53 @@ function parseTargetRoles(formData: FormData) {
   return Array.from(new Set(rawRoles)).filter((role): role is UserRole => roleValues.has(role as UserRole));
 }
 
+function sanitizeFileName(fileName: string) {
+  const name = fileName.replace(/\.[^.]+$/, "").trim() || "popup-bildirim";
+  return name
+    .toLocaleLowerCase("tr-TR")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);
+}
+
+function getExtension(fileName: string, mimeType: string) {
+  const fromName = fileName.split(".").pop()?.trim().toLowerCase();
+
+  if (fromName) {
+    return fromName;
+  }
+
+  if (mimeType === "image/png") return "png";
+  if (mimeType === "image/webp") return "webp";
+  return "jpg";
+}
+
+async function uploadPopupAnnouncementImage(file: File, userId: string) {
+  if (!file || file.size === 0) {
+    return null;
+  }
+
+  if (!file.type.startsWith("image/")) {
+    throw new Error("Popup gorseli olarak sadece resim yukleyebilirsiniz.");
+  }
+
+  const extension = getExtension(file.name, file.type);
+  const safeName = sanitizeFileName(file.name);
+  const imagePath = `${userId}/${Date.now()}-${crypto.randomUUID()}-${safeName}.${extension}`;
+  const fileBuffer = Buffer.from(await file.arrayBuffer());
+  const admin = createAdminClient();
+  const { error } = await admin.storage.from(POPUP_ANNOUNCEMENT_BUCKET).upload(imagePath, fileBuffer, {
+    contentType: file.type,
+    upsert: false
+  });
+
+  if (error) {
+    throw new Error(`Popup gorseli yuklenemedi: ${error.message}`);
+  }
+
+  return imagePath;
+}
+
 export async function createPopupAnnouncementAction(formData: FormData) {
   const { profile } = await requireAdminAccess();
   const title = String(formData.get("title") ?? "").trim();
@@ -42,6 +90,7 @@ export async function createPopupAnnouncementAction(formData: FormData) {
   const showFrom = toIstanbulIso(formData.get("showFrom"));
   const showUntil = toIstanbulIso(formData.get("showUntil"));
   const targetRoles = parseTargetRoles(formData);
+  const imageFile = formData.get("image");
 
   if (!title || !body || !showFrom || !showUntil) {
     redirectWithMessage("Baslik, metin, baslangic ve bitis tarihi zorunludur.", "error");
@@ -52,9 +101,11 @@ export async function createPopupAnnouncementAction(formData: FormData) {
   }
 
   const admin = createAdminClient();
+  const imagePath = imageFile instanceof File ? await uploadPopupAnnouncementImage(imageFile, profile.id) : null;
   const { error } = await admin.from("popup_announcements").insert({
     title,
     body,
+    image_path: imagePath,
     target_roles: targetRoles,
     show_from: showFrom,
     show_until: showUntil,
@@ -62,6 +113,9 @@ export async function createPopupAnnouncementAction(formData: FormData) {
   });
 
   if (error) {
+    if (imagePath) {
+      await admin.storage.from(POPUP_ANNOUNCEMENT_BUCKET).remove([imagePath]);
+    }
     redirectWithMessage(`Bildirim olusturulamadi: ${error.message}`, "error");
   }
 
@@ -100,10 +154,24 @@ export async function deletePopupAnnouncementAction(formData: FormData) {
   }
 
   const admin = createAdminClient();
+  const { data: announcement, error: announcementError } = await admin
+    .from("popup_announcements")
+    .select("id, image_path")
+    .eq("id", id)
+    .single();
+
+  if (announcementError || !announcement) {
+    redirectWithMessage("Bildirim bulunamadi.", "error");
+  }
+
   const { error } = await admin.from("popup_announcements").delete().eq("id", id);
 
   if (error) {
     redirectWithMessage(`Bildirim silinemedi: ${error.message}`, "error");
+  }
+
+  if (announcement.image_path) {
+    await admin.storage.from(POPUP_ANNOUNCEMENT_BUCKET).remove([announcement.image_path]);
   }
 
   revalidatePath("/");

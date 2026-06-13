@@ -9,6 +9,7 @@ type HomePopupAnnouncementProps = {
 
 export function HomePopupAnnouncement({ announcement }: HomePopupAnnouncementProps) {
   const [isOpen, setIsOpen] = useState(true);
+  const [isImageOpen, setIsImageOpen] = useState(false);
 
   if (!isOpen) {
     return null;
@@ -27,6 +28,16 @@ export function HomePopupAnnouncement({ announcement }: HomePopupAnnouncementPro
 
         <span className="home-popup-kicker">Tanca+ Pano</span>
         <h2 id="home-popup-title">{announcement.title}</h2>
+        {announcement.imageUrl ? (
+          <button
+            className="home-popup-image-button"
+            type="button"
+            onClick={() => setIsImageOpen(true)}
+            aria-label="Popup gorselini buyut"
+          >
+            <img className="home-popup-image" src={announcement.imageUrl} alt={announcement.title} />
+          </button>
+        ) : null}
         <p>{announcement.body}</p>
 
         <div className="home-popup-actions">
@@ -35,6 +46,20 @@ export function HomePopupAnnouncement({ announcement }: HomePopupAnnouncementPro
           </button>
         </div>
       </article>
+
+      {isImageOpen && announcement.imageUrl ? (
+        <div className="home-popup-image-viewer" role="dialog" aria-modal="true" aria-label="Popup gorseli">
+          <button
+            className="home-popup-image-viewer-close"
+            type="button"
+            onClick={() => setIsImageOpen(false)}
+            aria-label="Gorseli kapat"
+          >
+            x
+          </button>
+          <img className="home-popup-image-viewer-image" src={announcement.imageUrl} alt={announcement.title} />
+        </div>
+      ) : null}
     </div>
   );
 }

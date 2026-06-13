@@ -1,10 +1,26 @@
 import type { UserRole } from "@/lib/types";
 import { createAdminClient } from "@/lib/supabase/admin";
 
+export const POPUP_ANNOUNCEMENT_BUCKET = "popup-announcements";
+
 export type PopupAnnouncementRecord = {
   id: string;
   title: string;
   body: string;
+  image_path: string | null;
+  imageUrl: string | null;
+  target_roles: UserRole[] | null;
+  show_from: string;
+  show_until: string;
+  is_active: boolean;
+  created_at: string;
+};
+
+type PopupAnnouncementRow = {
+  id: string;
+  title: string;
+  body: string;
+  image_path: string | null;
   target_roles: UserRole[] | null;
   show_from: string;
   show_until: string;
@@ -33,6 +49,18 @@ export function formatPopupTargets(targetRoles: UserRole[] | null | undefined) {
     .join(", ");
 }
 
+function mapPopupAnnouncement(row: PopupAnnouncementRow): PopupAnnouncementRecord {
+  const admin = createAdminClient();
+  const imageUrl = row.image_path
+    ? admin.storage.from(POPUP_ANNOUNCEMENT_BUCKET).getPublicUrl(row.image_path).data.publicUrl
+    : null;
+
+  return {
+    ...row,
+    imageUrl
+  };
+}
+
 export async function getActivePopupAnnouncementForProfile(profile: {
   id: string;
   role: UserRole;
@@ -47,7 +75,7 @@ export async function getActivePopupAnnouncementForProfile(profile: {
 
   const { data, error } = await admin
     .from("popup_announcements")
-    .select("id, title, body, target_roles, show_from, show_until, is_active, created_at")
+    .select("id, title, body, image_path, target_roles, show_from, show_until, is_active, created_at")
     .eq("is_active", true)
     .lte("show_from", nowIso)
     .gte("show_until", nowIso)
@@ -58,7 +86,7 @@ export async function getActivePopupAnnouncementForProfile(profile: {
     return null;
   }
 
-  const targetedRows = ((data as PopupAnnouncementRecord[] | null) ?? []).filter((row) =>
+  const targetedRows = ((data as PopupAnnouncementRow[] | null) ?? []).filter((row) =>
     isTargeted(row.target_roles, profile.role)
   );
 
@@ -66,7 +94,7 @@ export async function getActivePopupAnnouncementForProfile(profile: {
     return null;
   }
 
-  return targetedRows[0] ?? null;
+  return targetedRows[0] ? mapPopupAnnouncement(targetedRows[0]) : null;
 }
 
 export async function getAdminPopupAnnouncements() {
@@ -74,7 +102,7 @@ export async function getAdminPopupAnnouncements() {
 
   const { data, error } = await admin
     .from("popup_announcements")
-    .select("id, title, body, target_roles, show_from, show_until, is_active, created_at")
+    .select("id, title, body, image_path, target_roles, show_from, show_until, is_active, created_at")
     .order("created_at", { ascending: false })
     .limit(60);
 
@@ -82,5 +110,5 @@ export async function getAdminPopupAnnouncements() {
     return [];
   }
 
-  return (data as PopupAnnouncementRecord[] | null) ?? [];
+  return ((data as PopupAnnouncementRow[] | null) ?? []).map(mapPopupAnnouncement);
 }

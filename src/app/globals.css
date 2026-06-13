@@ -4718,6 +4718,43 @@ textarea::placeholder {
   border-bottom: 0;
 }
 
+.manager-presentation-order-panel {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.manager-presentation-order-list {
+  display: grid;
+  gap: 12px;
+}
+
+.manager-presentation-order-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: 20px;
+  border: 1px solid rgba(4, 92, 96, 0.14);
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 10px 22px rgba(8, 22, 40, 0.06);
+}
+
+.manager-presentation-order-card span {
+  display: block;
+  color: #5d7290;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.manager-presentation-order-card strong {
+  display: block;
+  margin-top: 4px;
+  color: #10203b;
+  font-size: 1.04rem;
+}
+
 .product-meta,
 .subtle {
   color: var(--muted);
@@ -5873,6 +5910,54 @@ textarea::placeholder {
   font-size: 0.92rem;
 }
 
+.goal-live-prime-panel {
+  display: grid;
+  gap: 14px;
+  margin-top: 10px;
+  padding: 18px;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 209, 102, 0.34);
+  background: linear-gradient(135deg, rgba(117, 67, 18, 0.28), rgba(172, 108, 16, 0.2));
+  box-shadow: 0 16px 30px rgba(8, 22, 40, 0.14);
+}
+
+.goal-live-prime-head {
+  display: grid;
+  gap: 4px;
+}
+
+.goal-live-prime-head h3 {
+  margin: 0;
+  color: #fff4c9;
+  font-size: 1.16rem;
+}
+
+.goal-live-prime-head span {
+  color: #ffe9a6;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.goal-live-prime-panel .goal-category-card {
+  border-color: rgba(255, 226, 145, 0.28);
+  background: linear-gradient(180deg, rgba(255, 243, 204, 0.18), rgba(255, 209, 102, 0.12));
+}
+
+.goal-live-prime-panel .goal-category-title strong,
+.goal-live-prime-panel .goal-category-title span,
+.goal-live-prime-panel .goal-category-topline,
+.goal-live-prime-panel .goal-child-head strong,
+.goal-live-prime-panel .goal-child-meta span,
+.goal-live-prime-panel .goal-store-detail-title {
+  color: #fff7dc !important;
+}
+
+.goal-live-prime-panel .goal-child-card,
+.goal-live-prime-panel .goal-need-row {
+  background: rgba(255, 248, 224, 0.12);
+  border-color: rgba(255, 232, 171, 0.2);
+}
+
 .goal-need-grid {
   display: grid;
   gap: 10px;
@@ -6979,6 +7064,7 @@ textarea::placeholder {
   .campaign-directory-head,
   .campaign-directory-meta,
   .detail-page-head,
+  .manager-presentation-order-card,
   .ranking-focus-head,
   .user-management-group-head,
   .user-management-head,

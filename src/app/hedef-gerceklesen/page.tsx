@@ -563,6 +563,11 @@ function isEntryCount(title: string) {
   return normalizeCategoryKey(title).includes("GIRIS SAY");
 }
 
+function isLivePrimeCategory(title: string | null | undefined) {
+  const normalized = normalizeCategoryKey(String(title ?? ""));
+  return normalized.includes("CANLI PRIM");
+}
+
 function buildEmployeeZeroActualItems(rows: GoalActualRow[]) {
   const seen = new Set<string>();
 
@@ -1021,10 +1026,11 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
   }
 
   const filteredEmployeeRows = employeeRows.filter((row) => !isAggregateCategoryLabel(row.mainCategory));
+  const filteredEmployeeCoreRows = filteredEmployeeRows.filter((row) => !isLivePrimeCategory(row.mainCategory));
   const filteredStoreRows = storeRows.filter((row) => !isAggregateCategoryLabel(row.mainCategory));
 
   const employeeNames = Array.from(new Set(filteredEmployeeRows.map((row) => row.employeeName))).sort((a, b) => a.localeCompare(b, "tr"));
-  const employeeCategoryOptions = Array.from(new Set(filteredEmployeeRows.map((row) => row.mainCategory))).sort((a, b) =>
+  const employeeCategoryOptions = Array.from(new Set(filteredEmployeeCoreRows.map((row) => row.mainCategory))).sort((a, b) =>
     a.localeCompare(b, "tr")
   );
   const storeNames = Array.from(new Set(storeRows.map((row) => row.storeCode))).sort((a, b) => a.localeCompare(b, "tr"));
@@ -1040,8 +1046,8 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
     effectivePanel === "ranking" && rankingCategoryPool.includes(selectedCategory) ? selectedCategory : defaultRankingCategory;
 
   const employeeRankingRows = effectiveCategory
-    ? filteredEmployeeRows.filter((row) => row.mainCategory === effectiveCategory)
-    : filteredEmployeeRows;
+    ? filteredEmployeeCoreRows.filter((row) => row.mainCategory === effectiveCategory)
+    : filteredEmployeeCoreRows;
   const storeRankingRows = effectiveCategory
     ? filteredStoreRows.filter((row) => row.mainCategory === effectiveCategory)
     : filteredStoreRows;
@@ -1097,8 +1103,16 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
   const activeEmployeeRows = activeEmployeeName
     ? filteredEmployeeRows.filter((row) => row.employeeName === activeEmployeeName)
     : [];
+  const activeEmployeeCoreRows = activeEmployeeName
+    ? filteredEmployeeCoreRows.filter((row) => row.employeeName === activeEmployeeName)
+    : [];
   const activeStoreRows = activeStoreName ? filteredStoreRows.filter((row) => row.storeCode === activeStoreName) : [];
-  const employeeCategorySummaries = buildCategorySummaries(activeEmployeeRows, dayStats.workedDays, dayStats.totalDays);
+  const employeeCategorySummaries = buildCategorySummaries(activeEmployeeCoreRows, dayStats.workedDays, dayStats.totalDays);
+  const employeeLivePrimeSummaries = buildCategorySummaries(
+    activeEmployeeRows.filter((row) => isLivePrimeCategory(row.mainCategory)),
+    dayStats.workedDays,
+    dayStats.totalDays
+  );
   const storeCategorySummaries = buildStoreCategorySummaries(activeStoreRows, dayStats.workedDays, dayStats.totalDays);
   const companyCategorySummaries = buildCompanyCategorySummaries(filteredStoreRows, dayStats.workedDays, dayStats.totalDays);
   const storeNeedSummaries = storeCategorySummaries
@@ -1117,7 +1131,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
         : employeeCategorySummaries;
   const detailCoachingMetrics = detailCategorySummaries.map(toCoachingMetric);
   const detailEmployeeAverageNotes =
-    effectiveView === "employee" ? buildEmployeeAverageGapNotes(detailCoachingMetrics, filteredEmployeeRows) : [];
+    effectiveView === "employee" ? buildEmployeeAverageGapNotes(detailCoachingMetrics, filteredEmployeeCoreRows) : [];
   const detailStoreAverageNotes =
     effectiveView === "store" ? buildStoreAverageGapNotes(detailCoachingMetrics, filteredStoreRows) : [];
   const detailCoachingText = buildGoalActualCoachingText({
@@ -1129,7 +1143,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
   });
   const detailZeroActualItems =
     effectiveView === "employee"
-      ? buildEmployeeZeroActualItems(activeEmployeeRows)
+      ? buildEmployeeZeroActualItems(activeEmployeeCoreRows)
       : effectiveView === "store"
         ? buildStoreZeroActualItems(activeStoreRows)
         : buildCompanyZeroActualItems(filteredStoreRows);
@@ -1418,6 +1432,16 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                       <SpeakCoachingButton text={detailCoachingText} />
                       <CopyCoachingButton text={detailCoachingText} />
                     </div>
+                  </div>
+                ) : null}
+
+                {effectiveView === "employee" && employeeLivePrimeSummaries.length ? (
+                  <div className="goal-live-prime-panel">
+                    <div className="goal-live-prime-head">
+                      <h3>Canli Primler</h3>
+                      <span>Bu alan sadece ayri gosterilir, degerlendirme ve diger hesaplara dahil edilmez.</span>
+                    </div>
+                    <GoalCategoryCards categories={employeeLivePrimeSummaries} />
                   </div>
                 ) : null}
               </article>

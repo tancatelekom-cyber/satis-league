@@ -9,7 +9,7 @@ import type { UserRole } from "@/lib/types";
 
 const roleValues = new Set<UserRole>(["employee", "manager", "management", "admin"]);
 const allowedPopupImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
-const maxPopupImageSize = 1.5 * 1024 * 1024;
+const maxPopupImageSize = 5 * 1024 * 1024;
 
 function redirectWithMessage(message: string, type: "success" | "error" = "success"): never {
   const params = new URLSearchParams({ message, type });
@@ -48,7 +48,7 @@ async function uploadPopupAnnouncementImage(file: File) {
   }
 
   if (file.size > maxPopupImageSize) {
-    throw new Error("Popup gorseli en fazla 1,5 MB olabilir.");
+    throw new Error("Popup gorseli en fazla 5 MB olabilir.");
   }
 
   const fileBuffer = Buffer.from(await file.arrayBuffer());

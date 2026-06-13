@@ -33,6 +33,10 @@ async function resolvePopupImageUrl(imagePath: string | null) {
     return null;
   }
 
+  if (imagePath.startsWith("data:image/") || imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
+    return imagePath;
+  }
+
   try {
     const admin = createAdminClient();
     const { data, error } = await admin.storage.from(POPUP_ANNOUNCEMENT_BUCKET).download(imagePath);

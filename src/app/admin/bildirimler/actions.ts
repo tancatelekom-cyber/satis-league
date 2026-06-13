@@ -9,6 +9,7 @@ import type { UserRole } from "@/lib/types";
 
 const roleValues = new Set<UserRole>(["employee", "manager", "management", "admin"]);
 const allowedPopupImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+const maxPopupImageSize = 1.5 * 1024 * 1024;
 
 function redirectWithMessage(message: string, type: "success" | "error" = "success"): never {
   const params = new URLSearchParams({ message, type });
@@ -37,28 +38,7 @@ function parseTargetRoles(formData: FormData) {
   return Array.from(new Set(rawRoles)).filter((role): role is UserRole => roleValues.has(role as UserRole));
 }
 
-function sanitizeFileName(fileName: string) {
-  const name = fileName.replace(/\.[^.]+$/, "").trim() || "popup-bildirim";
-  return name
-    .toLocaleLowerCase("tr-TR")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 60);
-}
-
-function getExtension(fileName: string, mimeType: string) {
-  const fromName = fileName.split(".").pop()?.trim().toLowerCase();
-
-  if (fromName) {
-    return fromName;
-  }
-
-  if (mimeType === "image/png") return "png";
-  if (mimeType === "image/webp") return "webp";
-  return "jpg";
-}
-
-async function uploadPopupAnnouncementImage(file: File, userId: string) {
+async function uploadPopupAnnouncementImage(file: File) {
   if (!file || file.size === 0) {
     return null;
   }
@@ -67,26 +47,16 @@ async function uploadPopupAnnouncementImage(file: File, userId: string) {
     throw new Error("Popup gorseli icin sadece JPG, PNG veya WEBP yukleyebilirsiniz.");
   }
 
-  const extension = getExtension(file.name, file.type);
-  const safeName = sanitizeFileName(file.name);
-  const imagePath = `${userId}/${Date.now()}-${crypto.randomUUID()}-${safeName}.${extension}`;
-  const fileBuffer = Buffer.from(await file.arrayBuffer());
-  const admin = createAdminClient();
-  const { error } = await admin.storage.from(POPUP_ANNOUNCEMENT_BUCKET).upload(imagePath, fileBuffer, {
-    contentType: file.type,
-    upsert: false
-  });
-
-  if (error) {
-    throw new Error(`Popup gorseli yuklenemedi: ${error.message}`);
+  if (file.size > maxPopupImageSize) {
+    throw new Error("Popup gorseli en fazla 1,5 MB olabilir.");
   }
 
-  return imagePath;
+  const fileBuffer = Buffer.from(await file.arrayBuffer());
+  return `data:${file.type};base64,${fileBuffer.toString("base64")}`;
 }
 
 export async function createPopupAnnouncementAction(formData: FormData) {
   const { profile } = await requireAdminAccess();
-  let uploadedImagePath: string | null = null;
 
   try {
     const title = String(formData.get("title") ?? "").trim();
@@ -105,7 +75,7 @@ export async function createPopupAnnouncementAction(formData: FormData) {
     }
 
     const admin = createAdminClient();
-    uploadedImagePath = imageFile instanceof File ? await uploadPopupAnnouncementImage(imageFile, profile.id) : null;
+    const uploadedImagePath = imageFile instanceof File ? await uploadPopupAnnouncementImage(imageFile) : null;
     const { error } = await admin.from("popup_announcements").insert({
       title,
       body,
@@ -117,9 +87,6 @@ export async function createPopupAnnouncementAction(formData: FormData) {
     });
 
     if (error) {
-      if (uploadedImagePath) {
-        await admin.storage.from(POPUP_ANNOUNCEMENT_BUCKET).remove([uploadedImagePath]);
-      }
       redirectWithMessage(`Bildirim olusturulamadi: ${error.message}`, "error");
     }
 
@@ -127,11 +94,6 @@ export async function createPopupAnnouncementAction(formData: FormData) {
     revalidatePath("/admin/bildirimler");
     redirectWithMessage("Popup bildirim olusturuldu.");
   } catch (error) {
-    if (uploadedImagePath) {
-      const admin = createAdminClient();
-      await admin.storage.from(POPUP_ANNOUNCEMENT_BUCKET).remove([uploadedImagePath]);
-    }
-
     const message =
       error instanceof Error
         ? error.message
@@ -188,7 +150,9 @@ export async function deletePopupAnnouncementAction(formData: FormData) {
   }
 
   if (announcement.image_path) {
-    await admin.storage.from(POPUP_ANNOUNCEMENT_BUCKET).remove([announcement.image_path]);
+    if (!announcement.image_path.startsWith("data:")) {
+      await admin.storage.from(POPUP_ANNOUNCEMENT_BUCKET).remove([announcement.image_path]);
+    }
   }
 
   revalidatePath("/");

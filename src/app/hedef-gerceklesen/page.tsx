@@ -1073,6 +1073,29 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
       return b.projectedActual - a.projectedActual || b.totalActual - a.totalActual;
     });
 
+  const employeeLivePrimeMap = new Map<string, GoalActualRow[]>();
+  filteredEmployeeRows
+    .filter((row) => isLivePrimeCategory(row.mainCategory))
+    .forEach((row) => {
+      const current = employeeLivePrimeMap.get(row.employeeName) ?? [];
+      current.push(row);
+      employeeLivePrimeMap.set(row.employeeName, current);
+    });
+
+  const employeeLivePrimeRankingSummaries = Array.from(employeeLivePrimeMap.entries())
+    .map(([, rows]) => buildEmployeeSummary(rows, dayStats.workedDays, dayStats.totalDays))
+    .sort((a, b) => {
+      if (a.hasTarget && b.hasTarget) {
+        return (b.projectedPercent ?? 0) - (a.projectedPercent ?? 0) || b.totalActual - a.totalActual;
+      }
+
+      if (a.hasTarget !== b.hasTarget) {
+        return a.hasTarget ? -1 : 1;
+      }
+
+      return b.projectedActual - a.projectedActual || b.totalActual - a.totalActual;
+    });
+
   const storeMap = new Map<string, GoalStoreRow[]>();
   storeRankingRows.forEach((row) => {
     const current = storeMap.get(row.storeCode) ?? [];
@@ -1108,7 +1131,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
     : [];
   const activeStoreRows = activeStoreName ? filteredStoreRows.filter((row) => row.storeCode === activeStoreName) : [];
   const employeeCategorySummaries = buildCategorySummaries(activeEmployeeCoreRows, dayStats.workedDays, dayStats.totalDays);
-  const employeeLivePrimeSummaries = buildCategorySummaries(
+  const employeeLivePrimeCategorySummaries = buildCategorySummaries(
     activeEmployeeRows.filter((row) => isLivePrimeCategory(row.mainCategory)),
     dayStats.workedDays,
     dayStats.totalDays
@@ -1326,55 +1349,101 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
             </section>
           ) : effectivePanel === "ranking" && effectiveView !== "company" ? (
             <section className="goal-panel-single">
-              <article className="campaign-section-card goal-ranking-card">
-                <div className="goal-section-head">
-                  <h2>{effectiveView === "store" ? "Magaza Siralamasi" : "Firma Siralamasi"}</h2>
-                  <span>{effectiveCategory || "Kategori yok"}</span>
-                </div>
+              <div className="goal-ranking-stack">
+                <article className="campaign-section-card goal-ranking-card">
+                  <div className="goal-section-head">
+                    <h2>{effectiveView === "store" ? "Magaza Siralamasi" : "Firma Siralamasi"}</h2>
+                    <span>{effectiveCategory || "Kategori yok"}</span>
+                  </div>
 
-                <div className="goal-ranking-list">
-                  {(effectiveView === "store" ? storeSummaries : employeeSummaries).length ? (
-                    (effectiveView === "store" ? storeSummaries : employeeSummaries).map((summary, index) => (
-                      <a
-                        key={summary.name}
-                        className={`goal-ranking-row ${
-                          summary.name === (effectiveView === "store" ? activeStoreName : activeEmployeeName) ? "goal-ranking-row-active" : ""
-                        }`}
-                        href={
-                          effectiveView === "store"
-                            ? buildHref("store", { store: summary.name, panel: "detail" })
-                            : buildHref("employee", { employee: summary.name, panel: "detail" })
-                        }
-                      >
-                        <span className="goal-rank-badge">{index + 1}</span>
-                        <div className="goal-ranking-main">
-                          <strong>{summary.name}</strong>
-                          <span>
+                  <div className="goal-ranking-list">
+                    {(effectiveView === "store" ? storeSummaries : employeeSummaries).length ? (
+                      (effectiveView === "store" ? storeSummaries : employeeSummaries).map((summary, index) => (
+                        <a
+                          key={summary.name}
+                          className={`goal-ranking-row ${
+                            summary.name === (effectiveView === "store" ? activeStoreName : activeEmployeeName) ? "goal-ranking-row-active" : ""
+                          }`}
+                          href={
+                            effectiveView === "store"
+                              ? buildHref("store", { store: summary.name, panel: "detail" })
+                              : buildHref("employee", { employee: summary.name, panel: "detail" })
+                          }
+                        >
+                          <span className="goal-rank-badge">{index + 1}</span>
+                          <div className="goal-ranking-main">
+                            <strong>{summary.name}</strong>
+                            <span>
+                              {summary.hasTarget && summary.actualPercent !== null
+                                ? `Gerceklesen ${formatPercent(summary.actualPercent)}${
+                                    summary.showProjection && summary.projectedPercent !== null
+                                      ? ` | Ay sonu ${formatPercent(summary.projectedPercent)}`
+                                      : ""
+                                  }`
+                                : `Gerceklesen ${formatNumber(summary.actual)}${
+                                    summary.showProjection && summary.projectedActual !== null
+                                      ? ` | Ay sonu ${formatNumber(summary.projectedActual)}`
+                                      : ""
+                                  }`}
+                            </span>
+                          </div>
+                          <strong className="goal-ranking-score">
                             {summary.hasTarget && summary.actualPercent !== null
-                              ? `Gerceklesen ${formatPercent(summary.actualPercent)}${
-                                  summary.showProjection && summary.projectedPercent !== null
-                                    ? ` | Ay sonu ${formatPercent(summary.projectedPercent)}`
-                                    : ""
-                                }`
-                              : `Gerceklesen ${formatNumber(summary.actual)}${
-                                  summary.showProjection && summary.projectedActual !== null
-                                    ? ` | Ay sonu ${formatNumber(summary.projectedActual)}`
-                                    : ""
-                                }`}
-                          </span>
-                        </div>
-                        <strong className="goal-ranking-score">
-                          {summary.hasTarget && summary.actualPercent !== null
-                            ? formatPercent(summary.actualPercent)
-                            : formatNumber(summary.actual)}
-                        </strong>
-                      </a>
-                    ))
-                  ) : (
-                    <p className="subtle">Listelenecek veri bulunamadi.</p>
-                  )}
-                </div>
-              </article>
+                              ? formatPercent(summary.actualPercent)
+                              : formatNumber(summary.actual)}
+                          </strong>
+                        </a>
+                      ))
+                    ) : (
+                      <p className="subtle">Listelenecek veri bulunamadi.</p>
+                    )}
+                  </div>
+                </article>
+
+                {effectiveView === "employee" && employeeLivePrimeRankingSummaries.length ? (
+                  <article className="campaign-section-card goal-ranking-card goal-live-prime-ranking-card">
+                    <div className="goal-section-head">
+                      <h2>Canli Primler Siralamasi</h2>
+                      <span>Ana siralama ve degerlendirmeden ayri gosterilir</span>
+                    </div>
+
+                    <div className="goal-ranking-list">
+                      {employeeLivePrimeRankingSummaries.map((summary, index) => (
+                        <a
+                          key={`live-prime-${summary.name}`}
+                          className={`goal-ranking-row goal-live-prime-ranking-row ${
+                            summary.name === activeEmployeeName ? "goal-ranking-row-active" : ""
+                          }`}
+                          href={buildHref("employee", { employee: summary.name, panel: "detail" })}
+                        >
+                          <span className="goal-rank-badge">{index + 1}</span>
+                          <div className="goal-ranking-main">
+                            <strong>{summary.name}</strong>
+                            <span>
+                              {summary.hasTarget && summary.actualPercent !== null
+                                ? `Gerceklesen ${formatPercent(summary.actualPercent)}${
+                                    summary.showProjection && summary.projectedPercent !== null
+                                      ? ` | Ay sonu ${formatPercent(summary.projectedPercent)}`
+                                      : ""
+                                  }`
+                                : `Gerceklesen ${formatNumber(summary.actual)}${
+                                    summary.showProjection && summary.projectedActual !== null
+                                      ? ` | Ay sonu ${formatNumber(summary.projectedActual)}`
+                                      : ""
+                                  }`}
+                            </span>
+                          </div>
+                          <strong className="goal-ranking-score">
+                            {summary.hasTarget && summary.actualPercent !== null
+                              ? formatPercent(summary.actualPercent)
+                              : formatNumber(summary.actual)}
+                          </strong>
+                        </a>
+                      ))}
+                    </div>
+                  </article>
+                ) : null}
+              </div>
             </section>
           ) : (
             <section className="goal-panel-single">
@@ -1435,13 +1504,13 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                   </div>
                 ) : null}
 
-                {effectiveView === "employee" && employeeLivePrimeSummaries.length ? (
+                {effectiveView === "employee" && employeeLivePrimeCategorySummaries.length ? (
                   <div className="goal-live-prime-panel">
                     <div className="goal-live-prime-head">
                       <h3>Canli Primler</h3>
                       <span>Bu alan sadece ayri gosterilir, degerlendirme ve diger hesaplara dahil edilmez.</span>
                     </div>
-                    <GoalCategoryCards categories={employeeLivePrimeSummaries} />
+                    <GoalCategoryCards categories={employeeLivePrimeCategorySummaries} />
                   </div>
                 ) : null}
               </article>

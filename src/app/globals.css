@@ -5701,6 +5701,11 @@ textarea::placeholder {
   gap: 10px;
 }
 
+.goal-ranking-stack {
+  display: grid;
+  gap: 18px;
+}
+
 .goal-ranking-row {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
@@ -5716,6 +5721,16 @@ textarea::placeholder {
 .goal-ranking-row-active {
   border-color: rgba(255, 209, 102, 0.54);
   background: rgba(255, 209, 102, 0.18);
+}
+
+.goal-live-prime-ranking-card {
+  border: 1px solid rgba(255, 209, 102, 0.28);
+  background: linear-gradient(180deg, rgba(117, 67, 18, 0.34), rgba(150, 96, 16, 0.24));
+}
+
+.goal-live-prime-ranking-row {
+  background: rgba(255, 248, 224, 0.1);
+  border-color: rgba(255, 226, 145, 0.18);
 }
 
 .goal-rank-badge {

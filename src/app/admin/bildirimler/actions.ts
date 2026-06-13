@@ -8,6 +8,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import type { UserRole } from "@/lib/types";
 
 const roleValues = new Set<UserRole>(["employee", "manager", "management", "admin"]);
+const allowedPopupImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 function redirectWithMessage(message: string, type: "success" | "error" = "success"): never {
   const params = new URLSearchParams({ message, type });
@@ -62,8 +63,8 @@ async function uploadPopupAnnouncementImage(file: File, userId: string) {
     return null;
   }
 
-  if (!file.type.startsWith("image/")) {
-    throw new Error("Popup gorseli olarak sadece resim yukleyebilirsiniz.");
+  if (!allowedPopupImageTypes.has(file.type)) {
+    throw new Error("Popup gorseli icin sadece JPG, PNG veya WEBP yukleyebilirsiniz.");
   }
 
   const extension = getExtension(file.name, file.type);

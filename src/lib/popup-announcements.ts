@@ -49,23 +49,8 @@ export function formatPopupTargets(targetRoles: UserRole[] | null | undefined) {
     .join(", ");
 }
 
-async function resolvePopupImageUrl(imagePath: string | null) {
-  if (!imagePath) {
-    return null;
-  }
-
-  const admin = createAdminClient();
-  const { data, error } = await admin.storage.from(POPUP_ANNOUNCEMENT_BUCKET).createSignedUrl(imagePath, 60 * 60 * 24 * 7);
-
-  if (error || !data?.signedUrl) {
-    return admin.storage.from(POPUP_ANNOUNCEMENT_BUCKET).getPublicUrl(imagePath).data.publicUrl || null;
-  }
-
-  return data.signedUrl;
-}
-
-async function mapPopupAnnouncement(row: PopupAnnouncementRow): Promise<PopupAnnouncementRecord> {
-  const imageUrl = await resolvePopupImageUrl(row.image_path);
+function mapPopupAnnouncement(row: PopupAnnouncementRow): PopupAnnouncementRecord {
+  const imageUrl = row.image_path ? `/api/popup-announcements/image/${row.id}` : null;
 
   return {
     ...row,
@@ -106,7 +91,7 @@ export async function getActivePopupAnnouncementForProfile(profile: {
     return null;
   }
 
-  return targetedRows[0] ? await mapPopupAnnouncement(targetedRows[0]) : null;
+  return targetedRows[0] ? mapPopupAnnouncement(targetedRows[0]) : null;
 }
 
 export async function getAdminPopupAnnouncements() {
@@ -122,5 +107,5 @@ export async function getAdminPopupAnnouncements() {
     return [];
   }
 
-  return await Promise.all(((data as PopupAnnouncementRow[] | null) ?? []).map((row) => mapPopupAnnouncement(row)));
+  return ((data as PopupAnnouncementRow[] | null) ?? []).map((row) => mapPopupAnnouncement(row));
 }

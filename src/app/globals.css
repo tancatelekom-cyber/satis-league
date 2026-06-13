@@ -5985,31 +5985,29 @@ textarea::placeholder {
   margin-top: 10px;
   padding: 18px;
   border-radius: 24px;
-  border: 1px solid rgba(255, 209, 102, 0.34);
-  background: linear-gradient(135deg, rgba(117, 67, 18, 0.28), rgba(172, 108, 16, 0.2));
-  box-shadow: 0 16px 30px rgba(8, 22, 40, 0.14);
+  border: 1px solid rgba(255, 209, 102, 0.42);
+  background:
+    radial-gradient(circle at top right, rgba(255, 236, 153, 0.28), transparent 28%),
+    linear-gradient(135deg, rgba(6, 118, 110, 0.96), rgba(18, 148, 132, 0.92) 48%, rgba(232, 164, 39, 0.92));
+  box-shadow: 0 20px 34px rgba(8, 22, 40, 0.18);
 }
 
 .goal-live-prime-head {
   display: grid;
-  gap: 4px;
+  gap: 2px;
 }
 
 .goal-live-prime-head h3 {
   margin: 0;
-  color: #fff4c9;
-  font-size: 1.16rem;
-}
-
-.goal-live-prime-head span {
-  color: #ffe9a6;
-  font-size: 0.88rem;
-  font-weight: 700;
+  color: #ffffff;
+  font-size: 1.22rem;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.16);
 }
 
 .goal-live-prime-panel .goal-category-card {
-  border-color: rgba(255, 226, 145, 0.28);
-  background: linear-gradient(180deg, rgba(255, 243, 204, 0.18), rgba(255, 209, 102, 0.12));
+  border-color: rgba(255, 244, 201, 0.34);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 240, 197, 0.12));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
 .goal-live-prime-panel .goal-category-title strong,
@@ -6018,13 +6016,28 @@ textarea::placeholder {
 .goal-live-prime-panel .goal-child-head strong,
 .goal-live-prime-panel .goal-child-meta span,
 .goal-live-prime-panel .goal-store-detail-title {
-  color: #fff7dc !important;
+  color: #fffdf5 !important;
 }
 
 .goal-live-prime-panel .goal-child-card,
 .goal-live-prime-panel .goal-need-row {
-  background: rgba(255, 248, 224, 0.12);
-  border-color: rgba(255, 232, 171, 0.2);
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 245, 206, 0.22);
+}
+
+.goal-live-prime-panel .goal-category-metrics span,
+.goal-live-prime-panel .goal-child-head span,
+.goal-live-prime-panel .goal-child-meta span {
+  background: linear-gradient(135deg, #ffe07d, #ffd166);
+  color: #10203b !important;
+  box-shadow: 0 10px 18px rgba(140, 98, 13, 0.18);
+}
+
+.goal-live-prime-panel .goal-category-metrics small,
+.goal-live-prime-panel .goal-category-metrics strong,
+.goal-live-prime-panel .goal-child-head span,
+.goal-live-prime-panel .goal-child-meta span {
+  color: #10203b !important;
 }
 
 .goal-need-grid {

@@ -1541,7 +1541,6 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                   <div className="goal-live-prime-panel">
                     <div className="goal-live-prime-head">
                       <h3>Canli Primler</h3>
-                      <span>Bu alan sadece ayri gosterilir, degerlendirme ve diger hesaplara dahil edilmez.</span>
                     </div>
                     <GoalActualOnlyCategoryCards categories={employeeLivePrimeCategorySummaries} />
                   </div>

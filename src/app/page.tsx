@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth/require-user";
 import { getCampaignDashboardData } from "@/lib/campaign/get-campaign-dashboard-data";
-import { getActivePopupAnnouncementForProfile } from "@/lib/popup-announcements";
+import { getActivePopupAnnouncementsForProfile } from "@/lib/popup-announcements";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { SeasonRecord } from "@/lib/types";
 import { HomePopupAnnouncement } from "@/components/home-popup-announcement";
@@ -88,10 +88,10 @@ export default async function HomePage() {
   ]);
 
   const campaignDashboard = await campaignDashboardPromise;
-  const activePopupAnnouncementPromise =
+  const activePopupAnnouncementsPromise =
     campaignDashboard?.profile.approval === "approved"
-      ? getActivePopupAnnouncementForProfile(campaignDashboard.profile)
-      : Promise.resolve(null);
+      ? getActivePopupAnnouncementsForProfile(campaignDashboard.profile)
+      : Promise.resolve([]);
   const liveCampaignLeaderboard =
     campaignDashboard?.profile.approval === "approved"
       ? campaignDashboard.activeLeaderboards.find(
@@ -102,7 +102,7 @@ export default async function HomePage() {
       : null;
 
   const [{ data: seasons }, { data: profiles }, { data: stores }, { data: seasonSales }] = await seasonDataPromise;
-  const activePopupAnnouncement = await activePopupAnnouncementPromise;
+  const activePopupAnnouncements = await activePopupAnnouncementsPromise;
 
   const seasonRows = ((seasons as SeasonRecord[] | null) ?? []).filter((season) => season.is_active);
   const employeeProfiles =
@@ -191,7 +191,7 @@ export default async function HomePage() {
 
   return (
     <main>
-      {activePopupAnnouncement ? <HomePopupAnnouncement announcement={activePopupAnnouncement} /> : null}
+      {activePopupAnnouncements.length > 0 ? <HomePopupAnnouncement announcements={activePopupAnnouncements} /> : null}
 
       {liveCampaignLeaderboard ? (
         <>

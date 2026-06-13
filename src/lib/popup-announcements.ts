@@ -83,13 +83,13 @@ async function mapPopupAnnouncement(row: PopupAnnouncementRow): Promise<PopupAnn
   };
 }
 
-export async function getActivePopupAnnouncementForProfile(profile: {
+export async function getActivePopupAnnouncementsForProfile(profile: {
   id: string;
   role: UserRole;
   approval?: string | null;
 }) {
   if (profile.approval !== "approved") {
-    return null;
+    return [];
   }
 
   const admin = createAdminClient();
@@ -105,7 +105,7 @@ export async function getActivePopupAnnouncementForProfile(profile: {
     .limit(12);
 
   if (error) {
-    return null;
+    return [];
   }
 
   const targetedRows = ((data as PopupAnnouncementRow[] | null) ?? []).filter((row) =>
@@ -113,10 +113,10 @@ export async function getActivePopupAnnouncementForProfile(profile: {
   );
 
   if (targetedRows.length === 0) {
-    return null;
+    return [];
   }
 
-  return targetedRows[0] ? await mapPopupAnnouncement(targetedRows[0]) : null;
+  return await Promise.all(targetedRows.map((row) => mapPopupAnnouncement(row)));
 }
 
 export async function getAdminPopupAnnouncements() {

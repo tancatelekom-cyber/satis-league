@@ -1,22 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { PopupAnnouncementRecord } from "@/lib/popup-announcements";
 
 type HomePopupAnnouncementProps = {
-  announcement: PopupAnnouncementRecord;
+  announcements: PopupAnnouncementRecord[];
 };
 
-export function HomePopupAnnouncement({ announcement }: HomePopupAnnouncementProps) {
-  const [isOpen, setIsOpen] = useState(true);
+export function HomePopupAnnouncement({ announcements }: HomePopupAnnouncementProps) {
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [isImageOpen, setIsImageOpen] = useState(false);
+  const announcement = announcements[currentIndex] ?? null;
 
-  if (!isOpen) {
+  useEffect(() => {
+    setCurrentIndex(0);
+    setIsImageOpen(false);
+  }, [announcements]);
+
+  if (!announcement) {
     return null;
   }
 
   function closePopup() {
-    setIsOpen(false);
+    setIsImageOpen(false);
+    setCurrentIndex((current) => current + 1);
   }
 
   return (

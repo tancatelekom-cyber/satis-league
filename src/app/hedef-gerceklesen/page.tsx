@@ -1401,13 +1401,16 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                 </article>
 
                 {effectiveView === "employee" && employeeLivePrimeRankingSummaries.length ? (
-                  <article className="campaign-section-card goal-ranking-card goal-live-prime-ranking-card">
-                    <div className="goal-section-head">
-                      <h2>Canli Primler Siralamasi</h2>
-                      <span>Ana siralama ve degerlendirmeden ayri gosterilir</span>
-                    </div>
+                  <details className="campaign-section-card goal-ranking-card goal-live-prime-ranking-card">
+                    <summary className="goal-live-prime-ranking-summary">
+                      <div className="goal-section-head">
+                        <h2>Canli Primler Siralamasi</h2>
+                        <span>Ana siralama ve degerlendirmeden ayri gosterilir</span>
+                      </div>
+                      <span className="goal-live-prime-ranking-caret">v</span>
+                    </summary>
 
-                    <div className="goal-ranking-list">
+                    <div className="goal-ranking-list goal-live-prime-ranking-list">
                       {employeeLivePrimeRankingSummaries.map((summary, index) => (
                         <a
                           key={`live-prime-${summary.name}`}
@@ -1441,7 +1444,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                         </a>
                       ))}
                     </div>
-                  </article>
+                  </details>
                 ) : null}
               </div>
             </section>

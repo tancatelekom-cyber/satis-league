@@ -5729,6 +5729,42 @@ textarea::placeholder {
   box-shadow: 0 18px 32px rgba(56, 32, 6, 0.28);
 }
 
+.goal-live-prime-ranking-summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  cursor: pointer;
+}
+
+.goal-live-prime-ranking-summary::-webkit-details-marker {
+  display: none;
+}
+
+.goal-live-prime-ranking-caret {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: rgba(255, 209, 102, 0.16);
+  color: #fff3c0;
+  font-size: 0.94rem;
+  font-weight: 900;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.goal-live-prime-ranking-card[open] .goal-live-prime-ranking-caret {
+  transform: rotate(180deg);
+  background: rgba(255, 209, 102, 0.24);
+}
+
+.goal-live-prime-ranking-list {
+  margin-top: 14px;
+}
+
 .goal-live-prime-ranking-row {
   background: rgba(255, 243, 214, 0.08);
   border-color: rgba(255, 226, 145, 0.22);

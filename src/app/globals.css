@@ -5724,13 +5724,31 @@ textarea::placeholder {
 }
 
 .goal-live-prime-ranking-card {
-  border: 1px solid rgba(255, 209, 102, 0.28);
-  background: linear-gradient(180deg, rgba(117, 67, 18, 0.34), rgba(150, 96, 16, 0.24));
+  border: 1px solid rgba(255, 209, 102, 0.34);
+  background: linear-gradient(180deg, rgba(84, 50, 12, 0.96), rgba(112, 69, 14, 0.92));
+  box-shadow: 0 18px 32px rgba(56, 32, 6, 0.28);
 }
 
 .goal-live-prime-ranking-row {
-  background: rgba(255, 248, 224, 0.1);
-  border-color: rgba(255, 226, 145, 0.18);
+  background: rgba(255, 243, 214, 0.08);
+  border-color: rgba(255, 226, 145, 0.22);
+}
+
+.goal-live-prime-ranking-card .goal-section-head h2,
+.goal-live-prime-ranking-card .goal-section-head span,
+.goal-live-prime-ranking-card .goal-ranking-main strong,
+.goal-live-prime-ranking-card .goal-ranking-main span {
+  color: #fff8e6 !important;
+}
+
+.goal-live-prime-ranking-card .goal-ranking-score {
+  color: #ffe07d !important;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.18);
+}
+
+.goal-live-prime-ranking-card .goal-ranking-row-active {
+  background: rgba(255, 209, 102, 0.2);
+  border-color: rgba(255, 223, 140, 0.48);
 }
 
 .goal-rank-badge {

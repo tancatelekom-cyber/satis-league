@@ -6,10 +6,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import type { UserRole } from "@/lib/types";
 import {
   formatWeekInput,
-  formatMinutesAsHours,
   formatScheduleRange,
   getDefaultWeekDay,
-  getNetWorkedMinutes,
   getScheduleStatusLabel,
   getWeekDates,
   mergeWeekEntries,
@@ -59,16 +57,6 @@ function clampDay(value: string | undefined, weekStart: string) {
   }
 
   return Math.max(0, Math.min(6, Math.trunc(raw)));
-}
-
-function getWeeklyMinutes(entries: WeeklyWorkScheduleRecord[]) {
-  return entries.reduce((sum, entry) => {
-    if (entry.status !== "work") {
-      return sum;
-    }
-
-    return sum + getNetWorkedMinutes(entry.start_time, entry.end_time);
-  }, 0);
 }
 
 function getEntryForDay(entries: WeeklyWorkScheduleRecord[], dayOfWeek: number) {
@@ -165,15 +153,11 @@ export default async function WeeklyWorkSchedulePage({ searchParams }: PageProps
   const teamRows = teamProfiles.map((person) => {
     const entries = recordsByProfile.get(person.id) ?? [];
     const selectedEntry = getEntryForDay(entries, selectedDay);
-    const weeklyMinutes = getWeeklyMinutes(entries);
-    const workingDays = entries.filter((entry) => entry.status === "work").length;
 
     return {
       id: person.id,
       name: person.full_name ?? "Isimsiz Personel",
       roleLabel: person.role === "manager" ? "Magaza Muduru" : "Personel",
-      weeklyMinutes,
-      workingDays,
       selectedStatus: (selectedEntry?.status ?? "off") as WorkScheduleStatus,
       selectedRange: formatScheduleRange(selectedEntry?.start_time ?? null, selectedEntry?.end_time ?? null),
       entries
@@ -343,7 +327,6 @@ export default async function WeeklyWorkSchedulePage({ searchParams }: PageProps
                         <span>{day.shortDate}</span>
                       </th>
                     ))}
-                    <th>Haftalik Ozet</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -364,10 +347,6 @@ export default async function WeeklyWorkSchedulePage({ searchParams }: PageProps
                           </td>
                         );
                       })}
-                      <td>
-                        <strong>{formatMinutesAsHours(row.weeklyMinutes)}</strong>
-                        <span>{row.workingDays} calisma gunu</span>
-                      </td>
                     </tr>
                   ))}
                 </tbody>

@@ -85,43 +85,59 @@ async function uploadPopupAnnouncementImage(file: File, userId: string) {
 
 export async function createPopupAnnouncementAction(formData: FormData) {
   const { profile } = await requireAdminAccess();
-  const title = String(formData.get("title") ?? "").trim();
-  const body = String(formData.get("body") ?? "").trim();
-  const showFrom = toIstanbulIso(formData.get("showFrom"));
-  const showUntil = toIstanbulIso(formData.get("showUntil"));
-  const targetRoles = parseTargetRoles(formData);
-  const imageFile = formData.get("image");
+  let uploadedImagePath: string | null = null;
 
-  if (!title || !body || !showFrom || !showUntil) {
-    redirectWithMessage("Baslik, metin, baslangic ve bitis tarihi zorunludur.", "error");
-  }
+  try {
+    const title = String(formData.get("title") ?? "").trim();
+    const body = String(formData.get("body") ?? "").trim();
+    const showFrom = toIstanbulIso(formData.get("showFrom"));
+    const showUntil = toIstanbulIso(formData.get("showUntil"));
+    const targetRoles = parseTargetRoles(formData);
+    const imageFile = formData.get("image");
 
-  if (new Date(showUntil).getTime() <= new Date(showFrom).getTime()) {
-    redirectWithMessage("Bitis tarihi baslangic tarihinden sonra olmali.", "error");
-  }
-
-  const admin = createAdminClient();
-  const imagePath = imageFile instanceof File ? await uploadPopupAnnouncementImage(imageFile, profile.id) : null;
-  const { error } = await admin.from("popup_announcements").insert({
-    title,
-    body,
-    image_path: imagePath,
-    target_roles: targetRoles,
-    show_from: showFrom,
-    show_until: showUntil,
-    created_by: profile.id
-  });
-
-  if (error) {
-    if (imagePath) {
-      await admin.storage.from(POPUP_ANNOUNCEMENT_BUCKET).remove([imagePath]);
+    if (!title || !body || !showFrom || !showUntil) {
+      redirectWithMessage("Baslik, metin, baslangic ve bitis tarihi zorunludur.", "error");
     }
-    redirectWithMessage(`Bildirim olusturulamadi: ${error.message}`, "error");
-  }
 
-  revalidatePath("/");
-  revalidatePath("/admin/bildirimler");
-  redirectWithMessage("Popup bildirim olusturuldu.");
+    if (new Date(showUntil).getTime() <= new Date(showFrom).getTime()) {
+      redirectWithMessage("Bitis tarihi baslangic tarihinden sonra olmali.", "error");
+    }
+
+    const admin = createAdminClient();
+    uploadedImagePath = imageFile instanceof File ? await uploadPopupAnnouncementImage(imageFile, profile.id) : null;
+    const { error } = await admin.from("popup_announcements").insert({
+      title,
+      body,
+      image_path: uploadedImagePath,
+      target_roles: targetRoles,
+      show_from: showFrom,
+      show_until: showUntil,
+      created_by: profile.id
+    });
+
+    if (error) {
+      if (uploadedImagePath) {
+        await admin.storage.from(POPUP_ANNOUNCEMENT_BUCKET).remove([uploadedImagePath]);
+      }
+      redirectWithMessage(`Bildirim olusturulamadi: ${error.message}`, "error");
+    }
+
+    revalidatePath("/");
+    revalidatePath("/admin/bildirimler");
+    redirectWithMessage("Popup bildirim olusturuldu.");
+  } catch (error) {
+    if (uploadedImagePath) {
+      const admin = createAdminClient();
+      await admin.storage.from(POPUP_ANNOUNCEMENT_BUCKET).remove([uploadedImagePath]);
+    }
+
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Popup bildirim olusturulamadi. Popup gorsel bucket ve schema degisikliklerini kontrol edin.";
+
+    redirectWithMessage(message, "error");
+  }
 }
 
 export async function togglePopupAnnouncementAction(formData: FormData) {

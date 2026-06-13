@@ -49,11 +49,23 @@ export function formatPopupTargets(targetRoles: UserRole[] | null | undefined) {
     .join(", ");
 }
 
-function mapPopupAnnouncement(row: PopupAnnouncementRow): PopupAnnouncementRecord {
+async function resolvePopupImageUrl(imagePath: string | null) {
+  if (!imagePath) {
+    return null;
+  }
+
   const admin = createAdminClient();
-  const imageUrl = row.image_path
-    ? admin.storage.from(POPUP_ANNOUNCEMENT_BUCKET).getPublicUrl(row.image_path).data.publicUrl
-    : null;
+  const { data, error } = await admin.storage.from(POPUP_ANNOUNCEMENT_BUCKET).createSignedUrl(imagePath, 60 * 60 * 24 * 7);
+
+  if (error || !data?.signedUrl) {
+    return admin.storage.from(POPUP_ANNOUNCEMENT_BUCKET).getPublicUrl(imagePath).data.publicUrl || null;
+  }
+
+  return data.signedUrl;
+}
+
+async function mapPopupAnnouncement(row: PopupAnnouncementRow): Promise<PopupAnnouncementRecord> {
+  const imageUrl = await resolvePopupImageUrl(row.image_path);
 
   return {
     ...row,
@@ -94,7 +106,7 @@ export async function getActivePopupAnnouncementForProfile(profile: {
     return null;
   }
 
-  return targetedRows[0] ? mapPopupAnnouncement(targetedRows[0]) : null;
+  return targetedRows[0] ? await mapPopupAnnouncement(targetedRows[0]) : null;
 }
 
 export async function getAdminPopupAnnouncements() {
@@ -110,5 +122,5 @@ export async function getAdminPopupAnnouncements() {
     return [];
   }
 
-  return ((data as PopupAnnouncementRow[] | null) ?? []).map(mapPopupAnnouncement);
+  return await Promise.all(((data as PopupAnnouncementRow[] | null) ?? []).map((row) => mapPopupAnnouncement(row)));
 }

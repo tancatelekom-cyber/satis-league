@@ -974,8 +974,8 @@ function GoalCategoryCards({ categories }: { categories: GoalCategorySummary[] }
 function GoalActualOnlyCategoryCards({ categories }: { categories: GoalCategorySummary[] }) {
   return (
     <div className="goal-category-list">
-      {categories.map((category, index) => (
-        <details key={category.title} className="goal-category-card" open={index === 0}>
+      {categories.map((category) => (
+        <details key={category.title} className="goal-category-card">
           <summary className="goal-category-summary">
             <div className="goal-category-title">
               <strong>{category.title}</strong>

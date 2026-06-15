@@ -1,22 +1,23 @@
 import type { Metadata } from "next";
 import { AuthGate } from "@/components/auth/auth-gate";
 import { AppShellHeader } from "@/components/app-shell-header";
+import { PwaRegister } from "@/components/pwa-register";
 import { createClient } from "@/lib/supabase/server";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "TANCA+",
   description: "Satis ekibini motive eden mobil uyumlu web oyunu",
-  manifest: "/manifest.webmanifest",
+  manifest: "/manifest.webmanifest?v=5",
   icons: {
     icon: [
-      { url: "/favicon.ico?v=4", sizes: "any" },
-      { url: "/favicon.png?v=3", sizes: "64x64", type: "image/png" },
-      { url: "/icon-192.png?v=3", sizes: "192x192", type: "image/png" },
-      { url: "/icon-512.png?v=3", sizes: "512x512", type: "image/png" }
+      { url: "/favicon.ico?v=5", sizes: "any" },
+      { url: "/favicon.png?v=5", sizes: "64x64", type: "image/png" },
+      { url: "/icon-192.png?v=5", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png?v=5", sizes: "512x512", type: "image/png" }
     ],
-    apple: [{ url: "/apple-touch-icon.png?v=3", sizes: "180x180", type: "image/png" }],
-    shortcut: ["/favicon.ico?v=4"]
+    apple: [{ url: "/apple-touch-icon.png?v=5", sizes: "180x180", type: "image/png" }],
+    shortcut: ["/favicon.ico?v=5"]
   },
   appleWebApp: {
     capable: true,
@@ -67,14 +68,16 @@ export default async function RootLayout({
   return (
     <html lang="tr">
       <head>
-        <link rel="shortcut icon" href="/favicon.ico?v=4" />
-        <link rel="icon" type="image/png" sizes="64x64" href="/favicon.png?v=3" />
-        <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png?v=3" />
-        <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png?v=3" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=3" />
+        <link rel="shortcut icon" href="/favicon.ico?v=5" />
+        <link rel="icon" type="image/x-icon" href="/favicon.ico?v=5" />
+        <link rel="icon" type="image/png" sizes="64x64" href="/favicon.png?v=5" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png?v=5" />
+        <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png?v=5" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=5" />
       </head>
       <body>
         <div className="page-shell">
+          <PwaRegister />
           <AppShellHeader
             initialIsAdmin={isAdmin}
             initialCanEvaluate={canEvaluate}

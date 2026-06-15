@@ -1,0 +1,35 @@
+{
+  "id": "/",
+  "name": "Tanca+",
+  "short_name": "Tanca+",
+  "description": "Satis ekibini motive eden mobil uyumlu web oyunu",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0b2143",
+  "theme_color": "#0b2143",
+  "icons": [
+    {
+      "src": "/favicon.ico?v=5",
+      "sizes": "64x64",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/icon-192.png?v=5",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512.png?v=5",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png?v=5",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

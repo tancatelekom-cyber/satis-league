@@ -9,9 +9,13 @@ export const metadata: Metadata = {
   description: "Satis ekibini motive eden mobil uyumlu web oyunu",
   manifest: "/manifest.webmanifest",
   icons: {
-    icon: [{ url: "/icon", sizes: "512x512", type: "image/png" }],
-    apple: [{ url: "/apple-icon", sizes: "180x180", type: "image/png" }],
-    shortcut: ["/icon"]
+    icon: [
+      { url: "/favicon.png?v=3", sizes: "64x64", type: "image/png" },
+      { url: "/icon-192.png?v=3", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png?v=3", sizes: "512x512", type: "image/png" }
+    ],
+    apple: [{ url: "/apple-touch-icon.png?v=3", sizes: "180x180", type: "image/png" }],
+    shortcut: ["/favicon.png?v=3"]
   },
   appleWebApp: {
     capable: true,
@@ -61,6 +65,12 @@ export default async function RootLayout({
 
   return (
     <html lang="tr">
+      <head>
+        <link rel="icon" type="image/png" sizes="64x64" href="/favicon.png?v=3" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png?v=3" />
+        <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png?v=3" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=3" />
+      </head>
       <body>
         <div className="page-shell">
           <AppShellHeader

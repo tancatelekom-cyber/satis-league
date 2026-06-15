@@ -69,7 +69,7 @@ export function LoginForm({ message }: LoginFormProps) {
         <span className="status-chip">Giris</span>
         <h2>Hesabina Gir</h2>
         <p>
-          Admin onayi tamamlanan kullanicilar kampanya ekranlarina erisebilir.
+          Admin onayi tamamlanan kullanicilar erisim saglayabilir.
         </p>
       </div>
 

@@ -198,53 +198,6 @@ button {
   background: var(--surface-mid);
 }
 
-.install-app-button {
-  min-height: 46px;
-  padding: 0 18px;
-  white-space: nowrap;
-}
-
-.pwa-debug-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 38px;
-  padding: 0 12px;
-  border-radius: 999px;
-  font-size: 0.8rem;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-.pwa-debug-badge-kontrol-ediliyor {
-  background: rgba(255, 255, 255, 0.12);
-  color: #e9f3ff;
-}
-
-.pwa-debug-badge-hazir {
-  background: rgba(126, 241, 211, 0.18);
-  color: #bfffe9;
-}
-
-.pwa-debug-badge-hazir-degil {
-  background: rgba(255, 126, 126, 0.18);
-  color: #ffd2d2;
-}
-
-.pwa-debug-shell {
-  display: inline-grid;
-  gap: 8px;
-}
-
-.pwa-debug-details {
-  max-width: 300px;
-  padding: 10px 12px;
-  border-radius: 14px;
-  background: rgba(6, 15, 30, 0.78);
-  color: #dbe9ff;
-  font-size: 0.76rem;
-  line-height: 1.45;
-}
 
 .nav-links {
   display: flex;
@@ -6473,12 +6426,6 @@ textarea::placeholder {
     padding: 8px 12px;
     font-size: 0.9rem;
     min-height: auto;
-  }
-
-  .install-app-button {
-    padding: 0 12px;
-    font-size: 0.86rem;
-    min-height: 40px;
   }
 
   .nav-links {

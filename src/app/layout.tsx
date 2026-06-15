@@ -6,7 +6,21 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "TANCA+",
-  description: "Satis ekibini motive eden mobil uyumlu web oyunu"
+  description: "Satis ekibini motive eden mobil uyumlu web oyunu",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: [
+      { url: "/tplus-logo.png", sizes: "192x192", type: "image/png" },
+      { url: "/tplus-logo.png", sizes: "512x512", type: "image/png" }
+    ],
+    apple: [{ url: "/tplus-logo.png", sizes: "180x180", type: "image/png" }],
+    shortcut: ["/tplus-logo.png"]
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Tanca+"
+  }
 };
 
 export default async function RootLayout({

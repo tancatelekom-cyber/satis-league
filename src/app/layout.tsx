@@ -9,12 +9,9 @@ export const metadata: Metadata = {
   description: "Satis ekibini motive eden mobil uyumlu web oyunu",
   manifest: "/manifest.webmanifest",
   icons: {
-    icon: [
-      { url: "/tplus-logo.png", sizes: "192x192", type: "image/png" },
-      { url: "/tplus-logo.png", sizes: "512x512", type: "image/png" }
-    ],
-    apple: [{ url: "/tplus-logo.png", sizes: "180x180", type: "image/png" }],
-    shortcut: ["/tplus-logo.png"]
+    icon: [{ url: "/icon", sizes: "512x512", type: "image/png" }],
+    apple: [{ url: "/apple-icon", sizes: "180x180", type: "image/png" }],
+    shortcut: ["/icon"]
   },
   appleWebApp: {
     capable: true,

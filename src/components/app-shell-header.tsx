@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { useMemo, useRef, useState } from "react";
+import { InstallAppButton } from "@/components/install-app-button";
 
 type NavItem = {
   href: string;
@@ -197,6 +198,7 @@ export function AppShellHeader({
         </Link>
 
         <div className={`nav-cluster ${menuOpen ? "nav-cluster-open" : ""}`}>
+          <InstallAppButton />
           <button className="menu-toggle" type="button" onClick={() => setMenuOpen((value) => !value)}>
             Menu
           </button>

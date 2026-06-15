@@ -198,6 +198,12 @@ button {
   background: var(--surface-mid);
 }
 
+.install-app-button {
+  min-height: 46px;
+  padding: 0 18px;
+  white-space: nowrap;
+}
+
 .nav-links {
   display: flex;
   align-items: center;
@@ -5765,6 +5771,12 @@ textarea::placeholder {
   margin-top: 14px;
 }
 
+.goal-live-prime-ranking-export {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
 .goal-live-prime-ranking-row {
   background: rgba(255, 243, 214, 0.08);
   border-color: rgba(255, 226, 145, 0.22);
@@ -6419,6 +6431,12 @@ textarea::placeholder {
     padding: 8px 12px;
     font-size: 0.9rem;
     min-height: auto;
+  }
+
+  .install-app-button {
+    padding: 0 12px;
+    font-size: 0.86rem;
+    min-height: 40px;
   }
 
   .nav-links {

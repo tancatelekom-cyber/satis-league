@@ -231,6 +231,29 @@ button {
   color: #ffd2d2;
 }
 
+.pwa-debug-shell {
+  display: inline-grid;
+  gap: 8px;
+}
+
+.pwa-debug-shell summary {
+  list-style: none;
+}
+
+.pwa-debug-shell summary::-webkit-details-marker {
+  display: none;
+}
+
+.pwa-debug-details {
+  max-width: 300px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(6, 15, 30, 0.78);
+  color: #dbe9ff;
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
 .nav-links {
   display: flex;
   align-items: center;

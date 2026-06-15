@@ -10,12 +10,13 @@ export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
   icons: {
     icon: [
+      { url: "/favicon.ico?v=4", sizes: "any" },
       { url: "/favicon.png?v=3", sizes: "64x64", type: "image/png" },
       { url: "/icon-192.png?v=3", sizes: "192x192", type: "image/png" },
       { url: "/icon-512.png?v=3", sizes: "512x512", type: "image/png" }
     ],
     apple: [{ url: "/apple-touch-icon.png?v=3", sizes: "180x180", type: "image/png" }],
-    shortcut: ["/favicon.png?v=3"]
+    shortcut: ["/favicon.ico?v=4"]
   },
   appleWebApp: {
     capable: true,
@@ -66,6 +67,7 @@ export default async function RootLayout({
   return (
     <html lang="tr">
       <head>
+        <link rel="shortcut icon" href="/favicon.ico?v=4" />
         <link rel="icon" type="image/png" sizes="64x64" href="/favicon.png?v=3" />
         <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png?v=3" />
         <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png?v=3" />

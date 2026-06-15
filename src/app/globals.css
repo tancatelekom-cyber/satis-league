@@ -236,14 +236,6 @@ button {
   gap: 8px;
 }
 
-.pwa-debug-shell summary {
-  list-style: none;
-}
-
-.pwa-debug-shell summary::-webkit-details-marker {
-  display: none;
-}
-
 .pwa-debug-details {
   max-width: 300px;
   padding: 10px 12px;

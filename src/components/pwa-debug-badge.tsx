@@ -59,15 +59,15 @@ export function PwaDebugBadge() {
   }, []);
 
   return (
-    <details className={`pwa-debug-shell pwa-debug-shell-${status}`}>
-      <summary className={`pwa-debug-badge pwa-debug-badge-${status}`}>
+    <div className={`pwa-debug-shell pwa-debug-shell-${status}`}>
+      <span className={`pwa-debug-badge pwa-debug-badge-${status}`}>
         {status === "hazir"
           ? "PWA hazir"
           : status === "hazir-degil"
             ? "PWA hazir degil"
             : "PWA kontrol ediliyor"}
-      </summary>
+      </span>
       <div className="pwa-debug-details">{details}</div>
-    </details>
+    </div>
   );
 }

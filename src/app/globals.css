@@ -8325,6 +8325,11 @@ textarea::placeholder {
   color: #15803d !important;
 }
 
+.goal-company-trend-table tbody td.goal-company-trend-bad,
+.goal-company-trend-company.goal-company-trend-bad {
+  color: #dc2626 !important;
+}
+
 .evaluation-bars,
 .evaluation-metric-list {
   display: grid;

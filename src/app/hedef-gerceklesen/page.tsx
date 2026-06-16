@@ -106,6 +106,16 @@ type CompanyTrendSummaryRow = {
   }>;
 };
 
+type CompanyCurrentSummaryRow = {
+  title: string;
+  valueType: "percent" | "number";
+  companyActual: number | null;
+  stores: Array<{
+    storeCode: string;
+    actual: number | null;
+  }>;
+};
+
 type GoalView = "employee" | "store" | "company";
 type GoalPanel = "detail" | "ranking" | "needs" | "evaluation";
 
@@ -582,6 +592,29 @@ function isLivePrimeCategory(title: string | null | undefined) {
   return normalized.includes("CANLI PRIM");
 }
 
+function isSatisfactionCategory(title: string | null | undefined) {
+  return normalizeCategoryKey(String(title ?? "")).includes("MEMNUNIYET");
+}
+
+function isPinRateCategory(title: string | null | undefined) {
+  const normalized = normalizeCategoryKey(String(title ?? ""));
+  return normalized.includes("PIN ORAN");
+}
+
+function aggregateStoreActual(rows: GoalStoreRow[]) {
+  if (!rows.length) {
+    return null;
+  }
+
+  const actuals = rows.map((row) => row.actual);
+  const aggregate =
+    rows[0]?.companyMode === "average"
+      ? average
+      : (values: number[]) => values.reduce((sum, value) => sum + value, 0);
+
+  return aggregate(actuals);
+}
+
 function buildEmployeeZeroActualItems(rows: GoalActualRow[]) {
   const seen = new Set<string>();
 
@@ -692,6 +725,46 @@ function buildCompanyTrendSummaryRows(
       } satisfies CompanyTrendSummaryRow;
     })
     .sort((a, b) => a.title.localeCompare(b.title, "tr"));
+}
+
+function buildCompanyCurrentSummaryRows(rows: GoalStoreRow[]) {
+  const companyRows = buildCompanyRows(rows);
+  const definitions = [
+    { title: "Memnuniyet", matcher: isSatisfactionCategory, valueType: "number" as const },
+    { title: "Pin Orani", matcher: isPinRateCategory, valueType: "percent" as const },
+    { title: "Giris Sayilari", matcher: isEntryCount, valueType: "number" as const }
+  ];
+
+  return definitions
+    .map((definition) => {
+      const matchingCompanyRows = companyRows.filter((row) => definition.matcher(row.mainCategory));
+
+      if (!matchingCompanyRows.length) {
+        return null;
+      }
+
+      const matchingStoreRows = rows.filter((row) => definition.matcher(row.mainCategory));
+      const storeMap = new Map<string, GoalStoreRow[]>();
+
+      matchingStoreRows.forEach((row) => {
+        const current = storeMap.get(row.storeCode) ?? [];
+        current.push(row);
+        storeMap.set(row.storeCode, current);
+      });
+
+      return {
+        title: definition.title,
+        valueType: definition.valueType,
+        companyActual: aggregateStoreActual(matchingCompanyRows),
+        stores: Array.from(storeMap.entries())
+          .map(([storeCode, storeRows]) => ({
+            storeCode,
+            actual: aggregateStoreActual(storeRows)
+          }))
+          .sort((a, b) => a.storeCode.localeCompare(b.storeCode, "tr"))
+      } satisfies CompanyCurrentSummaryRow;
+    })
+    .filter((row): row is CompanyCurrentSummaryRow => Boolean(row));
 }
 
 function toCoachingMetric(summary: GoalCategorySummary): CoachingMetric {
@@ -1294,11 +1367,16 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
           dayStats.totalDays
         )
       : [];
+  const companyCurrentSummaryRows =
+    effectiveView === "company" ? buildCompanyCurrentSummaryRows(filteredStoreRows) : [];
   const companyTrendStoreCodes =
     effectiveView === "company"
-      ? Array.from(new Set(companyTrendSummaryRows.flatMap((row) => row.stores.map((store) => store.storeCode)))).sort((a, b) =>
-          a.localeCompare(b, "tr")
-        )
+      ? Array.from(
+          new Set([
+            ...companyTrendSummaryRows.flatMap((row) => row.stores.map((store) => store.storeCode)),
+            ...companyCurrentSummaryRows.flatMap((row) => row.stores.map((store) => store.storeCode))
+          ])
+        ).sort((a, b) => a.localeCompare(b, "tr"))
       : [];
   const detailCardTitle =
     effectiveView === "company" ? "FIRMA" : effectiveView === "store" ? activeStoreName || "MAGAZA" : activeEmployeeName || "CALISAN";
@@ -1699,6 +1777,45 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                                 }`}
                               >
                                 {formatPercent(row.companyProjectedPercent)}
+                              </td>
+                            </tr>
+                          ))}
+
+                          {companyCurrentSummaryRows.map((row) => (
+                            <tr key={`current-row-${row.title}`}>
+                              <th>{row.title}</th>
+                              {companyTrendStoreCodes.map((storeCode) => {
+                                const store = row.stores.find((item) => item.storeCode === storeCode);
+                                const isGood =
+                                  row.title === "Memnuniyet"
+                                    ? (store?.actual ?? 0) >= 4.4
+                                    : row.title === "Pin Orani"
+                                      ? (store?.actual ?? 0) >= 70
+                                      : true;
+
+                                return (
+                                  <td
+                                    key={`current-${row.title}-${storeCode}`}
+                                    className={isGood ? "goal-company-trend-good" : "goal-company-trend-bad"}
+                                  >
+                                    {row.valueType === "percent" ? formatPercent(store?.actual) : formatNumber(store?.actual)}
+                                  </td>
+                                );
+                              })}
+                              <td
+                                className={`goal-company-trend-company ${
+                                  row.title === "Memnuniyet"
+                                    ? (row.companyActual ?? 0) >= 4.4
+                                      ? "goal-company-trend-good"
+                                      : "goal-company-trend-bad"
+                                    : row.title === "Pin Orani"
+                                      ? (row.companyActual ?? 0) >= 70
+                                        ? "goal-company-trend-good"
+                                        : "goal-company-trend-bad"
+                                      : "goal-company-trend-good"
+                                }`}
+                              >
+                                {row.valueType === "percent" ? formatPercent(row.companyActual) : formatNumber(row.companyActual)}
                               </td>
                             </tr>
                           ))}

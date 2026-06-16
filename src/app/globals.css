@@ -8687,6 +8687,65 @@ textarea::placeholder {
   color: #991b1b;
 }
 
+.popup-edit-details {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(4, 92, 96, 0.14);
+}
+
+.popup-edit-details summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: #0f766e;
+  font-weight: 900;
+  list-style: none;
+}
+
+.popup-edit-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.popup-edit-details summary::before {
+  content: "+";
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: rgba(15, 118, 110, 0.12);
+  color: #0f766e;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.popup-edit-details[open] summary::before {
+  content: "-";
+}
+
+.popup-edit-form {
+  margin-top: 16px;
+}
+
+.popup-remove-image-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.86);
+  color: #10203b;
+  font-weight: 800;
+}
+
+.popup-remove-image-option input {
+  width: 18px;
+  height: 18px;
+  accent-color: #991b1b;
+}
+
 @media (max-width: 760px) {
   .home-popup-card {
     padding: 24px 20px;
@@ -8709,6 +8768,10 @@ textarea::placeholder {
 
   .popup-admin-actions form,
   .popup-admin-actions button {
+    width: 100%;
+  }
+
+  .popup-edit-details summary {
     width: 100%;
   }
 }

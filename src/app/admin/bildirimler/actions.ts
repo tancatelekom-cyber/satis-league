@@ -103,6 +103,86 @@ export async function createPopupAnnouncementAction(formData: FormData) {
   }
 }
 
+export async function updatePopupAnnouncementAction(formData: FormData) {
+  await requireAdminAccess();
+
+  try {
+    const id = String(formData.get("id") ?? "").trim();
+    const title = String(formData.get("title") ?? "").trim();
+    const body = String(formData.get("body") ?? "").trim();
+    const showFrom = toIstanbulIso(formData.get("showFrom"));
+    const showUntil = toIstanbulIso(formData.get("showUntil"));
+    const targetRoles = parseTargetRoles(formData);
+    const imageFile = formData.get("image");
+    const removeImage = String(formData.get("removeImage") ?? "") === "true";
+
+    if (!id) {
+      redirectWithMessage("Duzenlenecek bildirim bulunamadi.", "error");
+    }
+
+    if (!title || !body || !showFrom || !showUntil) {
+      redirectWithMessage("Baslik, metin, baslangic ve bitis tarihi zorunludur.", "error");
+    }
+
+    if (new Date(showUntil).getTime() <= new Date(showFrom).getTime()) {
+      redirectWithMessage("Bitis tarihi baslangic tarihinden sonra olmali.", "error");
+    }
+
+    const admin = createAdminClient();
+    const { data: existingAnnouncement, error: existingError } = await admin
+      .from("popup_announcements")
+      .select("id, image_path")
+      .eq("id", id)
+      .single();
+
+    if (existingError || !existingAnnouncement) {
+      redirectWithMessage("Duzenlenecek bildirim bulunamadi.", "error");
+    }
+
+    const uploadedImagePath = imageFile instanceof File ? await uploadPopupAnnouncementImage(imageFile) : null;
+    const nextImagePath = removeImage
+      ? null
+      : uploadedImagePath && uploadedImagePath.length > 0
+        ? uploadedImagePath
+        : existingAnnouncement.image_path;
+
+    const { error } = await admin
+      .from("popup_announcements")
+      .update({
+        title,
+        body,
+        image_path: nextImagePath,
+        target_roles: targetRoles,
+        show_from: showFrom,
+        show_until: showUntil
+      })
+      .eq("id", id);
+
+    if (error) {
+      redirectWithMessage(`Bildirim guncellenemedi: ${error.message}`, "error");
+    }
+
+    if (
+      existingAnnouncement.image_path &&
+      existingAnnouncement.image_path !== nextImagePath &&
+      !existingAnnouncement.image_path.startsWith("data:")
+    ) {
+      await admin.storage.from(POPUP_ANNOUNCEMENT_BUCKET).remove([existingAnnouncement.image_path]);
+    }
+
+    revalidatePath("/");
+    revalidatePath("/admin/bildirimler");
+    redirectWithMessage("Popup bildirim guncellendi.");
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Popup bildirim guncellenemedi. Lutfen tekrar deneyin.";
+
+    redirectWithMessage(message, "error");
+  }
+}
+
 export async function togglePopupAnnouncementAction(formData: FormData) {
   await requireAdminAccess();
   const id = String(formData.get("id") ?? "").trim();

@@ -6,7 +6,8 @@ import { formatPopupTargets, getAdminPopupAnnouncements, popupTargetOptions } fr
 import {
   createPopupAnnouncementAction,
   deletePopupAnnouncementAction,
-  togglePopupAnnouncementAction
+  togglePopupAnnouncementAction,
+  updatePopupAnnouncementAction
 } from "@/app/admin/bildirimler/actions";
 
 type AdminPopupAnnouncementsPageProps = {
@@ -26,6 +27,18 @@ function formatLocalDateTime(value: string) {
 
 function defaultDateTimeLocal(offsetHours: number) {
   const date = new Date(Date.now() + offsetHours * 60 * 60 * 1000);
+  const istanbulDate = new Date(date.toLocaleString("en-US", { timeZone: "Europe/Istanbul" }));
+  const year = istanbulDate.getFullYear();
+  const month = String(istanbulDate.getMonth() + 1).padStart(2, "0");
+  const day = String(istanbulDate.getDate()).padStart(2, "0");
+  const hour = String(istanbulDate.getHours()).padStart(2, "0");
+  const minute = String(istanbulDate.getMinutes()).padStart(2, "0");
+
+  return `${year}-${month}-${day}T${hour}:${minute}`;
+}
+
+function isoToDateTimeLocal(value: string) {
+  const date = new Date(value);
   const istanbulDate = new Date(date.toLocaleString("en-US", { timeZone: "Europe/Istanbul" }));
   const year = istanbulDate.getFullYear();
   const month = String(istanbulDate.getMonth() + 1).padStart(2, "0");
@@ -158,6 +171,86 @@ export default async function AdminPopupAnnouncementsPage({ searchParams }: Admi
                     {formatLocalDateTime(announcement.show_from)} - {formatLocalDateTime(announcement.show_until)}
                   </span>
                 </div>
+
+                <details className="popup-edit-details">
+                  <summary>
+                    {announcement.is_active ? "Yayindaki bildirimi duzenle" : "Bildirimi duzenle"}
+                  </summary>
+
+                  <form
+                    action={updatePopupAnnouncementAction}
+                    className="popup-admin-form popup-edit-form"
+                    encType="multipart/form-data"
+                  >
+                    <input type="hidden" name="id" value={announcement.id} />
+
+                    <label className="field">
+                      <span>Baslik</span>
+                      <input name="title" defaultValue={announcement.title} required />
+                    </label>
+
+                    <label className="field">
+                      <span>Bildirim Metni</span>
+                      <textarea className="text-area" name="body" rows={5} defaultValue={announcement.body} required />
+                    </label>
+
+                    <label className="field">
+                      <span>Yeni Gorsel</span>
+                      <input accept="image/png,image/jpeg,image/webp" name="image" type="file" />
+                    </label>
+
+                    {announcement.imageUrl ? (
+                      <label className="popup-remove-image-option">
+                        <input name="removeImage" type="checkbox" value="true" />
+                        <span>Mevcut gorseli kaldir</span>
+                      </label>
+                    ) : null}
+
+                    <div className="popup-target-card">
+                      <strong>Kime gidecek?</strong>
+                      <p>Hic rol secmezsen tum onayli kullanicilar gorur.</p>
+                      <div className="popup-target-grid">
+                        {popupTargetOptions.map((option) => (
+                          <label key={`${announcement.id}-${option.value}`} className="popup-target-option">
+                            <input
+                              name="targetRoles"
+                              type="checkbox"
+                              value={option.value}
+                              defaultChecked={announcement.target_roles?.includes(option.value) ?? false}
+                            />
+                            <span>{option.label}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="popup-date-grid">
+                      <label className="field">
+                        <span>Baslangic Tarih/Saat</span>
+                        <input
+                          name="showFrom"
+                          type="datetime-local"
+                          defaultValue={isoToDateTimeLocal(announcement.show_from)}
+                          required
+                        />
+                      </label>
+
+                      <label className="field">
+                        <span>Bitis Tarih/Saat</span>
+                        <input
+                          name="showUntil"
+                          type="datetime-local"
+                          defaultValue={isoToDateTimeLocal(announcement.show_until)}
+                          required
+                        />
+                      </label>
+                    </div>
+
+                    <button className="button-primary" type="submit">
+                      Degisiklikleri Kaydet
+                    </button>
+                  </form>
+                </details>
               </div>
 
               <div className="popup-admin-actions">

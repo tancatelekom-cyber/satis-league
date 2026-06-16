@@ -1619,7 +1619,10 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                     </summary>
 
                     <div className="goal-live-prime-ranking-export">
-                      <a className="button-secondary export-link-button" href="/hedef-gerceklesen/canli-primler-excel">
+                      <a
+                        className="button-secondary export-link-button"
+                        href="/api/hedef-gerceklesen/canli-primler-excel"
+                      >
                         Excele Indir
                       </a>
                     </div>

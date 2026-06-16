@@ -86,7 +86,7 @@ export default async function AdminPopupAnnouncementsPage({ searchParams }: Admi
 
         <form action={createPopupAnnouncementAction} className="popup-admin-form" encType="multipart/form-data">
           <label className="field">
-            <span>Baslik</span>
+            <span>Konu / Baslik</span>
             <input name="title" placeholder="Ornek: Bugunun odak duyurusu" required />
           </label>
 
@@ -185,7 +185,7 @@ export default async function AdminPopupAnnouncementsPage({ searchParams }: Admi
                     <input type="hidden" name="id" value={announcement.id} />
 
                     <label className="field">
-                      <span>Baslik</span>
+                      <span>Konu / Baslik</span>
                       <input name="title" defaultValue={announcement.title} required />
                     </label>
 

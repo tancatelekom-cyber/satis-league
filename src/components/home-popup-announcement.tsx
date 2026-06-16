@@ -33,7 +33,6 @@ export function HomePopupAnnouncement({ announcements }: HomePopupAnnouncementPr
           x
         </button>
 
-        <span className="home-popup-kicker">Tanca+ Pano</span>
         <h2 id="home-popup-title">{announcement.title}</h2>
         {announcement.imageUrl ? (
           <button

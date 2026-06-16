@@ -146,20 +146,29 @@ export async function updatePopupAnnouncementAction(formData: FormData) {
         ? uploadedImagePath
         : existingAnnouncement.image_path;
 
-    const { error } = await admin
+    const updatePayload = {
+      title,
+      body,
+      image_path: nextImagePath,
+      target_roles: targetRoles,
+      show_from: showFrom,
+      show_until: showUntil,
+      updated_at: new Date().toISOString()
+    };
+
+    const { data: updatedAnnouncement, error } = await admin
       .from("popup_announcements")
-      .update({
-        title,
-        body,
-        image_path: nextImagePath,
-        target_roles: targetRoles,
-        show_from: showFrom,
-        show_until: showUntil
-      })
-      .eq("id", id);
+      .update(updatePayload)
+      .eq("id", id)
+      .select("id, title")
+      .single();
 
     if (error) {
       redirectWithMessage(`Bildirim guncellenemedi: ${error.message}`, "error");
+    }
+
+    if (!updatedAnnouncement || updatedAnnouncement.title !== title) {
+      redirectWithMessage("Popup konusu guncellenemedi. Lutfen tekrar deneyin.", "error");
     }
 
     if (
@@ -172,7 +181,7 @@ export async function updatePopupAnnouncementAction(formData: FormData) {
 
     revalidatePath("/");
     revalidatePath("/admin/bildirimler");
-    redirectWithMessage("Popup bildirim guncellendi.");
+    redirectWithMessage("Popup bildirimin konusu ve icerigi guncellendi.");
   } catch (error) {
     const message =
       error instanceof Error

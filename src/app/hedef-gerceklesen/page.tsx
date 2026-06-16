@@ -1526,7 +1526,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
   const companyStoreZeroActualGroups =
     effectiveView === "company" ? buildCompanyStoreZeroActualGroups(filteredStoreRows) : [];
   const companyTrendSummaryRows =
-    effectiveView === "company"
+    effectiveView !== "employee"
       ? buildCompanyTrendSummaryRows(
           companyCategorySummaries,
           filteredStoreRows,
@@ -1535,9 +1535,9 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
         )
       : [];
   const companyCurrentSummaryRows =
-    effectiveView === "company" ? buildCompanyCurrentSummaryRows(filteredStoreRows) : [];
+    effectiveView !== "employee" ? buildCompanyCurrentSummaryRows(filteredStoreRows) : [];
   const companyTrendStoreCodes =
-    effectiveView === "company"
+    effectiveView !== "employee"
       ? Array.from(
           new Set([
             ...companyTrendSummaryRows.flatMap((row) => row.stores.map((store) => store.storeCode)),
@@ -1545,6 +1545,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
           ])
         ).sort((a, b) => a.localeCompare(b, "tr"))
       : [];
+  const highlightedTrendStoreCode = effectiveView === "store" ? activeStoreName : "";
   const detailCardTitle =
     effectiveView === "company" ? "FIRMA" : effectiveView === "store" ? activeStoreName || "MAGAZA" : activeEmployeeName || "CALISAN";
 
@@ -1918,7 +1919,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                   </div>
                 ) : null}
 
-                {effectiveView === "company" && companyTrendSummaryRows.length ? (
+                {effectiveView !== "employee" && companyTrendSummaryRows.length ? (
                   <div className="goal-company-trend-panel">
                     <div className="goal-live-prime-head">
                       <h3>Ay Sonu Gidisat Ozeti</h3>
@@ -1930,7 +1931,12 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                           <tr>
                             <th>Kategori</th>
                             {companyTrendStoreCodes.map((storeCode) => (
-                              <th key={`trend-head-${storeCode}`}>{storeCode}</th>
+                              <th
+                                key={`trend-head-${storeCode}`}
+                                className={storeCode === highlightedTrendStoreCode ? "goal-company-trend-selected" : ""}
+                              >
+                                {storeCode}
+                              </th>
                             ))}
                             <th>Firma</th>
                           </tr>
@@ -1941,13 +1947,19 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                               <th>{row.title}</th>
                               {companyTrendStoreCodes.map((storeCode) => {
                                 const store = row.stores.find((item) => item.storeCode === storeCode);
+                                const cellClasses = [
+                                  storeCode === highlightedTrendStoreCode ? "goal-company-trend-selected" : "",
+                                  store?.projectedPercent !== null &&
+                                  store?.projectedPercent !== undefined &&
+                                  store.projectedPercent >= 100
+                                    ? "goal-company-trend-good"
+                                    : ""
+                                ]
+                                  .filter(Boolean)
+                                  .join(" ");
+
                                 return (
-                                  <td
-                                    key={`trend-${row.title}-${storeCode}`}
-                                    className={store?.projectedPercent !== null && store?.projectedPercent !== undefined && store.projectedPercent >= 100
-                                      ? "goal-company-trend-good"
-                                      : ""}
-                                  >
+                                  <td key={`trend-${row.title}-${storeCode}`} className={cellClasses}>
                                     {formatPercent(store?.projectedPercent)}
                                   </td>
                                 );
@@ -1975,12 +1987,15 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                                     : row.title === "Pin Orani"
                                       ? (store?.actual ?? 0) >= 70
                                       : true;
+                                const cellClasses = [
+                                  storeCode === highlightedTrendStoreCode ? "goal-company-trend-selected" : "",
+                                  isGood ? "goal-company-trend-good" : "goal-company-trend-bad"
+                                ]
+                                  .filter(Boolean)
+                                  .join(" ");
 
                                 return (
-                                  <td
-                                    key={`current-${row.title}-${storeCode}`}
-                                    className={isGood ? "goal-company-trend-good" : "goal-company-trend-bad"}
-                                  >
+                                  <td key={`current-${row.title}-${storeCode}`} className={cellClasses}>
                                     {row.valueType === "percent" ? formatPercent(store?.actual) : formatNumber(store?.actual)}
                                   </td>
                                 );

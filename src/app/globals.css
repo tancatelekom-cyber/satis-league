@@ -8325,6 +8325,11 @@ textarea::placeholder {
   text-transform: uppercase;
 }
 
+.goal-company-trend-table thead th.goal-company-trend-selected,
+.goal-company-trend-table tbody td.goal-company-trend-selected {
+  background: #fde68a;
+}
+
 .goal-company-trend-table tbody th {
   background: #d8e6f5;
   color: #0b2143;

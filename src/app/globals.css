@@ -8343,6 +8343,13 @@ textarea::placeholder {
   background: #ffffff;
 }
 
+.goal-company-trend-value {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
 .goal-company-trend-company {
   background: #d8e6f5 !important;
   color: #dc2626 !important;
@@ -8357,6 +8364,48 @@ textarea::placeholder {
 .goal-company-trend-table tbody td.goal-company-trend-bad,
 .goal-company-trend-company.goal-company-trend-bad {
   color: #dc2626 !important;
+}
+
+.goal-company-trend-indicator {
+  display: inline-flex;
+  width: 0;
+  height: 0;
+  flex: 0 0 auto;
+}
+
+.goal-company-trend-indicator-up {
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 10px solid #16a34a;
+}
+
+.goal-company-trend-indicator-down {
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 10px solid #dc2626;
+}
+
+.goal-company-trend-indicator-equal {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #f59e0b;
+}
+
+.goal-company-trend-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  margin-top: 12px;
+  color: #f8fbff;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.goal-company-trend-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .evaluation-bars,

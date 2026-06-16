@@ -108,6 +108,8 @@ type CompanyLoginGapNote = StoreLoginGapNote & {
   storeName: string;
 };
 
+type TrendComparisonState = "up" | "down" | "equal" | null;
+
 type CompanyTrendSummaryRow = {
   title: string;
   companyProjectedPercent: number | null;
@@ -139,6 +141,27 @@ function calculateDaysSinceLogin(lastSignInAt: string) {
 
   const diffMs = Date.now() - loginTime;
   return diffMs >= 0 ? Math.floor(diffMs / (1000 * 60 * 60 * 24)) : 0;
+}
+
+function getTrendComparisonState(storeValue: number | null | undefined, companyValue: number | null | undefined): TrendComparisonState {
+  if (
+    storeValue === null ||
+    storeValue === undefined ||
+    companyValue === null ||
+    companyValue === undefined ||
+    Number.isNaN(storeValue) ||
+    Number.isNaN(companyValue)
+  ) {
+    return null;
+  }
+
+  const difference = storeValue - companyValue;
+
+  if (Math.abs(difference) < 0.05) {
+    return "equal";
+  }
+
+  return difference > 0 ? "up" : "down";
 }
 
 function isAggregateCategoryLabel(value: string | null | undefined) {
@@ -1947,6 +1970,10 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                               <th>{row.title}</th>
                               {companyTrendStoreCodes.map((storeCode) => {
                                 const store = row.stores.find((item) => item.storeCode === storeCode);
+                                const comparisonState =
+                                  storeCode === highlightedTrendStoreCode
+                                    ? getTrendComparisonState(store?.projectedPercent, row.companyProjectedPercent)
+                                    : null;
                                 const cellClasses = [
                                   storeCode === highlightedTrendStoreCode ? "goal-company-trend-selected" : "",
                                   store?.projectedPercent !== null &&
@@ -1960,7 +1987,15 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
 
                                 return (
                                   <td key={`trend-${row.title}-${storeCode}`} className={cellClasses}>
-                                    {formatPercent(store?.projectedPercent)}
+                                    <span className="goal-company-trend-value">
+                                      <span>{formatPercent(store?.projectedPercent)}</span>
+                                      {comparisonState ? (
+                                        <span
+                                          className={`goal-company-trend-indicator goal-company-trend-indicator-${comparisonState}`}
+                                          aria-hidden="true"
+                                        />
+                                      ) : null}
+                                    </span>
                                   </td>
                                 );
                               })}
@@ -1987,6 +2022,10 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                                     : row.title === "Pin Orani"
                                       ? (store?.actual ?? 0) >= 70
                                       : true;
+                                const comparisonState =
+                                  storeCode === highlightedTrendStoreCode
+                                    ? getTrendComparisonState(store?.actual, row.companyActual)
+                                    : null;
                                 const cellClasses = [
                                   storeCode === highlightedTrendStoreCode ? "goal-company-trend-selected" : "",
                                   isGood ? "goal-company-trend-good" : "goal-company-trend-bad"
@@ -1996,7 +2035,15 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
 
                                 return (
                                   <td key={`current-${row.title}-${storeCode}`} className={cellClasses}>
-                                    {row.valueType === "percent" ? formatPercent(store?.actual) : formatNumber(store?.actual)}
+                                    <span className="goal-company-trend-value">
+                                      <span>{row.valueType === "percent" ? formatPercent(store?.actual) : formatNumber(store?.actual)}</span>
+                                      {comparisonState ? (
+                                        <span
+                                          className={`goal-company-trend-indicator goal-company-trend-indicator-${comparisonState}`}
+                                          aria-hidden="true"
+                                        />
+                                      ) : null}
+                                    </span>
                                   </td>
                                 );
                               })}
@@ -2020,6 +2067,23 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                         </tbody>
                       </table>
                     </div>
+
+                    {effectiveView === "store" ? (
+                      <div className="goal-company-trend-legend">
+                        <span>
+                          <span className="goal-company-trend-indicator goal-company-trend-indicator-down" aria-hidden="true" />
+                          Firma gerceklesen alti
+                        </span>
+                        <span>
+                          <span className="goal-company-trend-indicator goal-company-trend-indicator-up" aria-hidden="true" />
+                          Firma gerceklesen ustu
+                        </span>
+                        <span>
+                          <span className="goal-company-trend-indicator goal-company-trend-indicator-equal" aria-hidden="true" />
+                          Esit
+                        </span>
+                      </div>
+                    ) : null}
                   </div>
                 ) : null}
 

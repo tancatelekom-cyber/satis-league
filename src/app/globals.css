@@ -8408,6 +8408,69 @@ textarea::placeholder {
   gap: 8px;
 }
 
+@media (max-width: 760px) {
+  .goal-company-trend-table-wrap {
+    overflow-x: hidden;
+  }
+
+  .goal-company-trend-table {
+    min-width: 0;
+    table-layout: fixed;
+  }
+
+  .goal-company-trend-table th,
+  .goal-company-trend-table td {
+    padding: 7px 4px;
+    font-size: 0.68rem;
+  }
+
+  .goal-company-trend-table thead th {
+    font-size: 0.66rem;
+    line-height: 1.15;
+  }
+
+  .goal-company-trend-table tbody th {
+    font-size: 0.68rem;
+    line-height: 1.15;
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .goal-company-trend-table tbody td {
+    font-size: 0.72rem;
+  }
+
+  .goal-company-trend-company {
+    font-size: 0.92rem !important;
+  }
+
+  .goal-company-trend-value {
+    gap: 4px;
+  }
+
+  .goal-company-trend-indicator-up {
+    border-left-width: 4px;
+    border-right-width: 4px;
+    border-bottom-width: 7px;
+  }
+
+  .goal-company-trend-indicator-down {
+    border-left-width: 4px;
+    border-right-width: 4px;
+    border-top-width: 7px;
+  }
+
+  .goal-company-trend-indicator-equal {
+    width: 7px;
+    height: 7px;
+  }
+
+  .goal-company-trend-legend {
+    gap: 8px 12px;
+    font-size: 0.72rem;
+  }
+}
+
 .evaluation-bars,
 .evaluation-metric-list {
   display: grid;

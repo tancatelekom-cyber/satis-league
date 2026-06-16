@@ -2011,7 +2011,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                               {visibleTrendStoreCodes.map((storeCode) => {
                                 const store = row.stores.find((item) => item.storeCode === storeCode);
                                 const comparisonState =
-                                  storeCode === highlightedTrendStoreCode
+                                  storeCode === highlightedTrendStoreCode && row.title !== "Giris Sayilari"
                                     ? getTrendComparisonState(store?.projectedPercent, row.companyProjectedPercent)
                                     : null;
                                 const cellClasses = [
@@ -2065,7 +2065,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                                       ? (store?.actual ?? 0) >= 70
                                       : true;
                                 const comparisonState =
-                                  storeCode === highlightedTrendStoreCode
+                                  storeCode === highlightedTrendStoreCode && row.title !== "Giris Sayilari"
                                     ? getTrendComparisonState(store?.actual, row.companyActual)
                                     : null;
                                 const cellClasses = [

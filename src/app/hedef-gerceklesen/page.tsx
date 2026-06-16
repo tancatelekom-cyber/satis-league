@@ -1219,13 +1219,21 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
     redirect("/giris");
   }
 
-  const { data: profile } = await supabase.from("profiles").select("approval, role").eq("id", user.id).single();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("approval, role, store:stores(name)")
+    .eq("id", user.id)
+    .single();
 
   if (!profile || profile.approval !== "approved") {
     redirect("/hesabim");
   }
 
   const canViewAll = canViewAllGoalActual(profile.role);
+  const currentUserStore = (profile as { store?: Array<{ name: string }> | { name: string } | null }).store;
+  const currentUserStoreName = Array.isArray(currentUserStore)
+    ? (currentUserStore[0]?.name ?? "")
+    : (currentUserStore?.name ?? "");
   const effectiveView: GoalView = canViewAll
     ? selectedView === "store"
       ? "store"
@@ -1549,7 +1557,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
   const companyStoreZeroActualGroups =
     effectiveView === "company" ? buildCompanyStoreZeroActualGroups(filteredStoreRows) : [];
   const companyTrendSummaryRows =
-    effectiveView !== "employee"
+    effectiveView !== "employee" || Boolean(currentUserStoreName)
       ? buildCompanyTrendSummaryRows(
           companyCategorySummaries,
           filteredStoreRows,
@@ -1558,9 +1566,9 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
         )
       : [];
   const companyCurrentSummaryRows =
-    effectiveView !== "employee" ? buildCompanyCurrentSummaryRows(filteredStoreRows) : [];
+    effectiveView !== "employee" || Boolean(currentUserStoreName) ? buildCompanyCurrentSummaryRows(filteredStoreRows) : [];
   const companyTrendStoreCodes =
-    effectiveView !== "employee"
+    effectiveView !== "employee" || Boolean(currentUserStoreName)
       ? Array.from(
           new Set([
             ...companyTrendSummaryRows.flatMap((row) => row.stores.map((store) => store.storeCode)),
@@ -1568,6 +1576,11 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
           ])
         ).sort((a, b) => a.localeCompare(b, "tr"))
       : [];
+  const employeeTrendStoreCodes =
+    effectiveView === "employee" && currentUserStoreName && companyTrendStoreCodes.includes(currentUserStoreName)
+      ? [currentUserStoreName]
+      : [];
+  const visibleTrendStoreCodes = effectiveView === "employee" ? employeeTrendStoreCodes : companyTrendStoreCodes;
   const highlightedTrendStoreCode = effectiveView === "store" ? activeStoreName : "";
   const detailCardTitle =
     effectiveView === "company" ? "FIRMA" : effectiveView === "store" ? activeStoreName || "MAGAZA" : activeEmployeeName || "CALISAN";
@@ -1942,7 +1955,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                   </div>
                 ) : null}
 
-                {effectiveView !== "employee" && companyTrendSummaryRows.length ? (
+                {visibleTrendStoreCodes.length && companyTrendSummaryRows.length ? (
                   <div className="goal-company-trend-panel">
                     <div className="goal-live-prime-head">
                       <h3>Ay Sonu Gidisat Ozeti</h3>
@@ -1953,7 +1966,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                         <thead>
                           <tr>
                             <th>Kategori</th>
-                            {companyTrendStoreCodes.map((storeCode) => (
+                            {visibleTrendStoreCodes.map((storeCode) => (
                               <th
                                 key={`trend-head-${storeCode}`}
                                 className={storeCode === highlightedTrendStoreCode ? "goal-company-trend-selected" : ""}
@@ -1961,14 +1974,14 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                                 {storeCode}
                               </th>
                             ))}
-                            <th>Firma</th>
+                            {effectiveView !== "employee" ? <th>Firma</th> : null}
                           </tr>
                         </thead>
                         <tbody>
                           {companyTrendSummaryRows.map((row) => (
                             <tr key={`trend-row-${row.title}`}>
                               <th>{row.title}</th>
-                              {companyTrendStoreCodes.map((storeCode) => {
+                              {visibleTrendStoreCodes.map((storeCode) => {
                                 const store = row.stores.find((item) => item.storeCode === storeCode);
                                 const comparisonState =
                                   storeCode === highlightedTrendStoreCode
@@ -1999,22 +2012,24 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                                   </td>
                                 );
                               })}
-                              <td
-                                className={`goal-company-trend-company ${
-                                  row.companyProjectedPercent !== null && row.companyProjectedPercent >= 100
-                                    ? "goal-company-trend-good"
-                                    : ""
-                                }`}
-                              >
-                                {formatPercent(row.companyProjectedPercent)}
-                              </td>
+                              {effectiveView !== "employee" ? (
+                                <td
+                                  className={`goal-company-trend-company ${
+                                    row.companyProjectedPercent !== null && row.companyProjectedPercent >= 100
+                                      ? "goal-company-trend-good"
+                                      : ""
+                                  }`}
+                                >
+                                  {formatPercent(row.companyProjectedPercent)}
+                                </td>
+                              ) : null}
                             </tr>
                           ))}
 
                           {companyCurrentSummaryRows.map((row) => (
                             <tr key={`current-row-${row.title}`}>
                               <th>{row.title}</th>
-                              {companyTrendStoreCodes.map((storeCode) => {
+                              {visibleTrendStoreCodes.map((storeCode) => {
                                 const store = row.stores.find((item) => item.storeCode === storeCode);
                                 const isGood =
                                   row.title === "Memnuniyet"
@@ -2047,21 +2062,23 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                                   </td>
                                 );
                               })}
-                              <td
-                                className={`goal-company-trend-company ${
-                                  row.title === "Memnuniyet"
-                                    ? (row.companyActual ?? 0) >= 4.4
-                                      ? "goal-company-trend-good"
-                                      : "goal-company-trend-bad"
-                                    : row.title === "Pin Orani"
-                                      ? (row.companyActual ?? 0) >= 70
+                              {effectiveView !== "employee" ? (
+                                <td
+                                  className={`goal-company-trend-company ${
+                                    row.title === "Memnuniyet"
+                                      ? (row.companyActual ?? 0) >= 4.4
                                         ? "goal-company-trend-good"
                                         : "goal-company-trend-bad"
-                                      : "goal-company-trend-good"
-                                }`}
-                              >
-                                {row.valueType === "percent" ? formatPercent(row.companyActual) : formatNumber(row.companyActual)}
-                              </td>
+                                      : row.title === "Pin Orani"
+                                        ? (row.companyActual ?? 0) >= 70
+                                          ? "goal-company-trend-good"
+                                          : "goal-company-trend-bad"
+                                        : "goal-company-trend-good"
+                                  }`}
+                                >
+                                  {row.valueType === "percent" ? formatPercent(row.companyActual) : formatNumber(row.companyActual)}
+                                </td>
+                              ) : null}
                             </tr>
                           ))}
                         </tbody>

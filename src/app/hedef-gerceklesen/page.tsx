@@ -5,6 +5,7 @@ import { FormattedCoachingText } from "@/components/evaluation/formatted-coachin
 import { SpeakCoachingButton } from "@/components/evaluation/speak-coaching-button";
 import { FilterSelectNav } from "@/components/ui/filter-select-nav";
 import { GoalActualRow, GoalStoreRow, fetchGoalActualRows, fetchGoalDayStats, fetchGoalStoreRows } from "@/lib/goal-actuals";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { UserRole } from "@/lib/types";
 
@@ -97,6 +98,12 @@ type StoreZeroActualGroup = {
   items: string[];
 };
 
+type StoreLoginGapNote = {
+  profileId: string;
+  fullName: string;
+  daysSinceLogin: number;
+};
+
 type CompanyTrendSummaryRow = {
   title: string;
   companyProjectedPercent: number | null;
@@ -118,6 +125,17 @@ type CompanyCurrentSummaryRow = {
 
 type GoalView = "employee" | "store" | "company";
 type GoalPanel = "detail" | "ranking" | "needs" | "evaluation";
+
+function calculateDaysSinceLogin(lastSignInAt: string) {
+  const loginTime = new Date(lastSignInAt).getTime();
+
+  if (!Number.isFinite(loginTime)) {
+    return null;
+  }
+
+  const diffMs = Date.now() - loginTime;
+  return diffMs >= 0 ? Math.floor(diffMs / (1000 * 60 * 60 * 24)) : 0;
+}
 
 function isAggregateCategoryLabel(value: string | null | undefined) {
   const normalized = String(value ?? "")
@@ -1308,6 +1326,76 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
 
   const activeEmployeeName = effectiveEmployee || employeeSummaries[0]?.name || "";
   const activeStoreName = effectiveStore || storeSummaries[0]?.name || "";
+  let storeLoginGapNotes: StoreLoginGapNote[] = [];
+
+  if (effectiveView === "store" && activeStoreName) {
+    try {
+      const admin = createAdminClient();
+      const { data: storeRecord } = await admin.from("stores").select("id").eq("name", activeStoreName).maybeSingle();
+
+      if (storeRecord?.id) {
+        const profilesResult = await admin
+          .from("profiles")
+          .select("id, full_name")
+          .eq("store_id", storeRecord.id)
+          .eq("approval", "approved")
+          .eq("role", "employee")
+          .order("full_name", { ascending: true });
+
+        const profiles = (profilesResult.data ?? []) as Array<{ id: string; full_name: string }>;
+
+        if (profiles.length) {
+          const authUsers: Array<{ id: string; last_sign_in_at?: string | null }> = [];
+          let page = 1;
+          const perPage = 1000;
+
+          while (true) {
+            const { data, error } = await admin.auth.admin.listUsers({ page, perPage });
+
+            if (error) {
+              break;
+            }
+
+            const batch = data?.users ?? [];
+            authUsers.push(...batch);
+
+            if (batch.length < perPage) {
+              break;
+            }
+
+            page += 1;
+          }
+
+          const authUserLastLoginMap = new Map(authUsers.map((entry) => [entry.id, entry.last_sign_in_at ?? null] as const));
+
+          storeLoginGapNotes = profiles
+            .map((person) => {
+              const lastSignInAt = authUserLastLoginMap.get(person.id);
+
+              if (!lastSignInAt) {
+                return null;
+              }
+
+              const daysSinceLogin = calculateDaysSinceLogin(lastSignInAt);
+
+              if (daysSinceLogin === null || daysSinceLogin < 2) {
+                return null;
+              }
+
+              return {
+                profileId: person.id,
+                fullName: person.full_name,
+                daysSinceLogin
+              };
+            })
+            .filter((note): note is StoreLoginGapNote => Boolean(note))
+            .sort((left, right) => right.daysSinceLogin - left.daysSinceLogin || left.fullName.localeCompare(right.fullName, "tr"));
+        }
+      }
+    } catch {
+      storeLoginGapNotes = [];
+    }
+  }
 
   const activeEmployeeRows = activeEmployeeName
     ? filteredEmployeeRows.filter((row) => row.employeeName === activeEmployeeName)
@@ -1725,6 +1813,19 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                     <div className="evaluation-card-actions evaluation-card-actions-bottom">
                       <SpeakCoachingButton text={detailCoachingText} />
                       <CopyCoachingButton text={detailCoachingText} />
+                    </div>
+                  </div>
+                ) : null}
+
+                {effectiveView === "store" && storeLoginGapNotes.length ? (
+                  <div className="evaluation-zero-alert">
+                    <strong>Portala giris yapmayan calisanlar</strong>
+                    <div>
+                      {storeLoginGapNotes.map((note) => (
+                        <span key={note.profileId}>
+                          {note.fullName} - {note.daysSinceLogin} gundur giris yapmamistir
+                        </span>
+                      ))}
                     </div>
                   </div>
                 ) : null}

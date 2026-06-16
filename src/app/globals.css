@@ -8320,6 +8320,11 @@ textarea::placeholder {
   font-size: 1.3rem !important;
 }
 
+.goal-company-trend-table tbody td.goal-company-trend-good,
+.goal-company-trend-company.goal-company-trend-good {
+  color: #15803d !important;
+}
+
 .evaluation-bars,
 .evaluation-metric-list {
   display: grid;

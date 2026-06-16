@@ -1680,9 +1680,26 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                               <th>{row.title}</th>
                               {companyTrendStoreCodes.map((storeCode) => {
                                 const store = row.stores.find((item) => item.storeCode === storeCode);
-                                return <td key={`trend-${row.title}-${storeCode}`}>{formatPercent(store?.projectedPercent)}</td>;
+                                return (
+                                  <td
+                                    key={`trend-${row.title}-${storeCode}`}
+                                    className={store?.projectedPercent !== null && store?.projectedPercent !== undefined && store.projectedPercent >= 100
+                                      ? "goal-company-trend-good"
+                                      : ""}
+                                  >
+                                    {formatPercent(store?.projectedPercent)}
+                                  </td>
+                                );
                               })}
-                              <td className="goal-company-trend-company">{formatPercent(row.companyProjectedPercent)}</td>
+                              <td
+                                className={`goal-company-trend-company ${
+                                  row.companyProjectedPercent !== null && row.companyProjectedPercent >= 100
+                                    ? "goal-company-trend-good"
+                                    : ""
+                                }`}
+                              >
+                                {formatPercent(row.companyProjectedPercent)}
+                              </td>
                             </tr>
                           ))}
                         </tbody>

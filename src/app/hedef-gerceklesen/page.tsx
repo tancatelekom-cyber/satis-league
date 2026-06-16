@@ -132,6 +132,19 @@ type CompanyCurrentSummaryRow = {
 type GoalView = "employee" | "store" | "company";
 type GoalPanel = "detail" | "ranking" | "needs" | "evaluation";
 
+function normalizeStoreKey(value: string | null | undefined) {
+  return String(value ?? "")
+    .toLocaleUpperCase("tr-TR")
+    .replace(/\u0130/g, "I")
+    .replace(/\u011E/g, "G")
+    .replace(/\u00DC/g, "U")
+    .replace(/\u015E/g, "S")
+    .replace(/\u00D6/g, "O")
+    .replace(/\u00C7/g, "C")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function calculateDaysSinceLogin(lastSignInAt: string) {
   const loginTime = new Date(lastSignInAt).getTime();
 
@@ -1577,9 +1590,14 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
           ])
         ).sort((a, b) => a.localeCompare(b, "tr"))
       : [];
+  const resolvedEmployeeStoreCode =
+    effectiveView === "employee" && activeEmployeeStoreCode
+      ? companyTrendStoreCodes.find((storeCode) => normalizeStoreKey(storeCode) === normalizeStoreKey(activeEmployeeStoreCode)) ??
+        activeEmployeeStoreCode
+      : "";
   const employeeTrendStoreCodes =
-    effectiveView === "employee" && activeEmployeeStoreCode && companyTrendStoreCodes.includes(activeEmployeeStoreCode)
-      ? [activeEmployeeStoreCode]
+    effectiveView === "employee" && resolvedEmployeeStoreCode && companyTrendStoreCodes.includes(resolvedEmployeeStoreCode)
+      ? [resolvedEmployeeStoreCode]
       : [];
   const storeTrendStoreCodes =
     effectiveView === "store" && activeStoreName && companyTrendStoreCodes.includes(activeStoreName) ? [activeStoreName] : [];
@@ -1589,7 +1607,8 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
       : effectiveView === "store"
         ? storeTrendStoreCodes
         : companyTrendStoreCodes;
-  const highlightedTrendStoreCode = effectiveView === "store" ? activeStoreName : effectiveView === "employee" ? activeEmployeeStoreCode : "";
+  const highlightedTrendStoreCode =
+    effectiveView === "store" ? activeStoreName : effectiveView === "employee" ? resolvedEmployeeStoreCode : "";
   const detailCardTitle =
     effectiveView === "company" ? "FIRMA" : effectiveView === "store" ? activeStoreName || "MAGAZA" : activeEmployeeName || "CALISAN";
 

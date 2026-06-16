@@ -1581,7 +1581,14 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
     effectiveView === "employee" && activeEmployeeStoreCode && companyTrendStoreCodes.includes(activeEmployeeStoreCode)
       ? [activeEmployeeStoreCode]
       : [];
-  const visibleTrendStoreCodes = effectiveView === "employee" ? employeeTrendStoreCodes : companyTrendStoreCodes;
+  const storeTrendStoreCodes =
+    effectiveView === "store" && activeStoreName && companyTrendStoreCodes.includes(activeStoreName) ? [activeStoreName] : [];
+  const visibleTrendStoreCodes =
+    effectiveView === "employee"
+      ? employeeTrendStoreCodes
+      : effectiveView === "store"
+        ? storeTrendStoreCodes
+        : companyTrendStoreCodes;
   const highlightedTrendStoreCode = effectiveView === "store" ? activeStoreName : effectiveView === "employee" ? activeEmployeeStoreCode : "";
   const detailCardTitle =
     effectiveView === "company" ? "FIRMA" : effectiveView === "store" ? activeStoreName || "MAGAZA" : activeEmployeeName || "CALISAN";

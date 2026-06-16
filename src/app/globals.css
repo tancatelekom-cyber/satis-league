@@ -8237,6 +8237,30 @@ textarea::placeholder {
   font-weight: 950;
 }
 
+.evaluation-login-alert {
+  border-color: rgba(14, 116, 144, 0.28);
+  background: linear-gradient(180deg, rgba(224, 242, 254, 0.94), rgba(207, 250, 254, 0.92));
+  color: #164e63;
+}
+
+.evaluation-login-alert strong {
+  color: #155e75;
+  font-size: 1rem;
+}
+
+.evaluation-login-alert div {
+  gap: 10px;
+}
+
+.evaluation-login-alert span {
+  min-height: 30px;
+  padding: 6px 11px;
+  background: linear-gradient(135deg, #0f766e, #0ea5a4);
+  color: #f8fbff;
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
 .evaluation-zero-store-list {
   display: grid !important;
   gap: 12px;

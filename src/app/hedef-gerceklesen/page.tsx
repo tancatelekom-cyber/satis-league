@@ -1897,7 +1897,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                 ) : null}
 
                 {effectiveView === "store" && storeLoginGapNotes.length ? (
-                  <div className="evaluation-zero-alert">
+                  <div className="evaluation-zero-alert evaluation-login-alert">
                     <strong>Portala giris yapmayan calisanlar</strong>
                     <div>
                       {storeLoginGapNotes.map((note) => (
@@ -2009,7 +2009,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                 ) : null}
 
                 {effectiveView === "company" && companyLoginGapNotes.length ? (
-                  <div className="evaluation-zero-alert">
+                  <div className="evaluation-zero-alert evaluation-login-alert">
                     <strong>Firma geneli portala giris yapmayanlar</strong>
                     <div>
                       {companyLoginGapNotes.map((note) => (

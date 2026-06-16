@@ -97,6 +97,15 @@ type StoreZeroActualGroup = {
   items: string[];
 };
 
+type CompanyTrendSummaryRow = {
+  title: string;
+  companyProjectedPercent: number | null;
+  stores: Array<{
+    storeCode: string;
+    projectedPercent: number | null;
+  }>;
+};
+
 type GoalView = "employee" | "store" | "company";
 type GoalPanel = "detail" | "ranking" | "needs" | "evaluation";
 
@@ -648,6 +657,41 @@ function buildCompanyStoreZeroActualGroups(rows: GoalStoreRow[]) {
       items: Array.from(items).sort((a, b) => a.localeCompare(b, "tr"))
     }))
     .sort((a, b) => a.storeCode.localeCompare(b.storeCode, "tr"));
+}
+
+function buildCompanyTrendSummaryRows(
+  companyCategories: GoalCategorySummary[],
+  storeRows: GoalStoreRow[],
+  workedDays: number,
+  totalDays: number
+) {
+  return companyCategories
+    .filter((category) => category.hasTarget && category.showProjection)
+    .map((category) => {
+      const storeMap = new Map<string, GoalStoreRow[]>();
+
+      storeRows
+        .filter((row) => row.mainCategory === category.title)
+        .forEach((row) => {
+          const current = storeMap.get(row.storeCode) ?? [];
+          current.push(row);
+          storeMap.set(row.storeCode, current);
+        });
+
+      const stores = Array.from(storeMap.entries())
+        .map(([storeCode, rows]) => ({
+          storeCode,
+          projectedPercent: buildStoreMetricSummary(rows, workedDays, totalDays).projectedPercent
+        }))
+        .sort((a, b) => a.storeCode.localeCompare(b.storeCode, "tr"));
+
+      return {
+        title: category.title,
+        companyProjectedPercent: category.projectedPercent,
+        stores
+      } satisfies CompanyTrendSummaryRow;
+    })
+    .sort((a, b) => a.title.localeCompare(b.title, "tr"));
 }
 
 function toCoachingMetric(summary: GoalCategorySummary): CoachingMetric {
@@ -1241,6 +1285,21 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
         : buildCompanyZeroActualItems(filteredStoreRows);
   const companyStoreZeroActualGroups =
     effectiveView === "company" ? buildCompanyStoreZeroActualGroups(filteredStoreRows) : [];
+  const companyTrendSummaryRows =
+    effectiveView === "company"
+      ? buildCompanyTrendSummaryRows(
+          companyCategorySummaries,
+          filteredStoreRows,
+          dayStats.workedDays,
+          dayStats.totalDays
+        )
+      : [];
+  const companyTrendStoreCodes =
+    effectiveView === "company"
+      ? Array.from(new Set(companyTrendSummaryRows.flatMap((row) => row.stores.map((store) => store.storeCode)))).sort((a, b) =>
+          a.localeCompare(b, "tr")
+        )
+      : [];
   const detailCardTitle =
     effectiveView === "company" ? "FIRMA" : effectiveView === "store" ? activeStoreName || "MAGAZA" : activeEmployeeName || "CALISAN";
 
@@ -1595,6 +1654,40 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                       <h3>Canli Primler</h3>
                     </div>
                     <GoalActualOnlyCategoryCards categories={employeeLivePrimeCategorySummaries} />
+                  </div>
+                ) : null}
+
+                {effectiveView === "company" && companyTrendSummaryRows.length ? (
+                  <div className="goal-company-trend-panel">
+                    <div className="goal-live-prime-head">
+                      <h3>Ay Sonu Gidisat Ozeti</h3>
+                    </div>
+
+                    <div className="goal-company-trend-table-wrap">
+                      <table className="goal-company-trend-table">
+                        <thead>
+                          <tr>
+                            <th>Kategori</th>
+                            {companyTrendStoreCodes.map((storeCode) => (
+                              <th key={`trend-head-${storeCode}`}>{storeCode}</th>
+                            ))}
+                            <th>Firma</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {companyTrendSummaryRows.map((row) => (
+                            <tr key={`trend-row-${row.title}`}>
+                              <th>{row.title}</th>
+                              {companyTrendStoreCodes.map((storeCode) => {
+                                const store = row.stores.find((item) => item.storeCode === storeCode);
+                                return <td key={`trend-${row.title}-${storeCode}`}>{formatPercent(store?.projectedPercent)}</td>;
+                              })}
+                              <td className="goal-company-trend-company">{formatPercent(row.companyProjectedPercent)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 ) : null}
               </article>

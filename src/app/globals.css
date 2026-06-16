@@ -8264,6 +8264,62 @@ textarea::placeholder {
   gap: 8px;
 }
 
+.goal-company-trend-panel {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+  padding: 18px;
+  border-radius: 22px;
+  background: rgba(7, 23, 43, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.goal-company-trend-table-wrap {
+  overflow-x: auto;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.goal-company-trend-table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+  color: #10203b;
+}
+
+.goal-company-trend-table th,
+.goal-company-trend-table td {
+  padding: 12px 14px;
+  border: 1px solid rgba(16, 32, 59, 0.12);
+  text-align: center;
+  font-weight: 900;
+}
+
+.goal-company-trend-table thead th {
+  background: #cfe0f2;
+  color: #0b2143;
+  text-transform: uppercase;
+}
+
+.goal-company-trend-table tbody th {
+  background: #d8e6f5;
+  color: #0b2143;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.goal-company-trend-table tbody td {
+  color: #dc2626;
+  font-size: 1.02rem;
+  background: #ffffff;
+}
+
+.goal-company-trend-company {
+  background: #d8e6f5 !important;
+  color: #dc2626 !important;
+  font-size: 1.3rem !important;
+}
+
 .evaluation-bars,
 .evaluation-metric-list {
   display: grid;

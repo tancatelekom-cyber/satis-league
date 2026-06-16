@@ -1514,6 +1514,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
     ? filteredEmployeeCoreRows.filter((row) => row.employeeName === activeEmployeeName)
     : [];
   const activeStoreRows = activeStoreName ? filteredStoreRows.filter((row) => row.storeCode === activeStoreName) : [];
+  const activeEmployeeStoreCode = activeEmployeeRows[0]?.storeName || currentUserStoreName;
   const employeeCategorySummaries = buildCategorySummaries(activeEmployeeCoreRows, dayStats.workedDays, dayStats.totalDays);
   const employeeLivePrimeCategorySummaries = buildCategorySummaries(
     activeEmployeeRows.filter((row) => isLivePrimeCategory(row.mainCategory)),
@@ -1557,7 +1558,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
   const companyStoreZeroActualGroups =
     effectiveView === "company" ? buildCompanyStoreZeroActualGroups(filteredStoreRows) : [];
   const companyTrendSummaryRows =
-    effectiveView !== "employee" || Boolean(currentUserStoreName)
+    effectiveView !== "employee" || Boolean(activeEmployeeStoreCode)
       ? buildCompanyTrendSummaryRows(
           companyCategorySummaries,
           filteredStoreRows,
@@ -1566,9 +1567,9 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
         )
       : [];
   const companyCurrentSummaryRows =
-    effectiveView !== "employee" || Boolean(currentUserStoreName) ? buildCompanyCurrentSummaryRows(filteredStoreRows) : [];
+    effectiveView !== "employee" || Boolean(activeEmployeeStoreCode) ? buildCompanyCurrentSummaryRows(filteredStoreRows) : [];
   const companyTrendStoreCodes =
-    effectiveView !== "employee" || Boolean(currentUserStoreName)
+    effectiveView !== "employee" || Boolean(activeEmployeeStoreCode)
       ? Array.from(
           new Set([
             ...companyTrendSummaryRows.flatMap((row) => row.stores.map((store) => store.storeCode)),
@@ -1577,11 +1578,11 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
         ).sort((a, b) => a.localeCompare(b, "tr"))
       : [];
   const employeeTrendStoreCodes =
-    effectiveView === "employee" && currentUserStoreName && companyTrendStoreCodes.includes(currentUserStoreName)
-      ? [currentUserStoreName]
+    effectiveView === "employee" && activeEmployeeStoreCode && companyTrendStoreCodes.includes(activeEmployeeStoreCode)
+      ? [activeEmployeeStoreCode]
       : [];
   const visibleTrendStoreCodes = effectiveView === "employee" ? employeeTrendStoreCodes : companyTrendStoreCodes;
-  const highlightedTrendStoreCode = effectiveView === "store" ? activeStoreName : "";
+  const highlightedTrendStoreCode = effectiveView === "store" ? activeStoreName : effectiveView === "employee" ? activeEmployeeStoreCode : "";
   const detailCardTitle =
     effectiveView === "company" ? "FIRMA" : effectiveView === "store" ? activeStoreName || "MAGAZA" : activeEmployeeName || "CALISAN";
 

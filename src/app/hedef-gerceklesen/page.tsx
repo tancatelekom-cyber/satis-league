@@ -92,6 +92,11 @@ type ZeroActualItem = {
   label: string;
 };
 
+type StoreZeroActualGroup = {
+  storeCode: string;
+  items: string[];
+};
+
 type GoalView = "employee" | "store" | "company";
 type GoalPanel = "detail" | "ranking" | "needs" | "evaluation";
 
@@ -623,6 +628,26 @@ function buildCompanyZeroActualItems(rows: GoalStoreRow[]) {
       seen.add(item.label);
       return true;
     });
+}
+
+function buildCompanyStoreZeroActualGroups(rows: GoalStoreRow[]) {
+  const storeMap = new Map<string, Set<string>>();
+
+  rows
+    .filter((row) => !isEntryCount(row.mainCategory) && row.actual === 0)
+    .forEach((row) => {
+      const label = row.subCategory || row.mainCategory;
+      const current = storeMap.get(row.storeCode) ?? new Set<string>();
+      current.add(label);
+      storeMap.set(row.storeCode, current);
+    });
+
+  return Array.from(storeMap.entries())
+    .map(([storeCode, items]) => ({
+      storeCode,
+      items: Array.from(items).sort((a, b) => a.localeCompare(b, "tr"))
+    }))
+    .sort((a, b) => a.storeCode.localeCompare(b.storeCode, "tr"));
 }
 
 function toCoachingMetric(summary: GoalCategorySummary): CoachingMetric {
@@ -1214,6 +1239,8 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
       : effectiveView === "store"
         ? buildStoreZeroActualItems(activeStoreRows)
         : buildCompanyZeroActualItems(filteredStoreRows);
+  const companyStoreZeroActualGroups =
+    effectiveView === "company" ? buildCompanyStoreZeroActualGroups(filteredStoreRows) : [];
   const detailCardTitle =
     effectiveView === "company" ? "FIRMA" : effectiveView === "store" ? activeStoreName || "MAGAZA" : activeEmployeeName || "CALISAN";
 
@@ -1454,6 +1481,12 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                       <span className="goal-live-prime-ranking-caret">v</span>
                     </summary>
 
+                    <div className="goal-live-prime-ranking-export">
+                      <a className="button-secondary export-link-button" href="/hedef-gerceklesen/canli-primler-excel">
+                        Excele Indir
+                      </a>
+                    </div>
+
                     <div className="goal-ranking-list goal-live-prime-ranking-list">
                       {employeeLivePrimeRankingSummaries.map((summary, index) => (
                         <a
@@ -1525,6 +1558,25 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                         <div>
                           {detailZeroActualItems.map((item) => (
                             <span key={item.key}>{item.label}</span>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {effectiveView === "company" && companyStoreZeroActualGroups.length ? (
+                      <div className="evaluation-zero-alert evaluation-zero-alert-stores">
+                        <strong>Subelerin gozden kacirdigi kalemler</strong>
+                        <p>Firma toplaminda sifir kalan kalemler sube bazinda asagida listelenir.</p>
+                        <div className="evaluation-zero-store-list">
+                          {companyStoreZeroActualGroups.map((group) => (
+                            <div key={group.storeCode} className="evaluation-zero-store-card">
+                              <strong>{group.storeCode}</strong>
+                              <div>
+                                {group.items.map((item) => (
+                                  <span key={`${group.storeCode}-${item}`}>{item}</span>
+                                ))}
+                              </div>
+                            </div>
                           ))}
                         </div>
                       </div>

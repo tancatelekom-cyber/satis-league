@@ -8237,6 +8237,33 @@ textarea::placeholder {
   font-weight: 950;
 }
 
+.evaluation-zero-store-list {
+  display: grid !important;
+  gap: 12px;
+}
+
+.evaluation-zero-store-card {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.48);
+  border: 1px solid rgba(127, 29, 29, 0.18);
+}
+
+.evaluation-zero-store-card > strong {
+  color: #7f1d1d;
+  font-size: 1rem;
+  font-weight: 950;
+  text-transform: none;
+}
+
+.evaluation-zero-store-card > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .evaluation-bars,
 .evaluation-metric-list {
   display: grid;

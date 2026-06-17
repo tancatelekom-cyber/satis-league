@@ -23,12 +23,18 @@ export type GoalDayStats = {
   totalDays: number;
 };
 
+export type GoalProductionRewardRow = {
+  points: number;
+  reward: string;
+};
+
 const GOAL_SHEET_ID = "1Ppf_vGtlD6RInm0fxy3lDaV5Sy3LWggkH6Gw1wgciuA";
 const PRS_SHEET_NAME = "PRS";
 const GN_SHEET_NAME = "GN";
 const PRS_SHEET_GID = "0";
 const GN_SHEET_GID = "2046012697";
 const STORE_SHEET_GID = "650800232";
+const PRODUCTION_REWARD_SHEET_GID = "2009769454";
 
 function buildSheetUrl(sheetName?: string, gid?: string) {
   const params = new URLSearchParams();
@@ -227,8 +233,45 @@ async function fetchGoalStoreRowsFromSheet() {
     .filter((row): row is GoalStoreRow => Boolean(row));
 }
 
+async function fetchGoalProductionRewardRowsFromSheet() {
+  const response = await fetch(buildSheetUrl(undefined, PRODUCTION_REWARD_SHEET_GID), {
+    cache: "no-store",
+    next: { revalidate: 0 },
+    headers: {
+      accept: "text/csv, text/plain, */*",
+      "user-agent": "Mozilla/5.0 (compatible; TancaSuperLigBot/1.0; +https://vercel.app)"
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`Uretim puani kazanım sayfasi okunamadi: ${response.status}`);
+  }
+
+  const rows = parseCsv(await response.text());
+
+  return rows
+    .slice(1)
+    .map((row): GoalProductionRewardRow | null => {
+      const points = parseLocalizedNumber(normalizeText(row[0] ?? ""));
+      const reward = normalizeText(row[1] ?? "");
+
+      if (!points || !reward) {
+        return null;
+      }
+
+      return {
+        points,
+        reward
+      };
+    })
+    .filter((row): row is GoalProductionRewardRow => Boolean(row))
+    .sort((left, right) => left.points - right.points);
+}
+
 export const fetchGoalActualRows = fetchGoalActualRowsFromSheet;
 
 export const fetchGoalDayStats = fetchGoalDayStatsFromSheet;
 
 export const fetchGoalStoreRows = fetchGoalStoreRowsFromSheet;
+
+export const fetchGoalProductionRewardRows = fetchGoalProductionRewardRowsFromSheet;

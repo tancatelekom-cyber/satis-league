@@ -6047,6 +6047,98 @@ textarea::placeholder {
   padding: 0 18px 18px;
 }
 
+.goal-production-reward-panel {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(7, 24, 45, 0.24);
+  border: 1px solid rgba(255, 209, 102, 0.2);
+}
+
+.goal-production-reward-head {
+  display: grid;
+  gap: 4px;
+}
+
+.goal-production-reward-head strong {
+  color: #fff4c2;
+  font-size: 0.98rem;
+}
+
+.goal-production-reward-head span {
+  color: #e7f1ff;
+  font-size: 0.9rem;
+}
+
+.goal-production-reward-head b {
+  color: #ffd166;
+}
+
+.goal-production-reward-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.goal-production-reward-summary span {
+  display: grid;
+  gap: 3px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.goal-production-reward-summary small {
+  color: rgba(247, 251, 255, 0.78);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.goal-production-reward-summary strong {
+  color: #ffffff;
+  font-size: 0.92rem;
+  line-height: 1.25;
+}
+
+.goal-production-reward-table-wrap {
+  overflow-x: auto;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.goal-production-reward-table {
+  width: 100%;
+  min-width: 620px;
+  border-collapse: collapse;
+  color: #10203b;
+}
+
+.goal-production-reward-table th,
+.goal-production-reward-table td {
+  padding: 10px 12px;
+  border: 1px solid rgba(16, 32, 59, 0.12);
+  text-align: left;
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.goal-production-reward-table thead th {
+  background: #d8e6f5;
+  color: #0b2143;
+}
+
+.goal-production-reward-table tbody tr.goal-production-reward-row-active {
+  background: #fff4c2;
+}
+
+.goal-production-reward-table tbody tr.goal-production-reward-row-active td {
+  color: #7a5200;
+}
+
 .goal-category-topline {
   display: flex;
   flex-wrap: wrap;
@@ -7198,6 +7290,14 @@ textarea::placeholder {
 
   .goal-category-caret {
     justify-self: end;
+  }
+
+  .goal-production-reward-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .goal-production-reward-table {
+    min-width: 520px;
   }
 
   .goal-mode-row {

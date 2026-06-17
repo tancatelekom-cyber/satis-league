@@ -4,7 +4,15 @@ import { CopyCoachingButton } from "@/components/evaluation/copy-coaching-button
 import { FormattedCoachingText } from "@/components/evaluation/formatted-coaching-text";
 import { SpeakCoachingButton } from "@/components/evaluation/speak-coaching-button";
 import { FilterSelectNav } from "@/components/ui/filter-select-nav";
-import { GoalActualRow, GoalStoreRow, fetchGoalActualRows, fetchGoalDayStats, fetchGoalStoreRows } from "@/lib/goal-actuals";
+import {
+  GoalActualRow,
+  GoalProductionRewardRow,
+  GoalStoreRow,
+  fetchGoalActualRows,
+  fetchGoalDayStats,
+  fetchGoalProductionRewardRows,
+  fetchGoalStoreRows
+} from "@/lib/goal-actuals";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { UserRole } from "@/lib/types";
@@ -67,6 +75,23 @@ type GoalDayStats = {
 type GoalNeedRow = {
   threshold: number;
   dailyRequired: number;
+};
+
+type ProductionRewardPlanRow = {
+  points: number;
+  reward: string;
+  isCurrentProjectedTier: boolean;
+  isReached: boolean;
+  remainingFromActual: number;
+  dailyRequired: number;
+};
+
+type ProductionRewardPlan = {
+  projectedPoints: number;
+  actualPoints: number;
+  projectedReward: string | null;
+  nextReward: string | null;
+  rows: ProductionRewardPlanRow[];
 };
 
 type CoachingMetric = {
@@ -692,6 +717,50 @@ function isPinRateCategory(title: string | null | undefined) {
   return normalized.includes("PIN ORAN");
 }
 
+function isProductionPointCategory(title: string | null | undefined) {
+  const normalized = normalizeCategoryKey(String(title ?? ""));
+  return normalized.includes("URETIM PUAN");
+}
+
+function buildProductionRewardPlan(
+  summary: GoalCategorySummary,
+  rewardRows: GoalProductionRewardRow[],
+  remainingDays: number
+): ProductionRewardPlan | null {
+  if (!isProductionPointCategory(summary.title) || !rewardRows.length) {
+    return null;
+  }
+
+  const actualPoints = summary.actual;
+  const projectedPoints = summary.projectedActual ?? summary.actual;
+  const projectedRewardRow = [...rewardRows].reverse().find((row) => projectedPoints >= row.points) ?? null;
+  const nextRewardRow = rewardRows.find((row) => row.points > projectedPoints) ?? null;
+
+  return {
+    actualPoints,
+    projectedPoints,
+    projectedReward: projectedRewardRow?.reward ?? null,
+    nextReward: nextRewardRow?.reward ?? null,
+    rows: rewardRows.map((row) => {
+      const remainingFromActual = Math.max(row.points - actualPoints, 0);
+
+      return {
+        points: row.points,
+        reward: row.reward,
+        isCurrentProjectedTier: Boolean(projectedRewardRow && projectedRewardRow.points === row.points),
+        isReached: actualPoints >= row.points,
+        remainingFromActual,
+        dailyRequired:
+          remainingFromActual > 0
+            ? remainingDays > 0
+              ? Math.ceil(remainingFromActual / remainingDays)
+              : remainingFromActual
+            : 0
+      } satisfies ProductionRewardPlanRow;
+    })
+  };
+}
+
 function aggregateStoreActual(rows: GoalStoreRow[]) {
   if (!rows.length) {
     return null;
@@ -1090,18 +1159,31 @@ function buildNeedRows(summary: GoalCategorySummary, remainingDays: number): Goa
   });
 }
 
-function GoalCategoryCards({ categories }: { categories: GoalCategorySummary[] }) {
+function GoalCategoryCards({
+  categories,
+  remainingDays = 0,
+  productionRewardRows = []
+}: {
+  categories: GoalCategorySummary[];
+  remainingDays?: number;
+  productionRewardRows?: GoalProductionRewardRow[];
+}) {
   return (
     <div className="goal-category-list">
-      {categories.map((category, index) => (
-        <details key={category.title} className="goal-category-card" open={index === 0}>
+      {categories.map((category, index) => {
+        const productionRewardPlan = buildProductionRewardPlan(category, productionRewardRows, remainingDays);
+        const hasExpandableBody =
+          category.childCount > 0 || (category.storeDetails?.length ?? 0) > 0 || Boolean(productionRewardPlan);
+
+        return (
+          <details key={category.title} className="goal-category-card" open={index === 0}>
           <summary className="goal-category-summary">
             <div className="goal-category-title">
               <strong>{category.title}</strong>
               <span>{category.childCount > 0 ? `${category.childCount} alt kategori` : "Tek kalem kategori"}</span>
             </div>
 
-            {category.childCount > 0 || (category.storeDetails?.length ?? 0) > 0 ? <span className="goal-category-caret">▼</span> : null}
+            {hasExpandableBody ? <span className="goal-category-caret">v</span> : null}
 
             <div className="goal-category-metrics">
               {category.hasTarget ? (
@@ -1142,6 +1224,60 @@ function GoalCategoryCards({ categories }: { categories: GoalCategorySummary[] }
           </summary>
 
           <div className="goal-category-body">
+            {productionRewardPlan ? (
+              <div className="goal-production-reward-panel">
+                <div className="goal-production-reward-head">
+                  <strong>Uretim Puani Kazanim Plani</strong>
+                  <span>
+                    Ay sonu gidisatina gore: <b>{productionRewardPlan.projectedReward ?? "Henuz kazanim seviyesine ulasmadi"}</b>
+                  </span>
+                </div>
+
+                <div className="goal-production-reward-summary">
+                  <span>
+                    <small>Su anki puan</small>
+                    <strong>{formatNumber(productionRewardPlan.actualPoints)}</strong>
+                  </span>
+                  <span>
+                    <small>Ay sonu ongoru</small>
+                    <strong>{formatNumber(productionRewardPlan.projectedPoints)}</strong>
+                  </span>
+                  <span>
+                    <small>Siradaki kazanim</small>
+                    <strong>{productionRewardPlan.nextReward ?? "Son skala"}</strong>
+                  </span>
+                </div>
+
+                <div className="goal-production-reward-table-wrap">
+                  <table className="goal-production-reward-table">
+                    <thead>
+                      <tr>
+                        <th>Puan</th>
+                        <th>Kazanim</th>
+                        <th>Durum</th>
+                        <th>Kalan Puan</th>
+                        <th>Gunluk Gerekli</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {productionRewardPlan.rows.map((row) => (
+                        <tr
+                          key={`${category.title}-reward-${row.points}`}
+                          className={row.isCurrentProjectedTier ? "goal-production-reward-row-active" : ""}
+                        >
+                          <td>{formatNumber(row.points)}</td>
+                          <td>{row.reward}</td>
+                          <td>{row.isCurrentProjectedTier ? "Ay sonu ongorusu" : row.isReached ? "Asildi" : "Ust skala"}</td>
+                          <td>{formatNumber(row.remainingFromActual)}</td>
+                          <td>{formatNumber(row.dailyRequired)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : null}
+
             {!category.hasTarget ? <div className="goal-category-topline"><span>Bu kategoride hedef tanimi yok.</span></div> : null}
             {category.hasTarget && !category.showProjection ? (
               <div className="goal-category-topline">
@@ -1198,8 +1334,9 @@ function GoalCategoryCards({ categories }: { categories: GoalCategorySummary[] }
               </div>
             ) : null}
           </div>
-        </details>
-      ))}
+          </details>
+        );
+      })}
     </div>
   );
 }
@@ -1215,7 +1352,7 @@ function GoalActualOnlyCategoryCards({ categories }: { categories: GoalCategoryS
               <span>{category.childCount > 0 ? `${category.childCount} alt kategori` : "Tek kalem kategori"}</span>
             </div>
 
-            {category.childCount > 0 ? <span className="goal-category-caret">▼</span> : null}
+            {category.childCount > 0 ? <span className="goal-category-caret">v</span> : null}
 
             <div className="goal-category-metrics">
               <span>
@@ -1300,11 +1437,17 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
 
   let employeeRows: GoalActualRow[] = [];
   let storeRows: GoalStoreRow[] = [];
+  let productionRewardRows: GoalProductionRewardRow[] = [];
   let dayStats: GoalDayStats = EMPTY_DAY_STATS;
   let sheetError = "";
 
   try {
-    [employeeRows, storeRows, dayStats] = await Promise.all([fetchGoalActualRows(), fetchGoalStoreRows(), fetchGoalDayStats()]);
+    [employeeRows, storeRows, dayStats, productionRewardRows] = await Promise.all([
+      fetchGoalActualRows(),
+      fetchGoalStoreRows(),
+      fetchGoalDayStats(),
+      fetchGoalProductionRewardRows()
+    ]);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Google Sheet verisi okunamadi.";
     sheetError = message;
@@ -1939,7 +2082,11 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                     <p className="subtle">Bu magaza icin kategori verisi bulunamadi.</p>
                   )
                 ) : employeeCategorySummaries.length ? (
-                  <GoalCategoryCards categories={employeeCategorySummaries} />
+                  <GoalCategoryCards
+                    categories={employeeCategorySummaries}
+                    remainingDays={dayStats.remainingDays}
+                    productionRewardRows={productionRewardRows}
+                  />
                 ) : (
                   <p className="subtle">Bu filtreye uygun calisan verisi bulunamadi.</p>
                 )}

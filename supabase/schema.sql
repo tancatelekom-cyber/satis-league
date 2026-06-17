@@ -334,6 +334,15 @@ create table if not exists public.manager_presentation_sections (
 alter table public.manager_presentation_sections
   add column if not exists is_visible boolean not null default true;
 
+create table if not exists public.manager_presentation_store_tables (
+  id uuid primary key default gen_random_uuid(),
+  table_key text not null unique,
+  label text not null,
+  sort_order integer not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 insert into public.manager_presentation_sections (section_key, label, sort_order, is_visible)
 values
   ('cover', 'Kapak ve Ozet', 0, true),

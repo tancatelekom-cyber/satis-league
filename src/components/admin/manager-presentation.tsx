@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ManagerPresentationSectionKey } from "@/lib/admin/manager-presentation-sections";
+import { buildManagerPresentationStoreTableKey } from "@/lib/admin/manager-presentation-store-tables";
 
 type SummaryCard = {
   label: string;
@@ -72,6 +73,7 @@ type ManagerPresentationProps = {
   storeSubcategoryTables: PresentationCategoryTable[];
   employeeSubcategoryTables: PresentationCategoryTable[];
   sectionOrder?: ManagerPresentationSectionKey[];
+  storeTableOrder?: string[];
   visibleSections?: ManagerPresentationSectionKey[];
 };
 
@@ -113,8 +115,8 @@ export function ManagerPresentation({
   employeeCategoryTables,
   storeSubcategoryTables,
   employeeSubcategoryTables,
-  sectionOrder = []
-  ,
+  sectionOrder = [],
+  storeTableOrder = [],
   visibleSections = []
 }: ManagerPresentationProps) {
   const stageRef = useRef<HTMLDivElement | null>(null);
@@ -431,30 +433,41 @@ export function ManagerPresentation({
       });
     });
 
-    storeCategoryTables.forEach((table) => {
-      const matchingSubtables = storeSubcategoryTables.filter((subtable) => subtable.parentTitle === table.title);
+    const orderedStoreTableEntries = [
+      ...storeCategoryTables.map((table) => ({
+        key: buildManagerPresentationStoreTableKey(undefined, table.title),
+        table,
+        title: `${table.title} MAGAZA TABLOSU`,
+        subtitleBase: "Kategori bazli magaza hedef-gerceklesen tablosu"
+      })),
+      ...storeSubcategoryTables.map((table) => ({
+        key: buildManagerPresentationStoreTableKey(table.parentTitle, table.title),
+        table,
+        title: `${table.parentTitle} / ${table.title} ALT KATEGORI`,
+        subtitleBase: "Alt kategori bazli magaza hedef-gerceklesen tablosu"
+      }))
+    ].sort((left, right) => {
+      const leftOrder = storeTableOrder.indexOf(left.key);
+      const rightOrder = storeTableOrder.indexOf(right.key);
+      const normalizedLeft = leftOrder >= 0 ? leftOrder : Number.MAX_SAFE_INTEGER;
+      const normalizedRight = rightOrder >= 0 ? rightOrder : Number.MAX_SAFE_INTEGER;
 
-      chunk(table.rows, 8).forEach((group, index, list) => {
+      if (normalizedLeft !== normalizedRight) {
+        return normalizedLeft - normalizedRight;
+      }
+
+      return left.title.localeCompare(right.title, "tr");
+    });
+
+    orderedStoreTableEntries.forEach((entry) => {
+      chunk(entry.table.rows, 8).forEach((group, index, list) => {
         items.push({
-          id: `store-table-${table.title}-${index}`,
+          id: `store-table-${entry.key}-${index}`,
           sectionKey: "storeTables",
-          title: `${table.title} MAGAZA TABLOSU`,
-          subtitle: `Kategori bazli magaza hedef-gerceklesen tablosu | Sayfa ${index + 1}/${list.length}`,
+          title: entry.title,
+          subtitle: `${entry.subtitleBase} | Sayfa ${index + 1}/${list.length}`,
           layout: "compact",
-          body: renderCategoryTable(table, group)
-        });
-      });
-
-      matchingSubtables.forEach((subtable) => {
-        chunk(subtable.rows, 8).forEach((group, index, list) => {
-          items.push({
-            id: `store-sub-table-${subtable.parentTitle}-${subtable.title}-${index}`,
-            sectionKey: "storeTables",
-            title: `${subtable.parentTitle} / ${subtable.title} ALT KATEGORI`,
-            subtitle: `Alt kategori bazli magaza hedef-gerceklesen tablosu | Sayfa ${index + 1}/${list.length}`,
-            layout: "compact",
-            body: renderCategoryTable(subtable, group)
-          });
+          body: renderCategoryTable(entry.table, group)
         });
       });
     });
@@ -597,6 +610,7 @@ export function ManagerPresentation({
     employeeCategoryTables,
     employeeSubcategoryTables,
     sectionOrder,
+    storeTableOrder,
     visibleSections,
     zeroItems
   ]);

@@ -3,9 +3,15 @@ import { AdminSectionNav } from "@/components/admin/admin-section-nav";
 import { ManagerPresentation } from "@/components/admin/manager-presentation";
 import {
   moveManagerPresentationSectionAction,
+  moveManagerPresentationStoreTableAction,
   toggleManagerPresentationSectionVisibilityAction
 } from "@/app/admin/mudur-sunumu/actions";
 import { getManagerPresentationSections } from "@/lib/admin/manager-presentation-sections";
+import {
+  buildManagerPresentationStoreTableKey,
+  getManagerPresentationStoreTableItems,
+  type ManagerPresentationStoreTableItem
+} from "@/lib/admin/manager-presentation-store-tables";
 import { requireAdminAccess } from "@/lib/auth/require-admin";
 import { fetchGoalActualRows, fetchGoalDayStats, fetchGoalStoreRows, type GoalActualRow, type GoalDayStats, type GoalStoreRow } from "@/lib/goal-actuals";
 import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
@@ -776,8 +782,6 @@ export default async function ManagerBriefingPage({ searchParams }: ManagerBrief
     return <AdminSetupNotice />;
   }
 
-  const { sections: presentationSections, persisted: presentationSectionsPersisted } = await getManagerPresentationSections();
-
   let employeeRows: GoalActualRow[] = [];
   let storeRows: GoalStoreRow[] = [];
   let dayStats: GoalDayStats = EMPTY_DAYS;
@@ -805,6 +809,18 @@ export default async function ManagerBriefingPage({ searchParams }: ManagerBrief
   const riskEmployees = [...employeeHealthSnapshots].sort((left, right) => left.averagePercent - right.averagePercent).slice(0, 4);
   const storeCategoryTables = buildStoreCategoryTables(filteredStoreRows, dayStats.workedDays, dayStats.totalDays, dayStats.remainingDays);
   const storeSubcategoryTables = buildStoreSubcategoryTables(filteredStoreRows, dayStats.workedDays, dayStats.totalDays, dayStats.remainingDays);
+  const defaultStoreTableItems: ManagerPresentationStoreTableItem[] = [
+    ...storeCategoryTables.map((table, index) => ({
+      key: buildManagerPresentationStoreTableKey(undefined, table.title),
+      label: `${table.title} Magaza Tablosu`,
+      sortOrder: index
+    })),
+    ...storeSubcategoryTables.map((table, index) => ({
+      key: buildManagerPresentationStoreTableKey(table.parentTitle, table.title),
+      label: `${table.parentTitle} / ${table.title} Alt Kategori`,
+      sortOrder: storeCategoryTables.length + index
+    }))
+  ];
   const employeeCategoryTables = buildEmployeeCategoryTables(
     filteredEmployeeRows,
     dayStats.workedDays,
@@ -817,6 +833,8 @@ export default async function ManagerBriefingPage({ searchParams }: ManagerBrief
     dayStats.totalDays,
     dayStats.remainingDays
   );
+  const { sections: presentationSections, persisted: presentationSectionsPersisted } = await getManagerPresentationSections();
+  const { items: storeTableItems, persisted: storeTableItemsPersisted } = await getManagerPresentationStoreTableItems(defaultStoreTableItems);
   const strongestCompanyMetric =
     buildCompanyCategorySummaries(filteredStoreRows, dayStats.workedDays, dayStats.totalDays)
       .filter((metric) => metric.hasTarget && !isEntryCount(metric.title))
@@ -905,6 +923,56 @@ export default async function ManagerBriefingPage({ searchParams }: ManagerBrief
         </div>
       </section>
 
+      <section className="admin-card manager-presentation-order-panel">
+        <div className="section-title compact-title">
+          <div>
+            <h2>Magaza Tablo Sirasi</h2>
+            <p>Sunumdaki magaza kategori ve alt kategori tablolarini ayri ayri yukari veya asagi tasiyin.</p>
+          </div>
+        </div>
+
+        {!storeTableItemsPersisted ? (
+          <div className="message-box error-box">
+            Magaza tablo siralama tablosu Supabase tarafinda henuz yok. Bu ozelligin calismasi icin `schema.sql` icindeki yeni tabloyu
+            veritabanina uygulamaniz gerekir.
+          </div>
+        ) : null}
+
+        <div className="manager-presentation-order-list">
+          {storeTableItems.map((item, index) => (
+            <article key={item.key} className="manager-presentation-order-card">
+              <div>
+                <span>Tablo {index + 1}</span>
+                <strong>{item.label}</strong>
+              </div>
+
+              <div className="admin-media-order-row">
+                <form action={moveManagerPresentationStoreTableAction}>
+                  <input name="tableKey" type="hidden" value={item.key} />
+                  <input name="direction" type="hidden" value="up" />
+                  <input name="tableItems" type="hidden" value={JSON.stringify(defaultStoreTableItems)} />
+                  <button className="button-secondary" disabled={!storeTableItemsPersisted || index === 0} type="submit">
+                    Yukari Al
+                  </button>
+                </form>
+                <form action={moveManagerPresentationStoreTableAction}>
+                  <input name="tableKey" type="hidden" value={item.key} />
+                  <input name="direction" type="hidden" value="down" />
+                  <input name="tableItems" type="hidden" value={JSON.stringify(defaultStoreTableItems)} />
+                  <button
+                    className="button-secondary"
+                    disabled={!storeTableItemsPersisted || index === storeTableItems.length - 1}
+                    type="submit"
+                  >
+                    Asagi Al
+                  </button>
+                </form>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
       <ManagerPresentation
         actionLines={actionLines}
         companyFocusItems={companyFocusItems}
@@ -922,6 +990,7 @@ export default async function ManagerBriefingPage({ searchParams }: ManagerBrief
         storeSubcategoryTables={storeSubcategoryTables}
         employeeSubcategoryTables={employeeSubcategoryTables}
         sectionOrder={presentationSections.map((section) => section.key)}
+        storeTableOrder={storeTableItems.map((item) => item.key)}
         visibleSections={presentationSections.filter((section) => section.isVisible).map((section) => section.key)}
         zeroItems={zeroItems}
       />

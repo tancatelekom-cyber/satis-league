@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useState } from "react";
-import { createClient } from "@/lib/supabase/browser";
-import { getAppBaseUrl, isSupabaseConfigured } from "@/lib/supabase/config";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 export function ForgotPasswordForm() {
   const [submitting, setSubmitting] = useState(false);
@@ -23,21 +22,29 @@ export function ForgotPasswordForm() {
     }
 
     const formData = new FormData(event.currentTarget);
-    const email = String(formData.get("email") ?? "").trim();
-    const supabase = createClient();
-    const redirectTo = `${getAppBaseUrl()}/sifre-yenile`;
+    const email = String(formData.get("email") ?? "")
+      .trim()
+      .toLocaleLowerCase("tr-TR");
 
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo
+    const response = await fetch("/api/auth/forgot-password", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ email })
     });
 
-    if (resetError) {
-      setError(resetError.message);
+    const result = (await response.json().catch(() => ({ message: "Bilinmeyen hata olustu." }))) as {
+      message?: string;
+    };
+
+    if (!response.ok) {
+      setError(result.message ?? "Sifre sifirlama maili gonderilemedi.");
       setSubmitting(false);
       return;
     }
 
-    setSuccess("Sifre yenileme linki tanimli mail adresinize gonderildi.");
+    setSuccess(result.message ?? "Sifre yenileme linki tanimli mail adresinize gonderildi.");
     setSubmitting(false);
     event.currentTarget.reset();
   }

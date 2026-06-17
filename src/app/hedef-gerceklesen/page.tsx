@@ -576,7 +576,20 @@ function buildCategoryGroups(rows: GoalActualRow[]) {
     map.set(row.mainCategory, group);
   });
 
-  return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0], "tr"));
+  return Array.from(map.entries()).sort((a, b) => {
+    const aIsProductionPoint = isProductionPointCategory(a[0]);
+    const bIsProductionPoint = isProductionPointCategory(b[0]);
+
+    if (aIsProductionPoint && !bIsProductionPoint) {
+      return -1;
+    }
+
+    if (!aIsProductionPoint && bIsProductionPoint) {
+      return 1;
+    }
+
+    return a[0].localeCompare(b[0], "tr");
+  });
 }
 
 function buildMetricSummary(rows: GoalActualRow[], workedDays: number, totalDays: number): GoalMetricSummary {

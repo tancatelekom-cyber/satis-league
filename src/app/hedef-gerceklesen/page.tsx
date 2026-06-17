@@ -145,6 +145,39 @@ function normalizeStoreKey(value: string | null | undefined) {
     .trim();
 }
 
+function resolveStoreCodeFromEmployeeRows(employeeRows: GoalActualRow[], availableStoreCodes: string[], fallbackStoreCode = "") {
+  const uniqueEmployeeStoreNames = Array.from(
+    new Set(
+      employeeRows
+        .map((row) => row.storeName)
+        .filter((value) => Boolean(String(value ?? "").trim()))
+        .map((value) => String(value).trim())
+    )
+  );
+
+  for (const employeeStoreName of uniqueEmployeeStoreNames) {
+    const matchedStoreCode = availableStoreCodes.find(
+      (storeCode) => normalizeStoreKey(storeCode) === normalizeStoreKey(employeeStoreName)
+    );
+
+    if (matchedStoreCode) {
+      return matchedStoreCode;
+    }
+  }
+
+  if (fallbackStoreCode) {
+    const matchedFallbackStoreCode = availableStoreCodes.find(
+      (storeCode) => normalizeStoreKey(storeCode) === normalizeStoreKey(fallbackStoreCode)
+    );
+
+    if (matchedFallbackStoreCode) {
+      return matchedFallbackStoreCode;
+    }
+  }
+
+  return "";
+}
+
 function calculateDaysSinceLogin(lastSignInAt: string) {
   const loginTime = new Date(lastSignInAt).getTime();
 
@@ -1527,7 +1560,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
     ? filteredEmployeeCoreRows.filter((row) => row.employeeName === activeEmployeeName)
     : [];
   const activeStoreRows = activeStoreName ? filteredStoreRows.filter((row) => row.storeCode === activeStoreName) : [];
-  const activeEmployeeStoreCode = activeEmployeeRows[0]?.storeName || currentUserStoreName;
+  const activeEmployeeStoreCode = resolveStoreCodeFromEmployeeRows(activeEmployeeRows, storeNames, currentUserStoreName);
   const employeeCategorySummaries = buildCategorySummaries(activeEmployeeCoreRows, dayStats.workedDays, dayStats.totalDays);
   const employeeLivePrimeCategorySummaries = buildCategorySummaries(
     activeEmployeeRows.filter((row) => isLivePrimeCategory(row.mainCategory)),
@@ -1591,10 +1624,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
         ).sort((a, b) => a.localeCompare(b, "tr"))
       : [];
   const resolvedEmployeeStoreCode =
-    effectiveView === "employee" && activeEmployeeStoreCode
-      ? companyTrendStoreCodes.find((storeCode) => normalizeStoreKey(storeCode) === normalizeStoreKey(activeEmployeeStoreCode)) ??
-        activeEmployeeStoreCode
-      : "";
+    effectiveView === "employee" ? resolveStoreCodeFromEmployeeRows(activeEmployeeRows, companyTrendStoreCodes, activeEmployeeStoreCode) : "";
   const employeeTrendStoreCodes =
     effectiveView === "employee" && resolvedEmployeeStoreCode && companyTrendStoreCodes.includes(resolvedEmployeeStoreCode)
       ? [resolvedEmployeeStoreCode]

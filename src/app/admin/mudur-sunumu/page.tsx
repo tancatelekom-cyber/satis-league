@@ -1,5 +1,11 @@
 import { AdminSetupNotice } from "@/components/admin/admin-setup-notice";
+import { AdminSectionNav } from "@/components/admin/admin-section-nav";
 import { ManagerPresentation } from "@/components/admin/manager-presentation";
+import {
+  moveManagerPresentationSectionAction,
+  toggleManagerPresentationSectionVisibilityAction
+} from "@/app/admin/mudur-sunumu/actions";
+import { getManagerPresentationSections } from "@/lib/admin/manager-presentation-sections";
 import { requireAdminAccess } from "@/lib/auth/require-admin";
 import { fetchGoalActualRows, fetchGoalDayStats, fetchGoalStoreRows, type GoalActualRow, type GoalDayStats, type GoalStoreRow } from "@/lib/goal-actuals";
 import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
@@ -754,12 +760,23 @@ function buildEmployeeHealthSnapshots(rows: GoalActualRow[], workedDays: number,
     .filter((item) => item.averagePercent > 0);
 }
 
-export default async function ManagerBriefingPage() {
+type ManagerBriefingPageProps = {
+  searchParams?: Promise<{
+    message?: string;
+    type?: "success" | "error";
+  }>;
+};
+
+export default async function ManagerBriefingPage({ searchParams }: ManagerBriefingPageProps) {
+  const params = searchParams ? await searchParams : undefined;
+
   await requireAdminAccess();
 
   if (!isSupabaseAdminConfigured()) {
     return <AdminSetupNotice />;
   }
+
+  const { sections: presentationSections, persisted: presentationSectionsPersisted } = await getManagerPresentationSections();
 
   let employeeRows: GoalActualRow[] = [];
   let storeRows: GoalStoreRow[] = [];
@@ -819,7 +836,74 @@ export default async function ManagerBriefingPage() {
 
   return (
     <main>
+      <h1 className="page-title">Mudur Sunumu</h1>
+      <p className="page-subtitle">
+        Magaza muduru sunumunu buradan acin ve slayt bloklarinin sirasini admin panelinden degistirin.
+      </p>
+
+      {params?.message ? (
+        <div className={`message-box ${params.type === "error" ? "error-box" : "success-box"}`}>{params.message}</div>
+      ) : null}
+
       {errorMessage ? <div className="message-box error-box">{errorMessage}</div> : null}
+
+      <AdminSectionNav currentPath="/admin/mudur-sunumu" />
+
+      <section className="admin-card manager-presentation-order-panel">
+        <div className="section-title compact-title">
+          <div>
+            <h2>Sunum Sayfa Sirasi</h2>
+            <p>Magaza muduru sunumundaki ana sayfa bloklarini yukari/asagi tasiyin veya istemediklerinizi gizleyin.</p>
+          </div>
+        </div>
+
+        {!presentationSectionsPersisted ? (
+          <div className="message-box error-box">
+            Kalici siralama tablosu Supabase tarafinda henuz yok. Bu ozelligin calismasi icin `schema.sql` icindeki yeni tabloyu
+            veritabanina uygulamaniz gerekir.
+          </div>
+        ) : null}
+
+        <div className="manager-presentation-order-list">
+          {presentationSections.map((section, index) => (
+            <article key={section.key} className="manager-presentation-order-card">
+              <div>
+                <span>Blok {index + 1}</span>
+                <strong>{section.label}</strong>
+                <small className="subtle">{section.isVisible ? "Sunumda gorunuyor" : "Sunumda gizli"}</small>
+              </div>
+
+              <div className="admin-media-order-row">
+                <form action={moveManagerPresentationSectionAction}>
+                  <input name="sectionKey" type="hidden" value={section.key} />
+                  <input name="direction" type="hidden" value="up" />
+                  <button className="button-secondary" disabled={!presentationSectionsPersisted || index === 0} type="submit">
+                    Yukari Al
+                  </button>
+                </form>
+                <form action={moveManagerPresentationSectionAction}>
+                  <input name="sectionKey" type="hidden" value={section.key} />
+                  <input name="direction" type="hidden" value="down" />
+                  <button
+                    className="button-secondary"
+                    disabled={!presentationSectionsPersisted || index === presentationSections.length - 1}
+                    type="submit"
+                  >
+                    Asagi Al
+                  </button>
+                </form>
+                <form action={toggleManagerPresentationSectionVisibilityAction}>
+                  <input name="sectionKey" type="hidden" value={section.key} />
+                  <input name="nextVisibility" type="hidden" value={String(!section.isVisible)} />
+                  <button className="button-secondary" disabled={!presentationSectionsPersisted} type="submit">
+                    {section.isVisible ? "Gizle" : "Goster"}
+                  </button>
+                </form>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
 
       <ManagerPresentation
         actionLines={actionLines}
@@ -837,6 +921,8 @@ export default async function ManagerBriefingPage() {
         employeeCategoryTables={employeeCategoryTables}
         storeSubcategoryTables={storeSubcategoryTables}
         employeeSubcategoryTables={employeeSubcategoryTables}
+        sectionOrder={presentationSections.map((section) => section.key)}
+        visibleSections={presentationSections.filter((section) => section.isVisible).map((section) => section.key)}
         zeroItems={zeroItems}
       />
     </main>

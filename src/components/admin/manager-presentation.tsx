@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { ManagerPresentationSectionKey } from "@/lib/admin/manager-presentation-sections";
 
 type SummaryCard = {
   label: string;
@@ -70,6 +71,8 @@ type ManagerPresentationProps = {
   employeeCategoryTables: PresentationCategoryTable[];
   storeSubcategoryTables: PresentationCategoryTable[];
   employeeSubcategoryTables: PresentationCategoryTable[];
+  sectionOrder?: ManagerPresentationSectionKey[];
+  visibleSections?: ManagerPresentationSectionKey[];
 };
 
 function chunk<T>(items: T[], size: number) {
@@ -109,7 +112,10 @@ export function ManagerPresentation({
   storeCategoryTables,
   employeeCategoryTables,
   storeSubcategoryTables,
-  employeeSubcategoryTables
+  employeeSubcategoryTables,
+  sectionOrder = []
+  ,
+  visibleSections = []
 }: ManagerPresentationProps) {
   const stageRef = useRef<HTMLDivElement | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -118,6 +124,7 @@ export function ManagerPresentation({
   const slides = useMemo(() => {
     const items: Array<{
       id: string;
+      sectionKey: ManagerPresentationSectionKey;
       title: string;
       subtitle: string;
       body: ReactNode;
@@ -235,6 +242,7 @@ export function ManagerPresentation({
 
     items.push({
       id: "cover",
+      sectionKey: "cover",
       title: "MAGAZA MUDURLERI SUNUMU",
       subtitle: `Anlik hedef gerceklesen bazli yonetim anlatimi | ${generatedAt}`,
       body: (
@@ -260,6 +268,7 @@ export function ManagerPresentation({
 
     items.push({
       id: "overview",
+      sectionKey: "overview",
       title: "GENEL GORUNUM",
       subtitle: "En guclu ve en riskli magaza / calisan ozetleri",
       body: (
@@ -343,6 +352,7 @@ export function ManagerPresentation({
     companyChunks.forEach((group, index) => {
       items.push({
         id: `company-${index}`,
+        sectionKey: "company",
         title: "FIRMA GENEL DURUMU",
         subtitle: `Firma hedef gerceklesenleri | Sayfa ${index + 1}/${companyChunks.length}`,
         body: (
@@ -393,6 +403,7 @@ export function ManagerPresentation({
     chunk(storeFocusItems, 4).forEach((group, index, list) => {
       items.push({
         id: `stores-${index}`,
+        sectionKey: "storeFocus",
         title: "MAGAZA KRITIKLERI",
         subtitle: `Mudur aksiyonu bekleyen magazalar | Sayfa ${index + 1}/${list.length}`,
         body: (
@@ -426,6 +437,7 @@ export function ManagerPresentation({
       chunk(table.rows, 8).forEach((group, index, list) => {
         items.push({
           id: `store-table-${table.title}-${index}`,
+          sectionKey: "storeTables",
           title: `${table.title} MAGAZA TABLOSU`,
           subtitle: `Kategori bazli magaza hedef-gerceklesen tablosu | Sayfa ${index + 1}/${list.length}`,
           layout: "compact",
@@ -437,6 +449,7 @@ export function ManagerPresentation({
         chunk(subtable.rows, 8).forEach((group, index, list) => {
           items.push({
             id: `store-sub-table-${subtable.parentTitle}-${subtable.title}-${index}`,
+            sectionKey: "storeTables",
             title: `${subtable.parentTitle} / ${subtable.title} ALT KATEGORI`,
             subtitle: `Alt kategori bazli magaza hedef-gerceklesen tablosu | Sayfa ${index + 1}/${list.length}`,
             layout: "compact",
@@ -449,6 +462,7 @@ export function ManagerPresentation({
     chunk(employeeFocusItems, 4).forEach((group, index, list) => {
       items.push({
         id: `employees-${index}`,
+        sectionKey: "employeeFocus",
         title: "CALISAN KRITIKLERI",
         subtitle: `Bire bir takip gerektiren calisanlar | Sayfa ${index + 1}/${list.length}`,
         body: (
@@ -481,6 +495,7 @@ export function ManagerPresentation({
 
       items.push({
         id: `employee-table-${table.title}`,
+        sectionKey: "employeeTables",
         title: `${table.title} CALISAN TABLOSU`,
         subtitle: "Kategori bazli calisan hedef-gerceklesen tablosu | Tum calisanlar tek sayfa",
         layout: "compact",
@@ -490,6 +505,7 @@ export function ManagerPresentation({
       matchingSubtables.forEach((subtable) => {
         items.push({
           id: `employee-sub-table-${subtable.parentTitle}-${subtable.title}`,
+          sectionKey: "employeeTables",
           title: `${subtable.parentTitle} / ${subtable.title} ALT KATEGORI`,
           subtitle: "Alt kategori bazli calisan hedef-gerceklesen tablosu | Tum calisanlar tek sayfa",
           layout: "compact",
@@ -501,6 +517,7 @@ export function ManagerPresentation({
     chunk(actionLines, 5).forEach((group, index, list) => {
       items.push({
         id: `actions-${index}`,
+        sectionKey: "actions",
         title: "KALAN GUNLER AKSIYON PLANI",
         subtitle: `Sunumda konusulacak yonetsel aksiyonlar | Sayfa ${index + 1}/${list.length}`,
         body: (
@@ -521,6 +538,7 @@ export function ManagerPresentation({
 
     items.push({
       id: "closing",
+      sectionKey: "closing",
       title: "KAPANIS MESAJI",
       subtitle: "Sunum cikisi icin yonetsel ozet",
       body: (
@@ -538,7 +556,30 @@ export function ManagerPresentation({
       )
     });
 
-    return items;
+    const sectionOrderMap = new Map(
+      (sectionOrder.length ? sectionOrder : ["cover", "overview", "company", "storeFocus", "storeTables", "employeeFocus", "employeeTables", "actions", "closing"]).map(
+        (sectionKey, index) => [sectionKey, index] as const
+      )
+    );
+
+    const visibleSectionSet = new Set(
+      (visibleSections.length ? visibleSections : ["cover", "overview", "company", "storeFocus", "storeTables", "employeeFocus", "employeeTables", "actions", "closing"])
+    );
+
+    return items
+      .filter((item) => visibleSectionSet.has(item.sectionKey))
+      .map((item, index) => ({ item, index }))
+      .sort((left, right) => {
+        const leftOrder = sectionOrderMap.get(left.item.sectionKey) ?? Number.MAX_SAFE_INTEGER;
+        const rightOrder = sectionOrderMap.get(right.item.sectionKey) ?? Number.MAX_SAFE_INTEGER;
+
+        if (leftOrder !== rightOrder) {
+          return leftOrder - rightOrder;
+        }
+
+        return left.index - right.index;
+      })
+      .map(({ item }) => item);
   }, [
     actionLines,
     companyFocusItems,
@@ -555,6 +596,8 @@ export function ManagerPresentation({
     topStores,
     employeeCategoryTables,
     employeeSubcategoryTables,
+    sectionOrder,
+    visibleSections,
     zeroItems
   ]);
 

@@ -326,21 +326,25 @@ create table if not exists public.manager_presentation_sections (
   section_key text not null unique,
   label text not null,
   sort_order integer not null default 0,
+  is_visible boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
-insert into public.manager_presentation_sections (section_key, label, sort_order)
+alter table public.manager_presentation_sections
+  add column if not exists is_visible boolean not null default true;
+
+insert into public.manager_presentation_sections (section_key, label, sort_order, is_visible)
 values
-  ('cover', 'Kapak ve Ozet', 0),
-  ('overview', 'Genel Gorunum', 1),
-  ('company', 'Firma Genel Durumu', 2),
-  ('storeFocus', 'Magaza Kritikleri', 3),
-  ('storeTables', 'Magaza Tablolari', 4),
-  ('employeeFocus', 'Calisan Kritikleri', 5),
-  ('employeeTables', 'Calisan Tablolari', 6),
-  ('actions', 'Aksiyon Plani', 7),
-  ('closing', 'Kapanis Mesaji', 8)
+  ('cover', 'Kapak ve Ozet', 0, true),
+  ('overview', 'Genel Gorunum', 1, true),
+  ('company', 'Firma Genel Durumu', 2, true),
+  ('storeFocus', 'Magaza Kritikleri', 3, true),
+  ('storeTables', 'Magaza Tablolari', 4, true),
+  ('employeeFocus', 'Calisan Kritikleri', 5, true),
+  ('employeeTables', 'Calisan Tablolari', 6, true),
+  ('actions', 'Aksiyon Plani', 7, true),
+  ('closing', 'Kapanis Mesaji', 8, true)
 on conflict (section_key) do nothing;
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)

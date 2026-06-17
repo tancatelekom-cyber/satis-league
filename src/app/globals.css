@@ -4756,6 +4756,30 @@ textarea::placeholder {
   font-size: 1.04rem;
 }
 
+.manager-presentation-order-card .subtle {
+  color: #6b7f98;
+  font-weight: 700;
+}
+
+.manager-presentation-order-panel .admin-media-order-row {
+  grid-template-columns: repeat(3, minmax(120px, 1fr));
+  align-items: start;
+}
+
+.manager-presentation-order-panel .button-secondary {
+  width: 100%;
+  min-height: 52px;
+  border: 1px solid rgba(4, 92, 96, 0.16);
+  background: linear-gradient(135deg, rgba(225, 234, 245, 0.98), rgba(245, 249, 255, 0.98));
+  color: #10203b;
+  box-shadow: 0 8px 18px rgba(8, 22, 40, 0.08);
+}
+
+.manager-presentation-order-panel .button-secondary:hover:not(:disabled) {
+  color: #09111f;
+  background: linear-gradient(135deg, rgba(196, 238, 229, 1), rgba(255, 222, 148, 0.98));
+}
+
 .product-meta,
 .subtle {
   color: var(--muted);

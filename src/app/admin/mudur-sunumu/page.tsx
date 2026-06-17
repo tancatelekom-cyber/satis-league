@@ -867,111 +867,129 @@ export default async function ManagerBriefingPage({ searchParams }: ManagerBrief
 
       <AdminSectionNav currentPath="/admin/mudur-sunumu" />
 
-      <section className="admin-card manager-presentation-order-panel">
-        <div className="section-title compact-title">
+      <details className="admin-card manager-presentation-order-panel manager-presentation-collapse">
+        <summary className="manager-presentation-collapse-summary">
           <div>
-            <h2>Sunum Sayfa Sirasi</h2>
-            <p>Magaza muduru sunumundaki ana sayfa bloklarini yukari/asagi tasiyin veya istemediklerinizi gizleyin.</p>
+            <strong>Sunum Sayfa Sirasi</strong>
+            <span>{presentationSections.length} blok</span>
+          </div>
+        </summary>
+
+        <div className="manager-presentation-collapse-body">
+          <div className="section-title compact-title">
+            <div>
+              <h2>Sunum Sayfa Sirasi</h2>
+              <p>Magaza muduru sunumundaki ana sayfa bloklarini yukari/asagi tasiyin veya istemediklerinizi gizleyin.</p>
+            </div>
+          </div>
+
+          {!presentationSectionsPersisted ? (
+            <div className="message-box error-box">
+              Kalici siralama tablosu Supabase tarafinda henuz yok. Bu ozelligin calismasi icin `schema.sql` icindeki yeni tabloyu
+              veritabanina uygulamaniz gerekir.
+            </div>
+          ) : null}
+
+          <div className="manager-presentation-order-list">
+            {presentationSections.map((section, index) => (
+              <article key={section.key} className="manager-presentation-order-card">
+                <div>
+                  <span>Blok {index + 1}</span>
+                  <strong>{section.label}</strong>
+                  <small className="subtle">{section.isVisible ? "Sunumda gorunuyor" : "Sunumda gizli"}</small>
+                </div>
+
+                <div className="admin-media-order-row">
+                  <form action={moveManagerPresentationSectionAction}>
+                    <input name="sectionKey" type="hidden" value={section.key} />
+                    <input name="direction" type="hidden" value="up" />
+                    <button className="button-secondary" disabled={!presentationSectionsPersisted || index === 0} type="submit">
+                      Yukari Al
+                    </button>
+                  </form>
+                  <form action={moveManagerPresentationSectionAction}>
+                    <input name="sectionKey" type="hidden" value={section.key} />
+                    <input name="direction" type="hidden" value="down" />
+                    <button
+                      className="button-secondary"
+                      disabled={!presentationSectionsPersisted || index === presentationSections.length - 1}
+                      type="submit"
+                    >
+                      Asagi Al
+                    </button>
+                  </form>
+                  <form action={toggleManagerPresentationSectionVisibilityAction}>
+                    <input name="sectionKey" type="hidden" value={section.key} />
+                    <input name="nextVisibility" type="hidden" value={String(!section.isVisible)} />
+                    <button className="button-secondary" disabled={!presentationSectionsPersisted} type="submit">
+                      {section.isVisible ? "Gizle" : "Goster"}
+                    </button>
+                  </form>
+                </div>
+              </article>
+            ))}
           </div>
         </div>
+      </details>
 
-        {!presentationSectionsPersisted ? (
-          <div className="message-box error-box">
-            Kalici siralama tablosu Supabase tarafinda henuz yok. Bu ozelligin calismasi icin `schema.sql` icindeki yeni tabloyu
-            veritabanina uygulamaniz gerekir.
-          </div>
-        ) : null}
-
-        <div className="manager-presentation-order-list">
-          {presentationSections.map((section, index) => (
-            <article key={section.key} className="manager-presentation-order-card">
-              <div>
-                <span>Blok {index + 1}</span>
-                <strong>{section.label}</strong>
-                <small className="subtle">{section.isVisible ? "Sunumda gorunuyor" : "Sunumda gizli"}</small>
-              </div>
-
-              <div className="admin-media-order-row">
-                <form action={moveManagerPresentationSectionAction}>
-                  <input name="sectionKey" type="hidden" value={section.key} />
-                  <input name="direction" type="hidden" value="up" />
-                  <button className="button-secondary" disabled={!presentationSectionsPersisted || index === 0} type="submit">
-                    Yukari Al
-                  </button>
-                </form>
-                <form action={moveManagerPresentationSectionAction}>
-                  <input name="sectionKey" type="hidden" value={section.key} />
-                  <input name="direction" type="hidden" value="down" />
-                  <button
-                    className="button-secondary"
-                    disabled={!presentationSectionsPersisted || index === presentationSections.length - 1}
-                    type="submit"
-                  >
-                    Asagi Al
-                  </button>
-                </form>
-                <form action={toggleManagerPresentationSectionVisibilityAction}>
-                  <input name="sectionKey" type="hidden" value={section.key} />
-                  <input name="nextVisibility" type="hidden" value={String(!section.isVisible)} />
-                  <button className="button-secondary" disabled={!presentationSectionsPersisted} type="submit">
-                    {section.isVisible ? "Gizle" : "Goster"}
-                  </button>
-                </form>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="admin-card manager-presentation-order-panel">
-        <div className="section-title compact-title">
+      <details className="admin-card manager-presentation-order-panel manager-presentation-collapse">
+        <summary className="manager-presentation-collapse-summary">
           <div>
-            <h2>Magaza Tablo Sirasi</h2>
-            <p>Sunumdaki magaza kategori ve alt kategori tablolarini ayri ayri yukari veya asagi tasiyin.</p>
+            <strong>Magaza Tablo Sirasi</strong>
+            <span>{storeTableItems.length} tablo</span>
+          </div>
+        </summary>
+
+        <div className="manager-presentation-collapse-body">
+          <div className="section-title compact-title">
+            <div>
+              <h2>Magaza Tablo Sirasi</h2>
+              <p>Sunumdaki magaza kategori ve alt kategori tablolarini ayri ayri yukari veya asagi tasiyin.</p>
+            </div>
+          </div>
+
+          {!storeTableItemsPersisted ? (
+            <div className="message-box error-box">
+              Magaza tablo siralama tablosu Supabase tarafinda henuz yok. Bu ozelligin calismasi icin `schema.sql` icindeki yeni tabloyu
+              veritabanina uygulamaniz gerekir.
+            </div>
+          ) : null}
+
+          <div className="manager-presentation-order-list">
+            {storeTableItems.map((item, index) => (
+              <article key={item.key} className="manager-presentation-order-card">
+                <div>
+                  <span>Tablo {index + 1}</span>
+                  <strong>{item.label}</strong>
+                </div>
+
+                <div className="admin-media-order-row">
+                  <form action={moveManagerPresentationStoreTableAction}>
+                    <input name="tableKey" type="hidden" value={item.key} />
+                    <input name="direction" type="hidden" value="up" />
+                    <input name="tableItems" type="hidden" value={JSON.stringify(defaultStoreTableItems)} />
+                    <button className="button-secondary" disabled={!storeTableItemsPersisted || index === 0} type="submit">
+                      Yukari Al
+                    </button>
+                  </form>
+                  <form action={moveManagerPresentationStoreTableAction}>
+                    <input name="tableKey" type="hidden" value={item.key} />
+                    <input name="direction" type="hidden" value="down" />
+                    <input name="tableItems" type="hidden" value={JSON.stringify(defaultStoreTableItems)} />
+                    <button
+                      className="button-secondary"
+                      disabled={!storeTableItemsPersisted || index === storeTableItems.length - 1}
+                      type="submit"
+                    >
+                      Asagi Al
+                    </button>
+                  </form>
+                </div>
+              </article>
+            ))}
           </div>
         </div>
-
-        {!storeTableItemsPersisted ? (
-          <div className="message-box error-box">
-            Magaza tablo siralama tablosu Supabase tarafinda henuz yok. Bu ozelligin calismasi icin `schema.sql` icindeki yeni tabloyu
-            veritabanina uygulamaniz gerekir.
-          </div>
-        ) : null}
-
-        <div className="manager-presentation-order-list">
-          {storeTableItems.map((item, index) => (
-            <article key={item.key} className="manager-presentation-order-card">
-              <div>
-                <span>Tablo {index + 1}</span>
-                <strong>{item.label}</strong>
-              </div>
-
-              <div className="admin-media-order-row">
-                <form action={moveManagerPresentationStoreTableAction}>
-                  <input name="tableKey" type="hidden" value={item.key} />
-                  <input name="direction" type="hidden" value="up" />
-                  <input name="tableItems" type="hidden" value={JSON.stringify(defaultStoreTableItems)} />
-                  <button className="button-secondary" disabled={!storeTableItemsPersisted || index === 0} type="submit">
-                    Yukari Al
-                  </button>
-                </form>
-                <form action={moveManagerPresentationStoreTableAction}>
-                  <input name="tableKey" type="hidden" value={item.key} />
-                  <input name="direction" type="hidden" value="down" />
-                  <input name="tableItems" type="hidden" value={JSON.stringify(defaultStoreTableItems)} />
-                  <button
-                    className="button-secondary"
-                    disabled={!storeTableItemsPersisted || index === storeTableItems.length - 1}
-                    type="submit"
-                  >
-                    Asagi Al
-                  </button>
-                </form>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
+      </details>
 
       <ManagerPresentation
         actionLines={actionLines}

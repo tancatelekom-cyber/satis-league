@@ -6,10 +6,12 @@ import { SpeakCoachingButton } from "@/components/evaluation/speak-coaching-butt
 import { FilterSelectNav } from "@/components/ui/filter-select-nav";
 import {
   GoalActualRow,
+  GoalProductPointRow,
   GoalProductionRewardRow,
   GoalStoreRow,
   fetchGoalActualRows,
   fetchGoalDayStats,
+  fetchGoalProductPointRows,
   fetchGoalProductionRewardRows,
   fetchGoalStoreRows
 } from "@/lib/goal-actuals";
@@ -1175,11 +1177,13 @@ function buildNeedRows(summary: GoalCategorySummary, remainingDays: number): Goa
 function GoalCategoryCards({
   categories,
   remainingDays = 0,
-  productionRewardRows = []
+  productionRewardRows = [],
+  productPointRows = []
 }: {
   categories: GoalCategorySummary[];
   remainingDays?: number;
   productionRewardRows?: GoalProductionRewardRow[];
+  productPointRows?: GoalProductPointRow[];
 }) {
   return (
     <div className="goal-category-list">
@@ -1288,6 +1292,34 @@ function GoalCategoryCards({
                     </tbody>
                   </table>
                 </div>
+
+                {productPointRows.length ? (
+                  <details className="goal-product-point-details">
+                    <summary className="goal-product-point-summary">
+                      <strong>Urun Puanlari</strong>
+                      <span>Bilgilendirme tablosu</span>
+                    </summary>
+
+                    <div className="goal-product-point-table-wrap">
+                      <table className="goal-product-point-table">
+                        <thead>
+                          <tr>
+                            <th>Urun</th>
+                            <th>Urun Puani</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {productPointRows.map((row) => (
+                            <tr key={`product-point-${row.product}`}>
+                              <td>{row.product}</td>
+                              <td>{formatNumber(row.points)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </details>
+                ) : null}
               </div>
             ) : null}
 
@@ -1451,15 +1483,17 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
   let employeeRows: GoalActualRow[] = [];
   let storeRows: GoalStoreRow[] = [];
   let productionRewardRows: GoalProductionRewardRow[] = [];
+  let productPointRows: GoalProductPointRow[] = [];
   let dayStats: GoalDayStats = EMPTY_DAY_STATS;
   let sheetError = "";
 
   try {
-    [employeeRows, storeRows, dayStats, productionRewardRows] = await Promise.all([
+    [employeeRows, storeRows, dayStats, productionRewardRows, productPointRows] = await Promise.all([
       fetchGoalActualRows(),
       fetchGoalStoreRows(),
       fetchGoalDayStats(),
-      fetchGoalProductionRewardRows()
+      fetchGoalProductionRewardRows(),
+      fetchGoalProductPointRows()
     ]);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Google Sheet verisi okunamadi.";
@@ -2099,6 +2133,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                     categories={employeeCategorySummaries}
                     remainingDays={dayStats.remainingDays}
                     productionRewardRows={productionRewardRows}
+                    productPointRows={productPointRows}
                   />
                 ) : (
                   <p className="subtle">Bu filtreye uygun calisan verisi bulunamadi.</p>

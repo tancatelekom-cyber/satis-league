@@ -28,6 +28,11 @@ export type GoalProductionRewardRow = {
   reward: string;
 };
 
+export type GoalProductPointRow = {
+  product: string;
+  points: number;
+};
+
 const GOAL_SHEET_ID = "1Ppf_vGtlD6RInm0fxy3lDaV5Sy3LWggkH6Gw1wgciuA";
 const PRS_SHEET_NAME = "PRS";
 const GN_SHEET_NAME = "GN";
@@ -35,6 +40,7 @@ const PRS_SHEET_GID = "0";
 const GN_SHEET_GID = "2046012697";
 const STORE_SHEET_GID = "650800232";
 const PRODUCTION_REWARD_SHEET_GID = "2009769454";
+const PRODUCT_POINT_SHEET_GID = "1779133571";
 
 function buildSheetUrl(sheetName?: string, gid?: string) {
   const params = new URLSearchParams();
@@ -268,6 +274,41 @@ async function fetchGoalProductionRewardRowsFromSheet() {
     .sort((left, right) => left.points - right.points);
 }
 
+async function fetchGoalProductPointRowsFromSheet() {
+  const response = await fetch(buildSheetUrl(undefined, PRODUCT_POINT_SHEET_GID), {
+    cache: "no-store",
+    next: { revalidate: 0 },
+    headers: {
+      accept: "text/csv, text/plain, */*",
+      "user-agent": "Mozilla/5.0 (compatible; TancaSuperLigBot/1.0; +https://vercel.app)"
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`Urun puani sayfasi okunamadi: ${response.status}`);
+  }
+
+  const rows = parseCsv(await response.text());
+
+  return rows
+    .slice(1)
+    .map((row): GoalProductPointRow | null => {
+      const product = normalizeText(row[0] ?? "");
+      const points = parseLocalizedNumber(normalizeText(row[1] ?? ""));
+
+      if (!product || !points) {
+        return null;
+      }
+
+      return {
+        product,
+        points
+      };
+    })
+    .filter((row): row is GoalProductPointRow => Boolean(row))
+    .sort((left, right) => right.points - left.points || left.product.localeCompare(right.product, "tr"));
+}
+
 export const fetchGoalActualRows = fetchGoalActualRowsFromSheet;
 
 export const fetchGoalDayStats = fetchGoalDayStatsFromSheet;
@@ -275,3 +316,5 @@ export const fetchGoalDayStats = fetchGoalDayStatsFromSheet;
 export const fetchGoalStoreRows = fetchGoalStoreRowsFromSheet;
 
 export const fetchGoalProductionRewardRows = fetchGoalProductionRewardRowsFromSheet;
+
+export const fetchGoalProductPointRows = fetchGoalProductPointRowsFromSheet;

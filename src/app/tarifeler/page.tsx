@@ -79,8 +79,7 @@ export default async function TariffsPage({ searchParams }: TariffsPageProps) {
   const filterOptions = buildTariffFilterOptions(presetTariffs, selectedMode);
   const bucketExists = !selectedBucket || filterOptions.some((option) => option.value === selectedBucket);
   const effectiveBucket = bucketExists ? selectedBucket : "";
-  const filteredTariffs =
-    selectedPreset === "all" ? [] : filterTariffs(tariffs, selectedMode, selectedPreset, effectiveBucket, search);
+  const filteredTariffs = filterTariffs(tariffs, selectedMode, selectedPreset, effectiveBucket, search);
 
   return (
     <main>
@@ -158,11 +157,9 @@ export default async function TariffsPage({ searchParams }: TariffsPageProps) {
       <section className="campaign-directory">
         {filteredTariffs.length === 0 ? (
           <article className="campaign-directory-card">
-            <strong>{selectedPreset === "all" ? "Hazir baslik secin" : "Tarife bulunamadi"}</strong>
+            <strong>Tarife bulunamadi</strong>
             <p className="subtle">
-              {selectedPreset === "all"
-                ? "Listeyi gormek icin once bir hazir baslik secin."
-                : "Seciminize uygun tarife yok. Farkli bir grup veya arama deneyin."}
+              Seciminize uygun tarife yok. Farkli bir grup veya arama deneyin.
             </p>
           </article>
         ) : (

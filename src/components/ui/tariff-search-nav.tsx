@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 type TariffSearchNavProps = {
@@ -28,18 +28,33 @@ export function TariffSearchNav({
   search
 }: TariffSearchNavProps) {
   const router = useRouter();
+  const inputRef = useRef<HTMLInputElement | null>(null);
   const [value, setValue] = useState(search);
+  const lastCommittedSearchRef = useRef(search);
   const [, startTransition] = useTransition();
 
   useEffect(() => {
-    setValue(search);
+    const isFocused = document.activeElement === inputRef.current;
+
+    if (!isFocused) {
+      setValue(search);
+    }
+
+    lastCommittedSearchRef.current = search;
   }, [search]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
       const normalized = value.trim();
+
+      if (normalized === lastCommittedSearchRef.current) {
+        return;
+      }
+
+      lastCommittedSearchRef.current = normalized;
+
       startTransition(() => {
-        router.replace(buildHref(mode, preset, bucket, normalized));
+        router.replace(buildHref(mode, preset, bucket, normalized), { scroll: false });
       });
     }, 220);
 
@@ -54,6 +69,7 @@ export function TariffSearchNav({
         className="input tariff-live-search-input"
         onChange={(event) => setValue(event.target.value)}
         placeholder={placeholder}
+        ref={inputRef}
         type="search"
         value={value}
       />

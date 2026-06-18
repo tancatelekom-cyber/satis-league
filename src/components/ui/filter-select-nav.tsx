@@ -29,7 +29,7 @@ export function FilterSelectNav({ ariaLabel, options, value }: FilterSelectNavPr
         className="filter-select"
         value={value}
         onChange={(event) => {
-          router.push(event.target.value);
+          router.replace(event.target.value, { scroll: false });
         }}
       >
         {options.map((option) => (

@@ -17,16 +17,14 @@ export const dynamic = "force-dynamic";
 
 type TariffsPageProps = {
   searchParams?: Promise<{
-    mode?: TariffCategoryMode;
     preset?: TariffPreset;
     bucket?: string;
     search?: string;
   }>;
 };
 
-function buildHref(mode: TariffCategoryMode, preset: TariffPreset, bucket?: string, search?: string) {
+function buildHref(preset: TariffPreset, bucket?: string, search?: string) {
   const params = new URLSearchParams();
-  params.set("mode", mode);
   if (preset !== "all") params.set("preset", preset);
   if (bucket) params.set("bucket", bucket);
   if (search) params.set("search", search);
@@ -35,7 +33,7 @@ function buildHref(mode: TariffCategoryMode, preset: TariffPreset, bucket?: stri
 
 export default async function TariffsPage({ searchParams }: TariffsPageProps) {
   const params = searchParams ? await searchParams : undefined;
-  const selectedMode = params?.mode === "minutes" || params?.mode === "name" ? params.mode : "gb";
+  const selectedMode: TariffCategoryMode = "name";
   const selectedPreset: TariffPreset =
     params?.preset === "new-member" ||
     params?.preset === "yapboz" ||
@@ -94,28 +92,15 @@ export default async function TariffsPage({ searchParams }: TariffsPageProps) {
             <span className="league-filter-label">Hazir Baslik</span>
             <FilterSelectNav
               ariaLabel="Hazir tarife basligi secimi"
-              value={buildHref(selectedMode, selectedPreset, "", search)}
+              value={buildHref(selectedPreset, "", search)}
               options={[
-                { value: buildHref(selectedMode, "all", "", search), label: "Tum Basliklar" },
-                { value: buildHref(selectedMode, "yapboz", "", search), label: "Yapboz" },
-                { value: buildHref(selectedMode, "emekli", "", search), label: "Emekli" },
-                { value: buildHref(selectedMode, "emek", "", search), label: "Emek" },
-                { value: buildHref(selectedMode, "platinum", "", search), label: "Platinum" },
-                { value: buildHref(selectedMode, "gnc", "", search), label: "GNC" },
-                { value: buildHref(selectedMode, "general-postpaid", "", search), label: "Genel Faturali" }
-              ]}
-            />
-          </div>
-
-          <div className="league-filter-item">
-            <span className="league-filter-label">Kategori</span>
-            <FilterSelectNav
-              ariaLabel="Tarife kategori secimi"
-              value={buildHref(selectedMode, selectedPreset, "", search)}
-              options={[
-                { value: buildHref("gb", selectedPreset, "", search), label: "GB Gruplari" },
-                { value: buildHref("minutes", selectedPreset, "", search), label: "Dakika Gruplari" },
-                { value: buildHref("name", selectedPreset, "", search), label: "Tarife Gruplari" }
+                { value: buildHref("all", "", search), label: "Tum Basliklar" },
+                { value: buildHref("yapboz", "", search), label: "Yapboz" },
+                { value: buildHref("emekli", "", search), label: "Emekli" },
+                { value: buildHref("emek", "", search), label: "Emek" },
+                { value: buildHref("platinum", "", search), label: "Platinum" },
+                { value: buildHref("gnc", "", search), label: "GNC" },
+                { value: buildHref("general-postpaid", "", search), label: "Genel Faturali" }
               ]}
             />
           </div>
@@ -124,11 +109,11 @@ export default async function TariffsPage({ searchParams }: TariffsPageProps) {
             <span className="league-filter-label">Filtre</span>
             <FilterSelectNav
               ariaLabel="Tarife filtre secimi"
-              value={buildHref(selectedMode, selectedPreset, effectiveBucket, search)}
+              value={buildHref(selectedPreset, effectiveBucket, search)}
               options={[
-                { value: buildHref(selectedMode, selectedPreset, "", search), label: "Tum Tarifeler" },
+                { value: buildHref(selectedPreset, "", search), label: "Tum Tarifeler" },
                 ...filterOptions.map((option) => ({
-                  value: buildHref(selectedMode, selectedPreset, option.value, search),
+                  value: buildHref(selectedPreset, option.value, search),
                   label: option.label
                 }))
               ]}

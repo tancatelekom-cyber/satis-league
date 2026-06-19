@@ -93,6 +93,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           <strong>Tarifeler</strong>
           <span>Turkcell tarifelerini ekle, duzenle ve kategorilere ayir.</span>
         </a>
+        <a className="admin-quick-card" href="/admin/web-kontor">
+          <strong>Web Kontor</strong>
+          <span>Web Kontor menusunun hangi rollerde gorunecegini ayarla.</span>
+        </a>
         <a className="admin-quick-card" href="/admin/magazalar">
           <strong>Magazalar</strong>
           <span>Kayit ekraninda gorunen magazalari burada yonet.</span>

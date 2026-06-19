@@ -8,6 +8,7 @@ const adminLinks = [
   { href: "/admin/aylik-kampanyalar", label: "Aylik Kampanyalar", description: "Gorsel yukle, degistir ve sil" },
   { href: "/admin/bildirimler", label: "Popup Bildirimler", description: "Ana ekran duyurularini yonet" },
   { href: "/admin/tarifeler", label: "Tarifeler", description: "Tarife ekle, duzenle, kategorilere ayir" },
+  { href: "/admin/web-kontor", label: "Web Kontor", description: "Menu yetkisini ve gorunurlugunu yonet" },
   { href: "/admin/magazalar", label: "Magazalar", description: "Magaza ekle, pasif yap, duzenle" },
   { href: "/admin/onaylar", label: "Kullanici Yonetimi", description: "Kullanici bilgilerini ve sifrelerini yonet" },
   { href: "/admin/mudur-sunumu", label: "Mudur Sunumu", description: "Anlik hedef gerceklesenlere gore sunum ekranini ac" },

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { AuthGate } from "@/components/auth/auth-gate";
 import { AppShellHeader } from "@/components/app-shell-header";
 import { PwaRegister } from "@/components/pwa-register";
+import { canRoleAccessFeature, getFeatureMenuPermissions, getFeaturePermissionByKey } from "@/lib/feature-menu-permissions";
 import { createClient } from "@/lib/supabase/server";
 import "./globals.css";
 
@@ -35,6 +36,7 @@ export default async function RootLayout({
   let canEvaluate = false;
   let canOpenEvaluationPresentation = false;
   let canOpenWorkSchedule = false;
+  let canOpenWebKontor = false;
 
   try {
     const supabase = await createClient();
@@ -57,12 +59,18 @@ export default async function RootLayout({
         profile?.approval === "approved" &&
         (profile.role === "admin" || profile.role === "management" || profile.role === "manager");
       canOpenWorkSchedule = profile?.approval === "approved";
+
+      if (profile?.approval === "approved") {
+        const { permissions } = await getFeatureMenuPermissions();
+        canOpenWebKontor = canRoleAccessFeature(getFeaturePermissionByKey(permissions, "web-kontor"), profile.role);
+      }
     }
   } catch {
     isAdmin = false;
     canEvaluate = false;
     canOpenEvaluationPresentation = false;
     canOpenWorkSchedule = false;
+    canOpenWebKontor = false;
   }
 
   return (
@@ -83,6 +91,7 @@ export default async function RootLayout({
             initialCanEvaluate={canEvaluate}
             initialCanOpenEvaluationPresentation={canOpenEvaluationPresentation}
             initialCanOpenWorkSchedule={canOpenWorkSchedule}
+            initialCanOpenWebKontor={canOpenWebKontor}
           />
 
           <AuthGate>{children}</AuthGate>

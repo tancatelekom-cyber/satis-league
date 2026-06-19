@@ -343,6 +343,18 @@ create table if not exists public.manager_presentation_store_tables (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.feature_menu_permissions (
+  id uuid primary key default gen_random_uuid(),
+  feature_key text not null unique,
+  label text not null,
+  employee_visible boolean not null default false,
+  manager_visible boolean not null default true,
+  management_visible boolean not null default true,
+  admin_visible boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 insert into public.manager_presentation_sections (section_key, label, sort_order, is_visible)
 values
   ('cover', 'Kapak ve Ozet', 0, true),
@@ -355,6 +367,18 @@ values
   ('actions', 'Aksiyon Plani', 7, true),
   ('closing', 'Kapanis Mesaji', 8, true)
 on conflict (section_key) do nothing;
+
+insert into public.feature_menu_permissions (
+  feature_key,
+  label,
+  employee_visible,
+  manager_visible,
+  management_visible,
+  admin_visible
+)
+values
+  ('web-kontor', 'Web Kontor Menusu', false, true, true, true)
+on conflict (feature_key) do nothing;
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (
@@ -476,6 +500,7 @@ alter table public.notifications enable row level security;
 alter table public.popup_announcements enable row level security;
 alter table public.popup_announcement_dismissals enable row level security;
 alter table public.weekly_work_schedules enable row level security;
+alter table public.feature_menu_permissions enable row level security;
 
 drop policy if exists "active stores are visible to everyone" on public.stores;
 create policy "active stores are visible to everyone" on public.stores
@@ -555,3 +580,14 @@ drop policy if exists "users can manage their own weekly work schedules" on publ
 create policy "users can manage their own weekly work schedules" on public.weekly_work_schedules
 for all using (auth.uid() = profile_id)
 with check (auth.uid() = profile_id);
+
+drop policy if exists "approved users can view feature menu permissions" on public.feature_menu_permissions;
+create policy "approved users can view feature menu permissions" on public.feature_menu_permissions
+for select using (
+  exists (
+    select 1
+    from public.profiles p
+    where p.id = auth.uid()
+      and p.approval = 'approved'
+  )
+);

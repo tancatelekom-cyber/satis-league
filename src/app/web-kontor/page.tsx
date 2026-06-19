@@ -172,21 +172,23 @@ function getScaleBadgeStyle(reachedScale: WebKontorReachedScale): CSSProperties 
   if (reachedScale === "2. Barem") {
     return {
       background: "linear-gradient(135deg, #67e8f9, #34d399)",
-      color: "#082032"
+      color: "#047857",
+      border: "1px solid rgba(4, 120, 87, 0.24)"
     };
   }
 
   if (reachedScale === "1. Barem") {
     return {
       background: "linear-gradient(135deg, #ffe083, #ffd166)",
-      color: "#082032"
+      color: "#15803d",
+      border: "1px solid rgba(21, 128, 61, 0.2)"
     };
   }
 
   return {
-    background: "rgba(11, 33, 67, 0.12)",
-    color: "#0b2143",
-    border: "1px solid rgba(11, 33, 67, 0.18)"
+    background: "rgba(239, 68, 68, 0.1)",
+    color: "#dc2626",
+    border: "1px solid rgba(220, 38, 38, 0.2)"
   };
 }
 

@@ -5783,6 +5783,16 @@ textarea::placeholder {
   color: #edf6ff !important;
 }
 
+.web-kontor-section-head h2 {
+  color: #0b2143 !important;
+  text-shadow: none !important;
+}
+
+.web-kontor-section-head span {
+  color: #37516f !important;
+  text-shadow: none !important;
+}
+
 .goal-ranking-list {
   display: grid;
   gap: 10px;

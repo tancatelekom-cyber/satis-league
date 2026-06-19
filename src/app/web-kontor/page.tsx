@@ -368,7 +368,7 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
       </section>
 
       <section className="campaign-section-card" style={{ display: "grid", gap: 16 }}>
-        <div className="goal-section-head" style={sectionHeadStyle}>
+        <div className="goal-section-head web-kontor-section-head" style={sectionHeadStyle}>
           <h2 style={sectionTitleStyle}>Prim Skala Tablosu</h2>
           <span style={sectionMetaStyle}>
             1. barem primi {formatWebKontorRate(webKontorData.scaleOneRate)} | 2. barem primi {formatWebKontorRate(webKontorData.scaleTwoRate)}
@@ -438,7 +438,7 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
       </section>
 
       <section className="campaign-section-card" style={{ display: "grid", gap: 16 }}>
-        <div className="goal-section-head" style={sectionHeadStyle}>
+        <div className="goal-section-head web-kontor-section-head" style={sectionHeadStyle}>
           <h2 style={sectionTitleStyle}>{selectedStore} Gunluk Web Kontor Akisi</h2>
           <span style={sectionMetaStyle}>
             Firma toplam gerceklesen {formatCurrency(webKontorData.companyTotal)} | Prim toplami {formatCurrency(selectedBonusRow?.bonusAmount ?? 0)}

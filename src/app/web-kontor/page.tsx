@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { FilterSelectNav } from "@/components/ui/filter-select-nav";
 import { requireUser } from "@/lib/auth/require-user";
 import { getResolvedFeatureAccessForProfile } from "@/lib/feature-menu-permissions";
-import { fetchGoalDayStats, fetchGoalStoreRows, type GoalDayStats, type GoalStoreRow } from "@/lib/goal-actuals";
 import { createClient } from "@/lib/supabase/server";
 import type { UserRole } from "@/lib/types";
 import {
@@ -11,7 +10,7 @@ import {
   formatWebKontorRate,
   getWebKontorRateMultiplier,
   sameWebKontorStore,
-  type WebKontorScaleRule,
+  type WebKontorDailyRow,
   type WebKontorStoreSummary
 } from "@/lib/web-kontor";
 
@@ -29,45 +28,27 @@ type WebKontorProfile = {
   } | null;
 };
 
-type WebKontorProgress = {
-  target: number | null;
-  actual: number;
-  actualPercent: number | null;
-  projectedPercent: number | null;
-};
+type WebKontorReachedScale = "2. Barem" | "1. Barem" | "Bareme Ulasmadi";
 
 type WebKontorBonusRow = {
   storeName: string;
   totalAmount: number;
-  actualPercent: number | null;
-  projectedPercent: number | null;
   scaleOneTarget: number | null;
   scaleTwoTarget: number | null;
-  reachedScale: "Skala 2" | "Skala 1" | "Henuz Yok";
-  rateValue: number;
+  highestReachedScale: WebKontorReachedScale;
+  firstScaleDayCount: number;
+  secondScaleDayCount: number;
   bonusAmount: number;
 };
 
-const EMPTY_DAYS: GoalDayStats = {
-  workedDays: 0,
-  remainingDays: 0,
-  totalDays: 0
+type WebKontorDayBonusRow = {
+  dayLabel: string;
+  amount: number;
+  reachedScale: WebKontorReachedScale;
+  rateValue: number;
+  bonusAmount: number;
+  companyTotal: number;
 };
-
-function normalizeCategoryKey(value: string) {
-  return String(value ?? "")
-    .toLocaleUpperCase("tr-TR")
-    .replace(/\u0130/g, "I")
-    .replace(/\u011E/g, "G")
-    .replace(/\u00DC/g, "U")
-    .replace(/\u015E/g, "S")
-    .replace(/\u00D6/g, "O")
-    .replace(/\u00C7/g, "C");
-}
-
-function isWebKontorCategory(value: string) {
-  return normalizeCategoryKey(value).includes("WEB KONTOR KARLILIK");
-}
 
 function buildStoreHref(store: string) {
   const params = new URLSearchParams();
@@ -110,71 +91,92 @@ function formatPercent(value: number | null | undefined) {
   })}`;
 }
 
-function buildWebKontorProgress(rows: GoalStoreRow[], dayStats: GoalDayStats): WebKontorProgress {
-  const totalTarget = rows.reduce((sum, row) => sum + (row.target ?? 0), 0);
-  const actual = rows.reduce((sum, row) => sum + row.actual, 0);
-  const hasTarget = totalTarget > 0;
-  const includeProjection = rows.length > 0 && rows.every((row) => row.includeProjection);
-  const projectedActual = includeProjection && dayStats.workedDays > 0 ? Math.floor((actual / dayStats.workedDays) * dayStats.totalDays) : actual;
-
-  return {
-    target: hasTarget ? totalTarget : null,
-    actual,
-    actualPercent: hasTarget ? (actual / totalTarget) * 100 : null,
-    projectedPercent: hasTarget ? (projectedActual / totalTarget) * 100 : null
-  };
-}
-
-function findScaleRule(scaleRules: WebKontorScaleRule[], storeName: string) {
-  return scaleRules.find((rule) => sameWebKontorStore(rule.storeName, storeName)) ?? null;
-}
-
 function buildBonusRow(
   summary: WebKontorStoreSummary,
-  scaleRules: WebKontorScaleRule[],
-  storeProgressRows: GoalStoreRow[],
-  dayStats: GoalDayStats,
+  dailyRows: WebKontorDailyRow[],
+  scaleRules: Awaited<ReturnType<typeof fetchWebKontorSheetData>>["scaleRules"],
   scaleOneRate: number,
   scaleTwoRate: number
 ): WebKontorBonusRow {
-  const scaleRule = findScaleRule(scaleRules, summary.storeName);
-  const progress = buildWebKontorProgress(storeProgressRows, dayStats);
+  const scaleRule = scaleRules.find((rule) => sameWebKontorStore(rule.storeName, summary.storeName)) ?? null;
   const scaleOneTarget = scaleRule?.scaleOneTarget ?? null;
   const scaleTwoTarget = scaleRule?.scaleTwoTarget ?? null;
+  let firstScaleDayCount = 0;
+  let secondScaleDayCount = 0;
+  let highestReachedScale: WebKontorReachedScale = "Bareme Ulasmadi";
 
-  let reachedScale: WebKontorBonusRow["reachedScale"] = "Henuz Yok";
-  let rateValue = 0;
+  const bonusAmount = dailyRows.reduce((sum, row) => {
+    const amount = row.storeAmounts.find((item) => sameWebKontorStore(item.storeName, summary.storeName))?.amount ?? 0;
+    let rateValue = 0;
 
-  if (progress.actualPercent !== null && scaleTwoTarget !== null && progress.actualPercent >= scaleTwoTarget) {
-    reachedScale = "Skala 2";
-    rateValue = scaleTwoRate;
-  } else if (progress.actualPercent !== null && scaleOneTarget !== null && progress.actualPercent >= scaleOneTarget) {
-    reachedScale = "Skala 1";
-    rateValue = scaleOneRate;
-  }
+    if (scaleTwoTarget !== null && amount >= scaleTwoTarget) {
+      rateValue = scaleTwoRate;
+      secondScaleDayCount += 1;
+      highestReachedScale = "2. Barem";
+    } else if (scaleOneTarget !== null && amount >= scaleOneTarget) {
+      rateValue = scaleOneRate;
+      firstScaleDayCount += 1;
+      if (highestReachedScale !== "2. Barem") {
+        highestReachedScale = "1. Barem";
+      }
+    }
+
+    return sum + amount * getWebKontorRateMultiplier(rateValue);
+  }, 0);
 
   return {
     storeName: summary.storeName,
     totalAmount: summary.totalAmount,
-    actualPercent: progress.actualPercent,
-    projectedPercent: progress.projectedPercent,
     scaleOneTarget,
     scaleTwoTarget,
-    reachedScale,
-    rateValue,
-    bonusAmount: summary.totalAmount * getWebKontorRateMultiplier(rateValue)
+    highestReachedScale,
+    firstScaleDayCount,
+    secondScaleDayCount,
+    bonusAmount
   };
 }
 
-function getScaleBadgeStyle(reachedScale: WebKontorBonusRow["reachedScale"]): CSSProperties {
-  if (reachedScale === "Skala 2") {
+function buildSelectedDayRows(
+  selectedStore: string,
+  dailyRows: WebKontorDailyRow[],
+  scaleOneTarget: number | null,
+  scaleTwoTarget: number | null,
+  scaleOneRate: number,
+  scaleTwoRate: number
+): WebKontorDayBonusRow[] {
+  return dailyRows.map((row) => {
+    const amount = row.storeAmounts.find((item) => sameWebKontorStore(item.storeName, selectedStore))?.amount ?? 0;
+    let reachedScale: WebKontorReachedScale = "Bareme Ulasmadi";
+    let rateValue = 0;
+
+    if (scaleTwoTarget !== null && amount >= scaleTwoTarget) {
+      reachedScale = "2. Barem";
+      rateValue = scaleTwoRate;
+    } else if (scaleOneTarget !== null && amount >= scaleOneTarget) {
+      reachedScale = "1. Barem";
+      rateValue = scaleOneRate;
+    }
+
+    return {
+      dayLabel: row.dayLabel,
+      amount,
+      reachedScale,
+      rateValue,
+      bonusAmount: amount * getWebKontorRateMultiplier(rateValue),
+      companyTotal: row.companyTotal ?? 0
+    };
+  });
+}
+
+function getScaleBadgeStyle(reachedScale: WebKontorReachedScale): CSSProperties {
+  if (reachedScale === "2. Barem") {
     return {
       background: "linear-gradient(135deg, #67e8f9, #34d399)",
       color: "#082032"
     };
   }
 
-  if (reachedScale === "Skala 1") {
+  if (reachedScale === "1. Barem") {
     return {
       background: "linear-gradient(135deg, #ffe083, #ffd166)",
       color: "#082032"
@@ -222,11 +224,7 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
     redirect("/");
   }
 
-  const [webKontorData, storeRows, dayStats] = await Promise.all([
-    fetchWebKontorSheetData(),
-    fetchGoalStoreRows().catch(() => [] as GoalStoreRow[]),
-    fetchGoalDayStats().catch(() => EMPTY_DAYS)
-  ]);
+  const webKontorData = await fetchWebKontorSheetData();
 
   const ownStoreName = safeProfile.store?.name?.trim() ?? "";
   const canViewAllStores = safeProfile.role === "admin" || safeProfile.role === "management";
@@ -253,20 +251,22 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
   const bonusRows = visibleStoreSummaries.map((summary) =>
     buildBonusRow(
       summary,
+      webKontorData.dailyRows,
       webKontorData.scaleRules,
-      storeRows.filter((row) => sameWebKontorStore(row.storeCode, summary.storeName) && isWebKontorCategory(row.mainCategory)),
-      dayStats,
       webKontorData.scaleOneRate,
       webKontorData.scaleTwoRate
     )
   );
 
   const selectedBonusRow = bonusRows.find((row) => sameWebKontorStore(row.storeName, selectedStore)) ?? bonusRows[0];
-  const selectedDailyRows = webKontorData.dailyRows.map((row) => ({
-    dayLabel: row.dayLabel,
-    storeAmount: row.storeAmounts.find((item) => sameWebKontorStore(item.storeName, selectedStore))?.amount ?? 0,
-    companyTotal: row.companyTotal ?? 0
-  }));
+  const selectedDailyRows = buildSelectedDayRows(
+    selectedStore,
+    webKontorData.dailyRows,
+    selectedBonusRow?.scaleOneTarget ?? null,
+    selectedBonusRow?.scaleTwoTarget ?? null,
+    webKontorData.scaleOneRate,
+    webKontorData.scaleTwoRate
+  );
 
   const summaryCardStyle: CSSProperties = {
     padding: "18px 20px",
@@ -282,7 +282,7 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
     <main>
       <h1 className="page-title">Web Kontor</h1>
       <p className="page-subtitle">
-        Gunluk Web Kontor karlilik tutarlarini, hedefe gore ulasilan prim skalasini ve tahmini kazanim tablosunu izleyin.
+        Gunluk Web Kontor karlilik tutarlarini, bareme gore olusan prim skalasini ve gunluk kazanimi izleyin.
       </p>
 
       <section className="guide-card game-brief-card" style={{ display: "grid", gap: 18 }}>
@@ -299,15 +299,15 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
           </article>
           <article style={summaryCardStyle}>
             <span style={{ color: "#56708c", fontWeight: 700 }}>Ulasilan Skala</span>
-            <strong style={{ color: "#0b2143", fontSize: "2rem", lineHeight: 1 }}>{selectedBonusRow?.reachedScale ?? "-"}</strong>
+            <strong style={{ color: "#0b2143", fontSize: "2rem", lineHeight: 1 }}>{selectedBonusRow?.highestReachedScale ?? "-"}</strong>
             <span style={{ color: "#37516f" }}>
-              Hedef yuzdesine gore aktif prim orani {formatWebKontorRate(selectedBonusRow?.rateValue ?? 0)}.
+              1. barem gunu {formatNumber(selectedBonusRow?.firstScaleDayCount ?? 0)} | 2. barem gunu {formatNumber(selectedBonusRow?.secondScaleDayCount ?? 0)}.
             </span>
           </article>
           <article style={summaryCardStyle}>
             <span style={{ color: "#56708c", fontWeight: 700 }}>Prim Kazanimi</span>
             <strong style={{ color: "#0b2143", fontSize: "2rem", lineHeight: 1 }}>{formatCurrency(selectedBonusRow?.bonusAmount ?? 0)}</strong>
-            <span style={{ color: "#37516f" }}>Gerceklesen tutar x aktif skala orani.</span>
+            <span style={{ color: "#37516f" }}>Gunluk gerceklesenler barem oranlariyla carpilarak toplanir.</span>
           </article>
         </div>
 
@@ -332,7 +332,7 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
         <div className="goal-section-head">
           <h2>Prim Skala Tablosu</h2>
           <span>
-            1. skala payi {formatWebKontorRate(webKontorData.scaleOneRate)} | 2. skala payi {formatWebKontorRate(webKontorData.scaleTwoRate)}
+            1. barem primi {formatWebKontorRate(webKontorData.scaleOneRate)} | 2. barem primi {formatWebKontorRate(webKontorData.scaleTwoRate)}
           </span>
         </div>
 
@@ -342,12 +342,11 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
               <tr>
                 <th>Sube</th>
                 <th>Gerceklesen</th>
-                <th>Hedef %</th>
-                <th>Ay Sonu %</th>
-                <th>1. Skala</th>
-                <th>2. Skala</th>
+                <th>1. Barem</th>
+                <th>2. Barem</th>
+                <th>1. Barem Gun</th>
+                <th>2. Barem Gun</th>
                 <th>Ulasilan</th>
-                <th>Prim Orani</th>
                 <th>Prim Kazanimi</th>
               </tr>
             </thead>
@@ -370,10 +369,10 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
                       {row.storeName}
                     </th>
                     <td>{formatCurrency(row.totalAmount)}</td>
-                    <td>{formatPercent(row.actualPercent)}</td>
-                    <td>{formatPercent(row.projectedPercent)}</td>
-                    <td>{formatPercent(row.scaleOneTarget)}</td>
-                    <td>{formatPercent(row.scaleTwoTarget)}</td>
+                    <td>{formatCurrency(row.scaleOneTarget)}</td>
+                    <td>{formatCurrency(row.scaleTwoTarget)}</td>
+                    <td>{formatNumber(row.firstScaleDayCount)}</td>
+                    <td>{formatNumber(row.secondScaleDayCount)}</td>
                     <td>
                       <span
                         style={{
@@ -384,13 +383,12 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
                           padding: "8px 12px",
                           borderRadius: 999,
                           fontWeight: 900,
-                          ...getScaleBadgeStyle(row.reachedScale)
+                          ...getScaleBadgeStyle(row.highestReachedScale)
                         }}
                       >
-                        {row.reachedScale}
+                        {row.highestReachedScale}
                       </span>
                     </td>
-                    <td>{formatWebKontorRate(row.rateValue)}</td>
                     <td>{formatCurrency(row.bonusAmount)}</td>
                   </tr>
                 );
@@ -404,7 +402,7 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
         <div className="goal-section-head">
           <h2>{selectedStore} Gunluk Web Kontor Akisi</h2>
           <span>
-            Firma toplam gerceklesen {formatCurrency(webKontorData.companyTotal)} | Calisilan gun {formatNumber(dayStats.workedDays)}
+            Firma toplam gerceklesen {formatCurrency(webKontorData.companyTotal)} | Prim toplamı {formatCurrency(selectedBonusRow?.bonusAmount ?? 0)}
           </span>
         </div>
 
@@ -414,6 +412,9 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
               <tr>
                 <th>Gun</th>
                 <th>{selectedStore}</th>
+                <th>Barem</th>
+                <th>Prim Orani</th>
+                <th>Gunluk Prim</th>
                 <th>Firma Toplami</th>
               </tr>
             </thead>
@@ -421,7 +422,25 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
               {selectedDailyRows.map((row) => (
                 <tr key={`web-kontor-day-${row.dayLabel}`}>
                   <th>{row.dayLabel}</th>
-                  <td>{formatCurrency(row.storeAmount)}</td>
+                  <td>{formatCurrency(row.amount)}</td>
+                  <td>
+                    <span
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        minWidth: 110,
+                        padding: "8px 12px",
+                        borderRadius: 999,
+                        fontWeight: 900,
+                        ...getScaleBadgeStyle(row.reachedScale)
+                      }}
+                    >
+                      {row.reachedScale}
+                    </span>
+                  </td>
+                  <td>{formatWebKontorRate(row.rateValue)}</td>
+                  <td>{formatCurrency(row.bonusAmount)}</td>
                   <td>{formatCurrency(row.companyTotal)}</td>
                 </tr>
               ))}

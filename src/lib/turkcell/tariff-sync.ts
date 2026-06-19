@@ -189,8 +189,9 @@ function isCorePostpaidTariff(pkg: TurkcellPackage) {
   const title = (pkg.title ?? "").toLocaleLowerCase("tr-TR");
   const paymentType = String(pkg.paymentType ?? "").toUpperCase();
   const isYapboz = isYapbozPackage(pkg);
+  const isUltra = /5g\s*ultra|\bultra\b/.test(title);
 
-  if (!isYapboz && paymentType !== "POSTPAID") {
+  if (!isYapboz && !isUltra && paymentType !== "POSTPAID") {
     return false;
   }
 
@@ -198,15 +199,15 @@ function isCorePostpaidTariff(pkg: TurkcellPackage) {
     return false;
   }
 
-  if (!pkg.cpcmTariffOfferId && !isYapboz) {
+  if (!pkg.cpcmTariffOfferId && !isYapboz && !isUltra) {
     return false;
   }
 
-  if (pkg.price?.onlineExclusive && !isYapboz) {
+  if (pkg.price?.onlineExclusive && !isYapboz && !isUltra) {
     return false;
   }
 
-  if (isDigitalOnly(pkg) && !isYapboz) {
+  if (isDigitalOnly(pkg) && !isYapboz && !isUltra) {
     return false;
   }
 
@@ -245,6 +246,7 @@ function inferCategoryName(name: string, selectedTags?: Array<{ title?: string |
   if (lower.includes("platinum+")) return "Platinum+";
   if (lower.includes("platinum prestij")) return "Platinum Prestij";
   if (lower.includes("prestij")) return "Prestij";
+  if (lower.includes("ultra")) return "5G Ultra";
   if (lower.includes("star+")) return "Star+";
   if (lower.includes("gnç+")) return "GNÇ+";
   if (lower.includes("mavi")) return "Mavi";

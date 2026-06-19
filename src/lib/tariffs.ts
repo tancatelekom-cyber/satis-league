@@ -55,6 +55,8 @@ function normalizeTariffText(tariff: TariffRecord) {
 
 export function getTariffPresetLabel(preset: TariffPreset) {
   switch (preset) {
+    case "ultra":
+      return "5G Ultra";
     case "new-member":
       return "Tarife Isimleri";
     case "yapboz":
@@ -81,6 +83,10 @@ export function matchesTariffPreset(tariff: TariffRecord, preset: TariffPreset):
 
   const haystack = normalizeTariffText(tariff);
 
+  if (preset === "ultra") {
+    return /5g\s*ultra|\bultra\b/.test(haystack);
+  }
+
   if (preset === "new-member") {
     return /ilk turkcell|yeni musteri|yeni turkcell/.test(haystack);
   }
@@ -106,6 +112,7 @@ export function matchesTariffPreset(tariff: TariffRecord, preset: TariffPreset):
   }
 
   return (
+    !matchesTariffPreset(tariff, "ultra") &&
     !matchesTariffPreset(tariff, "new-member") &&
     !matchesTariffPreset(tariff, "yapboz") &&
     !matchesTariffPreset(tariff, "emekli") &&

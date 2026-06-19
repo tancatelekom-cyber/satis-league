@@ -35,6 +35,7 @@ export default async function TariffsPage({ searchParams }: TariffsPageProps) {
   const params = searchParams ? await searchParams : undefined;
   const selectedMode: TariffCategoryMode = "name";
   const selectedPreset: TariffPreset =
+    params?.preset === "ultra" ||
     params?.preset === "new-member" ||
     params?.preset === "yapboz" ||
     params?.preset === "emekli" ||
@@ -95,6 +96,7 @@ export default async function TariffsPage({ searchParams }: TariffsPageProps) {
               value={buildHref(selectedPreset, "", search)}
               options={[
                 { value: buildHref("all", "", search), label: "Tum Basliklar" },
+                { value: buildHref("ultra", "", search), label: "5G Ultra" },
                 { value: buildHref("yapboz", "", search), label: "Yapboz" },
                 { value: buildHref("emekli", "", search), label: "Emekli" },
                 { value: buildHref("emek", "", search), label: "Emek" },

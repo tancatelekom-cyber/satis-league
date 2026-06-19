@@ -5,6 +5,7 @@ export type LeaguePeriod = "month" | "quarter" | "year";
 export type TariffCategoryMode = "gb" | "minutes" | "name";
 export type TariffPreset =
   | "all"
+  | "ultra"
   | "new-member"
   | "yapboz"
   | "emekli"

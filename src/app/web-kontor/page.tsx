@@ -192,6 +192,20 @@ function getScaleBadgeStyle(reachedScale: WebKontorReachedScale): CSSProperties 
   };
 }
 
+function getDailyRowTextStyle(reachedScale: WebKontorReachedScale): CSSProperties {
+  if (reachedScale === "Bareme Ulasmadi") {
+    return {
+      color: "#dc2626",
+      fontWeight: 900
+    };
+  }
+
+  return {
+    color: "#15803d",
+    fontWeight: 900
+  };
+}
+
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -425,7 +439,7 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
               {selectedDailyRows.map((row) => (
                 <tr key={`web-kontor-day-${row.dayLabel}`}>
                   <th>{row.dayLabel}</th>
-                  <td>{formatCurrency(row.amount)}</td>
+                  <td style={getDailyRowTextStyle(row.reachedScale)}>{formatCurrency(row.amount)}</td>
                   <td>
                     <span
                       style={{
@@ -442,9 +456,9 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
                       {row.reachedScale}
                     </span>
                   </td>
-                  <td>{formatWebKontorRate(row.rateValue)}</td>
-                  <td>{formatCurrency(row.bonusAmount)}</td>
-                  <td>{formatCurrency(row.companyTotal)}</td>
+                  <td style={getDailyRowTextStyle(row.reachedScale)}>{formatWebKontorRate(row.rateValue)}</td>
+                  <td style={getDailyRowTextStyle(row.reachedScale)}>{formatCurrency(row.bonusAmount)}</td>
+                  <td style={getDailyRowTextStyle(row.reachedScale)}>{formatCurrency(row.companyTotal)}</td>
                 </tr>
               ))}
             </tbody>

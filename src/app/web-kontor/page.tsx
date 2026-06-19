@@ -184,8 +184,9 @@ function getScaleBadgeStyle(reachedScale: WebKontorReachedScale): CSSProperties 
   }
 
   return {
-    background: "rgba(255,255,255,0.14)",
-    color: "#f8fbff"
+    background: "rgba(11, 33, 67, 0.12)",
+    color: "#0b2143",
+    border: "1px solid rgba(11, 33, 67, 0.18)"
   };
 }
 

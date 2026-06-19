@@ -8667,6 +8667,107 @@ textarea::placeholder {
   gap: 8px;
 }
 
+.goal-store-production-panel {
+  display: grid;
+  gap: 16px;
+  margin-top: 18px;
+  padding: 18px;
+  border-radius: 24px;
+  background: rgba(7, 23, 43, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.goal-store-production-table-wrap {
+  overflow-x: auto;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.goal-store-production-table {
+  width: 100%;
+  min-width: 980px;
+  border-collapse: collapse;
+  color: #10203b;
+}
+
+.goal-store-production-table th,
+.goal-store-production-table td {
+  padding: 12px 12px;
+  border: 1px solid rgba(16, 32, 59, 0.12);
+  text-align: center;
+  vertical-align: middle;
+}
+
+.goal-store-production-table thead th {
+  background: #cfe0f2;
+  color: #0b2143;
+  font-size: 0.88rem;
+  font-weight: 900;
+}
+
+.goal-store-production-table tbody th {
+  background: #d8e6f5;
+  color: #0b2143;
+  text-align: left;
+  white-space: nowrap;
+  font-size: 0.92rem;
+  font-weight: 900;
+}
+
+.goal-store-production-head-points,
+.goal-store-production-head-reward {
+  display: block;
+}
+
+.goal-store-production-head-points {
+  font-size: 0.88rem;
+  font-weight: 900;
+}
+
+.goal-store-production-head-reward {
+  margin-top: 4px;
+  color: #46627f;
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.goal-store-production-table td {
+  background: #ffffff;
+}
+
+.goal-store-production-table td strong {
+  display: block;
+  color: #0b2143;
+  font-size: 0.9rem;
+  font-weight: 900;
+}
+
+.goal-store-production-table td span {
+  display: block;
+  margin-top: 4px;
+  color: #56708c;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.goal-store-production-cell-active {
+  background: linear-gradient(135deg, rgba(215, 247, 167, 0.92), rgba(126, 241, 211, 0.86)) !important;
+}
+
+.goal-store-production-cell-complete {
+  background: rgba(255, 241, 199, 0.92) !important;
+}
+
+.goal-store-production-cell-active strong,
+.goal-store-production-cell-complete strong {
+  color: #09111f;
+}
+
+.goal-store-production-cell-active span,
+.goal-store-production-cell-complete span {
+  color: #24425d;
+}
+
 @media (max-width: 760px) {
   .goal-company-trend-table-wrap {
     overflow-x: hidden;
@@ -8727,6 +8828,30 @@ textarea::placeholder {
   .goal-company-trend-legend {
     gap: 8px 12px;
     font-size: 0.72rem;
+  }
+
+  .goal-store-production-panel {
+    padding: 14px;
+  }
+
+  .goal-store-production-table {
+    min-width: 840px;
+  }
+
+  .goal-store-production-table th,
+  .goal-store-production-table td {
+    padding: 8px 6px;
+  }
+
+  .goal-store-production-table thead th,
+  .goal-store-production-table tbody th,
+  .goal-store-production-table td strong {
+    font-size: 0.74rem;
+  }
+
+  .goal-store-production-head-reward,
+  .goal-store-production-table td span {
+    font-size: 0.64rem;
   }
 }
 

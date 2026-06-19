@@ -96,6 +96,14 @@ type ProductionRewardPlan = {
   rows: ProductionRewardPlanRow[];
 };
 
+type StoreEmployeeProductionPlan = {
+  employeeName: string;
+  actualPoints: number;
+  projectedPoints: number;
+  projectedReward: string | null;
+  rows: ProductionRewardPlanRow[];
+};
+
 type CoachingMetric = {
   title: string;
   target: number | null;
@@ -774,6 +782,56 @@ function buildProductionRewardPlan(
       } satisfies ProductionRewardPlanRow;
     })
   };
+}
+
+function buildStoreEmployeeProductionPlans(
+  rows: GoalActualRow[],
+  rewardRows: GoalProductionRewardRow[],
+  workedDays: number,
+  totalDays: number,
+  remainingDays: number
+) {
+  if (!rewardRows.length) {
+    return [] as StoreEmployeeProductionPlan[];
+  }
+
+  const employeeMap = new Map<string, GoalActualRow[]>();
+  rows
+    .filter((row) => isProductionPointCategory(row.mainCategory))
+    .forEach((row) => {
+      const current = employeeMap.get(row.employeeName) ?? [];
+      current.push(row);
+      employeeMap.set(row.employeeName, current);
+    });
+
+  return Array.from(employeeMap.entries())
+    .map(([employeeName, employeeRows]) => {
+      const summary = buildMetricSummary(employeeRows, workedDays, totalDays);
+      const rewardPlan = buildProductionRewardPlan(
+        {
+          title: "URETIM PUANI",
+          childCount: 0,
+          children: [],
+          ...summary
+        },
+        rewardRows,
+        remainingDays
+      );
+
+      if (!rewardPlan) {
+        return null;
+      }
+
+      return {
+        employeeName,
+        actualPoints: rewardPlan.actualPoints,
+        projectedPoints: rewardPlan.projectedPoints,
+        projectedReward: rewardPlan.projectedReward,
+        rows: rewardPlan.rows
+      } satisfies StoreEmployeeProductionPlan;
+    })
+    .filter((row): row is StoreEmployeeProductionPlan => Boolean(row))
+    .sort((a, b) => a.employeeName.localeCompare(b.employeeName, "tr"));
 }
 
 function aggregateStoreActual(rows: GoalStoreRow[]) {
@@ -1758,6 +1816,16 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
     dayStats.totalDays
   );
   const storeCategorySummaries = buildStoreCategorySummaries(activeStoreRows, dayStats.workedDays, dayStats.totalDays);
+  const activeStoreEmployeeRows = activeStoreName
+    ? filteredEmployeeCoreRows.filter((row) => normalizeStoreKey(row.storeName) === normalizeStoreKey(activeStoreName))
+    : [];
+  const storeEmployeeProductionPlans = buildStoreEmployeeProductionPlans(
+    activeStoreEmployeeRows,
+    productionRewardRows,
+    dayStats.workedDays,
+    dayStats.totalDays,
+    dayStats.remainingDays
+  );
   const companyCategorySummaries = buildCompanyCategorySummaries(filteredStoreRows, dayStats.workedDays, dayStats.totalDays);
   const storeNeedSummaries = storeCategorySummaries
     .filter((category) => category.hasTarget)
@@ -2353,6 +2421,56 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                         </span>
                       </div>
                     ) : null}
+                  </div>
+                ) : null}
+
+                {effectiveView === "store" && storeEmployeeProductionPlans.length ? (
+                  <div className="goal-store-production-panel">
+                    <div className="goal-live-prime-head">
+                      <h3>Personel Uretim Puani Skala Ihtiyaclari</h3>
+                    </div>
+
+                    <div className="goal-store-production-table-wrap">
+                      <table className="goal-store-production-table">
+                        <thead>
+                          <tr>
+                            <th>Personel</th>
+                            <th>Su Anki Puan</th>
+                            <th>Ay Sonu Ongoru</th>
+                            {productionRewardRows.map((rewardRow) => (
+                              <th key={`store-production-head-${rewardRow.points}`}>
+                                <span className="goal-store-production-head-points">{formatNumber(rewardRow.points)} Puan</span>
+                                <span className="goal-store-production-head-reward">{rewardRow.reward}</span>
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {storeEmployeeProductionPlans.map((plan) => (
+                            <tr key={`store-production-row-${plan.employeeName}`}>
+                              <th>{plan.employeeName}</th>
+                              <td>{formatNumber(plan.actualPoints)}</td>
+                              <td>{formatNumber(plan.projectedPoints)}</td>
+                              {plan.rows.map((row) => (
+                                <td
+                                  key={`store-production-cell-${plan.employeeName}-${row.points}`}
+                                  className={
+                                    row.isCurrentProjectedTier
+                                      ? "goal-store-production-cell-active"
+                                      : row.isReached
+                                        ? "goal-store-production-cell-complete"
+                                        : ""
+                                  }
+                                >
+                                  <strong>{row.isReached ? "Tamam" : `${formatNumber(row.dailyRequired)} / gun`}</strong>
+                                  <span>{row.isCurrentProjectedTier ? "Ay sonu gidisati" : row.isReached ? "Skala asildi" : "Gunluk ihtiyac"}</span>
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 ) : null}
 

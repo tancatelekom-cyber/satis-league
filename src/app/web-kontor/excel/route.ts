@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getResolvedFeatureAccessForProfile } from "@/lib/feature-menu-permissions";
 import {
@@ -107,11 +107,15 @@ function buildExcelWorkbookXml(worksheets: WorksheetDefinition[]) {
 </Workbook>`;
 }
 
-function formatCurrencyValue(value: number) {
-  return `${value.toLocaleString("tr-TR", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  })} TL`;
+function safeFileName(value: string) {
+  return (
+    value
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .toLowerCase() || "web-kontor-akisi"
+  );
 }
 
 function buildSelectedStoreSummaryRow(
@@ -157,123 +161,128 @@ function buildSelectedStoreSummaryRow(
   };
 }
 
-export async function GET(request: NextRequest) {
-  const supabase = await createClient();
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
+export async function GET(request: Request) {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user }
+    } = await supabase.auth.getUser();
 
-  if (!user) {
-    return NextResponse.json({ error: "Giris yapilmadi." }, { status: 401 });
-  }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("approval, role, store:stores(name)")
-    .eq("id", user.id)
-    .single();
-
-  const safeProfile = (profile as WebKontorProfile | null) ?? null;
-
-  if (!safeProfile || safeProfile.approval !== "approved") {
-    return NextResponse.json({ error: "Yetkisiz erisim." }, { status: 403 });
-  }
-
-  const resolvedFeatureAccess = await getResolvedFeatureAccessForProfile("web-kontor", user.id, safeProfile.role);
-
-  if (!resolvedFeatureAccess.allowed) {
-    return NextResponse.json({ error: "Yetkisiz erisim." }, { status: 403 });
-  }
-
-  const webKontorData = await fetchWebKontorSheetData();
-  const ownStoreName = safeProfile.store?.name?.trim() ?? "";
-  const canViewAllStores = safeProfile.role === "admin" || safeProfile.role === "management";
-  const accessibleStoreNames = canViewAllStores
-    ? webKontorData.storeNames
-    : webKontorData.storeNames.filter((storeName) => sameWebKontorStore(storeName, ownStoreName));
-
-  if (!accessibleStoreNames.length) {
-    return NextResponse.json({ error: "Uygun sube bulunamadi." }, { status: 404 });
-  }
-
-  const requestedStore = request.nextUrl.searchParams.get("store")?.trim() ?? "";
-  const selectedStore =
-    accessibleStoreNames.find((storeName) => sameWebKontorStore(storeName, requestedStore)) ?? accessibleStoreNames[0];
-
-  const selectedSummary = webKontorData.storeSummaries.find((summary) =>
-    sameWebKontorStore(summary.storeName, selectedStore)
-  );
-
-  if (!selectedSummary) {
-    return NextResponse.json({ error: "Sube ozeti bulunamadi." }, { status: 404 });
-  }
-
-  const selectedScaleSummary = buildSelectedStoreSummaryRow(
-    selectedSummary,
-    webKontorData.dailyRows,
-    webKontorData.scaleRules,
-    webKontorData.scaleOneRate,
-    webKontorData.scaleTwoRate
-  );
-
-  const detailRows = webKontorData.dailyRows.map((row) => {
-    const amount = row.storeAmounts.find((item) => sameWebKontorStore(item.storeName, selectedStore))?.amount ?? 0;
-    let reachedScale: WebKontorReachedScale = "Bareme Ulasmadi";
-    let rateValue = 0;
-
-    if (selectedScaleSummary.scaleTwoTarget !== null && amount >= selectedScaleSummary.scaleTwoTarget) {
-      reachedScale = "2. Barem";
-      rateValue = webKontorData.scaleTwoRate;
-    } else if (selectedScaleSummary.scaleOneTarget !== null && amount >= selectedScaleSummary.scaleOneTarget) {
-      reachedScale = "1. Barem";
-      rateValue = webKontorData.scaleOneRate;
+    if (!user) {
+      return NextResponse.json({ error: "Giris yapilmadi." }, { status: 401 });
     }
 
-    return [
-      row.dayLabel,
-      amount,
-      reachedScale,
-      formatWebKontorRate(rateValue),
-      Math.round(amount * getWebKontorRateMultiplier(rateValue)),
-      row.companyTotal ?? 0
-    ] as Array<string | number>;
-  });
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("approval, role, store:stores(name)")
+      .eq("id", user.id)
+      .single();
 
-  const workbookXml = buildExcelWorkbookXml([
-    {
-      name: `${selectedStore} Ozet`,
-      rows: [
-        ["Sube", "Gerceklesen", "1. Barem", "2. Barem", "1. Barem Gun", "2. Barem Gun", "Ulasilan", "Prim Kazanimi"],
-        [
-          selectedStore,
-          selectedSummary.totalAmount,
-          selectedScaleSummary.scaleOneTarget ?? "-",
-          selectedScaleSummary.scaleTwoTarget ?? "-",
-          selectedScaleSummary.firstScaleDayCount,
-          selectedScaleSummary.secondScaleDayCount,
-          selectedScaleSummary.highestReachedScale,
-          Math.round(selectedScaleSummary.bonusAmount)
+    const safeProfile = (profile as WebKontorProfile | null) ?? null;
+
+    if (!safeProfile || safeProfile.approval !== "approved") {
+      return NextResponse.json({ error: "Yetkisiz erisim." }, { status: 403 });
+    }
+
+    const resolvedFeatureAccess = await getResolvedFeatureAccessForProfile("web-kontor", user.id, safeProfile.role);
+
+    if (!resolvedFeatureAccess.allowed) {
+      return NextResponse.json({ error: "Yetkisiz erisim." }, { status: 403 });
+    }
+
+    const webKontorData = await fetchWebKontorSheetData();
+    const ownStoreName = safeProfile.store?.name?.trim() ?? "";
+    const canViewAllStores = safeProfile.role === "admin" || safeProfile.role === "management";
+    const accessibleStoreNames = canViewAllStores
+      ? webKontorData.storeNames
+      : webKontorData.storeNames.filter((storeName) => sameWebKontorStore(storeName, ownStoreName));
+
+    if (!accessibleStoreNames.length) {
+      return NextResponse.json({ error: "Uygun sube bulunamadi." }, { status: 404 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const requestedStore = searchParams.get("store")?.trim() ?? "";
+    const selectedStore =
+      accessibleStoreNames.find((storeName) => sameWebKontorStore(storeName, requestedStore)) ?? accessibleStoreNames[0];
+
+    const selectedSummary = webKontorData.storeSummaries.find((summary) =>
+      sameWebKontorStore(summary.storeName, selectedStore)
+    );
+
+    if (!selectedSummary) {
+      return NextResponse.json({ error: "Sube ozeti bulunamadi." }, { status: 404 });
+    }
+
+    const selectedScaleSummary = buildSelectedStoreSummaryRow(
+      selectedSummary,
+      webKontorData.dailyRows,
+      webKontorData.scaleRules,
+      webKontorData.scaleOneRate,
+      webKontorData.scaleTwoRate
+    );
+
+    const detailRows = webKontorData.dailyRows.map((row) => {
+      const amount = row.storeAmounts.find((item) => sameWebKontorStore(item.storeName, selectedStore))?.amount ?? 0;
+      let reachedScale: WebKontorReachedScale = "Bareme Ulasmadi";
+      let rateValue = 0;
+
+      if (selectedScaleSummary.scaleTwoTarget !== null && amount >= selectedScaleSummary.scaleTwoTarget) {
+        reachedScale = "2. Barem";
+        rateValue = webKontorData.scaleTwoRate;
+      } else if (selectedScaleSummary.scaleOneTarget !== null && amount >= selectedScaleSummary.scaleOneTarget) {
+        reachedScale = "1. Barem";
+        rateValue = webKontorData.scaleOneRate;
+      }
+
+      return [
+        row.dayLabel,
+        amount,
+        reachedScale,
+        formatWebKontorRate(rateValue),
+        Math.round(amount * getWebKontorRateMultiplier(rateValue)),
+        row.companyTotal ?? 0
+      ] as Array<string | number>;
+    });
+
+    const workbookXml = buildExcelWorkbookXml([
+      {
+        name: `${selectedStore} Ozet`,
+        rows: [
+          ["Sube", "Gerceklesen", "1. Barem", "2. Barem", "1. Barem Gun", "2. Barem Gun", "Ulasilan", "Prim Kazanimi"],
+          [
+            selectedStore,
+            selectedSummary.totalAmount,
+            selectedScaleSummary.scaleOneTarget ?? "-",
+            selectedScaleSummary.scaleTwoTarget ?? "-",
+            selectedScaleSummary.firstScaleDayCount,
+            selectedScaleSummary.secondScaleDayCount,
+            selectedScaleSummary.highestReachedScale,
+            Math.round(selectedScaleSummary.bonusAmount)
+          ]
         ]
-      ]
-    },
-    {
-      name: `${selectedStore} Akis`,
-      rows: [
-        ["Gun", "Gerceklesen", "Barem", "Prim Orani", "Gunluk Prim", "Firma Toplami"],
-        ...detailRows
-      ]
-    }
-  ]);
+      },
+      {
+        name: `${selectedStore} Akis`,
+        rows: [
+          ["Gun", "Gerceklesen", "Barem", "Prim Orani", "Gunluk Prim", "Firma Toplami"],
+          ...detailRows
+        ]
+      }
+    ]);
 
-  const safeFileStore = selectedStore.replace(/[^\p{L}\p{N}\s_-]/gu, "").replace(/\s+/g, "-").toLowerCase() || "sube";
-  const fileName = `web-kontor-akisi-${safeFileStore}-${new Date().toISOString().slice(0, 10)}.xls`;
+    const fileName = `${safeFileName(`web-kontor-akisi-${selectedStore}`)}-${new Date().toISOString().slice(0, 10)}.xls`;
 
-  return new NextResponse(workbookXml, {
-    status: 200,
-    headers: {
-      "Content-Type": "application/vnd.ms-excel; charset=utf-8",
-      "Content-Disposition": `attachment; filename="${fileName}"`,
-      "Cache-Control": "no-store"
-    }
-  });
+    return new NextResponse(workbookXml, {
+      status: 200,
+      headers: {
+        "Content-Type": "application/vnd.ms-excel; charset=utf-8",
+        "Content-Disposition": `attachment; filename="${fileName}"`,
+        "Cache-Control": "no-store"
+      }
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Web kontor excel olusturulamadi.";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }

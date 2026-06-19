@@ -2462,8 +2462,8 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                                         : ""
                                   }
                                 >
-                                  <strong>{row.isReached ? "Tamam" : `${formatNumber(row.dailyRequired)} / gun`}</strong>
-                                  <span>{row.isCurrentProjectedTier ? "Ay sonu gidisati" : row.isReached ? "Skala asildi" : "Gunluk ihtiyac"}</span>
+                                  <strong>{row.isReached ? "Tamam" : formatNumber(row.dailyRequired)}</strong>
+                                  <span>{row.isCurrentProjectedTier ? "Ay sonu ongorusu" : row.isReached ? "Skala asildi" : "Gunluk ihtiyac"}</span>
                                 </td>
                               ))}
                             </tr>

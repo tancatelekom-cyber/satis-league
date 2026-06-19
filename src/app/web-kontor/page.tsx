@@ -2,7 +2,7 @@ import type { CSSProperties } from "react";
 import { redirect } from "next/navigation";
 import { FilterSelectNav } from "@/components/ui/filter-select-nav";
 import { requireUser } from "@/lib/auth/require-user";
-import { canRoleAccessFeature, getFeatureMenuPermissions, getFeaturePermissionByKey } from "@/lib/feature-menu-permissions";
+import { getResolvedFeatureAccessForProfile } from "@/lib/feature-menu-permissions";
 import { fetchGoalDayStats, fetchGoalStoreRows, type GoalDayStats, type GoalStoreRow } from "@/lib/goal-actuals";
 import { createClient } from "@/lib/supabase/server";
 import type { UserRole } from "@/lib/types";
@@ -215,8 +215,8 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
     redirect("/hesabim");
   }
 
-  const { permissions } = await getFeatureMenuPermissions();
-  const canOpenWebKontor = canRoleAccessFeature(getFeaturePermissionByKey(permissions, "web-kontor"), safeProfile.role);
+  const resolvedFeatureAccess = await getResolvedFeatureAccessForProfile("web-kontor", user.id, safeProfile.role);
+  const canOpenWebKontor = resolvedFeatureAccess.allowed;
 
   if (!canOpenWebKontor) {
     redirect("/");

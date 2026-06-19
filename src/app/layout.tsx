@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { AuthGate } from "@/components/auth/auth-gate";
 import { AppShellHeader } from "@/components/app-shell-header";
 import { PwaRegister } from "@/components/pwa-register";
-import { canRoleAccessFeature, getFeatureMenuPermissions, getFeaturePermissionByKey } from "@/lib/feature-menu-permissions";
+import { getResolvedFeatureAccessForProfile } from "@/lib/feature-menu-permissions";
 import { createClient } from "@/lib/supabase/server";
 import "./globals.css";
 
@@ -61,8 +61,8 @@ export default async function RootLayout({
       canOpenWorkSchedule = profile?.approval === "approved";
 
       if (profile?.approval === "approved") {
-        const { permissions } = await getFeatureMenuPermissions();
-        canOpenWebKontor = canRoleAccessFeature(getFeaturePermissionByKey(permissions, "web-kontor"), profile.role);
+        const resolvedFeatureAccess = await getResolvedFeatureAccessForProfile("web-kontor", user.id, profile.role);
+        canOpenWebKontor = resolvedFeatureAccess.allowed;
       }
     }
   } catch {

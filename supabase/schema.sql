@@ -355,6 +355,16 @@ create table if not exists public.feature_menu_permissions (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.feature_profile_permissions (
+  id uuid primary key default gen_random_uuid(),
+  feature_key text not null,
+  profile_id uuid not null references public.profiles(id) on delete cascade,
+  is_allowed boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint feature_profile_permissions_feature_profile_key unique (feature_key, profile_id)
+);
+
 insert into public.manager_presentation_sections (section_key, label, sort_order, is_visible)
 values
   ('cover', 'Kapak ve Ozet', 0, true),
@@ -501,6 +511,7 @@ alter table public.popup_announcements enable row level security;
 alter table public.popup_announcement_dismissals enable row level security;
 alter table public.weekly_work_schedules enable row level security;
 alter table public.feature_menu_permissions enable row level security;
+alter table public.feature_profile_permissions enable row level security;
 
 drop policy if exists "active stores are visible to everyone" on public.stores;
 create policy "active stores are visible to everyone" on public.stores
@@ -583,6 +594,17 @@ with check (auth.uid() = profile_id);
 
 drop policy if exists "approved users can view feature menu permissions" on public.feature_menu_permissions;
 create policy "approved users can view feature menu permissions" on public.feature_menu_permissions
+for select using (
+  exists (
+    select 1
+    from public.profiles p
+    where p.id = auth.uid()
+      and p.approval = 'approved'
+  )
+);
+
+drop policy if exists "approved users can view feature profile permissions" on public.feature_profile_permissions;
+create policy "approved users can view feature profile permissions" on public.feature_profile_permissions
 for select using (
   exists (
     select 1

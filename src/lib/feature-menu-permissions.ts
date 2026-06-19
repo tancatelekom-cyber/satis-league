@@ -12,6 +12,14 @@ export type FeatureMenuPermission = {
   adminVisible: boolean;
 };
 
+export type FeatureProfilePermissionMode = "inherit" | "allow" | "deny";
+
+export type FeatureProfilePermission = {
+  profileId: string;
+  featureKey: FeatureMenuKey;
+  isAllowed: boolean;
+};
+
 type FeatureMenuPermissionRow = {
   feature_key: FeatureMenuKey;
   label: string;
@@ -19,6 +27,12 @@ type FeatureMenuPermissionRow = {
   manager_visible: boolean | null;
   management_visible: boolean | null;
   admin_visible: boolean | null;
+};
+
+type FeatureProfilePermissionRow = {
+  profile_id: string;
+  feature_key: FeatureMenuKey;
+  is_allowed: boolean | null;
 };
 
 const DEFAULT_FEATURE_MENU_PERMISSIONS: FeatureMenuPermission[] = [
@@ -131,4 +145,80 @@ export function getFeaturePermissionByKey(
   featureKey: FeatureMenuKey
 ) {
   return permissions.find((permission) => permission.key === featureKey) ?? null;
+}
+
+export async function getFeatureProfilePermissions(featureKey: FeatureMenuKey) {
+  try {
+    const admin = createAdminClient();
+    const { data, error } = await admin
+      .from("feature_profile_permissions")
+      .select("profile_id, feature_key, is_allowed")
+      .eq("feature_key", featureKey);
+
+    if (error) {
+      return [];
+    }
+
+    return ((data as FeatureProfilePermissionRow[] | null) ?? [])
+      .filter((row) => row.profile_id && typeof row.is_allowed === "boolean")
+      .map((row) => ({
+        profileId: row.profile_id,
+        featureKey: row.feature_key,
+        isAllowed: Boolean(row.is_allowed)
+      })) satisfies FeatureProfilePermission[];
+  } catch {
+    return [];
+  }
+}
+
+export function resolveFeatureProfilePermissionMode(
+  profilePermissions: FeatureProfilePermission[],
+  profileId: string,
+  featureKey: FeatureMenuKey
+): FeatureProfilePermissionMode {
+  const matched = profilePermissions.find(
+    (permission) => permission.profileId === profileId && permission.featureKey === featureKey
+  );
+
+  if (!matched) {
+    return "inherit";
+  }
+
+  return matched.isAllowed ? "allow" : "deny";
+}
+
+export function canRoleAccessFeatureWithOverride(
+  permission: FeatureMenuPermission | null | undefined,
+  role: UserRole | null | undefined,
+  overrideMode: FeatureProfilePermissionMode
+) {
+  if (overrideMode === "allow") {
+    return true;
+  }
+
+  if (overrideMode === "deny") {
+    return false;
+  }
+
+  return canRoleAccessFeature(permission, role);
+}
+
+export async function getResolvedFeatureAccessForProfile(
+  featureKey: FeatureMenuKey,
+  profileId: string,
+  role: UserRole | null | undefined
+) {
+  const [{ permissions }, profilePermissions] = await Promise.all([
+    getFeatureMenuPermissions(),
+    getFeatureProfilePermissions(featureKey)
+  ]);
+
+  const permission = getFeaturePermissionByKey(permissions, featureKey);
+  const overrideMode = resolveFeatureProfilePermissionMode(profilePermissions, profileId, featureKey);
+
+  return {
+    allowed: canRoleAccessFeatureWithOverride(permission, role, overrideMode),
+    permission,
+    overrideMode
+  };
 }

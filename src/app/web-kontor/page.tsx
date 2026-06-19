@@ -58,6 +58,14 @@ function buildStoreHref(store: string) {
   return `/web-kontor?${params.toString()}`;
 }
 
+function buildExcelHref(store: string) {
+  const params = new URLSearchParams();
+  if (store) {
+    params.set("store", store);
+  }
+  return `/web-kontor/excel?${params.toString()}`;
+}
+
 function formatNumber(value: number | null | undefined, digits = 0) {
   if (value === null || value === undefined || Number.isNaN(value)) {
     return "-";
@@ -439,10 +447,15 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
 
       <section className="campaign-section-card" style={{ display: "grid", gap: 16 }}>
         <div className="goal-section-head web-kontor-section-head" style={sectionHeadStyle}>
-          <h2 style={sectionTitleStyle}>{selectedStore} Gunluk Web Kontor Akisi</h2>
-          <span style={sectionMetaStyle}>
-            Firma toplam gerceklesen {formatCurrency(webKontorData.companyTotal)} | Prim toplami {formatCurrency(selectedBonusRow?.bonusAmount ?? 0)}
-          </span>
+          <div style={{ display: "grid", gap: 8 }}>
+            <h2 style={sectionTitleStyle}>{selectedStore} Gunluk Web Kontor Akisi</h2>
+            <span style={sectionMetaStyle}>
+              Firma toplam gerceklesen {formatCurrency(webKontorData.companyTotal)} | Prim toplami {formatCurrency(selectedBonusRow?.bonusAmount ?? 0)}
+            </span>
+          </div>
+          <a className="button-secondary export-link-button" href={buildExcelHref(selectedStore)}>
+            Excel'e Indir
+          </a>
         </div>
 
         <div style={{ overflowX: "auto" }}>

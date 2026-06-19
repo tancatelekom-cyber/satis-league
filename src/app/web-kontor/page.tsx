@@ -295,6 +295,28 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
     gap: 6
   };
 
+  const sectionHeadStyle: CSSProperties = {
+    display: "flex",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 12,
+    flexWrap: "wrap"
+  };
+
+  const sectionTitleStyle: CSSProperties = {
+    margin: 0,
+    color: "#0b2143",
+    fontSize: "1.95rem",
+    fontWeight: 900,
+    lineHeight: 1.05
+  };
+
+  const sectionMetaStyle: CSSProperties = {
+    color: "#37516f",
+    fontSize: "1rem",
+    fontWeight: 700
+  };
+
   return (
     <main>
       <h1 className="page-title">Web Kontor</h1>
@@ -346,9 +368,9 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
       </section>
 
       <section className="campaign-section-card" style={{ display: "grid", gap: 16 }}>
-        <div className="goal-section-head">
-          <h2>Prim Skala Tablosu</h2>
-          <span>
+        <div className="goal-section-head" style={sectionHeadStyle}>
+          <h2 style={sectionTitleStyle}>Prim Skala Tablosu</h2>
+          <span style={sectionMetaStyle}>
             1. barem primi {formatWebKontorRate(webKontorData.scaleOneRate)} | 2. barem primi {formatWebKontorRate(webKontorData.scaleTwoRate)}
           </span>
         </div>
@@ -416,10 +438,10 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
       </section>
 
       <section className="campaign-section-card" style={{ display: "grid", gap: 16 }}>
-        <div className="goal-section-head">
-          <h2>{selectedStore} Gunluk Web Kontor Akisi</h2>
-          <span>
-            Firma toplam gerceklesen {formatCurrency(webKontorData.companyTotal)} | Prim toplamı {formatCurrency(selectedBonusRow?.bonusAmount ?? 0)}
+        <div className="goal-section-head" style={sectionHeadStyle}>
+          <h2 style={sectionTitleStyle}>{selectedStore} Gunluk Web Kontor Akisi</h2>
+          <span style={sectionMetaStyle}>
+            Firma toplam gerceklesen {formatCurrency(webKontorData.companyTotal)} | Prim toplami {formatCurrency(selectedBonusRow?.bonusAmount ?? 0)}
           </span>
         </div>
 

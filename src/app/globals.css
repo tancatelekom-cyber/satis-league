@@ -5288,7 +5288,10 @@ textarea::placeholder {
 
 .campaign-matrix-wrap {
   overflow-x: auto;
+  overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+  border-radius: 16px;
 }
 
 .campaign-matrix-table {
@@ -5300,6 +5303,8 @@ textarea::placeholder {
 }
 
 .campaign-matrix-table thead th {
+  position: sticky;
+  top: 0;
   padding: 7px 8px;
   border: 1px solid rgba(88, 240, 196, 0.18);
   background: rgba(255, 222, 149, 0.92);
@@ -5308,17 +5313,25 @@ textarea::placeholder {
   font-weight: 900;
   text-align: center;
   white-space: nowrap;
+  z-index: 4;
 }
 
 .campaign-matrix-table thead th:first-child {
   text-align: left;
   position: sticky;
   left: 0;
-  z-index: 3;
+  z-index: 6;
   width: 12ch;
   min-width: 12ch;
   max-width: 12ch;
   box-shadow: 8px 0 16px rgba(8, 34, 66, 0.08);
+}
+
+.campaign-matrix-table thead th:last-child {
+  position: sticky;
+  right: 0;
+  z-index: 5;
+  box-shadow: -8px 0 16px rgba(8, 34, 66, 0.08);
 }
 
 .campaign-matrix-table tbody th,
@@ -5354,9 +5367,13 @@ textarea::placeholder {
 }
 
 .campaign-matrix-table tbody td.campaign-matrix-total {
+  position: sticky;
+  right: 0;
   background: rgba(255, 244, 213, 0.98);
   color: #0b6b6e;
   font-weight: 900;
+  z-index: 3;
+  box-shadow: -8px 0 16px rgba(8, 34, 66, 0.08);
 }
 
 .campaign-matrix-modal {
@@ -5419,6 +5436,7 @@ textarea::placeholder {
 
 .campaign-matrix-wrap-modal {
   max-height: calc(88vh - 96px);
+  overflow: auto;
 }
 
 .live-sale-list {

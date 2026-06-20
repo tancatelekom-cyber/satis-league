@@ -5707,12 +5707,13 @@ textarea::placeholder {
   border-bottom: 1px solid rgba(4, 92, 96, 0.08);
   color: #10203b;
   text-align: left;
+  font-size: 0.7rem;
 }
 
 .campaign-product-points-table thead th {
   background: #d8e6f5;
   color: #0b2143;
-  font-size: 0.84rem;
+  font-size: 0.6rem;
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: 0.04em;

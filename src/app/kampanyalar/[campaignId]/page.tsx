@@ -292,6 +292,38 @@ export default async function CampaignDetailPage({
               </span>
             </div>
           </div>
+
+          {campaign.products.length > 0 ? (
+            <div className="campaign-product-points-panel">
+              <div className="section-title compact-title">
+                <div>
+                  <h2>Urun Listesi ve Puanlari</h2>
+                  <p>Kampanyada kullanilan urunlerin puan ve birim bilgileri.</p>
+                </div>
+              </div>
+
+              <div className="campaign-product-points-wrap">
+                <table className="campaign-product-points-table">
+                  <thead>
+                    <tr>
+                      <th>Urun</th>
+                      <th>Puan</th>
+                      <th>Birim</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {campaign.products.map((product) => (
+                      <tr key={`campaign-product-point-${product.id}`}>
+                        <td>{product.name}</td>
+                        <td>{Number(product.base_points ?? 0).toFixed(0)}</td>
+                        <td>{product.unit_label}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : null}
         </section>
       ) : !isActiveCampaign || view === "leaderboard" || !canSubmitToCampaign ? (
         <section className="guide-card">

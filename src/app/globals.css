@@ -5681,6 +5681,53 @@ textarea::placeholder {
   margin-bottom: 8px;
 }
 
+.campaign-product-points-panel {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.campaign-product-points-wrap {
+  overflow-x: auto;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(4, 92, 96, 0.1);
+  box-shadow: 0 12px 24px rgba(8, 22, 40, 0.08);
+}
+
+.campaign-product-points-table {
+  width: 100%;
+  min-width: 420px;
+  border-collapse: collapse;
+}
+
+.campaign-product-points-table th,
+.campaign-product-points-table td {
+  padding: 13px 16px;
+  border-bottom: 1px solid rgba(4, 92, 96, 0.08);
+  color: #10203b;
+  text-align: left;
+}
+
+.campaign-product-points-table thead th {
+  background: #d8e6f5;
+  color: #0b2143;
+  font-size: 0.84rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.campaign-product-points-table tbody td:nth-child(2),
+.campaign-product-points-table tbody td:nth-child(3) {
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.campaign-product-points-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
 .footer-note {
   margin-top: 28px;
   color: var(--muted);

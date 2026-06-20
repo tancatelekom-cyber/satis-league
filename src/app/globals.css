@@ -5208,8 +5208,9 @@ textarea::placeholder {
   gap: 10px;
   padding: 14px 16px;
   border-radius: 18px;
-  border: 1px solid rgba(88, 240, 196, 0.16);
-  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(4, 92, 96, 0.12);
+  background: linear-gradient(180deg, rgba(248, 251, 255, 0.98), rgba(233, 244, 250, 0.96));
+  box-shadow: 0 12px 24px rgba(8, 22, 40, 0.08);
 }
 
 .live-sale-summary-head {
@@ -5220,12 +5221,12 @@ textarea::placeholder {
 }
 
 .live-sale-summary-head strong {
-  color: #ffffff;
+  color: #10203b;
   font-size: 1rem;
 }
 
 .live-sale-summary-head span {
-  color: #d5e7fb;
+  color: #56708c;
   font-size: 0.82rem;
 }
 
@@ -5241,7 +5242,8 @@ textarea::placeholder {
   gap: 12px;
   padding: 10px 12px;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(4, 92, 96, 0.08);
 }
 
 .live-sale-summary-header {
@@ -5251,7 +5253,7 @@ textarea::placeholder {
 }
 
 .live-sale-summary-header span {
-  color: #b9d3ee;
+  color: #6b7f98;
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -5260,12 +5262,12 @@ textarea::placeholder {
 
 .live-sale-summary-row span {
   min-width: 0;
-  color: #ffffff;
+  color: #10203b;
   font-size: 0.92rem;
 }
 
 .live-sale-summary-row strong {
-  color: #7df5d2;
+  color: #0f766e;
   font-size: 1rem;
   font-weight: 900;
 }
@@ -5431,8 +5433,9 @@ textarea::placeholder {
   align-items: center;
   padding: 12px 14px;
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(241, 248, 252, 0.98));
+  border: 1px solid rgba(4, 92, 96, 0.12);
+  box-shadow: 0 10px 22px rgba(8, 22, 40, 0.06);
 }
 
 .live-sale-copy {
@@ -5442,16 +5445,17 @@ textarea::placeholder {
 }
 
 .live-sale-copy strong {
-  color: #ffffff;
+  color: #10203b;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .live-sale-copy span {
-  color: #d5e7fb;
+  color: #56708c;
   font-size: 0.84rem;
   line-height: 1.35;
+  font-weight: 700;
 }
 
 .live-sale-controls {
@@ -5477,9 +5481,9 @@ textarea::placeholder {
   min-height: 38px;
   padding: 8px 10px;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
+  border: 1px solid rgba(4, 92, 96, 0.16);
+  background: #ffffff;
+  color: #10203b;
   font-size: 1rem;
   font-weight: 800;
   text-align: center;

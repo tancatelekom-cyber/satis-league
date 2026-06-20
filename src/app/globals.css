@@ -5276,14 +5276,29 @@ textarea::placeholder {
   margin-top: 14px;
 }
 
-.campaign-matrix-trigger {
-  display: block;
-  width: 100%;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  text-align: left;
-  cursor: zoom-in;
+.campaign-matrix-head {
+  align-items: center;
+}
+
+.campaign-matrix-head > div {
+  display: grid;
+  gap: 4px;
+}
+
+.campaign-matrix-open-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 8px 14px;
+  border: 1px solid rgba(4, 92, 96, 0.16);
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(196, 238, 229, 1), rgba(255, 222, 148, 0.98));
+  color: #09111f;
+  font-size: 0.84rem;
+  font-weight: 900;
+  cursor: pointer;
+  white-space: nowrap;
 }
 
 .campaign-matrix-wrap {
@@ -5292,6 +5307,7 @@ textarea::placeholder {
   -webkit-overflow-scrolling: touch;
   max-width: 100%;
   border-radius: 16px;
+  border: 1px solid rgba(88, 240, 196, 0.14);
 }
 
 .campaign-matrix-table {
@@ -7488,6 +7504,14 @@ textarea::placeholder {
 
   .live-sale-summary {
     padding: 12px;
+  }
+
+  .campaign-matrix-head {
+    align-items: stretch;
+  }
+
+  .campaign-matrix-open-button {
+    width: 100%;
   }
 
   .live-sale-summary-head {

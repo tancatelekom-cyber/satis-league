@@ -54,21 +54,24 @@ export function CampaignSummaryMatrix({
 
   return (
     <section className="live-sale-summary campaign-product-summary" aria-label="Kampanya bazli urun ozetleri">
-      <div className="live-sale-summary-head">
-        <strong>{title}</strong>
-        <span>{subtitle}</span>
+      <div className="live-sale-summary-head campaign-matrix-head">
+        <div>
+          <strong>{title}</strong>
+          <span>{subtitle}</span>
+        </div>
+        <button
+          type="button"
+          className="campaign-matrix-open-button"
+          onClick={() => setIsOpen(true)}
+          aria-label="Urun ozet tablosunu tam ekran ac"
+        >
+          Tam Ekran Ac
+        </button>
       </div>
 
-      <button
-        type="button"
-        className="campaign-matrix-trigger"
-        onClick={() => setIsOpen(true)}
-        aria-label="Urun ozet tablosunu tam ekran ac"
-      >
-        <div className="campaign-matrix-wrap">
-          <MatrixTable columns={columns} rows={rows} />
-        </div>
-      </button>
+      <div className="campaign-matrix-wrap">
+        <MatrixTable columns={columns} rows={rows} />
+      </div>
 
       {isOpen ? (
         <div className="campaign-matrix-modal" role="dialog" aria-modal="true" aria-label="Urun ozet tablosu">

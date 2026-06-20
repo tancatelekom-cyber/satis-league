@@ -5729,6 +5729,36 @@ textarea::placeholder {
   border-bottom: 0;
 }
 
+@media (max-width: 760px) {
+  .campaign-product-points-wrap {
+    overflow-x: hidden;
+  }
+
+  .campaign-product-points-table {
+    min-width: 0;
+    table-layout: fixed;
+  }
+
+  .campaign-product-points-table th,
+  .campaign-product-points-table td {
+    padding: 8px 8px;
+    font-size: 0.58rem;
+    line-height: 1.15;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+
+  .campaign-product-points-table thead th {
+    font-size: 0.52rem;
+    letter-spacing: 0.02em;
+  }
+
+  .campaign-product-points-table tbody td:nth-child(2),
+  .campaign-product-points-table tbody td:nth-child(3) {
+    white-space: normal;
+  }
+}
+
 .footer-note {
   margin-top: 28px;
   color: var(--muted);

@@ -450,7 +450,7 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
           <div style={{ display: "grid", gap: 8 }}>
             <h2 style={sectionTitleStyle}>{selectedStore} Gunluk Web Kontor Akisi</h2>
             <span style={sectionMetaStyle}>
-              Firma toplam gerceklesen {formatCurrency(webKontorData.companyTotal)} | Prim toplami {formatCurrency(selectedBonusRow?.bonusAmount ?? 0)}
+              Prim toplami {formatCurrency(selectedBonusRow?.bonusAmount ?? 0)}
             </span>
           </div>
           <a className="button-secondary export-link-button" href={buildExcelHref(selectedStore)}>
@@ -467,7 +467,6 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
                 <th>Barem</th>
                 <th>Prim Orani</th>
                 <th>Gunluk Prim</th>
-                <th>Firma Toplami</th>
               </tr>
             </thead>
             <tbody>
@@ -493,7 +492,6 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
                   </td>
                   <td style={getDailyRowTextStyle(row.reachedScale)}>{formatWebKontorRate(row.rateValue)}</td>
                   <td style={getDailyRowTextStyle(row.reachedScale)}>{formatCurrency(row.bonusAmount)}</td>
-                  <td style={getDailyRowTextStyle(row.reachedScale)}>{formatCurrency(row.companyTotal)}</td>
                 </tr>
               ))}
             </tbody>

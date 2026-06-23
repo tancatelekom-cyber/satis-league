@@ -497,6 +497,15 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
                 </tr>
               ))}
             </tbody>
+            <tfoot>
+              <tr>
+                <th>Genel Toplam</th>
+                <td>-</td>
+                <td>-</td>
+                <td>-</td>
+                <td>{formatCurrency(selectedBonusRow?.bonusAmount ?? 0)}</td>
+              </tr>
+            </tfoot>
           </table>
         </div>
       </section>

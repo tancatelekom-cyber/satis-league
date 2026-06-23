@@ -5914,6 +5914,19 @@ textarea::placeholder {
   text-shadow: none !important;
 }
 
+.web-kontor-page {
+  display: grid;
+  gap: 20px;
+}
+
+.web-kontor-page .page-title {
+  margin-bottom: 6px;
+}
+
+.web-kontor-page .page-subtitle {
+  margin-bottom: 0;
+}
+
 .goal-ranking-list {
   display: grid;
   gap: 10px;
@@ -6731,7 +6744,7 @@ textarea::placeholder {
   .page-shell {
     width: 100%;
     min-height: 100dvh;
-    padding: 0 0 110px;
+    padding: 0 0 calc(150px + env(safe-area-inset-bottom, 0px));
   }
 
   .hero {
@@ -6780,6 +6793,47 @@ textarea::placeholder {
 
   main {
     padding-inline: 14px;
+    padding-bottom: 12px;
+  }
+
+  .web-kontor-page {
+    gap: 16px;
+    padding-top: 10px;
+    padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .web-kontor-page .page-title {
+    margin-top: 10px;
+    font-size: clamp(1.95rem, 8.4vw, 2.5rem);
+    line-height: 1.02;
+  }
+
+  .web-kontor-page .page-subtitle {
+    margin-bottom: 2px;
+    font-size: 0.98rem;
+    line-height: 1.55;
+  }
+
+  .web-kontor-page .guide-card,
+  .web-kontor-page .campaign-section-card {
+    scroll-margin-top: 92px;
+  }
+
+  .web-kontor-page .guide-card {
+    margin-top: 4px;
+  }
+
+  .web-kontor-page .goal-section-head.web-kontor-section-head {
+    gap: 10px;
+  }
+
+  .web-kontor-page .goal-section-head.web-kontor-section-head > * {
+    width: 100%;
+  }
+
+  .web-kontor-page .export-link-button {
+    width: 100%;
+    justify-content: center;
   }
 
   .nav-cluster {

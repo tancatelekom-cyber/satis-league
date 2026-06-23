@@ -259,7 +259,7 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
 
   if (!accessibleStoreNames.length) {
     return (
-      <main>
+      <main className="web-kontor-page">
         <h1 className="page-title">Web Kontor</h1>
         <p className="page-subtitle">Bu kullanici icin gosterilecek Web Kontor verisi bulunamadi.</p>
       </main>
@@ -326,7 +326,7 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
   };
 
   return (
-    <main>
+    <main className="web-kontor-page">
       <h1 className="page-title">Web Kontor</h1>
       <p className="page-subtitle">
         Gunluk Web Kontor karlilik tutarlarini, bareme gore olusan prim skalasini ve gunluk kazanimi izleyin.

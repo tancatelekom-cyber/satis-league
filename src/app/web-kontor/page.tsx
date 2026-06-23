@@ -384,7 +384,7 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
         </div>
 
         <div style={{ overflowX: "auto" }}>
-          <table className="goal-company-trend-table">
+          <table className="goal-company-trend-table web-kontor-trend-table">
             <thead>
               <tr>
                 <th>Sube</th>
@@ -422,6 +422,7 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
                     <td>{formatNumber(row.secondScaleDayCount)}</td>
                     <td>
                       <span
+                        className="web-kontor-scale-badge"
                         style={{
                           display: "inline-flex",
                           alignItems: "center",
@@ -459,7 +460,7 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
         </div>
 
         <div style={{ overflowX: "auto" }}>
-          <table className="goal-company-trend-table">
+          <table className="goal-company-trend-table web-kontor-trend-table">
             <thead>
               <tr>
                 <th>Gun</th>
@@ -476,6 +477,7 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
                   <td style={getDailyRowTextStyle(row.reachedScale)}>{formatCurrency(row.amount)}</td>
                   <td>
                     <span
+                      className="web-kontor-scale-badge"
                       style={{
                         display: "inline-flex",
                         alignItems: "center",

@@ -9013,6 +9013,41 @@ textarea::placeholder {
     font-size: 0.72rem;
   }
 
+  .web-kontor-trend-table th,
+  .web-kontor-trend-table td {
+    padding: 6px 3px;
+    font-size: 0.58rem;
+    line-height: 1.02;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .web-kontor-trend-table thead th {
+    font-size: 0.54rem;
+    line-height: 1.04;
+    letter-spacing: 0;
+  }
+
+  .web-kontor-trend-table tbody th {
+    font-size: 0.58rem;
+    line-height: 1.04;
+    white-space: normal;
+  }
+
+  .web-kontor-trend-table tbody td {
+    font-size: 0.62rem;
+  }
+
+  .web-kontor-scale-badge {
+    min-width: 0 !important;
+    max-width: 100%;
+    padding: 5px 7px !important;
+    font-size: 0.58rem !important;
+    line-height: 1.02 !important;
+    white-space: normal !important;
+    text-align: center;
+  }
+
   .goal-store-production-panel {
     padding: 14px;
   }
@@ -9035,6 +9070,28 @@ textarea::placeholder {
   .goal-store-production-head-reward,
   .goal-store-production-table td span {
     font-size: 0.64rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .web-kontor-trend-table th,
+  .web-kontor-trend-table td {
+    padding: 5px 2px;
+    font-size: 0.52rem;
+  }
+
+  .web-kontor-trend-table thead th {
+    font-size: 0.5rem;
+  }
+
+  .web-kontor-trend-table tbody th,
+  .web-kontor-trend-table tbody td {
+    font-size: 0.56rem;
+  }
+
+  .web-kontor-scale-badge {
+    padding: 4px 6px !important;
+    font-size: 0.52rem !important;
   }
 }
 

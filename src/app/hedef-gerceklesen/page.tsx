@@ -180,6 +180,19 @@ function normalizeStoreKey(value: string | null | undefined) {
     .trim();
 }
 
+function normalizeEmployeeIdentity(value: string | null | undefined) {
+  return String(value ?? "")
+    .toLocaleUpperCase("tr-TR")
+    .replace(/\u0130/g, "I")
+    .replace(/\u011E/g, "G")
+    .replace(/\u00DC/g, "U")
+    .replace(/\u015E/g, "S")
+    .replace(/\u00D6/g, "O")
+    .replace(/\u00C7/g, "C")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function resolveStoreCodeFromEmployeeRows(employeeRows: GoalActualRow[], availableStoreCodes: string[], fallbackStoreCode = "") {
   const uniqueEmployeeStoreNames = Array.from(
     new Set(
@@ -1507,7 +1520,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("approval, role, store:stores(name)")
+    .select("approval, role, full_name, store:stores(name)")
     .eq("id", user.id)
     .single();
 
@@ -1516,6 +1529,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
   }
 
   const canViewAll = canViewAllGoalActual(profile.role);
+  const currentUserFullName = String((profile as { full_name?: string | null }).full_name ?? "").trim();
   const currentUserStore = (profile as { store?: Array<{ name: string }> | { name: string } | null }).store;
   const currentUserStoreName = Array.isArray(currentUserStore)
     ? (currentUserStore[0]?.name ?? "")
@@ -1559,9 +1573,16 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
   }
 
   const allFilteredEmployeeRows = employeeRows.filter((row) => !isAggregateCategoryLabel(row.mainCategory));
+  const employeeRowsByPersonnelId = employeeRows.filter((row) => row.personnelId && row.personnelId === user.id);
+  const employeeRowsByName =
+    currentUserFullName
+      ? employeeRows.filter((row) => normalizeEmployeeIdentity(row.employeeName) === normalizeEmployeeIdentity(currentUserFullName))
+      : [];
   const scopedEmployeeRows = canViewAll
     ? employeeRows
-    : employeeRows.filter((row) => row.personnelId && row.personnelId === user.id);
+    : employeeRowsByPersonnelId.length
+      ? employeeRowsByPersonnelId
+      : employeeRowsByName;
   const filteredEmployeeRows = scopedEmployeeRows.filter((row) => !isAggregateCategoryLabel(row.mainCategory));
   const allFilteredEmployeeCoreRows = allFilteredEmployeeRows.filter((row) => !isLivePrimeCategory(row.mainCategory));
   const filteredEmployeeCoreRows = filteredEmployeeRows.filter((row) => !isLivePrimeCategory(row.mainCategory));
@@ -1658,7 +1679,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
       return b.actual - a.actual;
     });
 
-  const activeEmployeeName = effectiveEmployee || employeeSummaries[0]?.name || "";
+  const activeEmployeeName = effectiveEmployee || employeeNames[0] || employeeSummaries[0]?.name || "";
   const activeStoreName = effectiveStore || storeSummaries[0]?.name || "";
   let storeLoginGapNotes: StoreLoginGapNote[] = [];
   let companyLoginGapNotes: CompanyLoginGapNote[] = [];

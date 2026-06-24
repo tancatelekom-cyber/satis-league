@@ -1558,7 +1558,11 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
     sheetError = message;
   }
 
-  const filteredEmployeeRows = employeeRows.filter((row) => !isAggregateCategoryLabel(row.mainCategory));
+  const scopedEmployeeRows = canViewAll
+    ? employeeRows
+    : employeeRows.filter((row) => row.personnelId && row.personnelId === user.id);
+
+  const filteredEmployeeRows = scopedEmployeeRows.filter((row) => !isAggregateCategoryLabel(row.mainCategory));
   const filteredEmployeeCoreRows = filteredEmployeeRows.filter((row) => !isLivePrimeCategory(row.mainCategory));
   const filteredStoreRows = storeRows.filter((row) => !isAggregateCategoryLabel(row.mainCategory));
 

@@ -1,4 +1,5 @@
 export type GoalActualRow = {
+  personnelId: string;
   employeeName: string;
   storeName: string;
   mainCategory: string;
@@ -148,6 +149,7 @@ async function fetchGoalActualRowsFromSheet() {
       const targetRaw = normalizeText(row[3] ?? "");
       const actualRaw = normalizeText(row[4] ?? "");
       const storeName = normalizeText(row[5] ?? "");
+      const personnelId = normalizeText(row[6] ?? "");
 
       if (!employeeName) {
         return null;
@@ -157,6 +159,7 @@ async function fetchGoalActualRowsFromSheet() {
       const actual = parseLocalizedNumber(actualRaw);
 
       return {
+        personnelId,
         employeeName,
         storeName,
         mainCategory: mainCategory || "Genel",

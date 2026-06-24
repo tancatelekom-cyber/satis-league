@@ -1558,16 +1558,17 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
     sheetError = message;
   }
 
+  const allFilteredEmployeeRows = employeeRows.filter((row) => !isAggregateCategoryLabel(row.mainCategory));
   const scopedEmployeeRows = canViewAll
     ? employeeRows
     : employeeRows.filter((row) => row.personnelId && row.personnelId === user.id);
-
   const filteredEmployeeRows = scopedEmployeeRows.filter((row) => !isAggregateCategoryLabel(row.mainCategory));
+  const allFilteredEmployeeCoreRows = allFilteredEmployeeRows.filter((row) => !isLivePrimeCategory(row.mainCategory));
   const filteredEmployeeCoreRows = filteredEmployeeRows.filter((row) => !isLivePrimeCategory(row.mainCategory));
   const filteredStoreRows = storeRows.filter((row) => !isAggregateCategoryLabel(row.mainCategory));
 
   const employeeNames = Array.from(new Set(filteredEmployeeRows.map((row) => row.employeeName))).sort((a, b) => a.localeCompare(b, "tr"));
-  const employeeCategoryOptions = Array.from(new Set(filteredEmployeeCoreRows.map((row) => row.mainCategory))).sort((a, b) =>
+  const employeeCategoryOptions = Array.from(new Set(allFilteredEmployeeCoreRows.map((row) => row.mainCategory))).sort((a, b) =>
     a.localeCompare(b, "tr")
   );
   const storeNames = Array.from(new Set(storeRows.map((row) => row.storeCode))).sort((a, b) => a.localeCompare(b, "tr"));
@@ -1583,8 +1584,8 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
     effectivePanel === "ranking" && rankingCategoryPool.includes(selectedCategory) ? selectedCategory : defaultRankingCategory;
 
   const employeeRankingRows = effectiveCategory
-    ? filteredEmployeeCoreRows.filter((row) => row.mainCategory === effectiveCategory)
-    : filteredEmployeeCoreRows;
+    ? allFilteredEmployeeCoreRows.filter((row) => row.mainCategory === effectiveCategory)
+    : allFilteredEmployeeCoreRows;
   const storeRankingRows = effectiveCategory
     ? filteredStoreRows.filter((row) => row.mainCategory === effectiveCategory)
     : filteredStoreRows;
@@ -1611,7 +1612,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
     });
 
   const employeeLivePrimeMap = new Map<string, GoalActualRow[]>();
-  filteredEmployeeRows
+  allFilteredEmployeeRows
     .filter((row) => isLivePrimeCategory(row.mainCategory))
     .forEach((row) => {
       const current = employeeLivePrimeMap.get(row.employeeName) ?? [];

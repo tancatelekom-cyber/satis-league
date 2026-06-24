@@ -100,12 +100,10 @@ export async function GET() {
 
   try {
     const [employeeRows, dayStats] = await Promise.all([fetchGoalActualRows(), fetchGoalDayStats()]);
-    const scopedEmployeeRows =
-      profile.role === "employee" ? employeeRows.filter((row) => row.personnelId && row.personnelId === user.id) : employeeRows;
 
     const employeeLivePrimeMap = new Map<string, GoalActualRow[]>();
 
-    scopedEmployeeRows
+    employeeRows
       .filter((row) => !isAggregateCategoryLabel(row.mainCategory) && isLivePrimeCategory(row.mainCategory))
       .forEach((row) => {
         const current = employeeLivePrimeMap.get(row.employeeName) ?? [];

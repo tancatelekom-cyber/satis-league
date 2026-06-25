@@ -37,11 +37,22 @@ type CompanyMetricBenchmark = {
   averageProjectedPercent: number | null;
 };
 
+type StoreMetricBenchmark = {
+  title: string;
+  employeeCount: number;
+  averageActualPercent: number | null;
+  averageProjectedPercent: number | null;
+};
+
 type AnalysisMetric = MetricSummary & {
   companyAverageActualPercent: number | null;
   companyAverageProjectedPercent: number | null;
+  storeAverageActualPercent: number | null;
+  storeAverageProjectedPercent: number | null;
   actualGap: number | null;
   projectedGap: number | null;
+  storeActualGap: number | null;
+  storeProjectedGap: number | null;
   status: "good" | "watch" | "critical" | "neutral";
   dailyNeed: number;
 };
@@ -202,6 +213,40 @@ function buildCompanyBenchmarks(rows: GoalActualRow[], workedDays: number, total
           averageProjectedPercent: average(summaries.map((summary) => summary.projectedPercent ?? 0).filter((value) => value > 0))
         }
       ] satisfies [string, CompanyMetricBenchmark];
+    })
+  );
+}
+
+function buildStoreBenchmarks(rows: GoalActualRow[], storeName: string, workedDays: number, totalDays: number) {
+  const normalizedStoreName = normalizeIdentity(storeName);
+  const storeRows = rows.filter((row) => normalizeIdentity(row.storeName) === normalizedStoreName);
+  const categoryEmployeeMap = new Map<string, Map<string, GoalActualRow[]>>();
+
+  storeRows.forEach((row) => {
+    const categoryKey = row.mainCategory;
+    const employeeKey = row.personnelId || normalizeIdentity(row.employeeName);
+    const byEmployee = categoryEmployeeMap.get(categoryKey) ?? new Map<string, GoalActualRow[]>();
+    const currentRows = byEmployee.get(employeeKey) ?? [];
+    currentRows.push(row);
+    byEmployee.set(employeeKey, currentRows);
+    categoryEmployeeMap.set(categoryKey, byEmployee);
+  });
+
+  return new Map<string, StoreMetricBenchmark>(
+    Array.from(categoryEmployeeMap.entries()).map(([title, byEmployee]) => {
+      const summaries = Array.from(byEmployee.values())
+        .map((employeeRows) => buildMetricSummary(employeeRows, workedDays, totalDays))
+        .filter((summary) => summary.hasTarget && summary.actual > 0);
+
+      return [
+        title,
+        {
+          title,
+          employeeCount: summaries.length,
+          averageActualPercent: average(summaries.map((summary) => summary.actualPercent ?? 0).filter((value) => value > 0)),
+          averageProjectedPercent: average(summaries.map((summary) => summary.projectedPercent ?? 0).filter((value) => value > 0))
+        }
+      ] satisfies [string, StoreMetricBenchmark];
     })
   );
 }
@@ -386,14 +431,18 @@ export default async function EmployeeAnalysisPage({ searchParams }: PageProps) 
   const selectedRows = employeeRowsById.length ? employeeRowsById : employeeRowsByName;
   const categorySummaries = buildEmployeeCategorySummaries(selectedRows, workedDays, totalDays);
   const companyBenchmarks = buildCompanyBenchmarks(goalRows, workedDays, totalDays);
+  const storeBenchmarks = buildStoreBenchmarks(goalRows, selectedProfile.storeName, workedDays, totalDays);
   const mergedMetrics = categorySummaries
     .map((metric) => {
       const benchmark = companyBenchmarks.get(metric.title) ?? null;
+      const storeBenchmark = storeBenchmarks.get(metric.title) ?? null;
       const dailyNeed = remainingDays > 0 && metric.remaining !== null ? Math.ceil(metric.remaining / remainingDays) : 0;
       const merged: AnalysisMetric = {
         ...metric,
         companyAverageActualPercent: benchmark?.averageActualPercent ?? null,
         companyAverageProjectedPercent: benchmark?.averageProjectedPercent ?? null,
+        storeAverageActualPercent: storeBenchmark?.averageActualPercent ?? null,
+        storeAverageProjectedPercent: storeBenchmark?.averageProjectedPercent ?? null,
         actualGap:
           metric.actualPercent !== null && (benchmark?.averageActualPercent ?? null) !== null
             ? metric.actualPercent - (benchmark?.averageActualPercent ?? 0)
@@ -401,6 +450,14 @@ export default async function EmployeeAnalysisPage({ searchParams }: PageProps) 
         projectedGap:
           metric.projectedPercent !== null && (benchmark?.averageProjectedPercent ?? null) !== null
             ? metric.projectedPercent - (benchmark?.averageProjectedPercent ?? 0)
+            : null,
+        storeActualGap:
+          metric.actualPercent !== null && (storeBenchmark?.averageActualPercent ?? null) !== null
+            ? metric.actualPercent - (storeBenchmark?.averageActualPercent ?? 0)
+            : null,
+        storeProjectedGap:
+          metric.projectedPercent !== null && (storeBenchmark?.averageProjectedPercent ?? null) !== null
+            ? metric.projectedPercent - (storeBenchmark?.averageProjectedPercent ?? 0)
             : null,
         status: "neutral",
         dailyNeed
@@ -454,8 +511,18 @@ export default async function EmployeeAnalysisPage({ searchParams }: PageProps) 
     : `${selectedProfile.fullName} icin acil mudahale gerektiren belirgin bir kategori gorunmuyor. Mevcut tempoyu koruyup guclu alanlari yaymak yeterli olur.`;
 
   const strengths = [...mergedMetrics]
-    .filter((metric) => metric.hasTarget && (metric.actualGap ?? 0) > 0 && (metric.actualPercent ?? 0) >= 100)
-    .sort((left, right) => (right.actualGap ?? -999) - (left.actualGap ?? -999) || (right.actualPercent ?? 0) - (left.actualPercent ?? 0))
+    .filter(
+      (metric) =>
+        metric.hasTarget &&
+        (metric.actualPercent ?? 0) >= 100 &&
+        (metric.actualGap ?? 0) > 0 &&
+        ((metric.storeActualGap ?? 0) > 0 || metric.storeAverageActualPercent === null)
+    )
+    .sort(
+      (left, right) =>
+        ((right.actualGap ?? -999) + (right.storeActualGap ?? 0)) - ((left.actualGap ?? -999) + (left.storeActualGap ?? 0)) ||
+        (right.actualPercent ?? 0) - (left.actualPercent ?? 0)
+    )
     .slice(0, 4);
   const strengthTitles = new Set(strengths.map((metric) => metric.title));
   const developmentAreas = [...mergedMetrics]
@@ -463,9 +530,19 @@ export default async function EmployeeAnalysisPage({ searchParams }: PageProps) 
       (metric) =>
         metric.hasTarget &&
         !strengthTitles.has(metric.title) &&
-        ((metric.actualGap ?? 0) < 0 || (metric.actualPercent ?? 0) < 100 || metric.status === "critical" || metric.status === "watch")
+        (
+          (metric.actualGap ?? 0) < 0 ||
+          (metric.storeActualGap ?? 0) < 0 ||
+          (metric.actualPercent ?? 0) < 100 ||
+          metric.status === "critical" ||
+          metric.status === "watch"
+        )
     )
-    .sort((left, right) => (left.actualGap ?? 999) - (right.actualGap ?? 999) || (left.actualPercent ?? 999) - (right.actualPercent ?? 999))
+    .sort(
+      (left, right) =>
+        ((left.actualGap ?? 999) + (left.storeActualGap ?? 0)) - ((right.actualGap ?? 999) + (right.storeActualGap ?? 0)) ||
+        (left.actualPercent ?? 999) - (right.actualPercent ?? 999)
+    )
     .slice(0, 4);
   const rewardForecast = buildRewardForecast(categorySummaries, rewardRows, workedDays, totalDays);
   const insight = buildInsightSummary(mergedMetrics, rewardForecast);
@@ -581,8 +658,8 @@ export default async function EmployeeAnalysisPage({ searchParams }: PageProps) 
                         <span>{formatPercent(metric.actualPercent)}</span>
                       </div>
                       <p>
-                        Firma ortalamasi {formatPercent(metric.companyAverageActualPercent)} seviyesinde. Bu calisan
-                        {formatPercent(metric.actualGap)} onde gorunuyor.
+                        Firma ortalamasi {formatPercent(metric.companyAverageActualPercent)}, sube ortalamasi {formatPercent(metric.storeAverageActualPercent)} seviyesinde.
+                        Bu calisan firma tarafinda {formatSignedPercent(metric.actualGap)}, sube tarafinda {formatSignedPercent(metric.storeActualGap)} onde gorunuyor.
                       </p>
                     </div>
                   ))
@@ -603,8 +680,9 @@ export default async function EmployeeAnalysisPage({ searchParams }: PageProps) 
                         <span>{formatPercent(metric.actualPercent)}</span>
                       </div>
                       <p>
-                        Firma ortalamasi {formatPercent(metric.companyAverageActualPercent)} seviyesinde. Aradaki fark{" "}
-                        {formatPercent(Math.abs(metric.actualGap ?? 0))}. Kalan gunlerde gunluk en az {formatNumber(metric.dailyNeed)} uretim gerekli.
+                        Firma ortalamasi {formatPercent(metric.companyAverageActualPercent)}, sube ortalamasi {formatPercent(metric.storeAverageActualPercent)} seviyesinde.
+                        Firma farki {formatSignedPercent(metric.actualGap)}, sube farki {formatSignedPercent(metric.storeActualGap)}.
+                        Kalan gunlerde gunluk en az {formatNumber(metric.dailyNeed)} uretim gerekli.
                       </p>
                     </div>
                   ))

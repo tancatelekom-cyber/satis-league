@@ -39,16 +39,46 @@ export function parsePosAmountInput(input: string) {
   return Number.isFinite(parsed) ? Math.max(0, parsed) : 0;
 }
 
+export function formatPosAmountInput(input: string) {
+  const normalized = input.replace(/[^\d,]/g, "");
+
+  if (!normalized) {
+    return "";
+  }
+
+  const [integerPartRaw, decimalPartRaw] = normalized.split(",");
+  const integerPart = integerPartRaw.replace(/^0+(?=\d)/, "") || "0";
+  const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+
+  if (decimalPartRaw === undefined) {
+    return formattedInteger;
+  }
+
+  return `${formattedInteger},${decimalPartRaw.slice(0, 2)}`;
+}
+
 export function calculatePosNetAmount(amount: number, commissionPercent: number) {
   const safeAmount = Number.isFinite(amount) ? Math.max(0, amount) : 0;
   const safePercent = normalizePosCommissionPercent(commissionPercent);
   return safeAmount * (1 - safePercent / 100);
 }
 
+export function calculatePosGrossAmount(amount: number, commissionPercent: number) {
+  const safeAmount = Number.isFinite(amount) ? Math.max(0, amount) : 0;
+  const safePercent = normalizePosCommissionPercent(commissionPercent);
+  const multiplier = 1 - safePercent / 100;
+
+  if (multiplier <= 0) {
+    return 0;
+  }
+
+  return safeAmount / multiplier;
+}
+
 export function calculatePosCommissionAmount(amount: number, commissionPercent: number) {
   const safeAmount = Number.isFinite(amount) ? Math.max(0, amount) : 0;
-  const netAmount = calculatePosNetAmount(safeAmount, commissionPercent);
-  return safeAmount - netAmount;
+  const grossAmount = calculatePosGrossAmount(safeAmount, commissionPercent);
+  return grossAmount - safeAmount;
 }
 
 export function formatPosCurrency(value: number | null | undefined) {

@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from "react";
 import {
-  calculatePosCommissionAmount,
-  calculatePosNetAmount,
+  calculatePosGrossAmount,
+  formatPosAmountInput,
   formatPosCurrency,
   formatPosPercent,
   parsePosAmountInput
@@ -19,12 +19,8 @@ export function PosCommissionCalculator({
   const [amountInput, setAmountInput] = useState("");
 
   const amount = useMemo(() => parsePosAmountInput(amountInput), [amountInput]);
-  const netAmount = useMemo(
-    () => calculatePosNetAmount(amount, commissionPercent),
-    [amount, commissionPercent]
-  );
-  const commissionAmount = useMemo(
-    () => calculatePosCommissionAmount(amount, commissionPercent),
+  const grossAmount = useMemo(
+    () => calculatePosGrossAmount(amount, commissionPercent),
     [amount, commissionPercent]
   );
 
@@ -56,14 +52,14 @@ export function PosCommissionCalculator({
               fontSize: "0.98rem"
             }}
           >
-            Cekilen Tutar
+            Net Gecmesi Istenen Tutar
           </span>
           <input
             type="text"
             inputMode="decimal"
             placeholder="Tutar girin"
             value={amountInput}
-            onChange={(event) => setAmountInput(event.target.value)}
+            onChange={(event) => setAmountInput(formatPosAmountInput(event.target.value))}
             style={{
               width: "100%",
               minHeight: 60,
@@ -96,9 +92,9 @@ export function PosCommissionCalculator({
               color: "#56708c",
               fontWeight: 700
             }}
-          >
-            Tanimli Komisyon
-          </span>
+        >
+          Tanimli Komisyon
+        </span>
           <strong
             style={{
               color: "#0b2143",
@@ -132,7 +128,7 @@ export function PosCommissionCalculator({
             fontSize: "0.92rem"
           }}
         >
-          Komisyonlu Net Tutar
+          Karttan Cekilecek Tutar
         </span>
         <strong
           style={{
@@ -142,46 +138,8 @@ export function PosCommissionCalculator({
             fontWeight: 900
           }}
         >
-          {formatPosCurrency(netAmount)}
+          {formatPosCurrency(grossAmount)}
         </strong>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
-            gap: 12
-          }}
-        >
-          <div
-            style={{
-              padding: "14px 16px",
-              borderRadius: 22,
-              background: "rgba(255,255,255,0.1)",
-              color: "#e2e8f0",
-              display: "grid",
-              gap: 4
-            }}
-          >
-            <span style={{ fontWeight: 700, opacity: 0.82 }}>Kesilecek Komisyon</span>
-            <strong style={{ fontSize: "1.35rem", color: "#fef3c7" }}>
-              {formatPosCurrency(commissionAmount)}
-            </strong>
-          </div>
-          <div
-            style={{
-              padding: "14px 16px",
-              borderRadius: 22,
-              background: "rgba(255,255,255,0.1)",
-              color: "#e2e8f0",
-              display: "grid",
-              gap: 4
-            }}
-          >
-            <span style={{ fontWeight: 700, opacity: 0.82 }}>Brut Tutar</span>
-            <strong style={{ fontSize: "1.35rem", color: "#d1fae5" }}>
-              {formatPosCurrency(amount)}
-            </strong>
-          </div>
-        </div>
       </article>
     </section>
   );

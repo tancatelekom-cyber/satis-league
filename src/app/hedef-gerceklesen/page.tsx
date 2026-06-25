@@ -2186,26 +2186,22 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                 )}
               </div>
 
-              <div className="goal-mode-row">
-                <a
-                  className={`goal-mode-button ${effectivePanel === "detail" ? "goal-mode-button-active" : ""}`}
-                  href={
-                    effectiveView === "store"
-                      ? buildHref("store", { store: activeStoreName, panel: "detail" })
-                      : buildHref("employee", { employee: activeEmployeeName, panel: "detail" })
-                  }
-                >
-                  Hedef Gerceklesen
-                </a>
-                {effectiveView !== "store" ? (
+              {effectiveView !== "store" ? (
+                <div className="goal-mode-row">
+                  <a
+                    className={`goal-mode-button ${effectivePanel === "detail" ? "goal-mode-button-active" : ""}`}
+                    href={buildHref("employee", { employee: activeEmployeeName, panel: "detail" })}
+                  >
+                    Hedef Gerceklesen
+                  </a>
                   <a
                     className={`goal-mode-button ${effectivePanel === "ranking" ? "goal-mode-button-active" : ""}`}
                     href={buildHref("employee", { employee: activeEmployeeName, category: effectiveCategory, panel: "ranking" })}
                   >
                     Siralama
                   </a>
-                ) : null}
-              </div>
+                </div>
+              ) : null}
             </section>
           ) : null}
 

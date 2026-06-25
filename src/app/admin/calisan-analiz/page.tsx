@@ -54,6 +54,8 @@ type RewardForecast = {
   nextReward: string | null;
 };
 
+type BranchImpactDirection = "lift" | "drag" | "balance";
+
 function buildHref(employeeId: string) {
   const params = new URLSearchParams();
   if (employeeId) {
@@ -100,6 +102,22 @@ function formatPercent(value: number | null | undefined) {
     minimumFractionDigits: 0,
     maximumFractionDigits: 1
   })}`;
+}
+
+function formatSignedPercent(value: number | null | undefined) {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return "-";
+  }
+
+  return `${value > 0 ? "+" : ""}${formatPercent(value)}`;
+}
+
+function clampValue(value: number | null | undefined, max = 140) {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return 0;
+  }
+
+  return Math.max(0, Math.min(value, max));
 }
 
 function average(values: number[]) {
@@ -257,6 +275,41 @@ function buildInsightSummary(metrics: AnalysisMetric[], rewardForecast: RewardFo
   };
 }
 
+function getBranchImpact(metric: AnalysisMetric): BranchImpactDirection {
+  if (!metric.hasTarget || metric.actualPercent === null) {
+    return "balance";
+  }
+
+  if ((metric.actualGap ?? 0) >= 8 && (metric.projectedGap ?? metric.actualGap ?? 0) >= 0) {
+    return "lift";
+  }
+
+  if ((metric.actualGap ?? 0) <= -8 || metric.actualPercent < 75) {
+    return "drag";
+  }
+
+  return "balance";
+}
+
+function getBranchImpactLabel(direction: BranchImpactDirection) {
+  if (direction === "lift") {
+    return "Subeyi yukari tasiyor";
+  }
+
+  if (direction === "drag") {
+    return "Subeyi geri cekiyor";
+  }
+
+  return "Sube temposunu dengede tutuyor";
+}
+
+function buildPriorityScore(metric: AnalysisMetric, remainingDays: number) {
+  const gapPenalty = Math.max(0, -(metric.actualGap ?? 0)) * 2.4;
+  const targetPenalty = metric.actualPercent !== null ? Math.max(0, 100 - metric.actualPercent) * 0.65 : 0;
+  const needPenalty = remainingDays > 0 ? metric.dailyNeed * 4 : metric.dailyNeed * 2;
+  return Math.round(gapPenalty + targetPenalty + needPenalty);
+}
+
 export default async function EmployeeAnalysisPage({ searchParams }: PageProps) {
   const params = searchParams ? await searchParams : undefined;
   const selectedEmployeeId = String(params?.employee ?? "").trim();
@@ -369,6 +422,36 @@ export default async function EmployeeAnalysisPage({ searchParams }: PageProps) 
 
       return right.actual - left.actual;
     });
+  const targetMetrics = mergedMetrics.filter((metric) => metric.hasTarget);
+  const statusTotals = {
+    good: targetMetrics.filter((metric) => metric.status === "good").length,
+    watch: targetMetrics.filter((metric) => metric.status === "watch").length,
+    critical: targetMetrics.filter((metric) => metric.status === "critical").length
+  };
+  const branchImpactMetrics = [...targetMetrics]
+    .sort(
+      (left, right) =>
+        Math.abs(right.actualGap ?? 0) - Math.abs(left.actualGap ?? 0) ||
+        Math.abs(right.projectedGap ?? 0) - Math.abs(left.projectedGap ?? 0)
+    )
+    .slice(0, 6);
+  const criticalPriorities = [...targetMetrics]
+    .map((metric) => ({
+      metric,
+      score: buildPriorityScore(metric, remainingDays)
+    }))
+    .sort((left, right) => right.score - left.score || (left.metric.actualPercent ?? 999) - (right.metric.actualPercent ?? 999))
+    .slice(0, 3);
+  const ringTotal = Math.max(targetMetrics.length, 1);
+  const ringGood = Math.round((statusTotals.good / ringTotal) * 100);
+  const ringWatch = Math.round((statusTotals.watch / ringTotal) * 100);
+  const ringCritical = Math.max(0, 100 - ringGood - ringWatch);
+  const ringBackground = `conic-gradient(#22c55e 0 ${ringGood}%, #f59e0b ${ringGood}% ${ringGood + ringWatch}%, #ef4444 ${ringGood + ringWatch}% 100%)`;
+  const managerRecommendation = criticalPriorities.length
+    ? `Ilk mudahale ${criticalPriorities[0]?.metric.title.toLocaleLowerCase("tr-TR")} alanina yapilmali. ${selectedProfile.fullName}, ${selectedProfile.storeName} icinde ozellikle ${criticalPriorities
+        .map(({ metric }) => metric.title.toLocaleLowerCase("tr-TR"))
+        .join(", ")} kalemlerinde subeyi geri cekiyor. Gun icinde bire bir takip, net gunluk adet hedefi ve kapanisa kadar ara kontrol uygulanirsa tempo hizla toparlanir.`
+    : `${selectedProfile.fullName} icin acil mudahale gerektiren belirgin bir kategori gorunmuyor. Mevcut tempoyu koruyup guclu alanlari yaymak yeterli olur.`;
 
   const strengths = [...mergedMetrics]
     .filter((metric) => metric.hasTarget)
@@ -449,6 +532,14 @@ export default async function EmployeeAnalysisPage({ searchParams }: PageProps) 
             <article className="goal-summary-card">
               <span>Gelisim Alani</span>
               <strong>{formatNumber(insight.weakCount)}</strong>
+            </article>
+            <article className="goal-summary-card">
+              <span>Subeyi Tasiyan</span>
+              <strong>{formatNumber(statusTotals.good)}</strong>
+            </article>
+            <article className="goal-summary-card">
+              <span>Subeyi Geri Ceken</span>
+              <strong>{formatNumber(statusTotals.critical)}</strong>
             </article>
           </section>
 
@@ -546,6 +637,178 @@ export default async function EmployeeAnalysisPage({ searchParams }: PageProps) 
             </article>
           ) : null}
 
+          <section className="employee-analysis-two-column">
+            <article className="admin-card">
+              <h3>Performans Dagilimi</h3>
+              <p className="employee-analysis-section-copy">
+                Yesil alanlar subeyi yukari tasiyan, sari alanlar takip edilmesi gereken, kirmizi alanlar ise hizli mudahale isteyen kategorileri gosterir.
+              </p>
+
+              <div className="employee-analysis-radar-card">
+                <div className="employee-analysis-radar-visual" style={{ background: ringBackground }}>
+                  <div className="employee-analysis-radar-core">
+                    <strong>{formatNumber(targetMetrics.length)}</strong>
+                    <span>hedefli kategori</span>
+                  </div>
+                </div>
+
+                <div className="employee-analysis-radar-legend">
+                  <div className="employee-analysis-radar-legend-item">
+                    <i className="employee-analysis-radar-dot employee-analysis-radar-dot-good" />
+                    <span>Subeyi tasiyan</span>
+                    <strong>{formatNumber(statusTotals.good)}</strong>
+                  </div>
+                  <div className="employee-analysis-radar-legend-item">
+                    <i className="employee-analysis-radar-dot employee-analysis-radar-dot-watch" />
+                    <span>Yakindan takip</span>
+                    <strong>{formatNumber(statusTotals.watch)}</strong>
+                  </div>
+                  <div className="employee-analysis-radar-legend-item">
+                    <i className="employee-analysis-radar-dot employee-analysis-radar-dot-critical" />
+                    <span>Subeyi geri ceken</span>
+                    <strong>{formatNumber(statusTotals.critical)}</strong>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article className="admin-card">
+              <h3>Oncelik Skoru</h3>
+              <p className="employee-analysis-section-copy">
+                Ilk 3 kritik alan, fark buyuklugu, mevcut tempo ve gunluk ihtiyac birlikte degerlendirilerek puanlandi.
+              </p>
+
+              <div className="employee-analysis-priority-list">
+                {criticalPriorities.map(({ metric, score }, index) => (
+                  <div key={`priority-${metric.title}`} className="employee-analysis-priority-card">
+                    <div className="employee-analysis-priority-rank">{index + 1}</div>
+                    <div className="employee-analysis-priority-copy">
+                      <strong>{metric.title}</strong>
+                      <p>
+                        Mevcut tempo {formatPercent(metric.actualPercent)}. Firma farki {formatSignedPercent(metric.actualGap)}.
+                        Gunluk ihtiyac {formatNumber(metric.dailyNeed)}.
+                      </p>
+                    </div>
+                    <div className="employee-analysis-priority-score">
+                      <span>Skor</span>
+                      <strong>{formatNumber(score)}</strong>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </article>
+          </section>
+
+          <article className="admin-card">
+            <h3>Grafik Detay Panosu</h3>
+            <p className="employee-analysis-section-copy">
+              Her kategori icin mevcut tempo, ay sonu ongorusu, firma ortalamasi ve kalan gun ihtiyaci ayni kartta ozetlenir.
+            </p>
+
+            <div className="employee-analysis-spotlight-grid">
+              {targetMetrics.map((metric) => {
+                const branchImpact = getBranchImpact(metric);
+
+                return (
+                  <div key={`spotlight-${metric.title}`} className="employee-analysis-spotlight-card">
+                    <div className="employee-analysis-spotlight-head">
+                      <strong>{metric.title}</strong>
+                      <span className={`employee-analysis-impact-badge employee-analysis-impact-badge-${branchImpact}`}>
+                        {getBranchImpactLabel(branchImpact)}
+                      </span>
+                    </div>
+
+                    <div className="employee-analysis-spotlight-stats">
+                      <div>
+                        <span>Mevcut</span>
+                        <strong>{formatPercent(metric.actualPercent)}</strong>
+                      </div>
+                      <div>
+                        <span>Ay sonu</span>
+                        <strong>{formatPercent(metric.projectedPercent)}</strong>
+                      </div>
+                      <div>
+                        <span>Firma</span>
+                        <strong>{formatPercent(metric.companyAverageActualPercent)}</strong>
+                      </div>
+                      <div>
+                        <span>Gunluk ihtiyac</span>
+                        <strong>{formatNumber(metric.dailyNeed)}</strong>
+                      </div>
+                    </div>
+
+                    <div className="employee-analysis-spotlight-bars">
+                      <div className="employee-analysis-spotlight-bar-row">
+                        <span>Tempo</span>
+                        <div className="employee-analysis-bar-track">
+                          <i className="employee-analysis-bar-fill employee-analysis-bar-fill-employee" style={{ width: `${clampValue(metric.actualPercent)}%` }} />
+                        </div>
+                      </div>
+                      <div className="employee-analysis-spotlight-bar-row">
+                        <span>Ay sonu</span>
+                        <div className="employee-analysis-bar-track">
+                          <i className="employee-analysis-bar-fill employee-analysis-bar-fill-projected" style={{ width: `${clampValue(metric.projectedPercent)}%` }} />
+                        </div>
+                      </div>
+                      <div className="employee-analysis-spotlight-bar-row">
+                        <span>Firma</span>
+                        <div className="employee-analysis-bar-track">
+                          <i className="employee-analysis-bar-fill employee-analysis-bar-fill-company" style={{ width: `${clampValue(metric.companyAverageActualPercent)}%` }} />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="employee-analysis-spotlight-footer">
+                      <span>Mevcut fark: {formatSignedPercent(metric.actualGap)}</span>
+                      <span>Ay sonu fark: {formatSignedPercent(metric.projectedGap)}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </article>
+
+          <article className="admin-card">
+            <h3>Sube Etki Analizi</h3>
+            <p className="employee-analysis-section-copy">
+              Hangi kalemlerin secili calisanin subesini yukari tasidigi, dengeledigi veya geri cektigi bu alanda net olarak gorulur.
+            </p>
+
+            <div className="employee-analysis-impact-grid">
+              {branchImpactMetrics.map((metric) => {
+                const branchImpact = getBranchImpact(metric);
+
+                return (
+                  <div
+                    key={`impact-${metric.title}`}
+                    className={`employee-analysis-impact-card employee-analysis-impact-card-${branchImpact}`}
+                  >
+                    <div className="employee-analysis-impact-head">
+                      <strong>{metric.title}</strong>
+                      <span className={`employee-analysis-impact-badge employee-analysis-impact-badge-${branchImpact}`}>
+                        {getBranchImpactLabel(branchImpact)}
+                      </span>
+                    </div>
+
+                    <p>
+                      {branchImpact === "lift"
+                        ? `${selectedProfile.storeName} icinde bu kategori subeyi destekliyor. Firma ortalamasina gore ${formatSignedPercent(metric.actualGap)} fark ile onde.`
+                        : branchImpact === "drag"
+                          ? `${selectedProfile.storeName} icinde bu kategori subeyi geri cekiyor. Firma ortalamasina gore ${formatSignedPercent(metric.actualGap)} fark ile geride ve gunluk ${formatNumber(metric.dailyNeed)} ek uretim gerekli.`
+                          : `${selectedProfile.storeName} icinde bu kategori sube temposunu dengede tutuyor. Kisa takip ile kolayca yukari tasinabilir.`}
+                    </p>
+
+                    <div className="employee-analysis-impact-meta">
+                      <span>Mevcut: {formatPercent(metric.actualPercent)}</span>
+                      <span>Firma: {formatPercent(metric.companyAverageActualPercent)}</span>
+                      <span>Ay sonu: {formatPercent(metric.projectedPercent)}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </article>
+
           <article className="admin-card">
             <h3>Kategori Bazli Karsilastirma</h3>
             <p className="employee-analysis-section-copy">
@@ -593,7 +856,7 @@ export default async function EmployeeAnalysisPage({ searchParams }: PageProps) 
                     <div className="employee-analysis-chart-meta">
                       <span>Ay sonu: {formatPercent(metric.projectedPercent)}</span>
                       <span>Firma ay sonu: {formatPercent(metric.companyAverageProjectedPercent)}</span>
-                      <span>Fark: {formatPercent(metric.actualGap)}</span>
+                      <span>Fark: {formatSignedPercent(metric.actualGap)}</span>
                     </div>
                   </div>
                 );
@@ -608,12 +871,18 @@ export default async function EmployeeAnalysisPage({ searchParams }: PageProps) 
                 <div key={`action-${metric.title}`} className="employee-analysis-action-item">
                   <strong>{metric.title}</strong>
                   <p>
-                    Bugun bu alanda tempo dusuk. Firma ortalamasina yaklasmak icin once {metric.title.toLocaleLowerCase("tr-TR")} kaleminde gunluk en az{" "}
+                    Bugun bu alanda tempo dusuk. Bu kategori {selectedProfile.storeName} subesini geri cekiyor.
+                    Firma ortalamasina yaklasmak ve subeyi yukari tasimak icin once {metric.title.toLocaleLowerCase("tr-TR")} kaleminde gunluk en az{" "}
                     {formatNumber(metric.dailyNeed)} ek uretim hedeflenmeli.
                   </p>
                 </div>
               ))}
             </div>
+          </article>
+
+          <article className="admin-card employee-analysis-manager-note">
+            <h3>Mudure Hazir Oneri Metni</h3>
+            <p className="employee-analysis-manager-note-copy">{managerRecommendation}</p>
           </article>
         </section>
       )}

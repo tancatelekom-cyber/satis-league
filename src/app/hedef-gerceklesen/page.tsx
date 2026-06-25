@@ -164,6 +164,15 @@ type CompanyCurrentSummaryRow = {
   }>;
 };
 
+type CompanyDailyNeedSummaryRow = {
+  title: string;
+  companyDailyNeed: number | null;
+  stores: Array<{
+    storeCode: string;
+    dailyNeed: number | null;
+  }>;
+};
+
 type GoalView = "employee" | "store" | "company";
 type GoalPanel = "detail" | "ranking" | "needs" | "evaluation";
 
@@ -1011,6 +1020,59 @@ function buildCompanyCurrentSummaryRows(rows: GoalStoreRow[]) {
       } satisfies CompanyCurrentSummaryRow;
     })
     .filter((row): row is CompanyCurrentSummaryRow => Boolean(row));
+}
+
+function buildCompanyDailyNeedSummaryRows(
+  companyCategories: GoalCategorySummary[],
+  storeRows: GoalStoreRow[],
+  workedDays: number,
+  totalDays: number,
+  remainingDays: number
+) {
+  return companyCategories
+    .filter((category) => category.hasTarget)
+    .map((category) => {
+      const storeMap = new Map<string, GoalStoreRow[]>();
+
+      storeRows
+        .filter((row) => row.mainCategory === category.title)
+        .forEach((row) => {
+          const current = storeMap.get(row.storeCode) ?? [];
+          current.push(row);
+          storeMap.set(row.storeCode, current);
+        });
+
+      const stores = Array.from(storeMap.entries())
+        .map(([storeCode, rows]) => {
+          const summary = buildStoreMetricSummary(rows, workedDays, totalDays);
+          const dailyNeed =
+            summary.remaining !== null
+              ? remainingDays > 0
+                ? Math.ceil(Math.max(summary.remaining, 0) / remainingDays)
+                : Math.ceil(Math.max(summary.remaining, 0))
+              : null;
+
+          return {
+            storeCode,
+            dailyNeed
+          };
+        })
+        .sort((a, b) => a.storeCode.localeCompare(b.storeCode, "tr"));
+
+      const companyDailyNeed =
+        category.remaining !== null
+          ? remainingDays > 0
+            ? Math.ceil(Math.max(category.remaining, 0) / remainingDays)
+            : Math.ceil(Math.max(category.remaining, 0))
+          : null;
+
+      return {
+        title: category.title,
+        companyDailyNeed,
+        stores
+      } satisfies CompanyDailyNeedSummaryRow;
+    })
+    .sort((a, b) => a.title.localeCompare(b.title, "tr"));
 }
 
 function toCoachingMetric(summary: GoalCategorySummary): CoachingMetric {
@@ -1898,6 +1960,16 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
       : [];
   const companyCurrentSummaryRows =
     effectiveView !== "employee" || Boolean(activeEmployeeStoreCode) ? buildCompanyCurrentSummaryRows(filteredStoreRows) : [];
+  const companyDailyNeedSummaryRows =
+    effectiveView === "company"
+      ? buildCompanyDailyNeedSummaryRows(
+          companyCategorySummaries,
+          filteredStoreRows,
+          dayStats.workedDays,
+          dayStats.totalDays,
+          dayStats.remainingDays
+        )
+      : [];
   const companyTrendStoreCodes =
     effectiveView !== "employee" || Boolean(activeEmployeeStoreCode)
       ? Array.from(
@@ -2447,6 +2519,45 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                         </span>
                       </div>
                     ) : null}
+                  </div>
+                ) : null}
+
+                {effectiveView === "company" && visibleTrendStoreCodes.length && companyDailyNeedSummaryRows.length ? (
+                  <div className="goal-company-trend-panel">
+                    <div className="goal-live-prime-head">
+                      <h3>Gunluk Ihtiyaclar</h3>
+                    </div>
+
+                    <div className="goal-company-trend-table-wrap">
+                      <table className="goal-company-trend-table">
+                        <thead>
+                          <tr>
+                            <th>Kategori</th>
+                            {visibleTrendStoreCodes.map((storeCode) => (
+                              <th key={`daily-need-head-${storeCode}`}>{storeCode}</th>
+                            ))}
+                            <th>Firma</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {companyDailyNeedSummaryRows.map((row) => (
+                            <tr key={`daily-need-row-${row.title}`}>
+                              <th>{row.title}</th>
+                              {visibleTrendStoreCodes.map((storeCode) => {
+                                const store = row.stores.find((item) => item.storeCode === storeCode);
+
+                                return (
+                                  <td key={`daily-need-${row.title}-${storeCode}`}>
+                                    {formatNumber(store?.dailyNeed)}
+                                  </td>
+                                );
+                              })}
+                              <td className="goal-company-trend-company">{formatNumber(row.companyDailyNeed)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 ) : null}
 

@@ -1,6 +1,6 @@
 import { AdminSectionNav } from "@/components/admin/admin-section-nav";
 import { requireAdminAccess } from "@/lib/auth/require-admin";
-import { formatPosCurrency, formatPosPercent, resolvePosCommissionSettings } from "@/lib/pos-commission";
+import { formatPosPercent, resolvePosCommissionSettings } from "@/lib/pos-commission";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { updatePosCommissionAction } from "./actions";
 
@@ -26,8 +26,6 @@ export default async function AdminPosCommissionPage({
     .maybeSingle();
 
   const settings = resolvePosCommissionSettings(data);
-  const sampleAmount = 10000;
-  const sampleNetAmount = sampleAmount * (1 - settings.commissionPercent / 100);
 
   return (
     <main>
@@ -54,7 +52,7 @@ export default async function AdminPosCommissionPage({
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+            gridTemplateColumns: "minmax(220px, 1fr)",
             gap: 16
           }}
         >
@@ -74,24 +72,6 @@ export default async function AdminPosCommissionPage({
               {formatPosPercent(settings.commissionPercent)}
             </strong>
             <span style={{ color: "#37516f" }}>Tum hesaplamalarda kullanilan aktif oran.</span>
-          </article>
-
-          <article
-            style={{
-              borderRadius: 24,
-              padding: "18px 20px",
-              background: "rgba(255,255,255,0.9)",
-              border: "1px solid rgba(4, 92, 96, 0.16)",
-              boxShadow: "0 16px 28px rgba(8, 22, 40, 0.08)",
-              display: "grid",
-              gap: 6
-            }}
-          >
-            <span style={{ color: "#56708c", fontWeight: 700 }}>10.000 TL Ornek Net</span>
-            <strong style={{ color: "#0b2143", fontSize: "2rem", lineHeight: 1 }}>
-              {formatPosCurrency(sampleNetAmount)}
-            </strong>
-            <span style={{ color: "#37516f" }}>Ornek hesapla guncel etkiyi hizli gorun.</span>
           </article>
         </div>
 

@@ -152,8 +152,17 @@ function isLivePrimeCategory(value: string | null | undefined) {
   return normalized.includes("CANLI PRIM");
 }
 
-function buildMetricSummary(rows: GoalActualRow[], workedDays: number, totalDays: number): MetricSummary {
-  const title = rows[0]?.mainCategory ?? "Kategori";
+function isUsableSubCategory(row: GoalActualRow) {
+  const subCategory = normalizeText(row.subCategory);
+
+  if (!subCategory || isAggregateCategoryLabel(subCategory) || isLivePrimeCategory(subCategory)) {
+    return false;
+  }
+
+  return normalizeIdentity(subCategory) !== normalizeIdentity(row.mainCategory);
+}
+
+function buildMetricSummary(title: string, rows: GoalActualRow[], workedDays: number, totalDays: number): MetricSummary {
   const totalTarget = rows.reduce((sum, row) => sum + (row.target ?? 0), 0);
   const totalActual = rows.reduce((sum, row) => sum + row.actual, 0);
   const hasTarget = totalTarget > 0;
@@ -171,25 +180,44 @@ function buildMetricSummary(rows: GoalActualRow[], workedDays: number, totalDays
   };
 }
 
-function buildEmployeeCategorySummaries(rows: GoalActualRow[], workedDays: number, totalDays: number) {
+function buildEmployeeMetricSummaries(
+  rows: GoalActualRow[],
+  workedDays: number,
+  totalDays: number,
+  labelResolver: (row: GoalActualRow) => string | null
+) {
   const categoryMap = new Map<string, GoalActualRow[]>();
 
   rows.forEach((row) => {
-    const current = categoryMap.get(row.mainCategory) ?? [];
+    const label = labelResolver(row);
+    if (!label) {
+      return;
+    }
+
+    const current = categoryMap.get(label) ?? [];
     current.push(row);
-    categoryMap.set(row.mainCategory, current);
+    categoryMap.set(label, current);
   });
 
   return Array.from(categoryMap.entries())
-    .map(([, categoryRows]) => buildMetricSummary(categoryRows, workedDays, totalDays))
+    .map(([title, categoryRows]) => buildMetricSummary(title, categoryRows, workedDays, totalDays))
     .sort((left, right) => left.title.localeCompare(right.title, "tr"));
 }
 
-function buildCompanyBenchmarks(rows: GoalActualRow[], workedDays: number, totalDays: number) {
+function buildCompanyBenchmarks(
+  rows: GoalActualRow[],
+  workedDays: number,
+  totalDays: number,
+  labelResolver: (row: GoalActualRow) => string | null
+) {
   const categoryEmployeeMap = new Map<string, Map<string, GoalActualRow[]>>();
 
   rows.forEach((row) => {
-    const categoryKey = row.mainCategory;
+    const categoryKey = labelResolver(row);
+    if (!categoryKey) {
+      return;
+    }
+
     const employeeKey = row.personnelId || normalizeIdentity(row.employeeName);
     const byEmployee = categoryEmployeeMap.get(categoryKey) ?? new Map<string, GoalActualRow[]>();
     const currentRows = byEmployee.get(employeeKey) ?? [];
@@ -201,8 +229,8 @@ function buildCompanyBenchmarks(rows: GoalActualRow[], workedDays: number, total
   return new Map<string, CompanyMetricBenchmark>(
     Array.from(categoryEmployeeMap.entries()).map(([title, byEmployee]) => {
       const summaries = Array.from(byEmployee.values())
-        .map((employeeRows) => buildMetricSummary(employeeRows, workedDays, totalDays))
-        .filter((summary) => summary.hasTarget);
+        .map((employeeRows) => buildMetricSummary(title, employeeRows, workedDays, totalDays))
+        .filter((summary) => summary.hasTarget && summary.actual > 0);
 
       return [
         title,
@@ -217,13 +245,23 @@ function buildCompanyBenchmarks(rows: GoalActualRow[], workedDays: number, total
   );
 }
 
-function buildStoreBenchmarks(rows: GoalActualRow[], storeName: string, workedDays: number, totalDays: number) {
+function buildStoreBenchmarks(
+  rows: GoalActualRow[],
+  storeName: string,
+  workedDays: number,
+  totalDays: number,
+  labelResolver: (row: GoalActualRow) => string | null
+) {
   const normalizedStoreName = normalizeIdentity(storeName);
   const storeRows = rows.filter((row) => normalizeIdentity(row.storeName) === normalizedStoreName);
   const categoryEmployeeMap = new Map<string, Map<string, GoalActualRow[]>>();
 
   storeRows.forEach((row) => {
-    const categoryKey = row.mainCategory;
+    const categoryKey = labelResolver(row);
+    if (!categoryKey) {
+      return;
+    }
+
     const employeeKey = row.personnelId || normalizeIdentity(row.employeeName);
     const byEmployee = categoryEmployeeMap.get(categoryKey) ?? new Map<string, GoalActualRow[]>();
     const currentRows = byEmployee.get(employeeKey) ?? [];
@@ -235,7 +273,7 @@ function buildStoreBenchmarks(rows: GoalActualRow[], storeName: string, workedDa
   return new Map<string, StoreMetricBenchmark>(
     Array.from(categoryEmployeeMap.entries()).map(([title, byEmployee]) => {
       const summaries = Array.from(byEmployee.values())
-        .map((employeeRows) => buildMetricSummary(employeeRows, workedDays, totalDays))
+        .map((employeeRows) => buildMetricSummary(title, employeeRows, workedDays, totalDays))
         .filter((summary) => summary.hasTarget && summary.actual > 0);
 
       return [
@@ -355,6 +393,61 @@ function buildPriorityScore(metric: AnalysisMetric, remainingDays: number) {
   return Math.round(gapPenalty + targetPenalty + needPenalty);
 }
 
+function buildMergedMetrics(
+  summaries: MetricSummary[],
+  companyBenchmarks: Map<string, CompanyMetricBenchmark>,
+  storeBenchmarks: Map<string, StoreMetricBenchmark>,
+  remainingDays: number
+) {
+  return summaries
+    .map((metric) => {
+      const benchmark = companyBenchmarks.get(metric.title) ?? null;
+      const storeBenchmark = storeBenchmarks.get(metric.title) ?? null;
+      const dailyNeed = remainingDays > 0 && metric.remaining !== null ? Math.ceil(metric.remaining / remainingDays) : 0;
+      const merged: AnalysisMetric = {
+        ...metric,
+        companyAverageActualPercent: benchmark?.averageActualPercent ?? null,
+        companyAverageProjectedPercent: benchmark?.averageProjectedPercent ?? null,
+        storeAverageActualPercent: storeBenchmark?.averageActualPercent ?? null,
+        storeAverageProjectedPercent: storeBenchmark?.averageProjectedPercent ?? null,
+        actualGap:
+          metric.actualPercent !== null && (benchmark?.averageActualPercent ?? null) !== null
+            ? metric.actualPercent - (benchmark?.averageActualPercent ?? 0)
+            : null,
+        projectedGap:
+          metric.projectedPercent !== null && (benchmark?.averageProjectedPercent ?? null) !== null
+            ? metric.projectedPercent - (benchmark?.averageProjectedPercent ?? 0)
+            : null,
+        storeActualGap:
+          metric.actualPercent !== null && (storeBenchmark?.averageActualPercent ?? null) !== null
+            ? metric.actualPercent - (storeBenchmark?.averageActualPercent ?? 0)
+            : null,
+        storeProjectedGap:
+          metric.projectedPercent !== null && (storeBenchmark?.averageProjectedPercent ?? null) !== null
+            ? metric.projectedPercent - (storeBenchmark?.averageProjectedPercent ?? 0)
+            : null,
+        status: "neutral",
+        dailyNeed
+      };
+
+      return {
+        ...merged,
+        status: statusFromMetric(merged)
+      } satisfies AnalysisMetric;
+    })
+    .sort((left, right) => {
+      if (left.hasTarget && right.hasTarget) {
+        return (right.actualPercent ?? 0) - (left.actualPercent ?? 0);
+      }
+
+      if (left.hasTarget !== right.hasTarget) {
+        return left.hasTarget ? -1 : 1;
+      }
+
+      return right.actual - left.actual;
+    });
+}
+
 export default async function EmployeeAnalysisPage({ searchParams }: PageProps) {
   const params = searchParams ? await searchParams : undefined;
   const selectedEmployeeId = String(params?.employee ?? "").trim();
@@ -429,57 +522,32 @@ export default async function EmployeeAnalysisPage({ searchParams }: PageProps) 
     (row) => normalizeIdentity(row.employeeName) === normalizeIdentity(selectedProfile.fullName)
   );
   const selectedRows = employeeRowsById.length ? employeeRowsById : employeeRowsByName;
-  const categorySummaries = buildEmployeeCategorySummaries(selectedRows, workedDays, totalDays);
-  const companyBenchmarks = buildCompanyBenchmarks(goalRows, workedDays, totalDays);
-  const storeBenchmarks = buildStoreBenchmarks(goalRows, selectedProfile.storeName, workedDays, totalDays);
-  const mergedMetrics = categorySummaries
-    .map((metric) => {
-      const benchmark = companyBenchmarks.get(metric.title) ?? null;
-      const storeBenchmark = storeBenchmarks.get(metric.title) ?? null;
-      const dailyNeed = remainingDays > 0 && metric.remaining !== null ? Math.ceil(metric.remaining / remainingDays) : 0;
-      const merged: AnalysisMetric = {
-        ...metric,
-        companyAverageActualPercent: benchmark?.averageActualPercent ?? null,
-        companyAverageProjectedPercent: benchmark?.averageProjectedPercent ?? null,
-        storeAverageActualPercent: storeBenchmark?.averageActualPercent ?? null,
-        storeAverageProjectedPercent: storeBenchmark?.averageProjectedPercent ?? null,
-        actualGap:
-          metric.actualPercent !== null && (benchmark?.averageActualPercent ?? null) !== null
-            ? metric.actualPercent - (benchmark?.averageActualPercent ?? 0)
-            : null,
-        projectedGap:
-          metric.projectedPercent !== null && (benchmark?.averageProjectedPercent ?? null) !== null
-            ? metric.projectedPercent - (benchmark?.averageProjectedPercent ?? 0)
-            : null,
-        storeActualGap:
-          metric.actualPercent !== null && (storeBenchmark?.averageActualPercent ?? null) !== null
-            ? metric.actualPercent - (storeBenchmark?.averageActualPercent ?? 0)
-            : null,
-        storeProjectedGap:
-          metric.projectedPercent !== null && (storeBenchmark?.averageProjectedPercent ?? null) !== null
-            ? metric.projectedPercent - (storeBenchmark?.averageProjectedPercent ?? 0)
-            : null,
-        status: "neutral",
-        dailyNeed
-      };
-
-      return {
-        ...merged,
-        status: statusFromMetric(merged)
-      } satisfies AnalysisMetric;
-    })
-    .sort((left, right) => {
-      if (left.hasTarget && right.hasTarget) {
-        return (right.actualPercent ?? 0) - (left.actualPercent ?? 0);
-      }
-
-      if (left.hasTarget !== right.hasTarget) {
-        return left.hasTarget ? -1 : 1;
-      }
-
-      return right.actual - left.actual;
-    });
+  const categorySummaries = buildEmployeeMetricSummaries(selectedRows, workedDays, totalDays, (row) => row.mainCategory);
+  const companyBenchmarks = buildCompanyBenchmarks(goalRows, workedDays, totalDays, (row) => row.mainCategory);
+  const storeBenchmarks = buildStoreBenchmarks(goalRows, selectedProfile.storeName, workedDays, totalDays, (row) => row.mainCategory);
+  const mergedMetrics = buildMergedMetrics(categorySummaries, companyBenchmarks, storeBenchmarks, remainingDays);
+  const subCategorySummaries = buildEmployeeMetricSummaries(
+    selectedRows.filter(isUsableSubCategory),
+    workedDays,
+    totalDays,
+    (row) => (isUsableSubCategory(row) ? `${row.mainCategory} / ${normalizeText(row.subCategory)}` : null)
+  );
+  const companySubBenchmarks = buildCompanyBenchmarks(
+    goalRows.filter(isUsableSubCategory),
+    workedDays,
+    totalDays,
+    (row) => (isUsableSubCategory(row) ? `${row.mainCategory} / ${normalizeText(row.subCategory)}` : null)
+  );
+  const storeSubBenchmarks = buildStoreBenchmarks(
+    goalRows.filter(isUsableSubCategory),
+    selectedProfile.storeName,
+    workedDays,
+    totalDays,
+    (row) => (isUsableSubCategory(row) ? `${row.mainCategory} / ${normalizeText(row.subCategory)}` : null)
+  );
+  const mergedSubMetrics = buildMergedMetrics(subCategorySummaries, companySubBenchmarks, storeSubBenchmarks, remainingDays);
   const targetMetrics = mergedMetrics.filter((metric) => metric.hasTarget);
+  const targetSubMetrics = mergedSubMetrics.filter((metric) => metric.hasTarget);
   const statusTotals = {
     good: targetMetrics.filter((metric) => metric.status === "good").length,
     watch: targetMetrics.filter((metric) => metric.status === "watch").length,
@@ -544,6 +612,40 @@ export default async function EmployeeAnalysisPage({ searchParams }: PageProps) 
         (left.actualPercent ?? 999) - (right.actualPercent ?? 999)
     )
     .slice(0, 4);
+  const subStrengths = [...mergedSubMetrics]
+    .filter(
+      (metric) =>
+        metric.hasTarget &&
+        (metric.actualPercent ?? 0) >= 100 &&
+        (metric.actualGap ?? 0) > 0 &&
+        ((metric.storeActualGap ?? 0) > 0 || metric.storeAverageActualPercent === null)
+    )
+    .sort(
+      (left, right) =>
+        ((right.actualGap ?? -999) + (right.storeActualGap ?? 0)) - ((left.actualGap ?? -999) + (left.storeActualGap ?? 0)) ||
+        (right.actualPercent ?? 0) - (left.actualPercent ?? 0)
+    )
+    .slice(0, 6);
+  const subStrengthTitles = new Set(subStrengths.map((metric) => metric.title));
+  const subDevelopmentAreas = [...mergedSubMetrics]
+    .filter(
+      (metric) =>
+        metric.hasTarget &&
+        !subStrengthTitles.has(metric.title) &&
+        (
+          (metric.actualGap ?? 0) < 0 ||
+          (metric.storeActualGap ?? 0) < 0 ||
+          (metric.actualPercent ?? 0) < 100 ||
+          metric.status === "critical" ||
+          metric.status === "watch"
+        )
+    )
+    .sort(
+      (left, right) =>
+        ((left.actualGap ?? 999) + (left.storeActualGap ?? 0)) - ((right.actualGap ?? 999) + (right.storeActualGap ?? 0)) ||
+        (left.actualPercent ?? 999) - (right.actualPercent ?? 999)
+    )
+    .slice(0, 6);
   const rewardForecast = buildRewardForecast(categorySummaries, rewardRows, workedDays, totalDays);
   const insight = buildInsightSummary(mergedMetrics, rewardForecast);
 
@@ -967,6 +1069,62 @@ export default async function EmployeeAnalysisPage({ searchParams }: PageProps) 
               })}
             </div>
           </article>
+
+          {targetSubMetrics.length ? (
+            <article className="admin-card">
+              <h3>Alt Kategori Analizi</h3>
+              <p className="employee-analysis-section-copy">
+                Ana kategorilerin alt kirilimlari da firma ve sube ortalamasiyla birlikte analiz edilir. Boylece hangi alt basligin calisani yukari tasidigi veya geri cektigi net gorulur.
+              </p>
+
+              <section className="employee-analysis-two-column">
+                <article>
+                  <h4 className="employee-analysis-subtitle">Guclu Alt Kategoriler</h4>
+                  <div className="employee-analysis-metric-list">
+                    {subStrengths.length ? (
+                      subStrengths.map((metric) => (
+                        <div key={`sub-strength-${metric.title}`} className="employee-analysis-metric-card employee-analysis-metric-card-good">
+                          <div className="employee-analysis-metric-head">
+                            <strong>{metric.title}</strong>
+                            <span>{formatPercent(metric.actualPercent)}</span>
+                          </div>
+                          <p>
+                            Firma ortalamasi {formatPercent(metric.companyAverageActualPercent)}, sube ortalamasi {formatPercent(metric.storeAverageActualPercent)}.
+                            Firma farki {formatSignedPercent(metric.actualGap)}, sube farki {formatSignedPercent(metric.storeActualGap)}.
+                          </p>
+                        </div>
+                      ))
+                    ) : (
+                      <p>Belirgin guclu alt kategori bulunamadi.</p>
+                    )}
+                  </div>
+                </article>
+
+                <article>
+                  <h4 className="employee-analysis-subtitle">Gelismesi Gereken Alt Kategoriler</h4>
+                  <div className="employee-analysis-metric-list">
+                    {subDevelopmentAreas.length ? (
+                      subDevelopmentAreas.map((metric) => (
+                        <div key={`sub-risk-${metric.title}`} className="employee-analysis-metric-card employee-analysis-metric-card-critical">
+                          <div className="employee-analysis-metric-head">
+                            <strong>{metric.title}</strong>
+                            <span>{formatPercent(metric.actualPercent)}</span>
+                          </div>
+                          <p>
+                            Firma ortalamasi {formatPercent(metric.companyAverageActualPercent)}, sube ortalamasi {formatPercent(metric.storeAverageActualPercent)}.
+                            Firma farki {formatSignedPercent(metric.actualGap)}, sube farki {formatSignedPercent(metric.storeActualGap)}.
+                            Gunluk ihtiyac {formatNumber(metric.dailyNeed)}.
+                          </p>
+                        </div>
+                      ))
+                    ) : (
+                      <p>Gelisim gerektiren alt kategori bulunamadi.</p>
+                    )}
+                  </div>
+                </article>
+              </section>
+            </article>
+          ) : null}
 
           <article className="admin-card">
             <h3>Nokta Atisi Ozet</h3>

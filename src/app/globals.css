@@ -2227,6 +2227,12 @@ textarea::placeholder {
   line-height: 1.6;
 }
 
+.employee-analysis-subtitle {
+  margin: 0 0 12px;
+  color: #10203b !important;
+  font-size: 1rem;
+}
+
 .employee-analysis-section-copy {
   margin-top: -4px !important;
   margin-bottom: 0 !important;

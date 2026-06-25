@@ -365,6 +365,14 @@ create table if not exists public.feature_profile_permissions (
   constraint feature_profile_permissions_feature_profile_key unique (feature_key, profile_id)
 );
 
+create table if not exists public.pos_commission_settings (
+  id uuid primary key default gen_random_uuid(),
+  commission_percent numeric(6,2) not null default 0,
+  updated_by uuid references public.profiles(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 insert into public.manager_presentation_sections (section_key, label, sort_order, is_visible)
 values
   ('cover', 'Kapak ve Ozet', 0, true),
@@ -389,6 +397,13 @@ insert into public.feature_menu_permissions (
 values
   ('web-kontor', 'Web Kontor Menusu', false, true, true, true)
 on conflict (feature_key) do nothing;
+
+insert into public.pos_commission_settings (commission_percent)
+select 0
+where not exists (
+  select 1
+  from public.pos_commission_settings
+);
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (
@@ -512,6 +527,7 @@ alter table public.popup_announcement_dismissals enable row level security;
 alter table public.weekly_work_schedules enable row level security;
 alter table public.feature_menu_permissions enable row level security;
 alter table public.feature_profile_permissions enable row level security;
+alter table public.pos_commission_settings enable row level security;
 
 drop policy if exists "active stores are visible to everyone" on public.stores;
 create policy "active stores are visible to everyone" on public.stores
@@ -613,3 +629,7 @@ for select using (
       and p.approval = 'approved'
   )
 );
+
+drop policy if exists "authenticated users can view pos commission settings" on public.pos_commission_settings;
+create policy "authenticated users can view pos commission settings" on public.pos_commission_settings
+for select using (auth.uid() is not null);

@@ -17,6 +17,7 @@ const baseNavItems: NavItem[] = [
   { href: "/", label: "Ana Sayfa" },
   { href: "/hedef-gerceklesen", label: "Hedef Gerceklesen", mobileLabel: "Hedef", icon: "H" },
   { href: "/web-kontor", label: "Web Kontor", mobileLabel: "Kontor", icon: "O" },
+  { href: "/pos-komisyon", label: "POS Komisyon", mobileLabel: "POS", icon: "M" },
   { href: "/tarifeler", label: "Tarifeler", mobileLabel: "Tarife", icon: "T" },
   { href: "/cihaz-fiyat-listesi", label: "Cihaz Fiyat Listesi", mobileLabel: "Cihaz", icon: "C" },
   { href: "/haftalik-calisma-programi", label: "Haftalik Calisma Programi", mobileLabel: "Program", icon: "W" },
@@ -135,6 +136,14 @@ function MobileTabIcon({ kind }: { kind?: string }) {
         <path d="M6 13.5h12v4a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-4Z" />
         <circle cx="12" cy="15.5" r="1.2" />
       </svg>
+    ),
+    M: (
+      <svg {...sharedProps}>
+        <rect x="4.5" y="6.5" width="15" height="11" rx="2.5" />
+        <path d="M4.5 10h15" />
+        <path d="M8 14h3" />
+        <path d="M15 14h1.5" />
+      </svg>
     )
   };
 
@@ -184,6 +193,7 @@ export function AppShellHeader({
     const wanted = [
       "/hedef-gerceklesen",
       "/web-kontor",
+      "/pos-komisyon",
       "/tarifeler",
       "/cihaz-fiyat-listesi",
       "/kampanyalar",

@@ -97,6 +97,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           <strong>Web Kontor</strong>
           <span>Web Kontor menusunun hangi rollerde gorunecegini ayarla.</span>
         </a>
+        <a className="admin-quick-card" href="/admin/pos-komisyon">
+          <strong>POS Komisyon</strong>
+          <span>Kredi karti cekimlerinde kullanilan komisyon oranini guncelle.</span>
+        </a>
         <a className="admin-quick-card" href="/admin/calisan-analiz">
           <strong>Calisan Analizi</strong>
           <span>Tek personeli sec, guclu ve zayif alanlarini firma ortalamasina gore aninda gor.</span>

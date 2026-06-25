@@ -30,49 +30,20 @@ export function PosCommissionCalculator({
 
   return (
     <section
-      className="campaign-section-card"
       style={{
         display: "grid",
-        gap: 20
+        gap: 18
       }}
     >
-      <div
+      <section
+        className="campaign-section-card"
         style={{
           display: "grid",
-          gap: 8
-        }}
-      >
-        <h2
-          style={{
-            margin: 0,
-            fontSize: "1.8rem",
-            color: "#0b2143",
-            fontWeight: 900
-          }}
-        >
-          Kredi Karti POS Komisyon Hesaplayici
-        </h2>
-        <p
-          style={{
-            margin: 0,
-            color: "#37516f",
-            fontSize: "1rem",
-            lineHeight: 1.7
-          }}
-        >
-          Cekilen tutari girin. Tanimli POS komisyonuna gore net gececek tutar otomatik hesaplanir.
-        </p>
-      </div>
-
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-          gap: 16
+          gap: 14,
+          padding: "20px"
         }}
       >
         <label
-          className="field"
           style={{
             display: "grid",
             gap: 10
@@ -82,20 +53,29 @@ export function PosCommissionCalculator({
             style={{
               color: "#0b2143",
               fontWeight: 800,
-              fontSize: "1rem"
+              fontSize: "0.98rem"
             }}
           >
             Cekilen Tutar
           </span>
           <input
-            className="input"
+            type="text"
             inputMode="decimal"
-            placeholder="Ornek: 12.500"
+            placeholder="Tutar girin"
             value={amountInput}
             onChange={(event) => setAmountInput(event.target.value)}
             style={{
-              fontSize: "1.3rem",
-              fontWeight: 800
+              width: "100%",
+              minHeight: 60,
+              borderRadius: 22,
+              border: "1px solid rgba(4, 92, 96, 0.18)",
+              background: "#ffffff",
+              color: "#0b2143",
+              padding: "16px 18px",
+              fontSize: "1.45rem",
+              fontWeight: 800,
+              outline: "none",
+              boxSizing: "border-box"
             }}
           />
         </label>
@@ -128,17 +108,11 @@ export function PosCommissionCalculator({
           >
             {formatPosPercent(commissionPercent)}
           </strong>
-          <span
-            style={{
-              color: "#37516f"
-            }}
-          >
-            Formul: Cekilen Tutar x (1 - Komisyon / 100)
-          </span>
         </article>
-      </div>
+      </section>
 
       <article
+        className="campaign-section-card"
         style={{
           borderRadius: 34,
           padding: "24px 24px 26px",

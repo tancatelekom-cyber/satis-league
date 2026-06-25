@@ -22,10 +22,6 @@ export default async function PosKomisyonPage() {
   return (
     <main>
       <h1 className="page-title">POS Komisyon Hesaplayici</h1>
-      <p className="page-subtitle">
-        Tanimli komisyon oranina gore cekilen tutarin net karsiligini hizli hesaplayin.
-      </p>
-
       <PosCommissionCalculator commissionPercent={settings.commissionPercent} />
     </main>
   );

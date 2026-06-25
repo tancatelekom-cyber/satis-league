@@ -631,7 +631,27 @@ export default async function EmployeeAnalysisPage({ searchParams }: PageProps) 
               <strong>{selectedProfile.fullName}</strong>
               <span>{selectedProfile.storeName}</span>
             </div>
-            <p className="employee-analysis-hero-copy">{insight.summaryText}</p>
+            <div className="employee-analysis-hero-summary-grid">
+              <article className="employee-analysis-hero-summary-item">
+                <span>Genel Tempo</span>
+                <strong>{formatPercent(insight.currentAverage)}</strong>
+                <p>{insight.summaryText}</p>
+              </article>
+              {insight.bestMetric ? (
+                <article className="employee-analysis-hero-summary-item employee-analysis-hero-summary-item-good">
+                  <span>En Guclu Alan</span>
+                  <strong>{insight.bestMetric.title}</strong>
+                  <p>Firma farki {formatSignedPercent(insight.bestMetric.actualGap)}</p>
+                </article>
+              ) : null}
+              {insight.worstMetric ? (
+                <article className="employee-analysis-hero-summary-item employee-analysis-hero-summary-item-critical">
+                  <span>En Kritik Alan</span>
+                  <strong>{insight.worstMetric.title}</strong>
+                  <p>Firma farki {formatSignedPercent(insight.worstMetric.actualGap)}</p>
+                </article>
+              ) : null}
+            </div>
 
             <div className="employee-analysis-hero-chips">
               {insight.bestMetric ? (

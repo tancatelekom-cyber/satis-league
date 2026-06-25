@@ -454,11 +454,17 @@ export default async function EmployeeAnalysisPage({ searchParams }: PageProps) 
     : `${selectedProfile.fullName} icin acil mudahale gerektiren belirgin bir kategori gorunmuyor. Mevcut tempoyu koruyup guclu alanlari yaymak yeterli olur.`;
 
   const strengths = [...mergedMetrics]
-    .filter((metric) => metric.hasTarget)
+    .filter((metric) => metric.hasTarget && (metric.actualGap ?? 0) > 0 && (metric.actualPercent ?? 0) >= 100)
     .sort((left, right) => (right.actualGap ?? -999) - (left.actualGap ?? -999) || (right.actualPercent ?? 0) - (left.actualPercent ?? 0))
     .slice(0, 4);
+  const strengthTitles = new Set(strengths.map((metric) => metric.title));
   const developmentAreas = [...mergedMetrics]
-    .filter((metric) => metric.hasTarget)
+    .filter(
+      (metric) =>
+        metric.hasTarget &&
+        !strengthTitles.has(metric.title) &&
+        ((metric.actualGap ?? 0) < 0 || (metric.actualPercent ?? 0) < 100 || metric.status === "critical" || metric.status === "watch")
+    )
     .sort((left, right) => (left.actualGap ?? 999) - (right.actualGap ?? 999) || (left.actualPercent ?? 999) - (right.actualPercent ?? 999))
     .slice(0, 4);
   const rewardForecast = buildRewardForecast(categorySummaries, rewardRows, workedDays, totalDays);

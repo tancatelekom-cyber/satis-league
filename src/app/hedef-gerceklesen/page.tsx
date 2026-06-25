@@ -2586,7 +2586,6 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                     <CompanyDailyNeedsTable
                       rows={companyDailyNeedSummaryRows}
                       visibleTrendStoreCodes={visibleTrendStoreCodes}
-                      formatNumber={formatNumber}
                     />
                   </div>
                 ) : null}

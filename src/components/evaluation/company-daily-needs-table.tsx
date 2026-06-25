@@ -17,14 +17,23 @@ type CompanyDailyNeedsTableRow = {
 type CompanyDailyNeedsTableProps = {
   rows: CompanyDailyNeedsTableRow[];
   visibleTrendStoreCodes: string[];
-  formatNumber: (value: number | null | undefined) => string;
 };
 
 export function CompanyDailyNeedsTable({
   rows,
-  visibleTrendStoreCodes,
-  formatNumber
+  visibleTrendStoreCodes
 }: CompanyDailyNeedsTableProps) {
+  function formatNumber(value: number | null | undefined) {
+    if (value === null || value === undefined || Number.isNaN(value)) {
+      return "-";
+    }
+
+    return value.toLocaleString("tr-TR", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 1
+    });
+  }
+
   const parentKeys = useMemo(
     () => rows.filter((row) => row.level === 0 && row.hasChildren).map((row) => row.groupKey),
     [rows]

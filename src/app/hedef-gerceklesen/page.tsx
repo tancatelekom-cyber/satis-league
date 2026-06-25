@@ -4,6 +4,7 @@ import { CopyCoachingButton } from "@/components/evaluation/copy-coaching-button
 import { CompanyDailyNeedsTable } from "@/components/evaluation/company-daily-needs-table";
 import { FormattedCoachingText } from "@/components/evaluation/formatted-coaching-text";
 import { SpeakCoachingButton } from "@/components/evaluation/speak-coaching-button";
+import { StoreDailyNeedsTable } from "@/components/evaluation/store-daily-needs-table";
 import { FilterSelectNav } from "@/components/ui/filter-select-nav";
 import {
   GoalActualRow,
@@ -175,6 +176,14 @@ type CompanyDailyNeedSummaryRow = {
     storeCode: string;
     dailyNeed: number | null;
   }>;
+};
+
+type StoreDailyNeedSummaryRow = {
+  title: string;
+  groupKey: string;
+  level: number;
+  hasChildren: boolean;
+  cells: GoalNeedRow[];
 };
 
 type GoalView = "employee" | "store" | "company";
@@ -1350,7 +1359,7 @@ function buildNeedRows(summary: GoalCategorySummary, remainingDays: number): Goa
     return [];
   }
 
-  return [90, 100, 110, 120].map((threshold) => {
+  return [80, 90, 100, 110, 120].map((threshold) => {
     const targetValue = (summary.target ?? 0) * (threshold / 100);
     const remainingTotal = Math.max(targetValue - summary.actual, 0);
     const dailyRequired = remainingDays > 0 ? Math.ceil(remainingTotal / remainingDays) : remainingTotal > 0 ? Math.ceil(remainingTotal) : 0;
@@ -1360,6 +1369,39 @@ function buildNeedRows(summary: GoalCategorySummary, remainingDays: number): Goa
       dailyRequired
     };
   });
+}
+
+function buildStoreDailyNeedSummaryRows(categories: GoalCategorySummary[], remainingDays: number) {
+  return categories
+    .filter((category) => category.hasTarget)
+    .flatMap((category) => {
+      const parentRow = {
+        title: category.title,
+        groupKey: category.title,
+        level: 0,
+        hasChildren: category.children.some((child) => child.hasTarget),
+        cells: buildNeedRows(category, remainingDays)
+      } satisfies StoreDailyNeedSummaryRow;
+
+      const childRows = category.children
+        .filter((child) => child.hasTarget)
+        .map((child) => ({
+          title: child.title,
+          groupKey: category.title,
+          level: 1,
+          hasChildren: false,
+          cells: buildNeedRows(
+            {
+              ...child,
+              childCount: 0,
+              children: []
+            } satisfies GoalCategorySummary,
+            remainingDays
+          )
+        } satisfies StoreDailyNeedSummaryRow));
+
+      return [parentRow, ...childRows];
+    });
 }
 
 function GoalCategoryCards({
@@ -1970,14 +2012,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
     dayStats.remainingDays
   );
   const companyCategorySummaries = buildCompanyCategorySummaries(filteredStoreRows, dayStats.workedDays, dayStats.totalDays);
-  const storeNeedSummaries = storeCategorySummaries
-    .filter((category) => category.hasTarget)
-    .map((category) => ({
-      title: category.title,
-      actual: category.actual,
-      target: category.target ?? 0,
-      needRows: buildNeedRows(category, dayStats.remainingDays)
-    }));
+  const storeDailyNeedSummaryRows = buildStoreDailyNeedSummaryRows(storeCategorySummaries, dayStats.remainingDays);
   const detailCategorySummaries =
     effectiveView === "company"
       ? companyCategorySummaries
@@ -2191,37 +2226,8 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                   <span>Hedefli kalemler icin gunluk gereken adet / tutar</span>
                 </div>
 
-                {storeNeedSummaries.length ? (
-                  <div className="goal-category-list">
-                    {storeNeedSummaries.map((item) => (
-                      <article key={item.title} className="goal-category-card goal-need-card">
-                        <div className="goal-category-summary">
-                          <div className="goal-category-title">
-                            <strong>{item.title}</strong>
-                            <span>
-                              Gerceklesen {formatNumber(item.actual)} / Hedef {formatNumber(item.target)}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="goal-category-body">
-                            <div className="goal-need-grid">
-                              {item.needRows.map((need) => (
-                                <div key={`${item.title}-${need.threshold}`} className="goal-need-row">
-                                  <div className="goal-need-cell">
-                                    <small>Skala</small>
-                                    <strong>%{need.threshold}</strong>
-                                  </div>
-                                  <div className="goal-need-cell goal-need-cell-value">
-                                    <small>Deger</small>
-                                    <strong>{formatNumber(need.dailyRequired)}</strong>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                        </div>
-                      </article>
-                    ))}
-                  </div>
+                {storeDailyNeedSummaryRows.length ? (
+                  <StoreDailyNeedsTable rows={storeDailyNeedSummaryRows} />
                 ) : (
                   <p className="subtle">Bu magazada hedef tanimli kalem bulunamadi.</p>
                 )}

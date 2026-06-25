@@ -9538,6 +9538,7 @@ textarea::placeholder {
 .goal-company-trend-table tbody td.goal-company-trend-good,
 .goal-company-trend-company.goal-company-trend-good {
   color: #15803d !important;
+  background: rgba(220, 252, 231, 0.96) !important;
 }
 
 .goal-company-trend-table tbody td.goal-company-trend-bad,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 type CompanyDailyNeedsTableRow = {
   title: string;
@@ -34,11 +34,7 @@ export function CompanyDailyNeedsTable({
     });
   }
 
-  const parentKeys = useMemo(
-    () => rows.filter((row) => row.level === 0 && row.hasChildren).map((row) => row.groupKey),
-    [rows]
-  );
-  const [openKeys, setOpenKeys] = useState<string[]>(parentKeys);
+  const [openKeys, setOpenKeys] = useState<string[]>([]);
 
   function toggleGroup(groupKey: string) {
     setOpenKeys((current) =>

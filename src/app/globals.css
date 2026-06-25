@@ -2048,6 +2048,268 @@ textarea::placeholder {
   color: #8a2020 !important;
 }
 
+.employee-analysis-stack {
+  gap: 18px;
+}
+
+.employee-analysis-filter-card,
+.employee-analysis-hero,
+.employee-analysis-summary-grid,
+.employee-analysis-two-column,
+.employee-analysis-chart-list,
+.employee-analysis-actions {
+  display: grid;
+  gap: 16px;
+}
+
+.employee-analysis-filter-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(240px, 0.7fr);
+  gap: 16px;
+  align-items: end;
+}
+
+.employee-analysis-picked-card {
+  display: grid;
+  gap: 6px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(4, 92, 96, 0.14);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(236, 247, 244, 0.92));
+}
+
+.employee-analysis-picked-card span {
+  color: #5d7290 !important;
+  font-size: 0.84rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.employee-analysis-picked-card strong {
+  color: #10203b !important;
+  font-size: 1.2rem;
+}
+
+.employee-analysis-picked-card p {
+  margin: 0;
+  color: #4f6684 !important;
+}
+
+.employee-analysis-summary-grid {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.employee-analysis-hero-copy {
+  margin: 0;
+  color: #163252 !important;
+  font-size: 1.02rem;
+  line-height: 1.7;
+}
+
+.employee-analysis-hero-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.employee-analysis-two-column {
+  grid-template-columns: 1fr 1fr;
+}
+
+.employee-analysis-metric-list {
+  display: grid;
+  gap: 12px;
+}
+
+.employee-analysis-metric-card {
+  display: grid;
+  gap: 8px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(4, 92, 96, 0.14);
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.employee-analysis-metric-card-good {
+  border-color: rgba(22, 163, 74, 0.22);
+  background: linear-gradient(135deg, rgba(232, 253, 242, 0.98), rgba(255, 255, 255, 0.94));
+}
+
+.employee-analysis-metric-card-critical {
+  border-color: rgba(220, 38, 38, 0.2);
+  background: linear-gradient(135deg, rgba(255, 239, 239, 0.98), rgba(255, 255, 255, 0.94));
+}
+
+.employee-analysis-metric-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.employee-analysis-metric-head strong {
+  color: #10203b !important;
+}
+
+.employee-analysis-metric-head span {
+  color: #0f766e !important;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.employee-analysis-metric-card-critical .employee-analysis-metric-head span {
+  color: #b91c1c !important;
+}
+
+.employee-analysis-metric-card p {
+  margin: 0;
+  color: #4f6684 !important;
+  line-height: 1.6;
+}
+
+.employee-analysis-section-copy {
+  margin-top: -4px !important;
+  margin-bottom: 0 !important;
+}
+
+.employee-analysis-chart-list {
+  margin-top: 14px;
+}
+
+.employee-analysis-chart-card {
+  display: grid;
+  gap: 12px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(4, 92, 96, 0.12);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.employee-analysis-chart-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.employee-analysis-chart-head strong {
+  color: #10203b !important;
+}
+
+.employee-analysis-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.employee-analysis-status-good {
+  background: rgba(22, 163, 74, 0.12);
+  color: #15803d !important;
+}
+
+.employee-analysis-status-watch {
+  background: rgba(245, 158, 11, 0.14);
+  color: #b45309 !important;
+}
+
+.employee-analysis-status-critical {
+  background: rgba(220, 38, 38, 0.12);
+  color: #b91c1c !important;
+}
+
+.employee-analysis-status-neutral {
+  background: rgba(148, 163, 184, 0.14);
+  color: #475569 !important;
+}
+
+.employee-analysis-bar-group {
+  display: grid;
+  gap: 10px;
+}
+
+.employee-analysis-bar-row {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.employee-analysis-bar-row span,
+.employee-analysis-bar-row strong {
+  color: #10203b !important;
+  font-weight: 900;
+}
+
+.employee-analysis-bar-track {
+  position: relative;
+  height: 12px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.18);
+}
+
+.employee-analysis-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+}
+
+.employee-analysis-bar-fill-employee {
+  background: linear-gradient(90deg, #58f0c4, #14b8a6);
+}
+
+.employee-analysis-bar-fill-company {
+  background: linear-gradient(90deg, #ffd166, #f59e0b);
+}
+
+.employee-analysis-chart-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+}
+
+.employee-analysis-chart-meta span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(4, 92, 96, 0.08);
+  color: #33506f !important;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.employee-analysis-actions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.employee-analysis-action-item {
+  display: grid;
+  gap: 8px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(4, 92, 96, 0.12);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.employee-analysis-action-item strong {
+  color: #10203b !important;
+}
+
+.employee-analysis-action-item p {
+  margin: 0;
+  color: #4f6684 !important;
+  line-height: 1.6;
+}
+
 .executive-step-item {
   background: rgba(255, 255, 255, 0.72);
   border: 1px solid rgba(4, 92, 96, 0.12);
@@ -7482,6 +7744,26 @@ textarea::placeholder {
 }
 
 @media (max-width: 900px) {
+  .employee-analysis-filter-grid,
+  .employee-analysis-two-column,
+  .employee-analysis-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .employee-analysis-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .employee-analysis-bar-row {
+    grid-template-columns: 68px minmax(0, 1fr) auto;
+  }
+
+  .employee-analysis-chart-head,
+  .employee-analysis-metric-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   .goal-stat-grid,
   .goal-layout {
     grid-template-columns: 1fr;
@@ -7507,6 +7789,14 @@ textarea::placeholder {
     margin-top: 3px;
     font-size: 0.94rem;
     line-height: 1.05;
+  }
+
+  .employee-analysis-picked-card strong {
+    font-size: 1.05rem;
+  }
+
+  .employee-analysis-chart-meta span {
+    font-size: 0.78rem;
   }
 
   .goal-section-head {

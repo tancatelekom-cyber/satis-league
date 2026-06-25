@@ -10,6 +10,7 @@ const adminLinks = [
   { href: "/admin/tarifeler", label: "Tarifeler", description: "Tarife ekle, duzenle, kategorilere ayir" },
   { href: "/admin/web-kontor", label: "Web Kontor", description: "Menu yetkisini ve gorunurlugunu yonet" },
   { href: "/admin/magazalar", label: "Magazalar", description: "Magaza ekle, pasif yap, duzenle" },
+  { href: "/admin/calisan-analiz", label: "Calisan Analizi", description: "Secili calisani firma ortalamasina gore detayli incele" },
   { href: "/admin/onaylar", label: "Kullanici Yonetimi", description: "Kullanici bilgilerini ve sifrelerini yonet" },
   { href: "/admin/mudur-sunumu", label: "Mudur Sunumu", description: "Anlik hedef gerceklesenlere gore sunum ekranini ac" },
   { href: "/admin/siralama", label: "Siralama", description: "Lig ve liderlik ekranlarina hizli erisim" }

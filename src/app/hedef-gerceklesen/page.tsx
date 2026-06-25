@@ -187,7 +187,7 @@ type StoreDailyNeedSummaryRow = {
 };
 
 type GoalView = "employee" | "store" | "company";
-type GoalPanel = "detail" | "ranking" | "needs" | "evaluation";
+type GoalPanel = "detail" | "ranking" | "evaluation";
 
 function normalizeStoreKey(value: string | null | undefined) {
   return String(value ?? "")
@@ -1701,11 +1701,9 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
         : "employee"
     : "employee";
   const effectivePanel =
-    selectedPanel === "needs"
-      ? "needs"
-      : effectiveView === "employee" && selectedPanel === "ranking"
-        ? "ranking"
-        : "detail";
+    effectiveView === "employee" && selectedPanel === "ranking"
+      ? "ranking"
+      : "detail";
 
   if (!canViewAll && selectedView !== "employee") {
     redirect(buildHref("employee", { employee: selectedEmployee, panel: effectivePanel }));
@@ -2199,41 +2197,19 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                 >
                   Hedef Gerceklesen
                 </a>
-                {effectiveView === "store" ? (
-                  <a
-                    className={`goal-mode-button ${effectivePanel === "needs" ? "goal-mode-button-active" : ""}`}
-                    href={buildHref("store", { store: activeStoreName, panel: "needs" })}
-                  >
-                    Gunluk Ihtiyaclar
-                  </a>
-                ) : (
+                {effectiveView !== "store" ? (
                   <a
                     className={`goal-mode-button ${effectivePanel === "ranking" ? "goal-mode-button-active" : ""}`}
                     href={buildHref("employee", { employee: activeEmployeeName, category: effectiveCategory, panel: "ranking" })}
                   >
                     Siralama
                   </a>
-                )}
+                ) : null}
               </div>
             </section>
           ) : null}
 
-          {effectiveView === "store" && effectivePanel === "needs" ? (
-            <section className="goal-panel-single">
-              <article className="campaign-section-card goal-detail-card">
-                <div className="goal-section-head">
-                  <h2>{activeStoreName || "Magaza Gunluk Ihtiyaclari"}</h2>
-                  <span>Hedefli kalemler icin gunluk gereken adet / tutar</span>
-                </div>
-
-                {storeDailyNeedSummaryRows.length ? (
-                  <StoreDailyNeedsTable rows={storeDailyNeedSummaryRows} />
-                ) : (
-                  <p className="subtle">Bu magazada hedef tanimli kalem bulunamadi.</p>
-                )}
-              </article>
-            </section>
-          ) : effectivePanel === "ranking" && effectiveView !== "company" ? (
+          {effectivePanel === "ranking" && effectiveView !== "company" ? (
             <section className="goal-panel-single">
               <div className="goal-ranking-stack">
                 <article className="campaign-section-card goal-ranking-card">
@@ -2593,6 +2569,21 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                       rows={companyDailyNeedSummaryRows}
                       visibleTrendStoreCodes={visibleTrendStoreCodes}
                     />
+                  </div>
+                ) : null}
+
+                {effectiveView === "store" ? (
+                  <div className="goal-company-trend-panel">
+                    <div className="goal-live-prime-head">
+                      <h3>Gunluk Ihtiyaclar</h3>
+                      <span>Hedefli kalemler icin gunluk gereken adet / tutar</span>
+                    </div>
+
+                    {storeDailyNeedSummaryRows.length ? (
+                      <StoreDailyNeedsTable rows={storeDailyNeedSummaryRows} />
+                    ) : (
+                      <p className="subtle">Bu magazada hedef tanimli kalem bulunamadi.</p>
+                    )}
                   </div>
                 ) : null}
 

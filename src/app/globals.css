@@ -9459,6 +9459,49 @@ textarea::placeholder {
   white-space: nowrap;
 }
 
+.goal-company-trend-toggle,
+.goal-company-trend-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: inherit;
+  color: inherit;
+}
+
+.goal-company-trend-toggle {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.goal-company-trend-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  min-width: 18px;
+  font-size: 0.78rem;
+  font-weight: 900;
+  transition: transform 0.2s ease;
+}
+
+.goal-company-trend-arrow-open {
+  transform: rotate(180deg);
+}
+
+.goal-company-trend-label-child {
+  padding-left: 22px;
+  font-size: 0.95rem;
+  opacity: 0.92;
+}
+
+.goal-company-trend-child-row th {
+  background: #e5eef8 !important;
+}
+
 .goal-company-trend-table tbody td {
   color: #dc2626;
   font-size: 1.02rem;

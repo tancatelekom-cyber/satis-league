@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import { redirect } from "next/navigation";
 import { CopyCoachingButton } from "@/components/evaluation/copy-coaching-button";
+import { CompanyDailyNeedsTable } from "@/components/evaluation/company-daily-needs-table";
 import { FormattedCoachingText } from "@/components/evaluation/formatted-coaching-text";
 import { SpeakCoachingButton } from "@/components/evaluation/speak-coaching-button";
 import { FilterSelectNav } from "@/components/ui/filter-select-nav";
@@ -166,6 +167,9 @@ type CompanyCurrentSummaryRow = {
 
 type CompanyDailyNeedSummaryRow = {
   title: string;
+  groupKey: string;
+  level: number;
+  hasChildren: boolean;
   companyDailyNeed: number | null;
   stores: Array<{
     storeCode: string;
@@ -1031,7 +1035,7 @@ function buildCompanyDailyNeedSummaryRows(
 ) {
   return companyCategories
     .filter((category) => category.hasTarget)
-    .map((category) => {
+    .flatMap((category) => {
       const storeMap = new Map<string, GoalStoreRow[]>();
 
       storeRows
@@ -1066,13 +1070,64 @@ function buildCompanyDailyNeedSummaryRows(
             : Math.ceil(Math.max(category.remaining, 0))
           : null;
 
-      return {
+      const parentRow = {
         title: category.title,
+        groupKey: category.title,
+        level: 0,
+        hasChildren: category.children.length > 0,
         companyDailyNeed,
         stores
       } satisfies CompanyDailyNeedSummaryRow;
-    })
-    .sort((a, b) => a.title.localeCompare(b.title, "tr"));
+
+      const childRows = category.children
+        .filter((child) => child.hasTarget)
+        .map((child) => {
+          const childStoreMap = new Map<string, GoalStoreRow[]>();
+
+          storeRows
+            .filter((row) => row.mainCategory === category.title && row.subCategory === child.title)
+            .forEach((row) => {
+              const current = childStoreMap.get(row.storeCode) ?? [];
+              current.push(row);
+              childStoreMap.set(row.storeCode, current);
+            });
+
+          const childStores = Array.from(childStoreMap.entries())
+            .map(([storeCode, rows]) => {
+              const summary = buildStoreMetricSummary(rows, workedDays, totalDays);
+              const dailyNeed =
+                summary.remaining !== null
+                  ? remainingDays > 0
+                    ? Math.ceil(Math.max(summary.remaining, 0) / remainingDays)
+                    : Math.ceil(Math.max(summary.remaining, 0))
+                  : null;
+
+              return {
+                storeCode,
+                dailyNeed
+              };
+            })
+            .sort((a, b) => a.storeCode.localeCompare(b.storeCode, "tr"));
+
+          const childCompanyDailyNeed =
+            child.remaining !== null
+              ? remainingDays > 0
+                ? Math.ceil(Math.max(child.remaining, 0) / remainingDays)
+                : Math.ceil(Math.max(child.remaining, 0))
+              : null;
+
+          return {
+            title: child.title,
+            groupKey: category.title,
+            level: 1,
+            hasChildren: false,
+            companyDailyNeed: childCompanyDailyNeed,
+            stores: childStores
+          } satisfies CompanyDailyNeedSummaryRow;
+        });
+
+      return [parentRow, ...childRows];
+    });
 }
 
 function toCoachingMetric(summary: GoalCategorySummary): CoachingMetric {
@@ -2528,36 +2583,11 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                       <h3>Gunluk Ihtiyaclar</h3>
                     </div>
 
-                    <div className="goal-company-trend-table-wrap">
-                      <table className="goal-company-trend-table">
-                        <thead>
-                          <tr>
-                            <th>Kategori</th>
-                            {visibleTrendStoreCodes.map((storeCode) => (
-                              <th key={`daily-need-head-${storeCode}`}>{storeCode}</th>
-                            ))}
-                            <th>Firma</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {companyDailyNeedSummaryRows.map((row) => (
-                            <tr key={`daily-need-row-${row.title}`}>
-                              <th>{row.title}</th>
-                              {visibleTrendStoreCodes.map((storeCode) => {
-                                const store = row.stores.find((item) => item.storeCode === storeCode);
-
-                                return (
-                                  <td key={`daily-need-${row.title}-${storeCode}`}>
-                                    {formatNumber(store?.dailyNeed)}
-                                  </td>
-                                );
-                              })}
-                              <td className="goal-company-trend-company">{formatNumber(row.companyDailyNeed)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                    <CompanyDailyNeedsTable
+                      rows={companyDailyNeedSummaryRows}
+                      visibleTrendStoreCodes={visibleTrendStoreCodes}
+                      formatNumber={formatNumber}
+                    />
                   </div>
                 ) : null}
 

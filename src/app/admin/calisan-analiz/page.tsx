@@ -572,12 +572,6 @@ export default async function EmployeeAnalysisPage({ searchParams }: PageProps) 
   const ringWatch = Math.round((statusTotals.watch / ringTotal) * 100);
   const ringCritical = Math.max(0, 100 - ringGood - ringWatch);
   const ringBackground = `conic-gradient(#22c55e 0 ${ringGood}%, #f59e0b ${ringGood}% ${ringGood + ringWatch}%, #ef4444 ${ringGood + ringWatch}% 100%)`;
-  const managerRecommendation = criticalPriorities.length
-    ? `Ilk mudahale ${criticalPriorities[0]?.metric.title.toLocaleLowerCase("tr-TR")} alanina yapilmali. ${selectedProfile.fullName}, ${selectedProfile.storeName} icinde ozellikle ${criticalPriorities
-        .map(({ metric }) => metric.title.toLocaleLowerCase("tr-TR"))
-        .join(", ")} kalemlerinde subeyi geri cekiyor. Gun icinde bire bir takip, net gunluk adet hedefi ve kapanisa kadar ara kontrol uygulanirsa tempo hizla toparlanir.`
-    : `${selectedProfile.fullName} icin acil mudahale gerektiren belirgin bir kategori gorunmuyor. Mevcut tempoyu koruyup guclu alanlari yaymak yeterli olur.`;
-
   const strengths = [...mergedMetrics]
     .filter(
       (metric) =>
@@ -1142,10 +1136,6 @@ export default async function EmployeeAnalysisPage({ searchParams }: PageProps) 
             </div>
           </article>
 
-          <article className="admin-card employee-analysis-manager-note">
-            <h3>Mudure Hazir Oneri Metni</h3>
-            <p className="employee-analysis-manager-note-copy">{managerRecommendation}</p>
-          </article>
         </section>
       )}
     </main>

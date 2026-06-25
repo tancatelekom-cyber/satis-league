@@ -2642,17 +2642,6 @@ textarea::placeholder {
   font-size: 1.22rem;
 }
 
-.employee-analysis-manager-note {
-  background: linear-gradient(135deg, rgba(232, 253, 242, 0.96), rgba(236, 247, 255, 0.96));
-}
-
-.employee-analysis-manager-note-copy {
-  margin: 0;
-  color: #163252 !important;
-  font-size: 1rem;
-  line-height: 1.8;
-}
-
 .employee-analysis-actions {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }

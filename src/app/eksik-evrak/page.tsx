@@ -1,4 +1,3 @@
-import { Fragment } from "react";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/require-user";
 import { getResolvedFeatureAccessForProfile } from "@/lib/feature-menu-permissions";
@@ -157,48 +156,42 @@ export default async function EksikEvrakPage() {
                 ? `${ownStoreName || "Magaza"} Evrak Listesi`
                 : "Kendi Evraklarim"}
           </h2>
-          <span>Tek tabloda durum, islem tipi ve aktivasyon gun farki</span>
+          <span>Ulasmayan ve eksik evraklar ayri tablo bloklari halinde listelenir</span>
         </div>
 
-        <div className="goal-company-trend-table-wrap">
-          <table className="goal-company-trend-table">
-            <thead>
-              <tr>
-                <th>Durum</th>
-                <th>Kullanici</th>
-                <th>Sube</th>
-                <th>Musteri GSM</th>
-                <th>Musteri Adi</th>
-                <th>Islem Tipi</th>
-                <th>Eksik Evrak</th>
-                <th>Aktivasyon Tarihi</th>
-                <th>Kac Gun Oldu</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedRows.length ? (
-                categorizedRows.map((group) => {
-                  const isMissingGroup = group.key === "Eksik Evrak";
+        {sortedRows.length ? (
+          <div className="document-issues-table-stack">
+            {categorizedRows.map((group) => {
+              const isMissingGroup = group.key === "Eksik Evrak";
 
-                  return (
-                    <Fragment key={group.key}>
-                      <tr key={`${group.key}-header`} className="document-issues-category-row">
-                        <td colSpan={9}>
-                          <div className="document-issues-category-head">
-                            <strong className={isMissingGroup ? "document-issues-category-bad" : "document-issues-category-neutral"}>
-                              {group.label}
-                            </strong>
-                            <span>{group.count.toLocaleString("tr-TR")} kayit</span>
-                          </div>
-                        </td>
-                      </tr>
+              return (
+                <section key={group.key} className="document-issues-table-section">
+                  <div className="document-issues-category-head document-issues-category-head-block">
+                    <strong className={isMissingGroup ? "document-issues-category-bad" : "document-issues-category-neutral"}>
+                      {group.label}
+                    </strong>
+                    <span>{group.count.toLocaleString("tr-TR")} kayit</span>
+                  </div>
 
-                      {group.rows.map((row, index) => {
-                        const isMissing = row.source === "Eksik Evrak";
-
-                        return (
+                  <div className="goal-company-trend-table-wrap">
+                    <table className="goal-company-trend-table document-issues-table">
+                      <thead>
+                        <tr>
+                          <th>Durum</th>
+                          <th>Kullanici</th>
+                          <th>Sube</th>
+                          <th>Musteri GSM</th>
+                          <th>Musteri Adi</th>
+                          <th>Islem Tipi</th>
+                          <th>Eksik Evrak</th>
+                          <th>Aktivasyon Tarihi</th>
+                          <th>Kac Gun Oldu</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {group.rows.map((row, index) => (
                           <tr key={`${group.key}-${row.personnelId}-${row.customerGsm}-${index}`}>
-                            <td className={isMissing ? "goal-company-trend-bad" : ""}>{row.source}</td>
+                            <td className="document-issues-status-cell">{row.source}</td>
                             <td>{resolveDocumentIssueUserLabel(row.personnelId, profileRows)}</td>
                             <td>{row.storeName || "-"}</td>
                             <td>{row.customerGsm || "-"}</td>
@@ -208,19 +201,38 @@ export default async function EksikEvrakPage() {
                             <td>{formatDocumentIssueDate(row.activationDate)}</td>
                             <td>{formatDocumentIssueDays(row.daysSinceActivation)}</td>
                           </tr>
-                        );
-                      })}
-                    </Fragment>
-                  );
-                })
-              ) : (
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="goal-company-trend-table-wrap">
+            <table className="goal-company-trend-table document-issues-table">
+              <thead>
+                <tr>
+                  <th>Durum</th>
+                  <th>Kullanici</th>
+                  <th>Sube</th>
+                  <th>Musteri GSM</th>
+                  <th>Musteri Adi</th>
+                  <th>Islem Tipi</th>
+                  <th>Eksik Evrak</th>
+                  <th>Aktivasyon Tarihi</th>
+                  <th>Kac Gun Oldu</th>
+                </tr>
+              </thead>
+              <tbody>
                 <tr>
                   <td colSpan={9}>Gosterilecek eksik veya ulasmayan evrak kaydi bulunamadi.</td>
                 </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
     </main>
   );

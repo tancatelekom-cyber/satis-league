@@ -109,22 +109,30 @@ function parseDateValue(value: string) {
     return null;
   }
 
+  const match = normalized.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})$/);
+  if (match) {
+    const day = Number(match[1]);
+    const month = Number(match[2]) - 1;
+    const year = Number(match[3].length === 2 ? `20${match[3]}` : match[3]);
+    const parsed = new Date(year, month, day);
+
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  if (/^\d{5}(\.\d+)?$/.test(normalized)) {
+    const excelSerial = Number(normalized);
+    const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+    const parsed = new Date(excelEpoch.getTime() + excelSerial * 24 * 60 * 60 * 1000);
+
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
   const directDate = new Date(normalized);
   if (!Number.isNaN(directDate.getTime())) {
     return directDate;
   }
 
-  const match = normalized.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})$/);
-  if (!match) {
-    return null;
-  }
-
-  const day = Number(match[1]);
-  const month = Number(match[2]) - 1;
-  const year = Number(match[3].length === 2 ? `20${match[3]}` : match[3]);
-  const parsed = new Date(year, month, day);
-
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
+  return null;
 }
 
 function calculateDaysSinceActivation(value: string) {

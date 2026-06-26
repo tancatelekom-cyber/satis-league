@@ -9599,6 +9599,16 @@ textarea::placeholder {
   background: linear-gradient(90deg, rgba(12, 74, 110, 0.14), rgba(45, 212, 191, 0.12)) !important;
 }
 
+.document-issues-table-stack {
+  display: grid;
+  gap: 18px;
+}
+
+.document-issues-table-section {
+  display: grid;
+  gap: 10px;
+}
+
 .document-issues-category-head {
   display: flex;
   align-items: center;
@@ -9634,6 +9644,18 @@ textarea::placeholder {
 .document-issues-category-bad {
   background: linear-gradient(135deg, rgba(254, 226, 226, 0.96), rgba(254, 205, 211, 0.95));
   color: #b91c1c;
+}
+
+.document-issues-table tbody td {
+  color: #111827;
+  font-size: 0.98rem;
+  font-weight: 800;
+  background: #ffffff;
+}
+
+.document-issues-table tbody td.document-issues-status-cell {
+  color: #0b2143;
+  font-weight: 900;
 }
 
 .goal-company-trend-indicator {
@@ -9832,6 +9854,14 @@ textarea::placeholder {
 
   .document-issues-category-head span {
     font-size: 0.68rem;
+  }
+
+  .document-issues-table-stack {
+    gap: 14px;
+  }
+
+  .document-issues-table tbody td {
+    font-size: 0.7rem;
   }
 
   .goal-company-trend-company {

@@ -9410,6 +9410,52 @@ textarea::placeholder {
   gap: 8px;
 }
 
+.goal-document-issue-alert {
+  border-color: #c2410c;
+  background: linear-gradient(180deg, rgba(255, 237, 213, 0.96), rgba(254, 215, 170, 0.92));
+  color: #9a3412;
+}
+
+.goal-document-issue-link {
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.goal-document-issue-link:hover,
+.goal-document-issue-link:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(154, 52, 18, 0.14);
+}
+
+.goal-document-issue-alert strong {
+  color: #9a3412;
+}
+
+.goal-document-issue-alert p {
+  color: #c2410c;
+}
+
+.goal-document-issue-badge {
+  animation: goalDocumentIssuePulse 1.2s ease-in-out infinite;
+  box-shadow: 0 0 0 rgba(185, 28, 28, 0.32);
+}
+
+@keyframes goalDocumentIssuePulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(185, 28, 28, 0.28);
+  }
+
+  50% {
+    transform: scale(1.05);
+    opacity: 0.88;
+    box-shadow: 0 0 0 8px rgba(185, 28, 28, 0);
+  }
+}
+
 .goal-company-trend-panel {
   display: grid;
   gap: 14px;

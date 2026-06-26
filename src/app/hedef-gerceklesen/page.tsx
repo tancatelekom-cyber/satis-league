@@ -6,6 +6,7 @@ import { FormattedCoachingText } from "@/components/evaluation/formatted-coachin
 import { SpeakCoachingButton } from "@/components/evaluation/speak-coaching-button";
 import { StoreDailyNeedsTable } from "@/components/evaluation/store-daily-needs-table";
 import { FilterSelectNav } from "@/components/ui/filter-select-nav";
+import { fetchDocumentIssueRows } from "@/lib/document-issues";
 import {
   GoalActualRow,
   GoalProductPointRow,
@@ -213,6 +214,10 @@ function normalizeEmployeeIdentity(value: string | null | undefined) {
     .replace(/\u00C7/g, "C")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function normalizeProfileIdentity(value: string | null | undefined) {
+  return String(value ?? "").trim().toLowerCase();
 }
 
 function resolveStoreCodeFromEmployeeRows(employeeRows: GoalActualRow[], availableStoreCodes: string[], fallbackStoreCode = "") {
@@ -1713,16 +1718,18 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
   let storeRows: GoalStoreRow[] = [];
   let productionRewardRows: GoalProductionRewardRow[] = [];
   let productPointRows: GoalProductPointRow[] = [];
+  let documentIssueRows = await Promise.resolve([] as Awaited<ReturnType<typeof fetchDocumentIssueRows>>);
   let dayStats: GoalDayStats = EMPTY_DAY_STATS;
   let sheetError = "";
 
   try {
-    [employeeRows, storeRows, dayStats, productionRewardRows, productPointRows] = await Promise.all([
+    [employeeRows, storeRows, dayStats, productionRewardRows, productPointRows, documentIssueRows] = await Promise.all([
       fetchGoalActualRows(),
       fetchGoalStoreRows(),
       fetchGoalDayStats(),
       fetchGoalProductionRewardRows(),
-      fetchGoalProductPointRows()
+      fetchGoalProductPointRows(),
+      fetchDocumentIssueRows().catch(() => [])
     ]);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Google Sheet verisi okunamadi.";
@@ -2085,6 +2092,19 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
     effectiveView === "store" ? activeStoreName : effectiveView === "employee" ? resolvedEmployeeStoreCode : "";
   const detailCardTitle =
     effectiveView === "company" ? "FIRMA" : effectiveView === "store" ? activeStoreName || "MAGAZA" : activeEmployeeName || "CALISAN";
+  const employeeDocumentIssueRows =
+    effectiveView === "employee"
+      ? documentIssueRows.filter((row) => normalizeProfileIdentity(row.personnelId) === normalizeProfileIdentity(user.id))
+      : [];
+  const storeDocumentIssueRows =
+    effectiveView === "store"
+      ? documentIssueRows.filter((row) => normalizeStoreKey(row.storeName) === normalizeStoreKey(activeStoreName || currentUserStoreName))
+      : [];
+  const relevantDocumentIssueRows = effectiveView === "employee" ? employeeDocumentIssueRows : effectiveView === "store" ? storeDocumentIssueRows : [];
+  const relevantUnreachableDocumentCount = relevantDocumentIssueRows.filter((row) => row.source === "Ulasmayan Evrak").length;
+  const relevantMissingDocumentCount = relevantDocumentIssueRows.filter((row) => row.source === "Eksik Evrak").length;
+  const shouldShowDocumentIssueAlert =
+    (effectiveView === "employee" || effectiveView === "store") && relevantDocumentIssueRows.length > 0;
 
   const employeeOptions = employeeNames.length
     ? employeeNames.map((name) => ({
@@ -2345,6 +2365,29 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                     </div>
 
                     <FormattedCoachingText text={detailCoachingText} />
+
+                    {shouldShowDocumentIssueAlert ? (
+                      <a href="/eksik-evrak" className="evaluation-zero-alert goal-document-issue-alert goal-document-issue-link">
+                        <strong>
+                          {effectiveView === "employee"
+                            ? "Evrak Uyarin Var"
+                            : "Magazana Ait Evrak Uyarisi Var"}
+                        </strong>
+                        <p>Detay icin Eksik Evrak menusunden kontrol ediniz.</p>
+                        <div>
+                          {relevantUnreachableDocumentCount > 0 ? (
+                            <span className="goal-document-issue-badge">
+                              Ulasmayan Evrak: {relevantUnreachableDocumentCount}
+                            </span>
+                          ) : null}
+                          {relevantMissingDocumentCount > 0 ? (
+                            <span className="goal-document-issue-badge">
+                              Eksik Evrak: {relevantMissingDocumentCount}
+                            </span>
+                          ) : null}
+                        </div>
+                      </a>
+                    ) : null}
 
                     {detailZeroActualItems.length ? (
                       <div className="evaluation-zero-alert">

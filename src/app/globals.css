@@ -9860,8 +9860,76 @@ textarea::placeholder {
     gap: 14px;
   }
 
+  .document-issues-table {
+    width: 100%;
+    min-width: 0 !important;
+    table-layout: fixed;
+  }
+
+  .document-issues-table th,
+  .document-issues-table td {
+    padding: 4px 2px !important;
+    font-size: 0.54rem !important;
+    line-height: 1.04 !important;
+    letter-spacing: -0.01em;
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
+    hyphens: auto;
+  }
+
+  .document-issues-table thead th {
+    font-size: 0.5rem !important;
+    line-height: 1.02 !important;
+  }
+
   .document-issues-table tbody td {
-    font-size: 0.7rem;
+    font-size: 0.56rem !important;
+  }
+
+  .document-issues-table th:nth-child(1),
+  .document-issues-table td:nth-child(1) {
+    width: 11%;
+  }
+
+  .document-issues-table th:nth-child(2),
+  .document-issues-table td:nth-child(2) {
+    width: 12%;
+  }
+
+  .document-issues-table th:nth-child(3),
+  .document-issues-table td:nth-child(3) {
+    width: 8%;
+  }
+
+  .document-issues-table th:nth-child(4),
+  .document-issues-table td:nth-child(4) {
+    width: 10%;
+  }
+
+  .document-issues-table th:nth-child(5),
+  .document-issues-table td:nth-child(5) {
+    width: 13%;
+  }
+
+  .document-issues-table th:nth-child(6),
+  .document-issues-table td:nth-child(6) {
+    width: 10%;
+  }
+
+  .document-issues-table th:nth-child(7),
+  .document-issues-table td:nth-child(7) {
+    width: 9%;
+  }
+
+  .document-issues-table th:nth-child(8),
+  .document-issues-table td:nth-child(8) {
+    width: 11%;
+  }
+
+  .document-issues-table th:nth-child(9),
+  .document-issues-table td:nth-child(9) {
+    width: 8%;
   }
 
   .goal-company-trend-company {

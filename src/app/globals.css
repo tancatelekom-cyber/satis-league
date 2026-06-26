@@ -9680,6 +9680,18 @@ textarea::placeholder {
   font-weight: 900;
 }
 
+.company-daily-needs-table .goal-company-trend-toggle,
+.company-daily-needs-table .goal-company-trend-label {
+  width: 100%;
+}
+
+.company-daily-needs-table .goal-company-trend-toggle span:last-child,
+.company-daily-needs-table .goal-company-trend-label span {
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+
 .goal-company-trend-indicator {
   display: inline-flex;
   width: 0;
@@ -9982,6 +9994,77 @@ textarea::placeholder {
   .goal-company-trend-legend {
     gap: 8px 12px;
     font-size: 0.72rem;
+  }
+
+  .company-daily-needs-table-wrap {
+    overflow-x: hidden;
+  }
+
+  .company-daily-needs-table {
+    min-width: 0 !important;
+    table-layout: fixed;
+  }
+
+  .company-daily-needs-table th,
+  .company-daily-needs-table td {
+    padding: 6px 3px !important;
+    font-size: 0.6rem !important;
+    line-height: 1.08 !important;
+    white-space: normal !important;
+    word-break: normal !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .company-daily-needs-table thead th {
+    font-size: 0.56rem !important;
+    line-height: 1.05 !important;
+  }
+
+  .company-daily-needs-table tbody th {
+    font-size: 0.6rem !important;
+    line-height: 1.08 !important;
+    text-align: left;
+    vertical-align: middle;
+  }
+
+  .company-daily-needs-table tbody td,
+  .company-daily-needs-table tbody td.goal-company-trend-company {
+    font-size: 0.66rem !important;
+    font-weight: 900;
+  }
+
+  .company-daily-needs-table th:nth-child(1),
+  .company-daily-needs-table td:nth-child(1) {
+    width: 28%;
+  }
+
+  .company-daily-needs-table th:nth-child(2),
+  .company-daily-needs-table td:nth-child(2),
+  .company-daily-needs-table th:nth-child(3),
+  .company-daily-needs-table td:nth-child(3),
+  .company-daily-needs-table th:nth-child(4),
+  .company-daily-needs-table td:nth-child(4),
+  .company-daily-needs-table th:nth-child(5),
+  .company-daily-needs-table td:nth-child(5),
+  .company-daily-needs-table th:nth-child(6),
+  .company-daily-needs-table td:nth-child(6) {
+    width: 14.4%;
+  }
+
+  .company-daily-needs-table .goal-company-trend-toggle {
+    gap: 5px;
+    padding: 0;
+  }
+
+  .company-daily-needs-table .goal-company-trend-arrow {
+    font-size: 0.58rem;
+    flex: 0 0 auto;
+  }
+
+  .company-daily-needs-table .goal-company-trend-toggle span:last-child,
+  .company-daily-needs-table .goal-company-trend-label span {
+    font-size: 0.6rem;
+    line-height: 1.08;
   }
 
   .web-kontor-trend-table th,

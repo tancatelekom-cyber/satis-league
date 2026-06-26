@@ -43,8 +43,8 @@ export function CompanyDailyNeedsTable({
   }
 
   return (
-    <div className="goal-company-trend-table-wrap">
-      <table className="goal-company-trend-table">
+    <div className="goal-company-trend-table-wrap company-daily-needs-table-wrap">
+      <table className="goal-company-trend-table company-daily-needs-table">
         <thead>
           <tr>
             <th>Kategori</th>

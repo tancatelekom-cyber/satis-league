@@ -9703,6 +9703,23 @@ textarea::placeholder {
   font-weight: 600;
 }
 
+.web-kontor-trend-table tbody th {
+  font-weight: 600;
+}
+
+.web-kontor-trend-table tbody td {
+  font-weight: 500;
+}
+
+.web-kontor-trend-table tfoot th,
+.web-kontor-trend-table tfoot td {
+  font-weight: 600;
+}
+
+.web-kontor-scale-badge {
+  font-weight: 600 !important;
+}
+
 .company-daily-needs-table .goal-company-trend-toggle,
 .company-daily-needs-table .goal-company-trend-label {
   width: 100%;

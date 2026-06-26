@@ -17,9 +17,10 @@ type PosCommissionCalculatorProps = {
 export function PosCommissionCalculator({
   commissionPercent
 }: PosCommissionCalculatorProps) {
+  const minimumCommissionPercent = normalizePosCommissionPercent(commissionPercent);
   const [amountInput, setAmountInput] = useState("");
   const [selectedCommissionPercent, setSelectedCommissionPercent] = useState(
-    normalizePosCommissionPercent(commissionPercent)
+    minimumCommissionPercent
   );
 
   const amount = useMemo(() => parsePosAmountInput(amountInput), [amountInput]);
@@ -29,7 +30,9 @@ export function PosCommissionCalculator({
   );
 
   function updateCommission(nextValue: number) {
-    setSelectedCommissionPercent(normalizePosCommissionPercent(nextValue));
+    setSelectedCommissionPercent(
+      Math.max(minimumCommissionPercent, normalizePosCommissionPercent(nextValue))
+    );
   }
 
   return (
@@ -126,15 +129,20 @@ export function PosCommissionCalculator({
               type="button"
               onClick={() => updateCommission(selectedCommissionPercent - 1)}
               aria-label="Komisyon oranini azalt"
+              disabled={selectedCommissionPercent <= minimumCommissionPercent}
               style={{
                 minHeight: 50,
                 borderRadius: 18,
                 border: "1px solid rgba(4, 92, 96, 0.18)",
-                background: "rgba(8, 32, 50, 0.06)",
-                color: "#0b2143",
+                background:
+                  selectedCommissionPercent <= minimumCommissionPercent
+                    ? "rgba(8, 32, 50, 0.03)"
+                    : "rgba(8, 32, 50, 0.06)",
+                color:
+                  selectedCommissionPercent <= minimumCommissionPercent ? "rgba(11, 33, 67, 0.45)" : "#0b2143",
                 fontSize: "1.7rem",
                 fontWeight: 900,
-                cursor: "pointer"
+                cursor: selectedCommissionPercent <= minimumCommissionPercent ? "not-allowed" : "pointer"
               }}
             >
               -

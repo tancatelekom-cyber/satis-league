@@ -7361,7 +7361,7 @@ textarea::placeholder {
   .page-shell {
     width: 100%;
     min-height: 100dvh;
-    padding: 0 0 calc(150px + env(safe-area-inset-bottom, 0px));
+    padding: 0 0 calc(20px + env(safe-area-inset-bottom, 0px));
   }
 
   .hero {
@@ -8235,6 +8235,29 @@ textarea::placeholder {
   .goal-filter-grid .filter-select {
     min-height: 60px;
     font-size: 1.02rem;
+  }
+}
+
+@media (display-mode: standalone), (display-mode: fullscreen) {
+  html,
+  body {
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+
+  body {
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .page-shell {
+    width: 100%;
+    min-height: calc(100dvh - env(safe-area-inset-top, 0px));
+    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .topbar {
+    top: env(safe-area-inset-top, 0px);
   }
 }
 

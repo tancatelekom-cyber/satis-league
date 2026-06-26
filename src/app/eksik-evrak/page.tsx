@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { FilterSelectNav } from "@/components/ui/filter-select-nav";
 import { requireUser } from "@/lib/auth/require-user";
 import { getResolvedFeatureAccessForProfile } from "@/lib/feature-menu-permissions";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -27,7 +28,14 @@ type MissingDocsProfile = {
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export default async function EksikEvrakPage() {
+type EksikEvrakPageProps = {
+  searchParams?: Promise<{
+    store?: string;
+  }>;
+};
+
+export default async function EksikEvrakPage({ searchParams }: EksikEvrakPageProps) {
+  const params = searchParams ? await searchParams : undefined;
   const user = await requireUser();
 
   const supabase = await createClient();
@@ -51,6 +59,7 @@ export default async function EksikEvrakPage() {
   const ownStoreName = safeProfile.store?.name?.trim() ?? "";
   const canViewAllStores = safeProfile.role === "admin" || safeProfile.role === "management";
   const canViewOwnStore = safeProfile.role === "manager";
+  const selectedStore = String(params?.store ?? "all").trim();
 
   let rows = [] as Awaited<ReturnType<typeof fetchDocumentIssueRows>>;
   let sheetError = "";
@@ -70,7 +79,15 @@ export default async function EksikEvrakPage() {
 
   const profileRows = ((profilesResult.data as DocumentIssueProfileMapRow[] | null) ?? []).filter((item) => item.id);
 
-  const visibleRows = rows.filter((row) => {
+  const availableStores = Array.from(
+    new Set(
+      rows
+        .map((row) => row.storeName?.trim() ?? "")
+        .filter((storeName) => storeName.length > 0)
+    )
+  ).sort((left, right) => left.localeCompare(right, "tr"));
+
+  const permissionScopedRows = rows.filter((row) => {
     if (canViewAllStores) {
       return true;
     }
@@ -80,6 +97,19 @@ export default async function EksikEvrakPage() {
     }
 
     return sameDocumentIssueProfileId(row.personnelId, safeProfile.id);
+  });
+
+  const effectiveSelectedStore =
+    canViewAllStores && availableStores.some((storeName) => sameDocumentIssueStore(storeName, selectedStore))
+      ? selectedStore
+      : "all";
+
+  const visibleRows = permissionScopedRows.filter((row) => {
+    if (!canViewAllStores || effectiveSelectedStore === "all") {
+      return true;
+    }
+
+    return sameDocumentIssueStore(row.storeName, effectiveSelectedStore);
   });
 
   const sortedRows = [...visibleRows].sort((left, right) => {
@@ -118,6 +148,17 @@ export default async function EksikEvrakPage() {
     }
   ].filter((group) => group.count > 0);
 
+  const buildEksikEvrakHref = (storeName: string) => {
+    const query = new URLSearchParams();
+
+    if (storeName !== "all") {
+      query.set("store", storeName);
+    }
+
+    const queryText = query.toString();
+    return queryText ? `/eksik-evrak?${queryText}` : "/eksik-evrak";
+  };
+
   return (
     <main className="document-issues-page">
       <h1 className="page-title document-issues-page-title">Eksik Evrak</h1>
@@ -147,11 +188,34 @@ export default async function EksikEvrakPage() {
         </article>
       </section>
 
+      {canViewAllStores && availableStores.length ? (
+        <section className="guide-card">
+          <div className="goal-filter-grid">
+            <div className="league-filter-item league-filter-item-wide">
+              <span className="league-filter-label">Sube Secimi</span>
+              <FilterSelectNav
+                ariaLabel="Sube secimi"
+                value={buildEksikEvrakHref(effectiveSelectedStore)}
+                options={[
+                  { value: buildEksikEvrakHref("all"), label: "Tumu" },
+                  ...availableStores.map((storeName) => ({
+                    value: buildEksikEvrakHref(storeName),
+                    label: storeName
+                  }))
+                ]}
+              />
+            </div>
+          </div>
+        </section>
+      ) : null}
+
       <section className="campaign-section-card" style={{ display: "grid", gap: 16 }}>
         <div className="goal-section-head document-issues-section-head">
           <h2>
             {canViewAllStores
-              ? "Firma Geneli Evrak Listesi"
+              ? effectiveSelectedStore === "all"
+                ? "Firma Geneli Evrak Listesi"
+                : `${effectiveSelectedStore} Evrak Listesi`
               : canViewOwnStore
                 ? `${ownStoreName || "Magaza"} Evrak Listesi`
                 : "Kendi Evraklarim"}

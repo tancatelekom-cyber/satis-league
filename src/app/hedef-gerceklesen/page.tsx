@@ -2092,9 +2092,20 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
     effectiveView === "store" ? activeStoreName : effectiveView === "employee" ? resolvedEmployeeStoreCode : "";
   const detailCardTitle =
     effectiveView === "company" ? "FIRMA" : effectiveView === "store" ? activeStoreName || "MAGAZA" : activeEmployeeName || "CALISAN";
+  const activeEmployeePersonnelIds = Array.from(
+    new Set(
+      [
+        user.id,
+        ...activeEmployeeRows.map((row) => row.personnelId),
+        ...activeEmployeeCoreRows.map((row) => row.personnelId)
+      ]
+        .map((value) => normalizeProfileIdentity(value))
+        .filter(Boolean)
+    )
+  );
   const employeeDocumentIssueRows =
     effectiveView === "employee"
-      ? documentIssueRows.filter((row) => normalizeProfileIdentity(row.personnelId) === normalizeProfileIdentity(user.id))
+      ? documentIssueRows.filter((row) => activeEmployeePersonnelIds.includes(normalizeProfileIdentity(row.personnelId)))
       : [];
   const storeDocumentIssueRows =
     effectiveView === "store"

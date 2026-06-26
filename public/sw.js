@@ -1,11 +1,11 @@
-const APP_CACHE = "tanca-plus-shell-v1";
+const APP_CACHE = "tanca-plus-shell-v2";
 const APP_SHELL = [
   "/",
-  "/manifest.webmanifest?v=6",
-  "/favicon.ico?v=6",
-  "/icon-192.png?v=6",
-  "/icon-512.png?v=6",
-  "/apple-touch-icon.png?v=6"
+  "/manifest.webmanifest?v=7",
+  "/favicon.ico?v=7",
+  "/icon-192.png?v=7",
+  "/icon-512.png?v=7",
+  "/apple-touch-icon.png?v=7"
 ];
 
 self.addEventListener("install", (event) => {

@@ -9694,13 +9694,13 @@ textarea::placeholder {
 .document-issues-table tbody td {
   color: #111827;
   font-size: 0.98rem;
-  font-weight: 800;
+  font-weight: 500;
   background: #ffffff;
 }
 
 .document-issues-table tbody td.document-issues-status-cell {
   color: #0b2143;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .company-daily-needs-table .goal-company-trend-toggle,

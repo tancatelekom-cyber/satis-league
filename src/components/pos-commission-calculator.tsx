@@ -6,6 +6,7 @@ import {
   formatPosAmountInput,
   formatPosCurrency,
   formatPosPercent,
+  normalizePosCommissionPercent,
   parsePosAmountInput
 } from "@/lib/pos-commission";
 
@@ -17,12 +18,19 @@ export function PosCommissionCalculator({
   commissionPercent
 }: PosCommissionCalculatorProps) {
   const [amountInput, setAmountInput] = useState("");
+  const [selectedCommissionPercent, setSelectedCommissionPercent] = useState(
+    normalizePosCommissionPercent(commissionPercent)
+  );
 
   const amount = useMemo(() => parsePosAmountInput(amountInput), [amountInput]);
   const grossAmount = useMemo(
-    () => calculatePosGrossAmount(amount, commissionPercent),
-    [amount, commissionPercent]
+    () => calculatePosGrossAmount(amount, selectedCommissionPercent),
+    [amount, selectedCommissionPercent]
   );
+
+  function updateCommission(nextValue: number) {
+    setSelectedCommissionPercent(normalizePosCommissionPercent(nextValue));
+  }
 
   return (
     <section
@@ -102,8 +110,70 @@ export function PosCommissionCalculator({
               lineHeight: 1
             }}
           >
-            {formatPosPercent(commissionPercent)}
+            {formatPosPercent(selectedCommissionPercent)}
           </strong>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "56px minmax(0, 1fr) 56px",
+              gap: 10,
+              alignItems: "center",
+              marginTop: 6
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => updateCommission(selectedCommissionPercent - 1)}
+              aria-label="Komisyon oranini azalt"
+              style={{
+                minHeight: 50,
+                borderRadius: 18,
+                border: "1px solid rgba(4, 92, 96, 0.18)",
+                background: "rgba(8, 32, 50, 0.06)",
+                color: "#0b2143",
+                fontSize: "1.7rem",
+                fontWeight: 900,
+                cursor: "pointer"
+              }}
+            >
+              -
+            </button>
+
+            <div
+              style={{
+                minHeight: 50,
+                borderRadius: 18,
+                border: "1px solid rgba(4, 92, 96, 0.14)",
+                background: "rgba(4, 92, 96, 0.08)",
+                color: "#0b2143",
+                display: "grid",
+                placeItems: "center",
+                fontSize: "1.05rem",
+                fontWeight: 900
+              }}
+            >
+              {formatPosPercent(selectedCommissionPercent)}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => updateCommission(selectedCommissionPercent + 1)}
+              aria-label="Komisyon oranini artir"
+              style={{
+                minHeight: 50,
+                borderRadius: 18,
+                border: "1px solid rgba(4, 92, 96, 0.18)",
+                background: "rgba(8, 32, 50, 0.06)",
+                color: "#0b2143",
+                fontSize: "1.7rem",
+                fontWeight: 900,
+                cursor: "pointer"
+              }}
+            >
+              +
+            </button>
+          </div>
         </article>
       </section>
 

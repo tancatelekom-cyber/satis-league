@@ -9609,6 +9609,28 @@ textarea::placeholder {
   gap: 10px;
 }
 
+.document-issues-page-title,
+.document-issues-page .page-title {
+  color: #0b2143 !important;
+  text-shadow: none !important;
+}
+
+.document-issues-page-subtitle,
+.document-issues-page .page-subtitle {
+  color: #475569 !important;
+  font-weight: 700;
+  text-shadow: none !important;
+}
+
+.document-issues-section-head h2 {
+  color: #0b2143 !important;
+}
+
+.document-issues-section-head span {
+  color: #334155 !important;
+  font-weight: 800;
+}
+
 .document-issues-category-head {
   display: flex;
   align-items: center;

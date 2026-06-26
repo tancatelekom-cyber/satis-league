@@ -119,9 +119,9 @@ export default async function EksikEvrakPage() {
   ].filter((group) => group.count > 0);
 
   return (
-    <main>
-      <h1 className="page-title">Eksik Evrak</h1>
-      <p className="page-subtitle">
+    <main className="document-issues-page">
+      <h1 className="page-title document-issues-page-title">Eksik Evrak</h1>
+      <p className="page-subtitle document-issues-page-subtitle">
         Ulasmayan ve eksik evrak kayitlarini tek tabloda takip edin.
       </p>
 
@@ -148,7 +148,7 @@ export default async function EksikEvrakPage() {
       </section>
 
       <section className="campaign-section-card" style={{ display: "grid", gap: 16 }}>
-        <div className="goal-section-head">
+        <div className="goal-section-head document-issues-section-head">
           <h2>
             {canViewAllStores
               ? "Firma Geneli Evrak Listesi"

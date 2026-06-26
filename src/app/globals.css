@@ -9546,6 +9546,50 @@ textarea::placeholder {
   color: #dc2626 !important;
 }
 
+.document-issues-category-row td {
+  padding: 0 !important;
+  border-left: 0 !important;
+  border-right: 0 !important;
+  background: linear-gradient(90deg, rgba(12, 74, 110, 0.14), rgba(45, 212, 191, 0.12)) !important;
+}
+
+.document-issues-category-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 14px;
+}
+
+.document-issues-category-head strong,
+.document-issues-category-head span {
+  font-weight: 900;
+}
+
+.document-issues-category-head strong {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.92rem;
+}
+
+.document-issues-category-head span {
+  color: #0b2143;
+  font-size: 0.84rem;
+}
+
+.document-issues-category-neutral {
+  background: linear-gradient(135deg, rgba(186, 230, 253, 0.95), rgba(165, 243, 252, 0.94));
+  color: #155e75;
+}
+
+.document-issues-category-bad {
+  background: linear-gradient(135deg, rgba(254, 226, 226, 0.96), rgba(254, 205, 211, 0.95));
+  color: #b91c1c;
+}
+
 .goal-company-trend-indicator {
   display: inline-flex;
   width: 0;
@@ -9724,6 +9768,23 @@ textarea::placeholder {
   .goal-company-trend-table tfoot th,
   .goal-company-trend-table tfoot td {
     padding: 7px 4px;
+    font-size: 0.68rem;
+  }
+
+  .document-issues-category-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 9px 10px;
+  }
+
+  .document-issues-category-head strong {
+    min-height: 28px;
+    padding: 5px 10px;
+    font-size: 0.74rem;
+  }
+
+  .document-issues-category-head span {
     font-size: 0.68rem;
   }
 

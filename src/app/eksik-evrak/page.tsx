@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/require-user";
 import { getResolvedFeatureAccessForProfile } from "@/lib/feature-menu-permissions";
@@ -83,6 +84,11 @@ export default async function EksikEvrakPage() {
   });
 
   const sortedRows = [...visibleRows].sort((left, right) => {
+    const sourceDiff = left.source.localeCompare(right.source, "tr");
+    if (sourceDiff !== 0) {
+      return sourceDiff;
+    }
+
     const dayDiff = (right.daysSinceActivation ?? -1) - (left.daysSinceActivation ?? -1);
     if (dayDiff !== 0) {
       return dayDiff;
@@ -98,6 +104,20 @@ export default async function EksikEvrakPage() {
 
   const unreachableCount = sortedRows.filter((row) => row.source === "Ulasmayan Evrak").length;
   const missingCount = sortedRows.filter((row) => row.source === "Eksik Evrak").length;
+  const categorizedRows = [
+    {
+      key: "Ulasmayan Evrak" as const,
+      label: "Ulasmayan Evrak",
+      count: unreachableCount,
+      rows: sortedRows.filter((row) => row.source === "Ulasmayan Evrak")
+    },
+    {
+      key: "Eksik Evrak" as const,
+      label: "Eksik Evrak",
+      count: missingCount,
+      rows: sortedRows.filter((row) => row.source === "Eksik Evrak")
+    }
+  ].filter((group) => group.count > 0);
 
   return (
     <main>
@@ -157,21 +177,40 @@ export default async function EksikEvrakPage() {
             </thead>
             <tbody>
               {sortedRows.length ? (
-                sortedRows.map((row, index) => {
-                  const isMissing = row.source === "Eksik Evrak";
+                categorizedRows.map((group) => {
+                  const isMissingGroup = group.key === "Eksik Evrak";
 
                   return (
-                    <tr key={`${row.source}-${row.personnelId}-${row.customerGsm}-${index}`}>
-                      <td className={isMissing ? "goal-company-trend-bad" : ""}>{row.source}</td>
-                      <td>{resolveDocumentIssueUserLabel(row.personnelId, profileRows)}</td>
-                      <td>{row.storeName || "-"}</td>
-                      <td>{row.customerGsm || "-"}</td>
-                      <td>{row.customerName || "-"}</td>
-                      <td>{row.transactionType || "-"}</td>
-                      <td>{row.documentDetail || "-"}</td>
-                      <td>{formatDocumentIssueDate(row.activationDate)}</td>
-                      <td>{formatDocumentIssueDays(row.daysSinceActivation)}</td>
-                    </tr>
+                    <Fragment key={group.key}>
+                      <tr key={`${group.key}-header`} className="document-issues-category-row">
+                        <td colSpan={9}>
+                          <div className="document-issues-category-head">
+                            <strong className={isMissingGroup ? "document-issues-category-bad" : "document-issues-category-neutral"}>
+                              {group.label}
+                            </strong>
+                            <span>{group.count.toLocaleString("tr-TR")} kayit</span>
+                          </div>
+                        </td>
+                      </tr>
+
+                      {group.rows.map((row, index) => {
+                        const isMissing = row.source === "Eksik Evrak";
+
+                        return (
+                          <tr key={`${group.key}-${row.personnelId}-${row.customerGsm}-${index}`}>
+                            <td className={isMissing ? "goal-company-trend-bad" : ""}>{row.source}</td>
+                            <td>{resolveDocumentIssueUserLabel(row.personnelId, profileRows)}</td>
+                            <td>{row.storeName || "-"}</td>
+                            <td>{row.customerGsm || "-"}</td>
+                            <td>{row.customerName || "-"}</td>
+                            <td>{row.transactionType || "-"}</td>
+                            <td>{row.documentDetail || "-"}</td>
+                            <td>{formatDocumentIssueDate(row.activationDate)}</td>
+                            <td>{formatDocumentIssueDays(row.daysSinceActivation)}</td>
+                          </tr>
+                        );
+                      })}
+                    </Fragment>
                   );
                 })
               ) : (

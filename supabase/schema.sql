@@ -395,7 +395,8 @@ insert into public.feature_menu_permissions (
   admin_visible
 )
 values
-  ('web-kontor', 'Web Kontor Menusu', false, true, true, true)
+  ('web-kontor', 'Web Kontor Menusu', false, true, true, true),
+  ('eksik-evrak', 'Eksik Evrak Menusu', true, true, true, true)
 on conflict (feature_key) do nothing;
 
 insert into public.pos_commission_settings (commission_percent)

@@ -17,6 +17,7 @@ const baseNavItems: NavItem[] = [
   { href: "/", label: "Ana Sayfa" },
   { href: "/hedef-gerceklesen", label: "Hedef Gerceklesen", mobileLabel: "Hedef", icon: "H" },
   { href: "/web-kontor", label: "Web Kontor", mobileLabel: "Kontor", icon: "O" },
+  { href: "/eksik-evrak", label: "Eksik Evrak", mobileLabel: "Evrak", icon: "E" },
   { href: "/pos-komisyon", label: "POS Komisyon", mobileLabel: "POS", icon: "M" },
   { href: "/tarifeler", label: "Tarifeler", mobileLabel: "Tarife", icon: "T" },
   { href: "/cihaz-fiyat-listesi", label: "Cihaz Fiyat Listesi", mobileLabel: "Cihaz", icon: "C" },
@@ -144,6 +145,14 @@ function MobileTabIcon({ kind }: { kind?: string }) {
         <path d="M8 14h3" />
         <path d="M15 14h1.5" />
       </svg>
+    ),
+    E: (
+      <svg {...sharedProps}>
+        <path d="M7 5.5h8l3 3v9a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-10a2 2 0 0 1 2-2Z" />
+        <path d="M15 5.5v3h3" />
+        <path d="M8.5 12h7" />
+        <path d="M8.5 15h5" />
+      </svg>
     )
   };
 
@@ -156,6 +165,7 @@ type AppShellHeaderProps = {
   initialCanOpenEvaluationPresentation?: boolean;
   initialCanOpenWorkSchedule?: boolean;
   initialCanOpenWebKontor?: boolean;
+  initialCanOpenMissingDocs?: boolean;
 };
 
 export function AppShellHeader({
@@ -163,7 +173,8 @@ export function AppShellHeader({
   initialCanEvaluate = false,
   initialCanOpenEvaluationPresentation = false,
   initialCanOpenWorkSchedule = false,
-  initialCanOpenWebKontor = false
+  initialCanOpenWebKontor = false,
+  initialCanOpenMissingDocs = false
 }: AppShellHeaderProps) {
   const pathname = usePathname() ?? "/";
   const [menuOpen, setMenuOpen] = useState(false);
@@ -176,9 +187,13 @@ export function AppShellHeader({
 
     const itemsWithWebKontor = initialCanOpenWebKontor ? items : items.filter((item) => item.href !== "/web-kontor");
 
-    const itemsWithWorkSchedule = initialCanOpenWorkSchedule
+    const itemsWithMissingDocs = initialCanOpenMissingDocs
       ? itemsWithWebKontor
-      : itemsWithWebKontor.filter((item) => item.href !== "/haftalik-calisma-programi");
+      : itemsWithWebKontor.filter((item) => item.href !== "/eksik-evrak");
+
+    const itemsWithWorkSchedule = initialCanOpenWorkSchedule
+      ? itemsWithMissingDocs
+      : itemsWithMissingDocs.filter((item) => item.href !== "/haftalik-calisma-programi");
 
     const itemsWithPresentation = initialCanOpenEvaluationPresentation
       ? [...itemsWithWorkSchedule, { href: "/degerlendirme-sunumu", label: "Degerlendirme Sunumu", mobileLabel: "Sunum", icon: "U" }]
@@ -187,12 +202,13 @@ export function AppShellHeader({
     return initialIsAdmin
       ? [...itemsWithPresentation, { href: "/admin", label: "Admin Paneli", mobileLabel: "Admin", icon: "Y" }]
       : itemsWithPresentation;
-  }, [initialCanEvaluate, initialCanOpenEvaluationPresentation, initialCanOpenWebKontor, initialCanOpenWorkSchedule, initialIsAdmin]);
+  }, [initialCanEvaluate, initialCanOpenEvaluationPresentation, initialCanOpenMissingDocs, initialCanOpenWebKontor, initialCanOpenWorkSchedule, initialIsAdmin]);
 
   const primaryTabs = useMemo(() => {
     const wanted = [
       "/hedef-gerceklesen",
       "/web-kontor",
+      "/eksik-evrak",
       "/pos-komisyon",
       "/tarifeler",
       "/cihaz-fiyat-listesi",

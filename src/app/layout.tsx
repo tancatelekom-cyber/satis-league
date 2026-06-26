@@ -37,6 +37,7 @@ export default async function RootLayout({
   let canOpenEvaluationPresentation = false;
   let canOpenWorkSchedule = false;
   let canOpenWebKontor = false;
+  let canOpenMissingDocs = false;
 
   try {
     const supabase = await createClient();
@@ -63,6 +64,8 @@ export default async function RootLayout({
       if (profile?.approval === "approved") {
         const resolvedFeatureAccess = await getResolvedFeatureAccessForProfile("web-kontor", user.id, profile.role);
         canOpenWebKontor = resolvedFeatureAccess.allowed;
+        const resolvedMissingDocsAccess = await getResolvedFeatureAccessForProfile("eksik-evrak", user.id, profile.role);
+        canOpenMissingDocs = resolvedMissingDocsAccess.allowed;
       }
     }
   } catch {
@@ -71,6 +74,7 @@ export default async function RootLayout({
     canOpenEvaluationPresentation = false;
     canOpenWorkSchedule = false;
     canOpenWebKontor = false;
+    canOpenMissingDocs = false;
   }
 
   return (
@@ -92,6 +96,7 @@ export default async function RootLayout({
             initialCanOpenEvaluationPresentation={canOpenEvaluationPresentation}
             initialCanOpenWorkSchedule={canOpenWorkSchedule}
             initialCanOpenWebKontor={canOpenWebKontor}
+            initialCanOpenMissingDocs={canOpenMissingDocs}
           />
 
           <AuthGate>{children}</AuthGate>

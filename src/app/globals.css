@@ -9785,6 +9785,143 @@ textarea::placeholder {
   background: rgba(255, 255, 255, 0.95);
 }
 
+.goal-employee-table-shell {
+  border: 1px solid rgba(7, 76, 86, 0.18);
+  border-radius: 24px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 18px 32px rgba(8, 28, 44, 0.12);
+}
+
+.goal-employee-table-head,
+.goal-employee-table-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 2.1fr) repeat(7, minmax(78px, 1fr));
+  align-items: stretch;
+}
+
+.goal-employee-table-head {
+  background: #cfe0f2;
+  color: #0b2143;
+  text-transform: uppercase;
+  font-size: 0.9rem;
+  font-weight: 900;
+}
+
+.goal-employee-table-body {
+  background: #ffffff;
+}
+
+.goal-employee-table-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 58px;
+  padding: 10px 12px;
+  border-right: 1px solid rgba(16, 32, 59, 0.12);
+  border-bottom: 1px solid rgba(16, 32, 59, 0.12);
+  color: #10203b;
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.goal-employee-table-head .goal-employee-table-cell {
+  min-height: 52px;
+}
+
+.goal-employee-table-cell:last-child {
+  border-right: 0;
+}
+
+.goal-employee-table-cell-title {
+  justify-content: flex-start;
+  background: #d8e6f5;
+  color: #0b2143;
+  text-align: left;
+}
+
+.goal-employee-table-title-toggle,
+.goal-employee-table-title-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.goal-employee-table-title-toggle {
+  font: inherit;
+}
+
+.goal-employee-table-row-child .goal-employee-table-cell-title {
+  background: #e5eef8;
+  padding-left: 24px;
+}
+
+.goal-employee-table-row-child .goal-employee-table-title-label {
+  font-size: 0.94rem;
+}
+
+.goal-employee-table-value-good {
+  color: #0f8a39;
+  font-weight: 900;
+}
+
+.goal-employee-table-value-bad {
+  color: #dc2626;
+  font-weight: 900;
+}
+
+.goal-employee-table-value-muted {
+  color: #5f7089;
+}
+
+.goal-employee-table-details {
+  border-bottom: 1px solid rgba(16, 32, 59, 0.12);
+}
+
+.goal-employee-table-details:last-child {
+  border-bottom: 0;
+}
+
+.goal-employee-table-summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.goal-employee-table-summary::-webkit-details-marker {
+  display: none;
+}
+
+.goal-employee-table-details[open] .goal-company-trend-arrow {
+  transform: rotate(180deg);
+}
+
+.goal-employee-table-details .goal-employee-table-row .goal-employee-table-cell {
+  border-bottom: 0;
+}
+
+.goal-employee-table-details-body {
+  background: linear-gradient(180deg, rgba(238, 246, 252, 0.7), rgba(255, 255, 255, 0.94));
+  padding: 14px;
+  border-top: 1px solid rgba(16, 32, 59, 0.12);
+}
+
+.goal-employee-table-children {
+  border: 1px solid rgba(16, 32, 59, 0.08);
+  border-radius: 18px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.goal-employee-table-children .goal-employee-table-row:last-child .goal-employee-table-cell {
+  border-bottom: 0;
+}
+
+.goal-employee-production-reward-panel {
+  margin-bottom: 14px;
+}
+
 .goal-company-trend-table {
   width: 100%;
   min-width: 720px;
@@ -10200,6 +10337,48 @@ textarea::placeholder {
 @media (max-width: 760px) {
   .goal-company-trend-table-wrap {
     overflow-x: hidden;
+  }
+
+  .goal-employee-table-head,
+  .goal-employee-table-row {
+    grid-template-columns: minmax(116px, 1.55fr) repeat(7, minmax(46px, 1fr));
+  }
+
+  .goal-employee-table-head {
+    font-size: 0.66rem;
+  }
+
+  .goal-employee-table-cell {
+    min-height: 46px;
+    padding: 6px 4px;
+    font-size: 0.68rem;
+    line-height: 1.15;
+    word-break: break-word;
+  }
+
+  .goal-employee-table-cell-title {
+    padding-left: 6px;
+  }
+
+  .goal-employee-table-row-child .goal-employee-table-cell-title {
+    padding-left: 12px;
+  }
+
+  .goal-employee-table-title-toggle,
+  .goal-employee-table-title-label {
+    gap: 4px;
+  }
+
+  .goal-employee-table-row-child .goal-employee-table-title-label {
+    font-size: 0.66rem;
+  }
+
+  .goal-employee-table-details-body {
+    padding: 8px;
+  }
+
+  .goal-employee-production-reward-panel {
+    margin-bottom: 8px;
   }
 
   .goal-company-trend-table {

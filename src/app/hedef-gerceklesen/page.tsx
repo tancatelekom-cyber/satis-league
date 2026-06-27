@@ -1592,6 +1592,192 @@ function GoalCategoryCards({
   );
 }
 
+function EmployeeGoalCategoryTable({
+  categories,
+  remainingDays = 0,
+  productionRewardRows = [],
+  productPointRows = []
+}: {
+  categories: GoalCategorySummary[];
+  remainingDays?: number;
+  productionRewardRows?: GoalProductionRewardRow[];
+  productPointRows?: GoalProductPointRow[];
+}) {
+  type EmployeeGoalTableMetric = GoalMetricSummary & { title: string };
+
+  const renderMetricRow = (
+    summary: EmployeeGoalTableMetric,
+    options?: {
+      child?: boolean;
+      expandable?: boolean;
+      open?: boolean;
+      productionRewardPlan?: ReturnType<typeof buildProductionRewardPlan>;
+    }
+  ) => {
+    const dailyNeedRow = buildNeedRows(summary, remainingDays).find((row) => row.threshold === 100);
+    const dailyMinimum = summary.hasTarget ? dailyNeedRow?.dailyRequired ?? 0 : null;
+    const hasExpandableBody = Boolean(options?.expandable);
+    const projectedPercentClass =
+      summary.hasTarget && summary.showProjection && summary.projectedPercent !== null
+        ? summary.projectedPercent >= 100
+          ? "goal-employee-table-value-good"
+          : "goal-employee-table-value-bad"
+        : "goal-employee-table-value-muted";
+
+    const titleNode = hasExpandableBody ? (
+      <span className="goal-employee-table-title-toggle">
+        <span className="goal-company-trend-arrow">v</span>
+        <span>{summary.title}</span>
+      </span>
+    ) : (
+      <span className="goal-employee-table-title-label">{summary.title}</span>
+    );
+
+    return (
+      <div className={`goal-employee-table-row${options?.child ? " goal-employee-table-row-child" : ""}`}>
+        <div className="goal-employee-table-cell goal-employee-table-cell-title">{titleNode}</div>
+        <div className="goal-employee-table-cell">{summary.hasTarget ? formatNumber(summary.target) : "-"}</div>
+        <div className="goal-employee-table-cell">{formatNumber(summary.actual)}</div>
+        <div className="goal-employee-table-cell">{summary.hasTarget ? formatNumber(summary.remaining) : "-"}</div>
+        <div className="goal-employee-table-cell">
+          {summary.hasTarget && summary.actualPercent !== null ? formatPercent(summary.actualPercent) : "-"}
+        </div>
+        <div className="goal-employee-table-cell">{summary.showProjection ? formatNumber(summary.projectedActual) : "-"}</div>
+        <div className={`goal-employee-table-cell ${projectedPercentClass}`}>
+          {summary.hasTarget && summary.showProjection && summary.projectedPercent !== null ? formatPercent(summary.projectedPercent) : "-"}
+        </div>
+        <div className="goal-employee-table-cell">{dailyMinimum !== null ? formatNumber(dailyMinimum) : "-"}</div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="goal-employee-table-shell">
+      <div className="goal-employee-table-head">
+        <div className="goal-employee-table-cell goal-employee-table-cell-title">Kategori</div>
+        <div className="goal-employee-table-cell">Hedef</div>
+        <div className="goal-employee-table-cell">Gerc.</div>
+        <div className="goal-employee-table-cell">Kalan</div>
+        <div className="goal-employee-table-cell">Anlik %</div>
+        <div className="goal-employee-table-cell">Ay Sonu</div>
+        <div className="goal-employee-table-cell">Ay Sonu %</div>
+        <div className="goal-employee-table-cell">Gunluk Min</div>
+      </div>
+
+      <div className="goal-employee-table-body">
+        {categories.map((category, index) => {
+          const productionRewardPlan = buildProductionRewardPlan(category, productionRewardRows, remainingDays);
+          const hasExpandableBody = category.childCount > 0 || Boolean(productionRewardPlan);
+
+          if (!hasExpandableBody) {
+            return <div key={category.title}>{renderMetricRow(category)}</div>;
+          }
+
+          return (
+            <details key={category.title} className="goal-employee-table-details" open={index === 0}>
+              <summary className="goal-employee-table-summary">
+                {renderMetricRow(category, { expandable: true })}
+              </summary>
+
+              <div className="goal-employee-table-details-body">
+                {productionRewardPlan ? (
+                  <div className="goal-production-reward-panel goal-employee-production-reward-panel">
+                    <div className="goal-production-reward-head">
+                      <strong>Uretim Puani Kazanim Plani</strong>
+                      <span>
+                        Ay sonu gidisatina gore: <b>{productionRewardPlan.projectedReward ?? "Henuz kazanim seviyesine ulasmadi"}</b>
+                      </span>
+                    </div>
+
+                    <div className="goal-production-reward-summary">
+                      <span>
+                        <small>Su anki puan</small>
+                        <strong>{formatNumber(productionRewardPlan.actualPoints)}</strong>
+                      </span>
+                      <span>
+                        <small>Ay sonu ongoru</small>
+                        <strong>{formatNumber(productionRewardPlan.projectedPoints)}</strong>
+                      </span>
+                      <span>
+                        <small>Siradaki kazanim</small>
+                        <strong>{productionRewardPlan.nextReward ?? "Son skala"}</strong>
+                      </span>
+                    </div>
+
+                    <div className="goal-production-reward-table-wrap">
+                      <table className="goal-production-reward-table">
+                        <thead>
+                          <tr>
+                            <th>Puan</th>
+                            <th>Kazanim</th>
+                            <th>Durum</th>
+                            <th>Kalan Puan</th>
+                            <th>Gunluk Gerekli</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {productionRewardPlan.rows.map((row) => (
+                            <tr
+                              key={`${category.title}-reward-${row.points}`}
+                              className={row.isCurrentProjectedTier ? "goal-production-reward-row-active" : ""}
+                            >
+                              <td>{formatNumber(row.points)}</td>
+                              <td>{row.reward}</td>
+                              <td>{row.isCurrentProjectedTier ? "Ay sonu ongorusu" : row.isReached ? "Asildi" : "Ust skala"}</td>
+                              <td>{formatNumber(row.remainingFromActual)}</td>
+                              <td>{formatNumber(row.dailyRequired)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {productPointRows.length ? (
+                      <details className="goal-product-point-details">
+                        <summary className="goal-product-point-summary">
+                          <strong>Urun Puanlari</strong>
+                          <span>Bilgilendirme tablosu</span>
+                        </summary>
+
+                        <div className="goal-product-point-table-wrap">
+                          <table className="goal-product-point-table">
+                            <thead>
+                              <tr>
+                                <th>Urun</th>
+                                <th>Urun Puani</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {productPointRows.map((row) => (
+                                <tr key={`product-point-${row.product}`}>
+                                  <td>{row.product}</td>
+                                  <td>{formatNumber(row.points)}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </details>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                {category.children.length ? (
+                  <div className="goal-employee-table-children">
+                    {category.children.map((child) => (
+                      <div key={`${category.title}-${child.title}`}>{renderMetricRow(child, { child: true })}</div>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            </details>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function GoalActualOnlyCategoryCards({ categories }: { categories: GoalCategorySummary[] }) {
   return (
     <div className="goal-category-list">
@@ -2351,7 +2537,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                     <p className="subtle">Bu magaza icin kategori verisi bulunamadi.</p>
                   )
                 ) : employeeCategorySummaries.length ? (
-                  <GoalCategoryCards
+                  <EmployeeGoalCategoryTable
                     categories={employeeCategorySummaries}
                     remainingDays={dayStats.remainingDays}
                     productionRewardRows={productionRewardRows}

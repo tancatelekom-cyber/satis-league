@@ -8370,6 +8370,37 @@ textarea::placeholder {
     line-height: 1.05;
   }
 
+  .goal-tab-row {
+    gap: 8px;
+    margin: 8px 0 12px;
+  }
+
+  .goal-tab {
+    min-height: 44px;
+    padding: 8px 10px;
+    border-radius: 18px;
+    font-size: 0.86rem;
+    font-weight: 800;
+    box-shadow: 0 8px 18px rgba(8, 22, 40, 0.06);
+  }
+
+  .goal-control-shell {
+    gap: 10px;
+  }
+
+  .goal-filter-card {
+    padding: 12px;
+    border-radius: 18px;
+  }
+
+  .goal-filter-grid {
+    gap: 8px;
+  }
+
+  .league-filter-label {
+    font-size: 0.72rem;
+  }
+
   .employee-analysis-picked-card strong {
     font-size: 1.05rem;
   }
@@ -8419,11 +8450,29 @@ textarea::placeholder {
 
   .goal-mode-row {
     grid-template-columns: 1fr;
+    gap: 8px;
+    margin-top: 10px;
   }
 
   .goal-filter-grid .filter-select {
-    min-height: 60px;
-    font-size: 1.02rem;
+    min-height: 46px;
+    font-size: 0.9rem;
+  }
+
+  .goal-filter-grid .filter-select-value,
+  .goal-filter-grid .filter-select-shell .filter-select-value {
+    min-height: 46px;
+    padding: 0.7rem 2.6rem 0.7rem 0.85rem;
+    font-size: 0.9rem;
+    line-height: 1.12;
+  }
+
+  .goal-mode-button {
+    min-height: 44px;
+    padding: 10px 12px;
+    border-radius: 16px;
+    font-size: 0.88rem;
+    box-shadow: 0 8px 18px rgba(8, 22, 40, 0.06);
   }
 }
 

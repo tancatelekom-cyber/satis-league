@@ -118,6 +118,30 @@ function buildDocumentIssuePopup(
   };
 }
 
+function buildInactiveLoginPopup(fullName: string, inactiveDays: number): PopupAnnouncementRecord | null {
+  if (inactiveDays < 2) {
+    return null;
+  }
+
+  return {
+    id: `inactive-login-${inactiveDays}`,
+    title: "Portal Hatirlatmasi",
+    body: [
+      `Sayin ${fullName},`,
+      `${inactiveDays} gundur portala giris yapmadiginiz goruntulenmistir.`,
+      "Hedef gerceklesen ve kazanc takibiniz icin gunluk girisinizi rica ederiz.",
+      "Bol satislar dileriz."
+    ].join("\n"),
+    image_path: null,
+    imageUrl: null,
+    target_roles: ["employee", "manager", "management", "admin"] satisfies UserRole[],
+    show_from: new Date().toISOString(),
+    show_until: new Date().toISOString(),
+    is_active: true,
+    created_at: new Date().toISOString()
+  };
+}
+
 export default async function HomePage() {
   const user = await requireUser();
 
@@ -152,6 +176,21 @@ export default async function HomePage() {
     campaignDashboard?.profile.approval === "approved"
       ? getActivePopupAnnouncementsForProfile(campaignDashboard.profile)
       : Promise.resolve([]);
+  const inactiveLoginPopupPromise =
+    campaignDashboard?.profile.approval === "approved"
+      ? Promise.resolve(
+          (() => {
+            const lastSignInAt = user.last_sign_in_at ? new Date(user.last_sign_in_at) : null;
+
+            if (!lastSignInAt || Number.isNaN(lastSignInAt.getTime())) {
+              return null;
+            }
+
+            const inactiveDays = Math.floor((now.getTime() - lastSignInAt.getTime()) / (1000 * 60 * 60 * 24));
+            return buildInactiveLoginPopup(campaignDashboard.profile.full_name || "Calisan", inactiveDays);
+          })()
+        )
+      : Promise.resolve(null);
   const documentIssuePopupPromise =
     campaignDashboard?.profile.approval === "approved"
       ? (async () => {
@@ -196,13 +235,16 @@ export default async function HomePage() {
       : null;
 
   const [{ data: seasons }, { data: profiles }, { data: stores }, { data: seasonSales }] = await seasonDataPromise;
-  const [activePopupAnnouncements, documentIssuePopup] = await Promise.all([
+  const [activePopupAnnouncements, inactiveLoginPopup, documentIssuePopup] = await Promise.all([
     activePopupAnnouncementsPromise,
+    inactiveLoginPopupPromise,
     documentIssuePopupPromise
   ]);
-  const popupAnnouncements = documentIssuePopup
-    ? [documentIssuePopup, ...activePopupAnnouncements]
-    : activePopupAnnouncements;
+  const popupAnnouncements = [
+    ...(inactiveLoginPopup ? [inactiveLoginPopup] : []),
+    ...(documentIssuePopup ? [documentIssuePopup] : []),
+    ...activePopupAnnouncements
+  ];
 
   const seasonRows = ((seasons as SeasonRecord[] | null) ?? []).filter((season) => season.is_active);
   const employeeProfiles =

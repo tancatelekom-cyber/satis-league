@@ -6996,8 +6996,9 @@ textarea::placeholder {
   margin-bottom: 14px;
   padding: 14px;
   border-radius: 18px;
-  background: rgba(7, 24, 45, 0.24);
-  border: 1px solid rgba(255, 209, 102, 0.2);
+  background: linear-gradient(180deg, rgba(236, 243, 251, 0.98), rgba(220, 232, 246, 0.96));
+  border: 1px solid rgba(120, 150, 186, 0.28);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 .goal-production-reward-head {
@@ -7006,17 +7007,19 @@ textarea::placeholder {
 }
 
 .goal-production-reward-head strong {
-  color: #fff4c2;
+  color: #b7791f;
   font-size: 0.98rem;
+  text-shadow: none;
 }
 
 .goal-production-reward-head span {
-  color: #e7f1ff;
+  color: #42556f;
   font-size: 0.9rem;
+  text-shadow: none;
 }
 
 .goal-production-reward-head b {
-  color: #ffd166;
+  color: #d69e2e;
 }
 
 .goal-production-reward-summary {
@@ -7030,21 +7033,24 @@ textarea::placeholder {
   gap: 3px;
   padding: 10px 12px;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.24);
 }
 
 .goal-production-reward-summary small {
-  color: rgba(247, 251, 255, 0.78);
+  color: #64748b;
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.02em;
   text-transform: uppercase;
+  text-shadow: none;
 }
 
 .goal-production-reward-summary strong {
-  color: #ffffff;
+  color: #10203b;
   font-size: 0.92rem;
   line-height: 1.25;
+  text-shadow: none;
 }
 
 .goal-production-reward-table-wrap {
@@ -7067,6 +7073,7 @@ textarea::placeholder {
   text-align: left;
   font-size: 0.84rem;
   font-weight: 800;
+  text-shadow: none;
 }
 
 .goal-production-reward-table thead th {

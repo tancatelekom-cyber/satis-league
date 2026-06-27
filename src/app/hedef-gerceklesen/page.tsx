@@ -188,6 +188,14 @@ type StoreDailyNeedSummaryRow = {
   cells: GoalNeedRow[];
 };
 
+type EmployeeDailyNeedSummaryRow = {
+  title: string;
+  groupKey: string;
+  level: number;
+  referenceLabel: string;
+  dailyRequired: number;
+};
+
 type GoalView = "employee" | "store" | "company";
 type GoalPanel = "detail" | "ranking" | "evaluation";
 
@@ -1380,6 +1388,73 @@ function buildStoreDailyNeedSummaryRows(categories: GoalCategorySummary[], remai
     });
 }
 
+function buildEmployeeDailyNeedReference(
+  summary: GoalCategorySummary,
+  rewardRows: GoalProductionRewardRow[],
+  remainingDays: number
+) {
+  if (!isProductionPointCategory(summary.title)) {
+    const needRow = buildNeedRows(summary, remainingDays).find((row) => row.threshold === 100);
+    return {
+      referenceLabel: "%100 Hedef",
+      dailyRequired: needRow?.dailyRequired ?? 0
+    };
+  }
+
+  const rewardPlan = buildProductionRewardPlan(summary, rewardRows, remainingDays);
+  if (!rewardPlan?.rows.length) {
+    return {
+      referenceLabel: "Ilk Skala",
+      dailyRequired: 0
+    };
+  }
+
+  const firstScaleRow = rewardPlan.rows[0];
+  const projectedScaleRow = rewardPlan.rows.find((row) => row.isCurrentProjectedTier) ?? null;
+  const nextScaleRow = rewardPlan.rows.find((row) => row.points > rewardPlan.projectedPoints) ?? null;
+  const targetRow = projectedScaleRow ? nextScaleRow ?? projectedScaleRow : firstScaleRow;
+
+  return {
+    referenceLabel: `${formatNumber(targetRow.points)} Puan`,
+    dailyRequired: targetRow.dailyRequired
+  };
+}
+
+function buildEmployeeDailyNeedSummaryRows(
+  categories: GoalCategorySummary[],
+  remainingDays: number,
+  rewardRows: GoalProductionRewardRow[]
+) {
+  return categories
+    .filter((category) => category.hasTarget)
+    .flatMap((category) => {
+      const parentNeed = buildEmployeeDailyNeedReference(category, rewardRows, remainingDays);
+      const parentRow = {
+        title: category.title,
+        groupKey: category.title,
+        level: 0,
+        referenceLabel: parentNeed.referenceLabel,
+        dailyRequired: parentNeed.dailyRequired
+      } satisfies EmployeeDailyNeedSummaryRow;
+
+      const childRows = category.children
+        .filter((child) => child.hasTarget)
+        .map((child) => {
+          const needRow = buildNeedRows(child, remainingDays).find((row) => row.threshold === 100);
+
+          return {
+            title: child.title,
+            groupKey: category.title,
+            level: 1,
+            referenceLabel: "%100 Hedef",
+            dailyRequired: needRow?.dailyRequired ?? 0
+          } satisfies EmployeeDailyNeedSummaryRow;
+        });
+
+      return [parentRow, ...childRows];
+    });
+}
+
 function GoalCategoryCards({
   categories,
   remainingDays = 0,
@@ -1774,6 +1849,37 @@ function EmployeeGoalCategoryTable({
           );
         })}
       </div>
+    </div>
+  );
+}
+
+function EmployeeDailyNeedsTable({ rows }: { rows: EmployeeDailyNeedSummaryRow[] }) {
+  return (
+    <div className="goal-company-trend-table-wrap goal-employee-daily-needs-wrap">
+      <table className="goal-company-trend-table goal-employee-daily-needs-table">
+        <thead>
+          <tr>
+            <th>Kategori</th>
+            <th>Referans</th>
+            <th>Gunluk Ihtiyac</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={`employee-daily-need-${row.groupKey}-${row.title}`} className={row.level > 0 ? "goal-company-trend-child-row" : ""}>
+              <th>
+                <span className={row.level > 0 ? "goal-company-trend-label goal-company-trend-label-child" : "goal-company-trend-label"}>
+                  {row.title}
+                </span>
+              </th>
+              <td>{row.referenceLabel}</td>
+              <td className={row.dailyRequired <= 0 ? "goal-company-trend-good" : ""}>
+                {row.dailyRequired <= 0 ? "Tamamlandi" : formatNumber(row.dailyRequired)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -2175,6 +2281,11 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
     employeeStoreCategorySummaries,
     dayStats.remainingDays
   );
+  const employeeDailyNeedSummaryRows = buildEmployeeDailyNeedSummaryRows(
+    employeeCategorySummaries,
+    dayStats.remainingDays,
+    productionRewardRows
+  );
   const storeCategorySummaries = buildStoreCategorySummaries(activeStoreRows, dayStats.workedDays, dayStats.totalDays);
   const activeStoreEmployeeRows = activeStoreName
     ? filteredEmployeeCoreRows.filter((row) => normalizeStoreKey(row.storeName) === normalizeStoreKey(activeStoreName))
@@ -2537,12 +2648,24 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                     <p className="subtle">Bu magaza icin kategori verisi bulunamadi.</p>
                   )
                 ) : employeeCategorySummaries.length ? (
-                  <EmployeeGoalCategoryTable
-                    categories={employeeCategorySummaries}
-                    remainingDays={dayStats.remainingDays}
-                    productionRewardRows={productionRewardRows}
-                    productPointRows={productPointRows}
-                  />
+                  <>
+                    <EmployeeGoalCategoryTable
+                      categories={employeeCategorySummaries}
+                      remainingDays={dayStats.remainingDays}
+                      productionRewardRows={productionRewardRows}
+                      productPointRows={productPointRows}
+                    />
+
+                    {employeeDailyNeedSummaryRows.length ? (
+                      <div className="goal-company-trend-panel goal-employee-daily-needs-panel">
+                        <div className="goal-live-prime-head">
+                          <h3>Personel Gunluk Ihtiyaclari</h3>
+                          <span>Hedefli kalemler icin bugunden ay sonuna gereken gunluk minimum tempo</span>
+                        </div>
+                        <EmployeeDailyNeedsTable rows={employeeDailyNeedSummaryRows} />
+                      </div>
+                    ) : null}
+                  </>
                 ) : (
                   <p className="subtle">Bu filtreye uygun calisan verisi bulunamadi.</p>
                 )}

@@ -10341,44 +10341,44 @@ textarea::placeholder {
 
   .goal-employee-table-head,
   .goal-employee-table-row {
-    grid-template-columns: minmax(116px, 1.55fr) repeat(7, minmax(46px, 1fr));
+    grid-template-columns: minmax(92px, 1.38fr) repeat(7, minmax(39px, 1fr));
   }
 
   .goal-employee-table-head {
-    font-size: 0.66rem;
+    font-size: 0.56rem;
   }
 
   .goal-employee-table-cell {
-    min-height: 46px;
-    padding: 6px 4px;
-    font-size: 0.68rem;
-    line-height: 1.15;
+    min-height: 34px;
+    padding: 4px 2px;
+    font-size: 0.56rem;
+    line-height: 1.02;
     word-break: break-word;
   }
 
   .goal-employee-table-cell-title {
-    padding-left: 6px;
+    padding-left: 4px;
   }
 
   .goal-employee-table-row-child .goal-employee-table-cell-title {
-    padding-left: 12px;
+    padding-left: 8px;
   }
 
   .goal-employee-table-title-toggle,
   .goal-employee-table-title-label {
-    gap: 4px;
+    gap: 2px;
   }
 
   .goal-employee-table-row-child .goal-employee-table-title-label {
-    font-size: 0.66rem;
+    font-size: 0.54rem;
   }
 
   .goal-employee-table-details-body {
-    padding: 8px;
+    padding: 6px;
   }
 
   .goal-employee-production-reward-panel {
-    margin-bottom: 8px;
+    margin-bottom: 6px;
   }
 
   .goal-company-trend-table {

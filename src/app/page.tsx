@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth/require-user";
 import { getCampaignDashboardData } from "@/lib/campaign/get-campaign-dashboard-data";
-import { getActivePopupAnnouncementsForProfile } from "@/lib/popup-announcements";
+import { fetchDocumentIssueRows, sameDocumentIssueProfileId } from "@/lib/document-issues";
+import { getActivePopupAnnouncementsForProfile, type PopupAnnouncementRecord } from "@/lib/popup-announcements";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { SeasonRecord } from "@/lib/types";
+import { SeasonRecord, type UserRole } from "@/lib/types";
 import { HomePopupAnnouncement } from "@/components/home-popup-announcement";
 
 export const dynamic = "force-dynamic";
@@ -58,6 +59,42 @@ function buildMonthHref(seasonId: string, monthKey: string) {
   return `/lig?seasonId=${seasonId}&period=month&year=${year}&month=${monthKey}`;
 }
 
+function buildDocumentIssuePopup(
+  fullName: string,
+  unreachableCount: number,
+  missingCount: number
+): PopupAnnouncementRecord | null {
+  const total = unreachableCount + missingCount;
+
+  if (total <= 0) {
+    return null;
+  }
+
+  const lines: string[] = [`Sayin ${fullName},`];
+
+  if (unreachableCount > 0) {
+    lines.push(`Ulasmayan evrak adetiniz: ${unreachableCount}`);
+  }
+  if (missingCount > 0) {
+    lines.push(`Eksik evrak adetiniz: ${missingCount}`);
+  }
+
+  lines.push("Lutfen onceliklerimiz arasina alalim ve bugun tamamlamak icin gerekli aksiyonlari alalim.");
+
+  return {
+    id: `document-issues-${unreachableCount}-${missingCount}`,
+    title: "Evrak Uyarisi",
+    body: lines.join("\n"),
+    image_path: null,
+    imageUrl: null,
+    target_roles: ["employee"] satisfies UserRole[],
+    show_from: new Date().toISOString(),
+    show_until: new Date().toISOString(),
+    is_active: true,
+    created_at: new Date().toISOString()
+  };
+}
+
 export default async function HomePage() {
   const user = await requireUser();
 
@@ -92,6 +129,20 @@ export default async function HomePage() {
     campaignDashboard?.profile.approval === "approved"
       ? getActivePopupAnnouncementsForProfile(campaignDashboard.profile)
       : Promise.resolve([]);
+  const documentIssuePopupPromise =
+    campaignDashboard?.profile.approval === "approved" && campaignDashboard.profile.role === "employee"
+      ? (async () => {
+          try {
+            const rows = await fetchDocumentIssueRows();
+            const ownRows = rows.filter((row) => sameDocumentIssueProfileId(row.personnelId, user.id));
+            const unreachableCount = ownRows.filter((row) => row.source === "Ulasmayan Evrak").length;
+            const missingCount = ownRows.filter((row) => row.source === "Eksik Evrak").length;
+            return buildDocumentIssuePopup(campaignDashboard.profile.full_name || "Calisan", unreachableCount, missingCount);
+          } catch {
+            return null;
+          }
+        })()
+      : Promise.resolve(null);
   const liveCampaignLeaderboard =
     campaignDashboard?.profile.approval === "approved"
       ? campaignDashboard.activeLeaderboards.find(
@@ -102,7 +153,13 @@ export default async function HomePage() {
       : null;
 
   const [{ data: seasons }, { data: profiles }, { data: stores }, { data: seasonSales }] = await seasonDataPromise;
-  const activePopupAnnouncements = await activePopupAnnouncementsPromise;
+  const [activePopupAnnouncements, documentIssuePopup] = await Promise.all([
+    activePopupAnnouncementsPromise,
+    documentIssuePopupPromise
+  ]);
+  const popupAnnouncements = documentIssuePopup
+    ? [documentIssuePopup, ...activePopupAnnouncements]
+    : activePopupAnnouncements;
 
   const seasonRows = ((seasons as SeasonRecord[] | null) ?? []).filter((season) => season.is_active);
   const employeeProfiles =
@@ -191,7 +248,7 @@ export default async function HomePage() {
 
   return (
     <main>
-      {activePopupAnnouncements.length > 0 ? <HomePopupAnnouncement announcements={activePopupAnnouncements} /> : null}
+      {popupAnnouncements.length > 0 ? <HomePopupAnnouncement announcements={popupAnnouncements} /> : null}
 
       {liveCampaignLeaderboard ? (
         <>

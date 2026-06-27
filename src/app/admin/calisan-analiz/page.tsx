@@ -1103,15 +1103,18 @@ export default async function EmployeeAnalysisPage({ searchParams }: PageProps) 
           </article>
 
           <article className="admin-card">
-            <h3>Ortalama Karsilastirma Matrisi</h3>
+            <h3>SWOT Tarzi Ortalama Matrisi</h3>
             <p className="employee-analysis-section-copy">
-              Kategoriler, secili calisanin sube ve firma ortalamasina gore ayri kutularda listelenir. Böylece hangi alanlarin yukari tasidigi ve hangilerinin geri kaldigi tek bakista gorulur.
+              Kategoriler, secili calisanin sube ve firma ortalamasina gore SWOT benzeri 4 bolmede ayrilir. Boylece guclu yonler, firsatlar, riskler ve kritik tehditler tek bakista gorulur.
             </p>
 
-            <div className="employee-analysis-comparison-grid">
-              <section className="employee-analysis-comparison-card employee-analysis-comparison-card-good">
+            <div className="employee-analysis-comparison-grid employee-analysis-comparison-grid-swot">
+              <section className="employee-analysis-comparison-card employee-analysis-comparison-card-good employee-analysis-comparison-card-swot">
                 <div className="employee-analysis-comparison-head">
-                  <strong>Sube Ortalamasinin Ustunde Olan Kategoriler</strong>
+                  <div className="employee-analysis-comparison-head-copy">
+                    <small>Guc</small>
+                    <strong>Sube Ortalamasinin Ustunde Olan Kategoriler</strong>
+                  </div>
                   <span>{formatNumber(aboveStoreMetrics.length)}</span>
                 </div>
                 <div className="employee-analysis-comparison-list">
@@ -1124,13 +1127,10 @@ export default async function EmployeeAnalysisPage({ searchParams }: PageProps) 
                             {formatSignedPercent(metric.gap)}
                           </b>
                         </div>
-                        <div className="employee-analysis-comparison-meter">
-                          <i
-                            className="employee-analysis-comparison-meter-fill employee-analysis-comparison-meter-fill-good"
-                            style={{ width: `${clampValue(metric.actualPercent)}%` }}
-                          />
+                        <div className="employee-analysis-comparison-chip-row">
+                          <span className="employee-analysis-comparison-chip">Tempo {formatPercent(metric.actualPercent)}</span>
+                          <span className="employee-analysis-comparison-chip employee-analysis-comparison-chip-good">Subeyi destekliyor</span>
                         </div>
-                        <span>Tempo {formatPercent(metric.actualPercent)} | Sube ortalamasinin ustunde</span>
                       </div>
                     ))
                   ) : (
@@ -1139,9 +1139,12 @@ export default async function EmployeeAnalysisPage({ searchParams }: PageProps) 
                 </div>
               </section>
 
-              <section className="employee-analysis-comparison-card employee-analysis-comparison-card-good">
+              <section className="employee-analysis-comparison-card employee-analysis-comparison-card-good employee-analysis-comparison-card-swot">
                 <div className="employee-analysis-comparison-head">
-                  <strong>Firma Ortalamasinin Ustunde Olan Kategoriler</strong>
+                  <div className="employee-analysis-comparison-head-copy">
+                    <small>Firsat</small>
+                    <strong>Firma Ortalamasinin Ustunde Olan Kategoriler</strong>
+                  </div>
                   <span>{formatNumber(aboveCompanyMetrics.length)}</span>
                 </div>
                 <div className="employee-analysis-comparison-list">
@@ -1154,13 +1157,10 @@ export default async function EmployeeAnalysisPage({ searchParams }: PageProps) 
                             {formatSignedPercent(metric.gap)}
                           </b>
                         </div>
-                        <div className="employee-analysis-comparison-meter">
-                          <i
-                            className="employee-analysis-comparison-meter-fill employee-analysis-comparison-meter-fill-good"
-                            style={{ width: `${clampValue(metric.actualPercent)}%` }}
-                          />
+                        <div className="employee-analysis-comparison-chip-row">
+                          <span className="employee-analysis-comparison-chip">Tempo {formatPercent(metric.actualPercent)}</span>
+                          <span className="employee-analysis-comparison-chip employee-analysis-comparison-chip-good">Firma ustu avantaj</span>
                         </div>
-                        <span>Tempo {formatPercent(metric.actualPercent)} | Firma ortalamasinin ustunde</span>
                       </div>
                     ))
                   ) : (
@@ -1169,9 +1169,12 @@ export default async function EmployeeAnalysisPage({ searchParams }: PageProps) 
                 </div>
               </section>
 
-              <section className="employee-analysis-comparison-card employee-analysis-comparison-card-critical">
+              <section className="employee-analysis-comparison-card employee-analysis-comparison-card-critical employee-analysis-comparison-card-swot">
                 <div className="employee-analysis-comparison-head">
-                  <strong>Sube Ortalamasinin Altinda Olan Kategoriler</strong>
+                  <div className="employee-analysis-comparison-head-copy">
+                    <small>Zayif Yon</small>
+                    <strong>Sube Ortalamasinin Altinda Olan Kategoriler</strong>
+                  </div>
                   <span>{formatNumber(belowStoreMetrics.length)}</span>
                 </div>
                 <div className="employee-analysis-comparison-list">
@@ -1184,13 +1187,10 @@ export default async function EmployeeAnalysisPage({ searchParams }: PageProps) 
                             {formatSignedPercent(metric.gap)}
                           </b>
                         </div>
-                        <div className="employee-analysis-comparison-meter">
-                          <i
-                            className="employee-analysis-comparison-meter-fill employee-analysis-comparison-meter-fill-critical"
-                            style={{ width: `${clampValue(metric.actualPercent)}%` }}
-                          />
+                        <div className="employee-analysis-comparison-chip-row">
+                          <span className="employee-analysis-comparison-chip">Tempo {formatPercent(metric.actualPercent)}</span>
+                          <span className="employee-analysis-comparison-chip employee-analysis-comparison-chip-critical">Subeyi geri cekiyor</span>
                         </div>
-                        <span>Tempo {formatPercent(metric.actualPercent)} | Sube ortalamasinin altinda</span>
                       </div>
                     ))
                   ) : (
@@ -1199,9 +1199,12 @@ export default async function EmployeeAnalysisPage({ searchParams }: PageProps) 
                 </div>
               </section>
 
-              <section className="employee-analysis-comparison-card employee-analysis-comparison-card-critical">
+              <section className="employee-analysis-comparison-card employee-analysis-comparison-card-critical employee-analysis-comparison-card-swot">
                 <div className="employee-analysis-comparison-head">
-                  <strong>Firma Ortalamasinin Altinda Olan Kategoriler</strong>
+                  <div className="employee-analysis-comparison-head-copy">
+                    <small>Tehdit</small>
+                    <strong>Firma Ortalamasinin Altinda Olan Kategoriler</strong>
+                  </div>
                   <span>{formatNumber(belowCompanyMetrics.length)}</span>
                 </div>
                 <div className="employee-analysis-comparison-list">
@@ -1214,13 +1217,10 @@ export default async function EmployeeAnalysisPage({ searchParams }: PageProps) 
                             {formatSignedPercent(metric.gap)}
                           </b>
                         </div>
-                        <div className="employee-analysis-comparison-meter">
-                          <i
-                            className="employee-analysis-comparison-meter-fill employee-analysis-comparison-meter-fill-critical"
-                            style={{ width: `${clampValue(metric.actualPercent)}%` }}
-                          />
+                        <div className="employee-analysis-comparison-chip-row">
+                          <span className="employee-analysis-comparison-chip">Tempo {formatPercent(metric.actualPercent)}</span>
+                          <span className="employee-analysis-comparison-chip employee-analysis-comparison-chip-critical">Firma altinda risk</span>
                         </div>
-                        <span>Tempo {formatPercent(metric.actualPercent)} | Firma ortalamasinin altinda</span>
                       </div>
                     ))
                   ) : (

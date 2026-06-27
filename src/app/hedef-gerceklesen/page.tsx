@@ -2354,7 +2354,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                       <strong>{detailCardTitle}</strong>
                     </div>
 
-                    <FormattedCoachingText text={detailCoachingText} />
+                    {effectiveView === "employee" ? <FormattedCoachingText text={detailCoachingText} /> : null}
 
                     {shouldShowDocumentIssueAlert ? (
                       <a href="/eksik-evrak" className="evaluation-zero-alert goal-document-issue-alert goal-document-issue-link">
@@ -2418,7 +2418,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
 
                     <div className="evaluation-card-actions evaluation-card-actions-bottom">
                       <SpeakCoachingButton text={detailCoachingText} />
-                      <CopyCoachingButton text={detailCoachingText} />
+                      {effectiveView === "employee" ? <CopyCoachingButton text={detailCoachingText} /> : null}
                     </div>
                   </div>
                 ) : null}

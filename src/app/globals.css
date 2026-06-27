@@ -10404,6 +10404,25 @@ textarea::placeholder {
     word-break: break-word;
   }
 
+  .goal-company-trend-child-row th {
+    padding: 5px 4px;
+  }
+
+  .goal-company-trend-child-row th .goal-company-trend-label-child,
+  .goal-company-trend-child-row th .goal-company-trend-toggle .goal-company-trend-label-child,
+  .goal-company-trend-child-row th .goal-company-trend-toggle span:last-child {
+    font-size: 0.56rem !important;
+    line-height: 1.02;
+    padding-left: 8px;
+    font-weight: 700;
+  }
+
+  .goal-company-trend-child-row td {
+    font-size: 0.62rem !important;
+    line-height: 1.02;
+    padding: 5px 3px;
+  }
+
   .goal-company-trend-table tbody td {
     font-size: 0.72rem;
   }

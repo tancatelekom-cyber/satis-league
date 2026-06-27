@@ -2082,11 +2082,19 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
     effectiveView === "store"
       ? documentIssueRows.filter((row) => normalizeStoreKey(row.storeName) === normalizeStoreKey(activeStoreName || currentUserStoreName))
       : [];
-  const relevantDocumentIssueRows = effectiveView === "employee" ? employeeDocumentIssueRows : effectiveView === "store" ? storeDocumentIssueRows : [];
+  const relevantDocumentIssueRows =
+    effectiveView === "employee"
+      ? employeeDocumentIssueRows
+      : effectiveView === "store"
+        ? storeDocumentIssueRows
+        : effectiveView === "company"
+          ? documentIssueRows
+          : [];
   const relevantUnreachableDocumentCount = relevantDocumentIssueRows.filter((row) => row.source === "Ulasmayan Evrak").length;
   const relevantMissingDocumentCount = relevantDocumentIssueRows.filter((row) => row.source === "Eksik Evrak").length;
   const shouldShowDocumentIssueAlert =
-    (effectiveView === "employee" || effectiveView === "store") && relevantDocumentIssueRows.length > 0;
+    (effectiveView === "employee" || effectiveView === "store" || effectiveView === "company") &&
+    relevantDocumentIssueRows.length > 0;
 
   const employeeOptions = employeeNames.length
     ? employeeNames.map((name) => ({
@@ -2353,9 +2361,15 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                         <strong>
                           {effectiveView === "employee"
                             ? "Evrak Uyarin Var"
-                            : "Magazana Ait Evrak Uyarisi Var"}
+                            : effectiveView === "store"
+                              ? "Magazana Ait Evrak Uyarisi Var"
+                              : "Firma Geneli Evrak Uyarisi Var"}
                         </strong>
-                        <p>Detay icin Eksik Evrak menusunden kontrol ediniz.</p>
+                        <p>
+                          {effectiveView === "company"
+                            ? "Firma geneli detay icin Eksik Evrak menusunden kontrol ediniz."
+                            : "Detay icin Eksik Evrak menusunden kontrol ediniz."}
+                        </p>
                         <div>
                           {relevantUnreachableDocumentCount > 0 ? (
                             <span className="goal-document-issue-badge">

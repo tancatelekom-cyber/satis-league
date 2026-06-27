@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
+import { APP_SESSION_COOKIE, APP_SESSION_DURATION_SECONDS, createAppSessionValue } from "@/lib/auth/app-session";
 import { getSupabasePublicEnv } from "@/lib/supabase/config";
-
-const APP_SESSION_COOKIE = "tanca_session";
 
 export async function POST(request: Request) {
   let accessToken = "";
@@ -50,11 +49,12 @@ export async function POST(request: Request) {
   }
 
   const response = NextResponse.json({ ok: true });
-  response.cookies.set(APP_SESSION_COOKIE, "active", {
+  response.cookies.set(APP_SESSION_COOKIE, createAppSessionValue(), {
     httpOnly: true,
     sameSite: "lax",
     secure: true,
-    path: "/"
+    path: "/",
+    maxAge: APP_SESSION_DURATION_SECONDS
   });
 
   return response;

@@ -1,10 +1,11 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { APP_SESSION_COOKIE, isAppSessionActive } from "@/lib/auth/app-session";
 import { createClient } from "@/lib/supabase/server";
 
 export async function requireUser() {
   const cookieStore = await cookies();
-  const hasAppSession = cookieStore.get("tanca_session")?.value === "active";
+  const hasAppSession = isAppSessionActive(cookieStore.get(APP_SESSION_COOKIE)?.value);
 
   if (!hasAppSession) {
     redirect("/giris");

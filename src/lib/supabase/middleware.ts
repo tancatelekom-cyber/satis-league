@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { APP_SESSION_COOKIE, isAppSessionActive } from "@/lib/auth/app-session";
 import { getSupabasePublicEnv } from "@/lib/supabase/config";
 
 const PUBLIC_ROUTES = new Set([
@@ -10,8 +11,6 @@ const PUBLIC_ROUTES = new Set([
   "/api/auth/confirm-session",
   "/api/auth/forgot-password"
 ]);
-const APP_SESSION_COOKIE = "tanca_session";
-
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({
     request
@@ -19,7 +18,8 @@ export async function updateSession(request: NextRequest) {
   const env = getSupabasePublicEnv();
   const pathname = request.nextUrl.pathname;
   const isPublicRoute = PUBLIC_ROUTES.has(pathname);
-  const hasAppSession = request.cookies.get(APP_SESSION_COOKIE)?.value === "active";
+  const appSessionCookie = request.cookies.get(APP_SESSION_COOKIE)?.value;
+  const hasAppSession = isAppSessionActive(appSessionCookie);
 
   if (!env) {
     return response;
@@ -66,7 +66,9 @@ export async function updateSession(request: NextRequest) {
     if (pathname !== "/") {
       redirectUrl.searchParams.set("next", pathname);
     }
-    return NextResponse.redirect(redirectUrl);
+    const redirectResponse = NextResponse.redirect(redirectUrl);
+    redirectResponse.cookies.delete(APP_SESSION_COOKIE);
+    return redirectResponse;
   }
 
   if (user && hasAppSession && isPublicRoute && pathname !== "/sifre-yenile") {

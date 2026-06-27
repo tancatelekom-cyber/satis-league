@@ -1118,8 +1118,19 @@ export default async function EmployeeAnalysisPage({ searchParams }: PageProps) 
                   {aboveStoreMetrics.length ? (
                     aboveStoreMetrics.map((metric) => (
                       <div key={`above-store-${metric.title}`} className="employee-analysis-comparison-item">
-                        <strong>{metric.title}</strong>
-                        <span>Tempo {formatPercent(metric.actualPercent)} | Sube farki {formatSignedPercent(metric.gap)}</span>
+                        <div className="employee-analysis-comparison-item-head">
+                          <strong>{metric.title}</strong>
+                          <b className="employee-analysis-comparison-badge employee-analysis-comparison-badge-good">
+                            {formatSignedPercent(metric.gap)}
+                          </b>
+                        </div>
+                        <div className="employee-analysis-comparison-meter">
+                          <i
+                            className="employee-analysis-comparison-meter-fill employee-analysis-comparison-meter-fill-good"
+                            style={{ width: `${clampValue(metric.actualPercent)}%` }}
+                          />
+                        </div>
+                        <span>Tempo {formatPercent(metric.actualPercent)} | Sube ortalamasinin ustunde</span>
                       </div>
                     ))
                   ) : (
@@ -1137,8 +1148,19 @@ export default async function EmployeeAnalysisPage({ searchParams }: PageProps) 
                   {aboveCompanyMetrics.length ? (
                     aboveCompanyMetrics.map((metric) => (
                       <div key={`above-company-${metric.title}`} className="employee-analysis-comparison-item">
-                        <strong>{metric.title}</strong>
-                        <span>Tempo {formatPercent(metric.actualPercent)} | Firma farki {formatSignedPercent(metric.gap)}</span>
+                        <div className="employee-analysis-comparison-item-head">
+                          <strong>{metric.title}</strong>
+                          <b className="employee-analysis-comparison-badge employee-analysis-comparison-badge-good">
+                            {formatSignedPercent(metric.gap)}
+                          </b>
+                        </div>
+                        <div className="employee-analysis-comparison-meter">
+                          <i
+                            className="employee-analysis-comparison-meter-fill employee-analysis-comparison-meter-fill-good"
+                            style={{ width: `${clampValue(metric.actualPercent)}%` }}
+                          />
+                        </div>
+                        <span>Tempo {formatPercent(metric.actualPercent)} | Firma ortalamasinin ustunde</span>
                       </div>
                     ))
                   ) : (
@@ -1156,8 +1178,19 @@ export default async function EmployeeAnalysisPage({ searchParams }: PageProps) 
                   {belowStoreMetrics.length ? (
                     belowStoreMetrics.map((metric) => (
                       <div key={`below-store-${metric.title}`} className="employee-analysis-comparison-item">
-                        <strong>{metric.title}</strong>
-                        <span>Tempo {formatPercent(metric.actualPercent)} | Sube farki {formatSignedPercent(metric.gap)}</span>
+                        <div className="employee-analysis-comparison-item-head">
+                          <strong>{metric.title}</strong>
+                          <b className="employee-analysis-comparison-badge employee-analysis-comparison-badge-critical">
+                            {formatSignedPercent(metric.gap)}
+                          </b>
+                        </div>
+                        <div className="employee-analysis-comparison-meter">
+                          <i
+                            className="employee-analysis-comparison-meter-fill employee-analysis-comparison-meter-fill-critical"
+                            style={{ width: `${clampValue(metric.actualPercent)}%` }}
+                          />
+                        </div>
+                        <span>Tempo {formatPercent(metric.actualPercent)} | Sube ortalamasinin altinda</span>
                       </div>
                     ))
                   ) : (
@@ -1175,8 +1208,19 @@ export default async function EmployeeAnalysisPage({ searchParams }: PageProps) 
                   {belowCompanyMetrics.length ? (
                     belowCompanyMetrics.map((metric) => (
                       <div key={`below-company-${metric.title}`} className="employee-analysis-comparison-item">
-                        <strong>{metric.title}</strong>
-                        <span>Tempo {formatPercent(metric.actualPercent)} | Firma farki {formatSignedPercent(metric.gap)}</span>
+                        <div className="employee-analysis-comparison-item-head">
+                          <strong>{metric.title}</strong>
+                          <b className="employee-analysis-comparison-badge employee-analysis-comparison-badge-critical">
+                            {formatSignedPercent(metric.gap)}
+                          </b>
+                        </div>
+                        <div className="employee-analysis-comparison-meter">
+                          <i
+                            className="employee-analysis-comparison-meter-fill employee-analysis-comparison-meter-fill-critical"
+                            style={{ width: `${clampValue(metric.actualPercent)}%` }}
+                          />
+                        </div>
+                        <span>Tempo {formatPercent(metric.actualPercent)} | Firma ortalamasinin altinda</span>
                       </div>
                     ))
                   ) : (

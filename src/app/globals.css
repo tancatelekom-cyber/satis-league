@@ -2352,6 +2352,89 @@ textarea::placeholder {
   font-weight: 800;
 }
 
+.employee-analysis-comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 16px;
+}
+
+.employee-analysis-comparison-card {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 22px;
+  border: 1px solid rgba(4, 92, 96, 0.14);
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.employee-analysis-comparison-card-good {
+  background: linear-gradient(135deg, rgba(236, 253, 245, 0.98), rgba(255, 255, 255, 0.96));
+  border-color: rgba(22, 163, 74, 0.22);
+}
+
+.employee-analysis-comparison-card-critical {
+  background: linear-gradient(135deg, rgba(255, 241, 242, 0.98), rgba(255, 255, 255, 0.96));
+  border-color: rgba(220, 38, 38, 0.18);
+}
+
+.employee-analysis-comparison-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.employee-analysis-comparison-head strong {
+  color: #10203b !important;
+  font-size: 1rem;
+  line-height: 1.25;
+}
+
+.employee-analysis-comparison-head span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  min-height: 34px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(4, 92, 96, 0.1);
+  color: #0b2143 !important;
+  font-size: 0.85rem;
+  font-weight: 900;
+}
+
+.employee-analysis-comparison-list {
+  display: grid;
+  gap: 10px;
+}
+
+.employee-analysis-comparison-item {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(4, 92, 96, 0.1);
+}
+
+.employee-analysis-comparison-item strong {
+  color: #10203b !important;
+  font-size: 0.94rem;
+}
+
+.employee-analysis-comparison-item span,
+.employee-analysis-comparison-empty {
+  color: #4f6684 !important;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.employee-analysis-comparison-empty {
+  margin: 0;
+}
+
 .employee-analysis-spotlight-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   margin-top: 14px;
@@ -8103,7 +8186,8 @@ textarea::placeholder {
   .employee-analysis-two-column,
   .employee-analysis-actions,
   .employee-analysis-spotlight-grid,
-  .employee-analysis-impact-grid {
+  .employee-analysis-impact-grid,
+  .employee-analysis-comparison-grid {
     grid-template-columns: 1fr;
   }
 
@@ -8122,7 +8206,8 @@ textarea::placeholder {
   }
 
   .employee-analysis-spotlight-head,
-  .employee-analysis-impact-head {
+  .employee-analysis-impact-head,
+  .employee-analysis-comparison-head {
     flex-direction: column;
     align-items: flex-start;
   }

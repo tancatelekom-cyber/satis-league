@@ -65,6 +65,12 @@ type RewardForecast = {
   nextReward: string | null;
 };
 
+type ComparisonBucketItem = {
+  title: string;
+  actualPercent: number | null;
+  gap: number | null;
+};
+
 type BranchImpactDirection = "lift" | "drag" | "balance";
 
 function buildHref(employeeId: string) {
@@ -642,6 +648,38 @@ export default async function EmployeeAnalysisPage({ searchParams }: PageProps) 
     .slice(0, 6);
   const rewardForecast = buildRewardForecast(categorySummaries, rewardRows, workedDays, totalDays);
   const insight = buildInsightSummary(mergedMetrics, rewardForecast);
+  const aboveStoreMetrics: ComparisonBucketItem[] = targetMetrics
+    .filter((metric) => (metric.storeActualGap ?? 0) > 0)
+    .sort((left, right) => (right.storeActualGap ?? 0) - (left.storeActualGap ?? 0))
+    .map((metric) => ({
+      title: metric.title,
+      actualPercent: metric.actualPercent,
+      gap: metric.storeActualGap
+    }));
+  const aboveCompanyMetrics: ComparisonBucketItem[] = targetMetrics
+    .filter((metric) => (metric.actualGap ?? 0) > 0)
+    .sort((left, right) => (right.actualGap ?? 0) - (left.actualGap ?? 0))
+    .map((metric) => ({
+      title: metric.title,
+      actualPercent: metric.actualPercent,
+      gap: metric.actualGap
+    }));
+  const belowStoreMetrics: ComparisonBucketItem[] = targetMetrics
+    .filter((metric) => (metric.storeActualGap ?? 0) < 0)
+    .sort((left, right) => (left.storeActualGap ?? 0) - (right.storeActualGap ?? 0))
+    .map((metric) => ({
+      title: metric.title,
+      actualPercent: metric.actualPercent,
+      gap: metric.storeActualGap
+    }));
+  const belowCompanyMetrics: ComparisonBucketItem[] = targetMetrics
+    .filter((metric) => (metric.actualGap ?? 0) < 0)
+    .sort((left, right) => (left.actualGap ?? 0) - (right.actualGap ?? 0))
+    .map((metric) => ({
+      title: metric.title,
+      actualPercent: metric.actualPercent,
+      gap: metric.actualGap
+    }));
 
   const employeeOptions = employeeProfiles.map((profile) => ({
     label: `${profile.fullName} | ${profile.storeName}`,
@@ -1061,6 +1099,91 @@ export default async function EmployeeAnalysisPage({ searchParams }: PageProps) 
                   </div>
                 );
               })}
+            </div>
+          </article>
+
+          <article className="admin-card">
+            <h3>Ortalama Karsilastirma Matrisi</h3>
+            <p className="employee-analysis-section-copy">
+              Kategoriler, secili calisanin sube ve firma ortalamasina gore ayri kutularda listelenir. Böylece hangi alanlarin yukari tasidigi ve hangilerinin geri kaldigi tek bakista gorulur.
+            </p>
+
+            <div className="employee-analysis-comparison-grid">
+              <section className="employee-analysis-comparison-card employee-analysis-comparison-card-good">
+                <div className="employee-analysis-comparison-head">
+                  <strong>Sube Ortalamasinin Ustunde Olan Kategoriler</strong>
+                  <span>{formatNumber(aboveStoreMetrics.length)}</span>
+                </div>
+                <div className="employee-analysis-comparison-list">
+                  {aboveStoreMetrics.length ? (
+                    aboveStoreMetrics.map((metric) => (
+                      <div key={`above-store-${metric.title}`} className="employee-analysis-comparison-item">
+                        <strong>{metric.title}</strong>
+                        <span>Tempo {formatPercent(metric.actualPercent)} | Sube farki {formatSignedPercent(metric.gap)}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="employee-analysis-comparison-empty">Sube ortalamasinin uzerinde kategori yok.</p>
+                  )}
+                </div>
+              </section>
+
+              <section className="employee-analysis-comparison-card employee-analysis-comparison-card-good">
+                <div className="employee-analysis-comparison-head">
+                  <strong>Firma Ortalamasinin Ustunde Olan Kategoriler</strong>
+                  <span>{formatNumber(aboveCompanyMetrics.length)}</span>
+                </div>
+                <div className="employee-analysis-comparison-list">
+                  {aboveCompanyMetrics.length ? (
+                    aboveCompanyMetrics.map((metric) => (
+                      <div key={`above-company-${metric.title}`} className="employee-analysis-comparison-item">
+                        <strong>{metric.title}</strong>
+                        <span>Tempo {formatPercent(metric.actualPercent)} | Firma farki {formatSignedPercent(metric.gap)}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="employee-analysis-comparison-empty">Firma ortalamasinin uzerinde kategori yok.</p>
+                  )}
+                </div>
+              </section>
+
+              <section className="employee-analysis-comparison-card employee-analysis-comparison-card-critical">
+                <div className="employee-analysis-comparison-head">
+                  <strong>Sube Ortalamasinin Altinda Olan Kategoriler</strong>
+                  <span>{formatNumber(belowStoreMetrics.length)}</span>
+                </div>
+                <div className="employee-analysis-comparison-list">
+                  {belowStoreMetrics.length ? (
+                    belowStoreMetrics.map((metric) => (
+                      <div key={`below-store-${metric.title}`} className="employee-analysis-comparison-item">
+                        <strong>{metric.title}</strong>
+                        <span>Tempo {formatPercent(metric.actualPercent)} | Sube farki {formatSignedPercent(metric.gap)}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="employee-analysis-comparison-empty">Sube ortalamasinin altinda kategori yok.</p>
+                  )}
+                </div>
+              </section>
+
+              <section className="employee-analysis-comparison-card employee-analysis-comparison-card-critical">
+                <div className="employee-analysis-comparison-head">
+                  <strong>Firma Ortalamasinin Altinda Olan Kategoriler</strong>
+                  <span>{formatNumber(belowCompanyMetrics.length)}</span>
+                </div>
+                <div className="employee-analysis-comparison-list">
+                  {belowCompanyMetrics.length ? (
+                    belowCompanyMetrics.map((metric) => (
+                      <div key={`below-company-${metric.title}`} className="employee-analysis-comparison-item">
+                        <strong>{metric.title}</strong>
+                        <span>Tempo {formatPercent(metric.actualPercent)} | Firma farki {formatSignedPercent(metric.gap)}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="employee-analysis-comparison-empty">Firma ortalamasinin altinda kategori yok.</p>
+                  )}
+                </div>
+              </section>
             </div>
           </article>
 

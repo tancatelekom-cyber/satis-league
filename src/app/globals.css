@@ -9533,42 +9533,47 @@ textarea::placeholder {
 
 .evaluation-zero-alert {
   display: grid;
-  gap: 10px;
-  padding: 16px;
-  border: 2px solid #b91c1c;
-  border-radius: 18px;
-  background: #fee2e2;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid rgba(185, 28, 28, 0.8);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255, 244, 244, 0.96), rgba(254, 226, 226, 0.9));
   color: #7f1d1d;
 }
 
 .evaluation-zero-alert strong {
   color: #7f1d1d;
-  font-size: 1.12rem;
-  font-weight: 950;
+  font-size: 0.98rem;
+  line-height: 1.25;
+  font-weight: 900;
   text-transform: uppercase;
 }
 
 .evaluation-zero-alert p {
   margin: 0;
   color: #991b1b;
-  font-weight: 950;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  font-weight: 800;
 }
 
 .evaluation-zero-alert div {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .evaluation-zero-alert span {
   display: inline-flex;
   align-items: center;
-  min-height: 34px;
-  padding: 7px 12px;
+  min-height: 28px;
+  padding: 5px 10px;
   border-radius: 999px;
   background: #b91c1c;
   color: #ffffff;
-  font-weight: 950;
+  font-size: 0.9rem;
+  line-height: 1;
+  font-weight: 850;
 }
 
 .evaluation-login-alert {
@@ -9651,6 +9656,53 @@ textarea::placeholder {
 .goal-document-issue-badge {
   animation: goalDocumentIssuePulse 1.2s ease-in-out infinite;
   box-shadow: 0 0 0 rgba(185, 28, 28, 0.32);
+}
+
+@media (max-width: 768px) {
+  .evaluation-zero-alert {
+    gap: 6px;
+    padding: 10px 10px;
+    border-radius: 12px;
+  }
+
+  .evaluation-zero-alert strong {
+    font-size: 0.82rem;
+    line-height: 1.2;
+  }
+
+  .evaluation-zero-alert p {
+    font-size: 0.74rem;
+    line-height: 1.35;
+  }
+
+  .evaluation-zero-alert div {
+    gap: 5px;
+  }
+
+  .evaluation-zero-alert span {
+    min-height: 24px;
+    padding: 4px 8px;
+    font-size: 0.72rem;
+  }
+
+  .evaluation-zero-store-card {
+    padding: 8px 10px;
+    border-radius: 12px;
+  }
+
+  .evaluation-zero-store-card > strong {
+    font-size: 0.78rem;
+  }
+
+  .evaluation-zero-store-card > div {
+    gap: 5px;
+  }
+
+  .goal-document-issue-link:hover,
+  .goal-document-issue-link:focus-visible {
+    transform: none;
+    box-shadow: none;
+  }
 }
 
 @keyframes goalDocumentIssuePulse {

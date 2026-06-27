@@ -1970,11 +1970,24 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
     : [];
   const activeStoreRows = activeStoreName ? filteredStoreRows.filter((row) => row.storeCode === activeStoreName) : [];
   const activeEmployeeStoreCode = resolveStoreCodeFromEmployeeRows(activeEmployeeRows, storeNames, currentUserStoreName);
+  const employeeScopedStoreCode = activeEmployeeStoreCode || currentUserStoreName;
   const employeeCategorySummaries = buildCategorySummaries(activeEmployeeCoreRows, dayStats.workedDays, dayStats.totalDays);
   const employeeLivePrimeCategorySummaries = buildCategorySummaries(
     activeEmployeeRows.filter((row) => isLivePrimeCategory(row.mainCategory)),
     dayStats.workedDays,
     dayStats.totalDays
+  );
+  const employeeStoreRows = employeeScopedStoreCode
+    ? filteredStoreRows.filter((row) => normalizeStoreKey(row.storeCode) === normalizeStoreKey(employeeScopedStoreCode))
+    : [];
+  const employeeStoreCategorySummaries = buildStoreCategorySummaries(
+    employeeStoreRows,
+    dayStats.workedDays,
+    dayStats.totalDays
+  );
+  const employeeStoreDailyNeedSummaryRows = buildStoreDailyNeedSummaryRows(
+    employeeStoreCategorySummaries,
+    dayStats.remainingDays
   );
   const storeCategorySummaries = buildStoreCategorySummaries(activeStoreRows, dayStats.workedDays, dayStats.totalDays);
   const activeStoreEmployeeRows = activeStoreName
@@ -2604,6 +2617,21 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                       rows={companyDailyNeedSummaryRows}
                       visibleTrendStoreCodes={visibleTrendStoreCodes}
                     />
+                  </div>
+                ) : null}
+
+                {effectiveView === "employee" ? (
+                  <div className="goal-company-trend-panel">
+                    <div className="goal-live-prime-head">
+                      <h3>Sube Gunluk Ihtiyaclari</h3>
+                      <span>Kendi subenin hedefli kalemler icin gunluk gereken adet / tutar</span>
+                    </div>
+
+                    {employeeStoreDailyNeedSummaryRows.length ? (
+                      <StoreDailyNeedsTable rows={employeeStoreDailyNeedSummaryRows} />
+                    ) : (
+                      <p className="subtle">Bu sube icin hedef tanimli kalem bulunamadi.</p>
+                    )}
                   </div>
                 ) : null}
 

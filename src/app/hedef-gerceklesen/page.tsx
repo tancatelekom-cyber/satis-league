@@ -170,12 +170,13 @@ type CompanyCurrentSummaryRow = {
 type CompanyDailyNeedSummaryRow = {
   title: string;
   groupKey: string;
+  rowKey: string;
   level: number;
   hasChildren: boolean;
-  companyDailyNeed: number | null;
+  cells: GoalNeedRow[];
   stores: Array<{
     storeCode: string;
-    dailyNeed: number | null;
+    cells: GoalNeedRow[];
   }>;
 };
 
@@ -1063,33 +1064,20 @@ function buildCompanyDailyNeedSummaryRows(
       const stores = Array.from(storeMap.entries())
         .map(([storeCode, rows]) => {
           const summary = buildStoreMetricSummary(rows, workedDays, totalDays);
-          const dailyNeed =
-            summary.remaining !== null
-              ? remainingDays > 0
-                ? Math.ceil(Math.max(summary.remaining, 0) / remainingDays)
-                : Math.ceil(Math.max(summary.remaining, 0))
-              : null;
-
           return {
             storeCode,
-            dailyNeed
+            cells: buildNeedRows(summary, remainingDays)
           };
         })
         .sort((a, b) => a.storeCode.localeCompare(b.storeCode, "tr"));
 
-      const companyDailyNeed =
-        category.remaining !== null
-          ? remainingDays > 0
-            ? Math.ceil(Math.max(category.remaining, 0) / remainingDays)
-            : Math.ceil(Math.max(category.remaining, 0))
-          : null;
-
       const parentRow = {
         title: category.title,
         groupKey: category.title,
+        rowKey: category.title,
         level: 0,
         hasChildren: category.children.length > 0,
-        companyDailyNeed,
+        cells: buildNeedRows(category, remainingDays),
         stores
       } satisfies CompanyDailyNeedSummaryRow;
 
@@ -1109,33 +1097,20 @@ function buildCompanyDailyNeedSummaryRows(
           const childStores = Array.from(childStoreMap.entries())
             .map(([storeCode, rows]) => {
               const summary = buildStoreMetricSummary(rows, workedDays, totalDays);
-              const dailyNeed =
-                summary.remaining !== null
-                  ? remainingDays > 0
-                    ? Math.ceil(Math.max(summary.remaining, 0) / remainingDays)
-                    : Math.ceil(Math.max(summary.remaining, 0))
-                  : null;
-
               return {
                 storeCode,
-                dailyNeed
+                cells: buildNeedRows(summary, remainingDays)
               };
             })
             .sort((a, b) => a.storeCode.localeCompare(b.storeCode, "tr"));
 
-          const childCompanyDailyNeed =
-            child.remaining !== null
-              ? remainingDays > 0
-                ? Math.ceil(Math.max(child.remaining, 0) / remainingDays)
-                : Math.ceil(Math.max(child.remaining, 0))
-              : null;
-
           return {
             title: child.title,
             groupKey: category.title,
+            rowKey: `${category.title}::${child.title}`,
             level: 1,
             hasChildren: false,
-            companyDailyNeed: childCompanyDailyNeed,
+            cells: buildNeedRows(child, remainingDays),
             stores: childStores
           } satisfies CompanyDailyNeedSummaryRow;
         });
@@ -1359,7 +1334,10 @@ function canViewAllGoalActual(role: UserRole | string | null | undefined) {
   return role === "admin" || role === "management" || role === "manager";
 }
 
-function buildNeedRows(summary: GoalCategorySummary, remainingDays: number): GoalNeedRow[] {
+function buildNeedRows(
+  summary: Pick<GoalMetricSummary, "hasTarget" | "target" | "actual">,
+  remainingDays: number
+): GoalNeedRow[] {
   if (!summary.hasTarget || !summary.target) {
     return [];
   }
@@ -1395,14 +1373,7 @@ function buildStoreDailyNeedSummaryRows(categories: GoalCategorySummary[], remai
           groupKey: category.title,
           level: 1,
           hasChildren: false,
-          cells: buildNeedRows(
-            {
-              ...child,
-              childCount: 0,
-              children: []
-            } satisfies GoalCategorySummary,
-            remainingDays
-          )
+          cells: buildNeedRows(child, remainingDays)
         } satisfies StoreDailyNeedSummaryRow));
 
       return [parentRow, ...childRows];

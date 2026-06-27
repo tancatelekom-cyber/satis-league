@@ -596,6 +596,31 @@ function formatPercent(value: number | null | undefined) {
   })}`;
 }
 
+function formatRewardValue(value: string | null | undefined) {
+  if (!value) {
+    return "-";
+  }
+
+  const normalized = value.trim().replace(/\./g, "").replace(",", ".");
+  if (/^\d+(\.\d+)?$/.test(normalized)) {
+    return formatNumber(Number(normalized));
+  }
+
+  return value;
+}
+
+function getProductionRewardStatus(row: ProductionRewardPlanRow) {
+  if (row.isCurrentProjectedTier) {
+    return { full: "Ay sonu ongorusu", short: "◎" };
+  }
+
+  if (row.isReached) {
+    return { full: "Asildi", short: "✓" };
+  }
+
+  return { full: "Ust skala", short: "↑" };
+}
+
 function buildEmployeeSummary(rows: GoalActualRow[], workedDays: number, totalDays: number): EmployeeSummary {
   const totalTarget = rows.reduce((sum, row) => sum + (row.target ?? 0), 0);
   const totalActual = rows.reduce((sum, row) => sum + row.actual, 0);
@@ -1542,7 +1567,7 @@ function GoalCategoryCards({
                   </span>
                   <span>
                     <small>Siradaki kazanim</small>
-                    <strong>{productionRewardPlan.nextReward ?? "Son skala"}</strong>
+                    <strong>{productionRewardPlan.nextReward ? formatRewardValue(productionRewardPlan.nextReward) : "Son skala"}</strong>
                   </span>
                 </div>
 
@@ -1563,11 +1588,25 @@ function GoalCategoryCards({
                           key={`${category.title}-reward-${row.points}`}
                           className={row.isCurrentProjectedTier ? "goal-production-reward-row-active" : ""}
                         >
+                          {(() => {
+                            const status = getProductionRewardStatus(row);
+                            return (
+                              <>
                           <td>{formatNumber(row.points)}</td>
-                          <td>{row.reward}</td>
-                          <td>{row.isCurrentProjectedTier ? "Ay sonu ongorusu" : row.isReached ? "Asildi" : "Ust skala"}</td>
+                          <td>{formatRewardValue(row.reward)}</td>
+                          <td>
+                            <span className="goal-production-reward-status">
+                              <span className="goal-production-reward-status-full">{status.full}</span>
+                              <span className="goal-production-reward-status-short" aria-hidden="true">
+                                {status.short}
+                              </span>
+                            </span>
+                          </td>
                           <td>{formatNumber(row.remainingFromActual)}</td>
                           <td>{formatNumber(row.dailyRequired)}</td>
+                              </>
+                            );
+                          })()}
                         </tr>
                       ))}
                     </tbody>
@@ -1775,7 +1814,7 @@ function EmployeeGoalCategoryTable({
                       </span>
                       <span>
                         <small>Siradaki kazanim</small>
-                        <strong>{productionRewardPlan.nextReward ?? "Son skala"}</strong>
+                        <strong>{productionRewardPlan.nextReward ? formatRewardValue(productionRewardPlan.nextReward) : "Son skala"}</strong>
                       </span>
                     </div>
 
@@ -1796,11 +1835,25 @@ function EmployeeGoalCategoryTable({
                               key={`${category.title}-reward-${row.points}`}
                               className={row.isCurrentProjectedTier ? "goal-production-reward-row-active" : ""}
                             >
-                              <td>{formatNumber(row.points)}</td>
-                              <td>{row.reward}</td>
-                              <td>{row.isCurrentProjectedTier ? "Ay sonu ongorusu" : row.isReached ? "Asildi" : "Ust skala"}</td>
-                              <td>{formatNumber(row.remainingFromActual)}</td>
-                              <td>{formatNumber(row.dailyRequired)}</td>
+                              {(() => {
+                                const status = getProductionRewardStatus(row);
+                                return (
+                                  <>
+                                    <td>{formatNumber(row.points)}</td>
+                                    <td>{formatRewardValue(row.reward)}</td>
+                                    <td>
+                                      <span className="goal-production-reward-status">
+                                        <span className="goal-production-reward-status-full">{status.full}</span>
+                                        <span className="goal-production-reward-status-short" aria-hidden="true">
+                                          {status.short}
+                                        </span>
+                                      </span>
+                                    </td>
+                                    <td>{formatNumber(row.remainingFromActual)}</td>
+                                    <td>{formatNumber(row.dailyRequired)}</td>
+                                  </>
+                                );
+                              })()}
                             </tr>
                           ))}
                         </tbody>

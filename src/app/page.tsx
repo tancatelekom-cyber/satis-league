@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth/require-user";
 import { getCampaignDashboardData } from "@/lib/campaign/get-campaign-dashboard-data";
-import { fetchDocumentIssueRows, sameDocumentIssueProfileId } from "@/lib/document-issues";
+import { fetchDocumentIssueRows, sameDocumentIssueProfileId, sameDocumentIssueStore } from "@/lib/document-issues";
 import { getActivePopupAnnouncementsForProfile, type PopupAnnouncementRecord } from "@/lib/popup-announcements";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { SeasonRecord, type UserRole } from "@/lib/types";
@@ -59,10 +59,21 @@ function buildMonthHref(seasonId: string, monthKey: string) {
   return `/lig?seasonId=${seasonId}&period=month&year=${year}&month=${monthKey}`;
 }
 
+function getProfileStoreName(
+  store: Array<{ name: string }> | { name: string } | null | undefined
+) {
+  if (Array.isArray(store)) {
+    return store[0]?.name ?? null;
+  }
+
+  return store?.name ?? null;
+}
+
 function buildDocumentIssuePopup(
   fullName: string,
   unreachableCount: number,
-  missingCount: number
+  missingCount: number,
+  scope: "employee" | "store" | "company"
 ): PopupAnnouncementRecord | null {
   const total = unreachableCount + missingCount;
 
@@ -73,10 +84,22 @@ function buildDocumentIssuePopup(
   const lines: string[] = [`Sayin ${fullName},`];
 
   if (unreachableCount > 0) {
-    lines.push(`Ulasmayan evrak adetiniz: ${unreachableCount}`);
+    lines.push(
+      scope === "employee"
+        ? `Ulasmayan evrak adetiniz: ${unreachableCount}`
+        : scope === "store"
+          ? `Magazaniza ait ulasmayan evrak adedi: ${unreachableCount}`
+          : `Firma geneli ulasmayan evrak adedi: ${unreachableCount}`
+    );
   }
   if (missingCount > 0) {
-    lines.push(`Eksik evrak adetiniz: ${missingCount}`);
+    lines.push(
+      scope === "employee"
+        ? `Eksik evrak adetiniz: ${missingCount}`
+        : scope === "store"
+          ? `Magazaniza ait eksik evrak adedi: ${missingCount}`
+          : `Firma geneli eksik evrak adedi: ${missingCount}`
+    );
   }
 
   lines.push("Lutfen onceliklerimiz arasina alalim ve bugun tamamlamak icin gerekli aksiyonlari alalim.");
@@ -87,7 +110,7 @@ function buildDocumentIssuePopup(
     body: lines.join("\n"),
     image_path: null,
     imageUrl: null,
-    target_roles: ["employee"] satisfies UserRole[],
+    target_roles: ["employee", "manager", "management", "admin"] satisfies UserRole[],
     show_from: new Date().toISOString(),
     show_until: new Date().toISOString(),
     is_active: true,
@@ -130,14 +153,34 @@ export default async function HomePage() {
       ? getActivePopupAnnouncementsForProfile(campaignDashboard.profile)
       : Promise.resolve([]);
   const documentIssuePopupPromise =
-    campaignDashboard?.profile.approval === "approved" && campaignDashboard.profile.role === "employee"
+    campaignDashboard?.profile.approval === "approved"
       ? (async () => {
           try {
             const rows = await fetchDocumentIssueRows();
-            const ownRows = rows.filter((row) => sameDocumentIssueProfileId(row.personnelId, user.id));
-            const unreachableCount = ownRows.filter((row) => row.source === "Ulasmayan Evrak").length;
-            const missingCount = ownRows.filter((row) => row.source === "Eksik Evrak").length;
-            return buildDocumentIssuePopup(campaignDashboard.profile.full_name || "Calisan", unreachableCount, missingCount);
+            const role = campaignDashboard.profile.role;
+            const fullName = campaignDashboard.profile.full_name || "Calisan";
+            const storeName = getProfileStoreName(
+              campaignDashboard.profile.store as Array<{ name: string }> | { name: string } | null | undefined
+            );
+
+            const scopedRows =
+              role === "employee"
+                ? rows.filter((row) => sameDocumentIssueProfileId(row.personnelId, user.id))
+                : role === "manager"
+                  ? storeName
+                    ? rows.filter((row) => sameDocumentIssueStore(row.storeName, storeName))
+                    : []
+                  : rows;
+
+            const unreachableCount = scopedRows.filter((row) => row.source === "Ulasmayan Evrak").length;
+            const missingCount = scopedRows.filter((row) => row.source === "Eksik Evrak").length;
+
+            return buildDocumentIssuePopup(
+              fullName,
+              unreachableCount,
+              missingCount,
+              role === "employee" ? "employee" : role === "manager" ? "store" : "company"
+            );
           } catch {
             return null;
           }

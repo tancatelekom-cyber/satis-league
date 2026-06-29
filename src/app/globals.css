@@ -10452,6 +10452,88 @@ textarea::placeholder {
   color: #24425d;
 }
 
+.manager-prime-page .page-title {
+  color: #10203b;
+}
+
+.manager-prime-page .page-subtitle {
+  color: #39506f;
+}
+
+.manager-prime-page .guide-card.game-brief-card,
+.manager-prime-page .campaign-section-card {
+  border: 1px solid rgba(4, 92, 96, 0.16);
+  background: linear-gradient(180deg, rgba(18, 110, 116, 0.92), rgba(21, 123, 129, 0.9));
+  box-shadow: 0 18px 36px rgba(8, 22, 40, 0.14);
+}
+
+.manager-prime-page .goal-panel-title,
+.manager-prime-page .goal-panel-subtitle,
+.manager-prime-page .campaign-section-card p,
+.manager-prime-page .campaign-section-card span,
+.manager-prime-page .guide-card.game-brief-card p,
+.manager-prime-page .guide-card.game-brief-card span,
+.manager-prime-page .guide-card.game-brief-card label > span {
+  color: #f5fbff !important;
+}
+
+.manager-prime-page .campaign-summary-card {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.manager-prime-page .campaign-summary-card strong {
+  color: #ffffff;
+}
+
+.manager-prime-page .manager-prime-table {
+  min-width: 0;
+  table-layout: fixed;
+}
+
+.manager-prime-page .manager-prime-table th,
+.manager-prime-page .manager-prime-table td {
+  padding: 9px 8px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  line-height: 1.12;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.manager-prime-page .manager-prime-table thead th {
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.08;
+}
+
+.manager-prime-page .manager-prime-table tbody th,
+.manager-prime-page .manager-prime-table tfoot th {
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.08;
+  white-space: normal;
+}
+
+.manager-prime-page .manager-prime-table tbody td,
+.manager-prime-page .manager-prime-table tfoot td {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #173250;
+}
+
+.manager-prime-page .manager-prime-table tbody td:has(.web-kontor-scale-badge),
+.manager-prime-page .manager-prime-table tbody td.goal-company-trend-good,
+.manager-prime-page .manager-prime-table tfoot td.goal-company-trend-good {
+  color: #0b6b57;
+}
+
+.manager-prime-page .manager-prime-table tbody td.goal-company-trend-bad,
+.manager-prime-page .manager-prime-table tfoot td.goal-company-trend-bad {
+  color: #9b1c1c;
+}
+
 @media (max-width: 760px) {
   .goal-company-trend-table-wrap {
     overflow-x: hidden;
@@ -10810,6 +10892,73 @@ textarea::placeholder {
   .goal-store-production-table td span {
     font-size: 0.64rem;
   }
+
+  .manager-prime-page .page-title {
+    font-size: clamp(1.8rem, 7vw, 2.45rem);
+    margin-bottom: 8px;
+  }
+
+  .manager-prime-page .page-subtitle {
+    font-size: 0.92rem;
+    margin-bottom: 18px;
+  }
+
+  .manager-prime-page .guide-card.game-brief-card,
+  .manager-prime-page .campaign-section-card {
+    padding: 16px;
+  }
+
+  .manager-prime-page .goal-section-head {
+    align-items: flex-start;
+  }
+
+  .manager-prime-page .goal-panel-title {
+    font-size: 1.08rem !important;
+    line-height: 1.08;
+  }
+
+  .manager-prime-page .goal-panel-subtitle,
+  .manager-prime-page .campaign-section-card p,
+  .manager-prime-page .guide-card.game-brief-card p,
+  .manager-prime-page .guide-card.game-brief-card label > span {
+    font-size: 0.76rem !important;
+    line-height: 1.25;
+  }
+
+  .manager-prime-page .campaign-summary-card {
+    padding: 12px;
+  }
+
+  .manager-prime-page .campaign-summary-card strong {
+    font-size: 0.94rem;
+    line-height: 1.14;
+  }
+
+  .manager-prime-page .manager-prime-table th,
+  .manager-prime-page .manager-prime-table td {
+    padding: 5px 3px;
+    font-size: 0.54rem;
+    font-weight: 500;
+    line-height: 1.02;
+  }
+
+  .manager-prime-page .manager-prime-table thead th {
+    font-size: 0.5rem;
+    font-weight: 700;
+    letter-spacing: 0;
+  }
+
+  .manager-prime-page .manager-prime-table tbody th,
+  .manager-prime-page .manager-prime-table tfoot th {
+    font-size: 0.54rem;
+    font-weight: 700;
+  }
+
+  .manager-prime-page .manager-prime-table tbody td,
+  .manager-prime-page .manager-prime-table tfoot td {
+    font-size: 0.56rem;
+    font-weight: 500;
+  }
 }
 
 @media (max-width: 420px) {
@@ -10837,6 +10986,26 @@ textarea::placeholder {
   .web-kontor-scale-badge {
     padding: 4px 6px !important;
     font-size: 0.52rem !important;
+  }
+
+  .manager-prime-page .manager-prime-table th,
+  .manager-prime-page .manager-prime-table td {
+    padding: 4px 2px;
+    font-size: 0.5rem;
+  }
+
+  .manager-prime-page .manager-prime-table thead th {
+    font-size: 0.46rem;
+  }
+
+  .manager-prime-page .manager-prime-table tbody th,
+  .manager-prime-page .manager-prime-table tfoot th {
+    font-size: 0.5rem;
+  }
+
+  .manager-prime-page .manager-prime-table tbody td,
+  .manager-prime-page .manager-prime-table tfoot td {
+    font-size: 0.52rem;
   }
 }
 

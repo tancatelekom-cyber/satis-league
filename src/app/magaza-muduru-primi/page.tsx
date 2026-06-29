@@ -185,7 +185,7 @@ export default async function ManagerPrimePage({ searchParams }: PageProps) {
 
   if (!visibleManagers.length) {
     return (
-      <main>
+      <main className="manager-prime-page">
         <h1 className="page-title">Magaza Muduru Prim Kazanimi</h1>
         <p className="page-subtitle">Gosterilecek magaza veya magaza muduru kaydi bulunamadi.</p>
       </main>
@@ -198,7 +198,7 @@ export default async function ManagerPrimePage({ searchParams }: PageProps) {
 
   if (!summary) {
     return (
-      <main>
+      <main className="manager-prime-page">
         <h1 className="page-title">Magaza Muduru Prim Kazanimi</h1>
         <p className="page-subtitle">{selectedManager.storeName} icin hedef gerceklesen verisi bulunamadi.</p>
       </main>
@@ -206,7 +206,7 @@ export default async function ManagerPrimePage({ searchParams }: PageProps) {
   }
 
   return (
-    <main>
+    <main className="manager-prime-page">
       <h1 className="page-title">Magaza Muduru Prim Kazanimi</h1>
       <p className="page-subtitle">
         Magaza mudurunun mevcut temposuna ve ay sonu gidisatina gore mevcut prim ile ay sonu prim ongorusu hesaplanir.
@@ -287,7 +287,7 @@ export default async function ManagerPrimePage({ searchParams }: PageProps) {
         </div>
 
         <div style={{ overflowX: "auto" }}>
-          <table className="goal-company-trend-table">
+          <table className="goal-company-trend-table manager-prime-table">
             <thead>
               <tr>
                 <th>Kategori</th>
@@ -359,7 +359,7 @@ export default async function ManagerPrimePage({ searchParams }: PageProps) {
         </div>
 
         <div style={{ overflowX: "auto" }}>
-          <table className="goal-company-trend-table">
+          <table className="goal-company-trend-table manager-prime-table">
             <thead>
               <tr>
                 <th>Kategori</th>

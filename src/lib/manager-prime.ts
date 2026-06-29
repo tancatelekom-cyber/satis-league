@@ -411,8 +411,8 @@ export async function buildManagerPrimeSummary(managerName: string, storeName: s
     accessory: buildMetric("accessory", managerRows, dayStats, settings.accessoryCategory)
   } satisfies Record<ManagerPrimeMetricKey, ManagerPrimeMetric>;
 
-  const currentRecontractMultiplier = Math.max(0, metrics.recontract.actualTempo / 100);
-  const projectedRecontractMultiplier = Math.max(0, metrics.recontract.projectedTempo / 100);
+  const currentRecontractMultiplier = Math.min(1, Math.max(0, metrics.recontract.actualTempo / 100));
+  const projectedRecontractMultiplier = Math.min(1, Math.max(0, metrics.recontract.projectedTempo / 100));
 
   const recontractCurrentScale = findScaleRow(sheetRows, metrics.recontract.actualTempo);
   const recontractProjectedScale = findScaleRow(sheetRows, metrics.recontract.projectedTempo);
@@ -515,7 +515,7 @@ export async function buildManagerPrimeSummary(managerName: string, storeName: s
       let estimatedIncrease = 0;
 
       if (key === "recontract") {
-        const nextMultiplier = nextScale.thresholdPercent / 100;
+        const nextMultiplier = Math.min(1, nextScale.thresholdPercent / 100);
         const nextRecontractBaseValue = nextScale.recontractReward;
         const nextNonAccessoryBaseTotal =
           projectedNonAccessoryBaseTotal - projectedRecontractBaseValue + nextRecontractBaseValue;

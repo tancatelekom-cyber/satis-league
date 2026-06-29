@@ -9,6 +9,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { UserRole } from "@/lib/types";
 import { unlockManagerPrimePage } from "./actions";
+import { ManagerPrimeAccessWatcher } from "./access-watcher";
 import { MANAGER_PRIME_ACCESS_COOKIE } from "./constants";
 
 type PageProps = {
@@ -252,6 +253,7 @@ export default async function ManagerPrimePage({ searchParams }: PageProps) {
 
   return (
     <main className="manager-prime-page">
+      <ManagerPrimeAccessWatcher />
       <h1 className="page-title">Magaza Muduru Prim Kazanimi</h1>
       <p className="page-subtitle">
         Magaza mudurunun mevcut temposuna ve ay sonu gidisatina gore mevcut prim ile ay sonu prim ongorusu hesaplanir.

@@ -213,6 +213,22 @@ export default async function ManagerPrimePage({ searchParams }: PageProps) {
       </p>
 
       <section className="guide-card game-brief-card" style={{ display: "grid", gap: 18 }}>
+        {safeProfile.role !== "manager" ? (
+          <div className="admin-form manager-prime-selector-form">
+            <label className="field">
+              <span>Magaza Muduru Secimi</span>
+              <FilterSelectNav
+                ariaLabel="Magaza muduru secimi"
+                value={buildManagerHref(selectedManager.id)}
+                options={visibleManagers.map((item) => ({
+                  label: `${item.storeName} | ${item.managerName}`,
+                  value: buildManagerHref(item.id)
+                }))}
+              />
+            </label>
+          </div>
+        ) : null}
+
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 14 }}>
           <article className="campaign-summary-card">
             <span>Secili Mudur</span>
@@ -258,22 +274,6 @@ export default async function ManagerPrimePage({ searchParams }: PageProps) {
             <p>Aksesuar karlilik ay sonu bagimsiz prim ongorusu.</p>
           </article>
         </div>
-
-        {safeProfile.role !== "manager" ? (
-          <div className="admin-form">
-            <label className="field">
-              <span>Magaza Muduru Secimi</span>
-              <FilterSelectNav
-                ariaLabel="Magaza muduru secimi"
-                value={buildManagerHref(selectedManager.id)}
-                options={visibleManagers.map((item) => ({
-                  label: `${item.storeName} | ${item.managerName}`,
-                  value: buildManagerHref(item.id)
-                }))}
-              />
-            </label>
-          </div>
-        ) : null}
       </section>
 
       <section className="campaign-section-card" style={{ display: "grid", gap: 16 }}>

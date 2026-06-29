@@ -1533,6 +1533,10 @@ function isSepeteTaksitCategory(title: string | null | undefined) {
   return normalizeCategoryKey(String(title ?? "")).includes("SEPETE TAKSIT");
 }
 
+function isSepeteTaksitHaricCategory(title: string | null | undefined) {
+  return normalizeCategoryKey(String(title ?? "")).includes("SEPETE TAKSIT HARIC");
+}
+
 function findLivePrimeAccessoryRate(
   scaleRows: GoalLivePrimeSettings["accessoryScaleRows"],
   tempoPercent: number | null | undefined
@@ -1555,6 +1559,13 @@ function resolveAccessoryBase(
 ) {
   if (!category) {
     return 0;
+  }
+
+  const sepeteTaksitHaricRow = category.children.find((child) => isSepeteTaksitHaricCategory(child.title));
+  if (sepeteTaksitHaricRow) {
+    return valueKey === "actual"
+      ? sepeteTaksitHaricRow.actual
+      : (sepeteTaksitHaricRow.projectedActual ?? sepeteTaksitHaricRow.actual);
   }
 
   const totalValue = valueKey === "actual" ? category.actual : (category.projectedActual ?? category.actual);

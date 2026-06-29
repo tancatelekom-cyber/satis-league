@@ -1557,14 +1557,19 @@ function resolveAccessoryBase(
     return 0;
   }
 
-  const relevantChildren = category.children.filter((child) => !isSepeteTaksitCategory(child.title));
-  const childTotal = relevantChildren.reduce((sum, child) => sum + (valueKey === "actual" ? child.actual : (child.projectedActual ?? child.actual)), 0);
+  const totalValue = valueKey === "actual" ? category.actual : (category.projectedActual ?? category.actual);
+  const sepeteTaksitTotal = category.children
+    .filter((child) => isSepeteTaksitCategory(child.title))
+    .reduce((sum, child) => sum + (valueKey === "actual" ? child.actual : (child.projectedActual ?? child.actual)), 0);
+  const nonSepeteChildTotal = category.children
+    .filter((child) => !isSepeteTaksitCategory(child.title))
+    .reduce((sum, child) => sum + (valueKey === "actual" ? child.actual : (child.projectedActual ?? child.actual)), 0);
 
-  if (childTotal > 0) {
-    return childTotal;
+  if (nonSepeteChildTotal > 0) {
+    return nonSepeteChildTotal;
   }
 
-  return valueKey === "actual" ? category.actual : (category.projectedActual ?? category.actual);
+  return Math.max(totalValue - sepeteTaksitTotal, 0);
 }
 
 function buildEmployeePrimeForecast(

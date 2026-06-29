@@ -1549,6 +1549,24 @@ function findLivePrimeAccessoryRate(
   );
 }
 
+function resolveAccessoryBase(
+  category: GoalCategorySummary | undefined,
+  valueKey: "actual" | "projectedActual"
+) {
+  if (!category) {
+    return 0;
+  }
+
+  const relevantChildren = category.children.filter((child) => !isSepeteTaksitCategory(child.title));
+  const childTotal = relevantChildren.reduce((sum, child) => sum + (valueKey === "actual" ? child.actual : (child.projectedActual ?? child.actual)), 0);
+
+  if (childTotal > 0) {
+    return childTotal;
+  }
+
+  return valueKey === "actual" ? category.actual : (category.projectedActual ?? category.actual);
+}
+
 function buildEmployeePrimeForecast(
   employeeCategories: GoalCategorySummary[],
   employeeLivePrimeCategories: GoalCategorySummary[],
@@ -1576,14 +1594,8 @@ function buildEmployeePrimeForecast(
   const accessoryCategory = employeeCategories.find(
     (category) => normalizeCategoryKey(category.title) === normalizeCategoryKey("AKSESUAR KARLILIK")
   );
-  const accessoryChildren = accessoryCategory?.children ?? [];
-  const accessoryRelevantChildren = accessoryChildren.filter((child) => !isSepeteTaksitCategory(child.title));
-  const accessoryCurrentBase = accessoryRelevantChildren.length
-    ? accessoryRelevantChildren.reduce((sum, child) => sum + child.actual, 0)
-    : 0;
-  const accessoryProjectedBase = accessoryRelevantChildren.length
-    ? accessoryRelevantChildren.reduce((sum, child) => sum + (child.projectedActual ?? child.actual), 0)
-    : 0;
+  const accessoryCurrentBase = resolveAccessoryBase(accessoryCategory, "actual");
+  const accessoryProjectedBase = resolveAccessoryBase(accessoryCategory, "projectedActual");
   const accessoryCurrentRate = findLivePrimeAccessoryRate(
     livePrimeSettings.accessoryScaleRows,
     accessoryCategory?.actualPercent ?? null

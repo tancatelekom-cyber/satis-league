@@ -2470,15 +2470,21 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
   const employeeAccessoryCategory = employeeCategorySummaries.find(
     (category) => normalizeCategoryKey(category.title) === normalizeCategoryKey("AKSESUAR KARLILIK")
   );
-  const employeePrimeForecast =
-    effectiveView === "employee" && employeeCategorySummaries.length
-      ? buildEmployeePrimeForecast(
-          employeeCategorySummaries,
-          employeeLivePrimeCategorySummaries,
-          productionRewardRows,
-          livePrimeSettings
-        )
-      : null;
+    const employeePrimeForecast =
+      effectiveView === "employee" && employeeCategorySummaries.length
+        ? buildEmployeePrimeForecast(
+            employeeCategorySummaries,
+            employeeLivePrimeCategorySummaries,
+            productionRewardRows,
+            livePrimeSettings
+          )
+        : null;
+    const employeePrimeSubtotalCurrent = employeePrimeForecast
+      ? employeePrimeForecast.productionCurrentReward + employeePrimeForecast.accessoryCurrentReward
+      : 0;
+    const employeePrimeSubtotalProjected = employeePrimeForecast
+      ? employeePrimeForecast.productionProjectedReward + employeePrimeForecast.accessoryProjectedReward
+      : 0;
   const employeeStoreRows = employeeScopedStoreCode
     ? filteredStoreRows.filter((row) => normalizeStoreKey(row.storeCode) === normalizeStoreKey(employeeScopedStoreCode))
     : [];
@@ -3152,9 +3158,15 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                       <span>Uretim puani, canli prim ve aksesuar karlilik bazli mevcut ve ay sonu prim tahmini</span>
                     </div>
 
-                    <div className="goal-company-trend-table-wrap">
-                      <table className="goal-company-trend-table goal-employee-prime-forecast-table">
-                        <thead>
+                      <div className="goal-company-trend-table-wrap">
+                        <table className="goal-company-trend-table goal-employee-prime-forecast-table">
+                          <colgroup>
+                            <col className="goal-employee-prime-forecast-col-label" />
+                            <col className="goal-employee-prime-forecast-col-current" />
+                            <col className="goal-employee-prime-forecast-col-projected" />
+                            <col className="goal-employee-prime-forecast-col-note" />
+                          </colgroup>
+                          <thead>
                           <tr>
                             <th>Kalem</th>
                             <th>Mevcut</th>
@@ -3167,9 +3179,26 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                             <th>Uretim Puani Kazanimi</th>
                             <td>{formatCurrency(employeePrimeForecast.productionCurrentReward)}</td>
                             <td>{formatCurrency(employeePrimeForecast.productionProjectedReward)}</td>
+                            <td>Mevcut skala ve ay sonu puan ongorusu esas alindi.</td>
+                          </tr>
+                          <tr>
+                            <th>Aksesuar Karlilik Primi</th>
+                            <td>{formatCurrency(employeePrimeForecast.accessoryCurrentReward)}</td>
+                            <td>{formatCurrency(employeePrimeForecast.accessoryProjectedReward)}</td>
                             <td>
-                              Mevcut skala ve ay sonu puan ongorusu esas alindi.
+                              Tempo {formatPercent(employeeAccessoryCategory?.actualPercent ?? null)} /{" "}
+                              {formatPercent(employeeAccessoryCategory?.projectedPercent ?? null)} ve sepete taksit haric baz{" "}
+                              {formatCurrency(employeePrimeForecast.accessoryCurrentBase)} /{" "}
+                              {formatCurrency(employeePrimeForecast.accessoryProjectedBase)} uzerinden %{
+                                employeePrimeForecast.accessoryCurrentRate
+                              } / %{employeePrimeForecast.accessoryProjectedRate}.
                             </td>
+                          </tr>
+                          <tr>
+                            <th>Aylik Prim Ongorusu Toplami</th>
+                            <td>{formatCurrency(employeePrimeSubtotalCurrent)}</td>
+                            <td>{formatCurrency(employeePrimeSubtotalProjected)}</td>
+                            <td>Uretim puani kazanimi + aksesuar karlilik primi toplami</td>
                           </tr>
                           <tr>
                             <td colSpan={4} className="goal-employee-prime-forecast-live-prime-cell">
@@ -3179,6 +3208,10 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                                   <span className="goal-employee-prime-forecast-live-prime-values">
                                     <span>{formatCurrency(employeePrimeForecast.livePrimeCurrentReward)}</span>
                                     <span>{formatCurrency(employeePrimeForecast.livePrimeProjectedReward)}</span>
+                                  </span>
+                                  <span className="goal-employee-prime-forecast-live-prime-action">
+                                    <span>Kirilimi ac</span>
+                                    <span className="goal-employee-prime-forecast-live-prime-caret">v</span>
                                   </span>
                                 </summary>
                                 <div className="goal-employee-prime-forecast-live-prime-meta">
@@ -3193,26 +3226,13 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                               </details>
                             </td>
                           </tr>
-                          <tr>
-                            <th>Aksesuar Karlilik Primi</th>
-                            <td>{formatCurrency(employeePrimeForecast.accessoryCurrentReward)}</td>
-                            <td>{formatCurrency(employeePrimeForecast.accessoryProjectedReward)}</td>
-                            <td>
-                              Tempo {formatPercent(employeeAccessoryCategory?.actualPercent ?? null)} /{" "}
-                              {formatPercent(employeeAccessoryCategory?.projectedPercent ?? null)} ve sepete taksit haric baz {formatCurrency(
-                                employeePrimeForecast.accessoryCurrentBase
-                              )} / {formatCurrency(employeePrimeForecast.accessoryProjectedBase)} uzerinden %{
-                                employeePrimeForecast.accessoryCurrentRate
-                              } / %{employeePrimeForecast.accessoryProjectedRate}.
-                            </td>
-                          </tr>
                         </tbody>
                         <tfoot>
                           <tr>
-                            <th>Toplam Prim</th>
+                            <th>Primler Toplami</th>
                             <td>{formatCurrency(employeePrimeForecast.totalCurrentReward)}</td>
                             <td>{formatCurrency(employeePrimeForecast.totalProjectedReward)}</td>
-                            <td>Uretim puani + canli prim + aksesuar karlilik toplami</td>
+                            <td>Aylik prim ongorusu toplami + canli prim toplami</td>
                           </tr>
                         </tfoot>
                       </table>

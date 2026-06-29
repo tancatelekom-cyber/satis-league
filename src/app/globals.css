@@ -7239,50 +7239,128 @@ textarea::placeholder {
   padding: 0 !important;
 }
 
+.goal-employee-prime-forecast-table {
+  table-layout: fixed;
+}
+
+.goal-employee-prime-forecast-col-label {
+  width: 21%;
+}
+
+.goal-employee-prime-forecast-col-current {
+  width: 12%;
+}
+
+.goal-employee-prime-forecast-col-projected {
+  width: 17%;
+}
+
+.goal-employee-prime-forecast-col-note {
+  width: 50%;
+}
+
+.goal-employee-prime-forecast-table thead th {
+  font-size: 0.86rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.goal-employee-prime-forecast-table tbody th,
+.goal-employee-prime-forecast-table tbody td,
+.goal-employee-prime-forecast-table tfoot th,
+.goal-employee-prime-forecast-table tfoot td {
+  font-weight: 500;
+}
+
+.goal-employee-prime-forecast-table tbody th,
+.goal-employee-prime-forecast-table tfoot th {
+  color: #16324d;
+}
+
+.goal-employee-prime-forecast-table tbody td,
+.goal-employee-prime-forecast-table tfoot td {
+  color: #36526b;
+  font-size: 0.96rem;
+}
+
+.goal-employee-prime-forecast-table tbody tr:nth-child(odd) th,
+.goal-employee-prime-forecast-table tbody tr:nth-child(odd) td {
+  background: rgba(245, 249, 252, 0.95);
+}
+
+.goal-employee-prime-forecast-table tbody tr:nth-child(even) th,
+.goal-employee-prime-forecast-table tbody tr:nth-child(even) td {
+  background: rgba(255, 255, 255, 0.98);
+}
+
+.goal-employee-prime-forecast-table tbody td:last-child,
+.goal-employee-prime-forecast-table tfoot td:last-child {
+  color: #45627b;
+  line-height: 1.45;
+}
+
 .goal-employee-prime-forecast-live-prime-details {
   display: grid;
   gap: 10px;
-  padding: 12px 14px;
+  padding: 10px 12px;
 }
 
 .goal-employee-prime-forecast-live-prime-summary {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.8fr) minmax(0, 0.8fr) auto;
+  grid-template-columns: 21% 12% 17% minmax(0, 1fr);
   align-items: center;
   gap: 10px;
   list-style: none;
   cursor: pointer;
   color: #11284a;
-  font-weight: 800;
+  font-weight: 500;
 }
 
 .goal-employee-prime-forecast-live-prime-summary::-webkit-details-marker {
   display: none;
 }
 
-.goal-employee-prime-forecast-live-prime-summary::after {
-  content: "v";
-  color: #1d4764;
-  font-size: 0.9rem;
-  transition: transform 0.2s ease;
-}
-
-.goal-employee-prime-forecast-live-prime-details[open] .goal-employee-prime-forecast-live-prime-summary::after {
-  transform: rotate(180deg);
-}
-
 .goal-employee-prime-forecast-live-prime-title {
-  font-weight: 900;
+  color: #16324d;
+  font-weight: 700;
 }
 
 .goal-employee-prime-forecast-live-prime-values {
-  display: contents;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-column: 2 / 4;
 }
 
 .goal-employee-prime-forecast-live-prime-values span {
   text-align: center;
-  color: #173250;
-  font-weight: 800;
+  color: #36526b;
+  font-weight: 500;
+}
+
+.goal-employee-prime-forecast-live-prime-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  color: #527089;
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+.goal-employee-prime-forecast-live-prime-caret {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 999px;
+  background: rgba(12, 74, 110, 0.08);
+  color: #1d4764;
+  transition: transform 0.2s ease;
+}
+
+.goal-employee-prime-forecast-live-prime-details[open] .goal-employee-prime-forecast-live-prime-caret {
+  transform: rotate(180deg);
 }
 
 .goal-employee-prime-forecast-live-prime-meta {
@@ -10222,6 +10300,66 @@ textarea::placeholder {
   color: #dc2626 !important;
 }
 
+.goal-company-trend-table.goal-employee-prime-forecast-table {
+  table-layout: fixed;
+}
+
+.goal-company-trend-table.goal-employee-prime-forecast-table .goal-employee-prime-forecast-col-label {
+  width: 21%;
+}
+
+.goal-company-trend-table.goal-employee-prime-forecast-table .goal-employee-prime-forecast-col-current {
+  width: 12%;
+}
+
+.goal-company-trend-table.goal-employee-prime-forecast-table .goal-employee-prime-forecast-col-projected {
+  width: 17%;
+}
+
+.goal-company-trend-table.goal-employee-prime-forecast-table .goal-employee-prime-forecast-col-note {
+  width: 50%;
+}
+
+.goal-company-trend-table.goal-employee-prime-forecast-table thead th {
+  font-size: 0.86rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.goal-company-trend-table.goal-employee-prime-forecast-table tbody th,
+.goal-company-trend-table.goal-employee-prime-forecast-table tbody td,
+.goal-company-trend-table.goal-employee-prime-forecast-table tfoot th,
+.goal-company-trend-table.goal-employee-prime-forecast-table tfoot td {
+  font-weight: 500;
+}
+
+.goal-company-trend-table.goal-employee-prime-forecast-table tbody th,
+.goal-company-trend-table.goal-employee-prime-forecast-table tfoot th {
+  color: #16324d;
+}
+
+.goal-company-trend-table.goal-employee-prime-forecast-table tbody td,
+.goal-company-trend-table.goal-employee-prime-forecast-table tfoot td {
+  color: #36526b;
+  font-size: 0.96rem;
+}
+
+.goal-company-trend-table.goal-employee-prime-forecast-table tbody tr:nth-child(odd) th,
+.goal-company-trend-table.goal-employee-prime-forecast-table tbody tr:nth-child(odd) td {
+  background: rgba(245, 249, 252, 0.95);
+}
+
+.goal-company-trend-table.goal-employee-prime-forecast-table tbody tr:nth-child(even) th,
+.goal-company-trend-table.goal-employee-prime-forecast-table tbody tr:nth-child(even) td {
+  background: rgba(255, 255, 255, 0.98);
+}
+
+.goal-company-trend-table.goal-employee-prime-forecast-table tbody td:last-child,
+.goal-company-trend-table.goal-employee-prime-forecast-table tfoot td:last-child {
+  color: #45627b;
+  line-height: 1.45;
+}
+
 .document-issues-category-row td {
   padding: 0 !important;
   border-left: 0 !important;
@@ -10744,6 +10882,69 @@ textarea::placeholder {
   .goal-company-trend-table tfoot td {
     padding: 7px 4px;
     font-size: 0.68rem;
+  }
+
+  .goal-company-trend-table.goal-employee-prime-forecast-table .goal-employee-prime-forecast-col-label {
+    width: 22%;
+  }
+
+  .goal-company-trend-table.goal-employee-prime-forecast-table .goal-employee-prime-forecast-col-current {
+    width: 12%;
+  }
+
+  .goal-company-trend-table.goal-employee-prime-forecast-table .goal-employee-prime-forecast-col-projected {
+    width: 17%;
+  }
+
+  .goal-company-trend-table.goal-employee-prime-forecast-table .goal-employee-prime-forecast-col-note {
+    width: 49%;
+  }
+
+  .goal-company-trend-table.goal-employee-prime-forecast-table thead th {
+    font-size: 0.62rem;
+    letter-spacing: 0;
+  }
+
+  .goal-company-trend-table.goal-employee-prime-forecast-table tbody th,
+  .goal-company-trend-table.goal-employee-prime-forecast-table tbody td,
+  .goal-company-trend-table.goal-employee-prime-forecast-table tfoot th,
+  .goal-company-trend-table.goal-employee-prime-forecast-table tfoot td {
+    font-size: 0.64rem !important;
+    font-weight: 500;
+    line-height: 1.2;
+  }
+
+  .goal-employee-prime-forecast-live-prime-details {
+    gap: 7px;
+    padding: 8px 6px;
+  }
+
+  .goal-employee-prime-forecast-live-prime-summary {
+    grid-template-columns: 22% 12% 17% minmax(0, 1fr);
+    gap: 6px;
+    font-size: 0.64rem;
+  }
+
+  .goal-employee-prime-forecast-live-prime-title,
+  .goal-employee-prime-forecast-live-prime-values span {
+    font-size: 0.64rem;
+    line-height: 1.15;
+  }
+
+  .goal-employee-prime-forecast-live-prime-action {
+    gap: 4px;
+    font-size: 0.56rem;
+  }
+
+  .goal-employee-prime-forecast-live-prime-caret {
+    width: 0.92rem;
+    height: 0.92rem;
+    font-size: 0.54rem;
+  }
+
+  .goal-employee-prime-forecast-live-prime-meta {
+    font-size: 0.56rem;
+    line-height: 1.25;
   }
 
   .document-issues-category-head {

@@ -1565,11 +1565,13 @@ function resolveAccessoryBase(
     .filter((child) => !isSepeteTaksitCategory(child.title))
     .reduce((sum, child) => sum + (valueKey === "actual" ? child.actual : (child.projectedActual ?? child.actual)), 0);
 
-  if (nonSepeteChildTotal > 0) {
-    return nonSepeteChildTotal;
+  const totalMinusSepeteTaksit = Math.max(totalValue - sepeteTaksitTotal, 0);
+
+  if (totalMinusSepeteTaksit > 0 || sepeteTaksitTotal > 0) {
+    return totalMinusSepeteTaksit;
   }
 
-  return Math.max(totalValue - sepeteTaksitTotal, 0);
+  return nonSepeteChildTotal > 0 ? nonSepeteChildTotal : totalValue;
 }
 
 function buildEmployeePrimeForecast(

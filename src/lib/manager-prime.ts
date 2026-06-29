@@ -273,6 +273,23 @@ function parseRewardString(value: string) {
   return parseLocalizedNumber(String(value ?? "").replace("₺", ""));
 }
 
+async function fetchManagerPrimeSheetCsvRows() {
+  const response = await fetch(buildSheetUrl(MANAGER_PRIME_SHEET_GID), {
+    cache: "no-store",
+    next: { revalidate: 0 },
+    headers: {
+      accept: "text/csv, text/plain, */*",
+      "user-agent": "Mozilla/5.0 (compatible; TancaSuperLigBot/1.0; +https://vercel.app)"
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`Magaza muduru prim sayfasi okunamadi: ${response.status}`);
+  }
+
+  return parseCsv(await response.text());
+}
+
 export async function getManagerPrimeSettings() {
   try {
     const admin = createAdminClient();
@@ -330,22 +347,15 @@ export async function getManagerPrimeSettings() {
   }
 }
 
+export async function fetchManagerPrimePassword() {
+  const rows = await fetchManagerPrimeSheetCsvRows();
+  const passwordRow = rows[1] ?? [];
+  return String(passwordRow[columnLetterToIndex("J")] ?? "").trim();
+}
+
 export async function fetchManagerPrimeSheetRows(settings?: ManagerPrimeSettings) {
   const resolvedSettings = settings ?? (await getManagerPrimeSettings());
-  const response = await fetch(buildSheetUrl(MANAGER_PRIME_SHEET_GID), {
-    cache: "no-store",
-    next: { revalidate: 0 },
-    headers: {
-      accept: "text/csv, text/plain, */*",
-      "user-agent": "Mozilla/5.0 (compatible; TancaSuperLigBot/1.0; +https://vercel.app)"
-    }
-  });
-
-  if (!response.ok) {
-    throw new Error(`Magaza muduru prim sayfasi okunamadi: ${response.status}`);
-  }
-
-  const rows = parseCsv(await response.text());
+  const rows = await fetchManagerPrimeSheetCsvRows();
   const scaleIndex = columnLetterToIndex(resolvedSettings.scale);
   const recontractIndex = columnLetterToIndex(resolvedSettings.recontract);
   const productionIndex = columnLetterToIndex(resolvedSettings.production);

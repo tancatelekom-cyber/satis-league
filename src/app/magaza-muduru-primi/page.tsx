@@ -1,16 +1,20 @@
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { FilterSelectNav } from "@/components/ui/filter-select-nav";
 import { requireUser } from "@/lib/auth/require-user";
 import { getResolvedFeatureAccessForProfile } from "@/lib/feature-menu-permissions";
 import { roleLabels } from "@/lib/labels";
-import { buildManagerPrimeSummary } from "@/lib/manager-prime";
+import { buildManagerPrimeSummary, fetchManagerPrimePassword } from "@/lib/manager-prime";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { UserRole } from "@/lib/types";
+import { unlockManagerPrimePage } from "./actions";
+import { MANAGER_PRIME_ACCESS_COOKIE } from "./constants";
 
 type PageProps = {
   searchParams?: Promise<{
     manager?: string;
+    hata?: string;
   }>;
 };
 
@@ -108,6 +112,47 @@ export default async function ManagerPrimePage({ searchParams }: PageProps) {
 
   if (!["manager", "management", "admin"].includes(safeProfile.role)) {
     redirect("/");
+  }
+
+  const expectedPassword = await fetchManagerPrimePassword();
+  const cookieStore = await cookies();
+  const storedPassword = cookieStore.get(MANAGER_PRIME_ACCESS_COOKIE)?.value?.trim() ?? "";
+  const requiresPassword = Boolean(expectedPassword);
+  const passwordError = String(params?.hata ?? "").trim() === "sifre";
+
+  if (requiresPassword && storedPassword !== expectedPassword) {
+    return (
+      <main className="manager-prime-page">
+        <h1 className="page-title">Magaza Muduru Prim Kazanimi</h1>
+        <p className="page-subtitle">
+          Bu sayfa icin Sheet uzerinde tanimli sifre gereklidir. Devam etmek icin gecerli sifreyi girin.
+        </p>
+
+        <section className="guide-card game-brief-card manager-prime-password-card">
+          <form action={unlockManagerPrimePage} className="admin-form manager-prime-password-form">
+            <label className="field manager-prime-password-field">
+              <span>Sayfa Sifresi</span>
+              <input
+                type="password"
+                name="password"
+                placeholder="Sifreyi girin"
+                autoComplete="current-password"
+                autoFocus
+                required
+              />
+            </label>
+
+            {passwordError ? (
+              <p className="manager-prime-password-error">Girilen sifre hatali. Lutfen tekrar deneyin.</p>
+            ) : null}
+
+            <button type="submit" className="button-primary manager-prime-password-button">
+              Sayfayi Ac
+            </button>
+          </form>
+        </section>
+      </main>
+    );
   }
 
   let storeProfilesData: ManagerProfileRow[] | null = null;

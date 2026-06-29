@@ -340,8 +340,8 @@ export default async function ManagerPrimePage({ searchParams }: PageProps) {
                 <td>{formatPercent(summary.metrics.recontract.projectedTempo)}</td>
                 <td>-</td>
                 <td>-</td>
-                <td>{formatCurrency(summary.currentCoreBaseTotal)}</td>
-                <td>{formatCurrency(summary.projectedCoreBaseTotal)}</td>
+                <td>{formatCurrency(summary.currentNonAccessoryBaseTotal)}</td>
+                <td>{formatCurrency(summary.projectedNonAccessoryBaseTotal)}</td>
                 <td>{formatCurrency(summary.currentPrimeTotal)}</td>
                 <td>{formatCurrency(summary.projectedPrimeTotal)}</td>
               </tr>
@@ -384,6 +384,48 @@ export default async function ManagerPrimePage({ searchParams }: PageProps) {
             </tbody>
           </table>
         </div>
+      </section>
+
+      <section className="campaign-section-card" style={{ display: "grid", gap: 16 }}>
+        <div className="goal-section-head web-kontor-section-head">
+          <div>
+            <h2 className="goal-panel-title">Ay Sonu Gelir Artis Firsatlari</h2>
+            <p className="goal-panel-subtitle">
+              Bir ust kazanc seviyesi icin hangi kategoride gunluk ne kadar ek uretim gerektigi asagida ozetlenir.
+            </p>
+          </div>
+        </div>
+
+        {summary.opportunities.length ? (
+          <div style={{ display: "grid", gap: 12 }}>
+            {summary.opportunities.map((item) => (
+              <article key={`manager-prime-opportunity-${item.key}`} className="campaign-summary-card">
+                <span>{item.label}</span>
+                <strong>
+                  Ay sonu gelirini {formatCurrency(item.estimatedIncrease)} artirmak icin {item.nextScaleLabel} seviyesine
+                  cikman gerekiyor.
+                </strong>
+                <p>
+                  Bunun icin bu kategoride kalan gunlerde gunluk ortalama{" "}
+                  {item.dailyRequired.toLocaleString("tr-TR", {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 2
+                  })}{" "}
+                  ek uretim lazim. Toplam ek ihtiyac:{" "}
+                  {item.additionalRequiredTotal.toLocaleString("tr-TR", {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 2
+                  })}.
+                </p>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div className="campaign-summary-card">
+            <strong>Ek gelir firsati icin acik bir ust skala kalmadi.</strong>
+            <p>Secili magazada mevcut gidisat, tanimli skala yapisina gore son seviyeye ulasmis gorunuyor.</p>
+          </div>
+        )}
       </section>
     </main>
   );

@@ -71,6 +71,12 @@ function getStatusClass(status: WorkScheduleStatus) {
   return "schedule-pill-off";
 }
 
+function getPreviousWeekStart(weekStart: string) {
+  const base = new Date(`${normalizeWeekStart(weekStart)}T00:00:00`);
+  base.setDate(base.getDate() - 7);
+  return normalizeWeekStart(base.toISOString().slice(0, 10));
+}
+
 export default async function WeeklyWorkSchedulePage({ searchParams }: PageProps) {
   const user = await requireUser();
   const params = (await searchParams) ?? {};
@@ -87,7 +93,9 @@ export default async function WeeklyWorkSchedulePage({ searchParams }: PageProps
   }
 
   const selectedWeek = normalizeWeekStart(params.week);
+  const previousWeekStart = getPreviousWeekStart(selectedWeek);
   const weekDates = getWeekDates(selectedWeek);
+  const previousWeekDates = getWeekDates(previousWeekStart);
   const selectedDay = clampDay(params.day, selectedWeek);
   const canPickStore = profile.role === "management" || profile.role === "admin";
   const teamVisible = canViewTeam(profile.role);
@@ -142,12 +150,27 @@ export default async function WeeklyWorkSchedulePage({ searchParams }: PageProps
           .in("profile_id", teamProfileIds)
           .order("day_of_week")).data as WeeklyWorkScheduleRecord[] | null) ?? [])
       : [];
+  const previousWeekScheduleRecords =
+    teamProfileIds.length > 0
+      ? (((await admin
+          .from("weekly_work_schedules")
+          .select("id, profile_id, store_id, week_start, day_of_week, status, start_time, end_time, updated_at")
+          .eq("week_start", previousWeekStart)
+          .in("profile_id", teamProfileIds)
+          .order("day_of_week")).data as WeeklyWorkScheduleRecord[] | null) ?? [])
+      : [];
 
   const recordsByProfile = new Map<string, WeeklyWorkScheduleRecord[]>();
   teamScheduleRecords.forEach((record) => {
     const current = recordsByProfile.get(record.profile_id) ?? [];
     current.push(record);
     recordsByProfile.set(record.profile_id, current);
+  });
+  const previousRecordsByProfile = new Map<string, WeeklyWorkScheduleRecord[]>();
+  previousWeekScheduleRecords.forEach((record) => {
+    const current = previousRecordsByProfile.get(record.profile_id) ?? [];
+    current.push(record);
+    previousRecordsByProfile.set(record.profile_id, current);
   });
 
   const teamRows = teamProfiles.map((person) => {
@@ -256,6 +279,10 @@ export default async function WeeklyWorkSchedulePage({ searchParams }: PageProps
   const initialEntriesByProfile = Object.fromEntries(
     teamProfiles.map((person) => [person.id, mergeWeekEntries(recordsByProfile.get(person.id) ?? [])])
   );
+  const previousWeekEntriesByProfile = Object.fromEntries(
+    teamProfiles.map((person) => [person.id, mergeWeekEntries(previousRecordsByProfile.get(person.id) ?? [])])
+  );
+  const previousWeekLabel = `${previousWeekDates[0]?.shortDate ?? ""} - ${previousWeekDates[6]?.shortDate ?? ""}`;
 
   return (
     <div className="schedule-shell">
@@ -389,12 +416,14 @@ export default async function WeeklyWorkSchedulePage({ searchParams }: PageProps
                 }))}
                 redirectDay={String(selectedDay)}
                 redirectStoreId={selectedStoreId}
-                saveAction={saveWeeklyWorkScheduleAction}
-                weekDates={weekDates}
-                weekStart={selectedWeek}
-              />
-            </section>
-          ) : null}
+              saveAction={saveWeeklyWorkScheduleAction}
+              weekDates={weekDates}
+              weekStart={selectedWeek}
+              previousWeekEntriesByProfile={previousWeekEntriesByProfile}
+              previousWeekLabel={previousWeekLabel}
+            />
+          </section>
+        ) : null}
         </>
       ) : null}
     </div>

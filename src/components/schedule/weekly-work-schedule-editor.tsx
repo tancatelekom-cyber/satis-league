@@ -28,6 +28,8 @@ type WeeklyWorkScheduleEditorProps = {
   weekDates: WeekDate[];
   weekStart: string;
   initialEntriesByProfile: Record<string, WorkScheduleDayEntry[]>;
+  previousWeekEntriesByProfile?: Record<string, WorkScheduleDayEntry[]>;
+  previousWeekLabel?: string;
 };
 
 function SubmitButton() {
@@ -72,12 +74,18 @@ export function WeeklyWorkScheduleEditor({
   saveAction,
   weekDates,
   weekStart,
-  initialEntriesByProfile
+  initialEntriesByProfile,
+  previousWeekEntriesByProfile = {},
+  previousWeekLabel = ""
 }: WeeklyWorkScheduleEditorProps) {
   const [draft, setDraft] = useState<Record<string, WorkScheduleDayEntry[]>>(initialEntriesByProfile);
   const [isEditing, setIsEditing] = useState(false);
 
   const fallbackEntries = useMemo(() => buildFallbackEntries(weekDates), [weekDates]);
+  const hasPreviousWeekEntries = useMemo(
+    () => Object.values(previousWeekEntriesByProfile).some((entries) => entries.some((entry) => entry.status !== "off" || entry.startTime || entry.endTime)),
+    [previousWeekEntriesByProfile]
+  );
 
   function getEntry(profileId: string, dayOfWeek: number) {
     const entries = draft[profileId] ?? fallbackEntries;
@@ -138,6 +146,19 @@ export function WeeklyWorkScheduleEditor({
           <input type="hidden" name="redirectStoreId" value={redirectStoreId} />
           <input type="hidden" name="redirectDay" value={redirectDay} />
           <input type="hidden" name="profileIds" value={profiles.map((profile) => profile.id).join(",")} />
+
+          {hasPreviousWeekEntries ? (
+            <div className="schedule-copy-row">
+              <button
+                className="button-secondary schedule-copy-button"
+                type="button"
+                onClick={() => setDraft(previousWeekEntriesByProfile)}
+              >
+                Bir Onceki Haftayi Getir
+              </button>
+              <span>{previousWeekLabel ? `${previousWeekLabel} programini aynen doldurur.` : "Bir onceki hafta programini doldurur."}</span>
+            </div>
+          ) : null}
 
           <div className="schedule-bulk-table-wrap">
             <table className="schedule-bulk-table">

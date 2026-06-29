@@ -4486,6 +4486,25 @@ textarea::placeholder {
   justify-content: flex-start;
 }
 
+.schedule-copy-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 12px 0 16px;
+}
+
+.schedule-copy-row span {
+  color: #35516f;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.schedule-copy-button {
+  min-height: 46px;
+  padding: 0 18px;
+}
+
 .schedule-edit-trigger-card,
 .schedule-editor-card {
   padding-top: 18px;
@@ -4812,6 +4831,18 @@ textarea::placeholder {
 
   .schedule-bulk-table {
     min-width: 980px;
+  }
+
+  .schedule-copy-row {
+    align-items: stretch;
+  }
+
+  .schedule-copy-row .schedule-copy-button {
+    width: 100%;
+  }
+
+  .schedule-copy-row span {
+    font-size: 0.82rem;
   }
 }
 

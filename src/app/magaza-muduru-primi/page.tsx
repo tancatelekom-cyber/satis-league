@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth/require-user";
 import { getResolvedFeatureAccessForProfile } from "@/lib/feature-menu-permissions";
 import { roleLabels } from "@/lib/labels";
 import { buildManagerPrimeSummary } from "@/lib/manager-prime";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { UserRole } from "@/lib/types";
 
@@ -109,15 +110,35 @@ export default async function ManagerPrimePage({ searchParams }: PageProps) {
     redirect("/");
   }
 
-  const { data: storeProfilesData } = await supabase
-    .from("profiles")
-    .select("id, full_name, role, approval, store_id, store:stores(name)")
-    .eq("approval", "approved")
-    .not("store_id", "is", null)
-    .in("role", ["employee", "manager"])
-    .order("full_name", { ascending: true });
+  let storeProfilesData: ManagerProfileRow[] | null = null;
 
-  const storeProfiles = ((storeProfilesData as ManagerProfileRow[] | null) ?? []).filter(
+  if (safeProfile.role === "manager") {
+    storeProfilesData = safeProfile.store?.name
+      ? [
+          {
+            id: safeProfile.id,
+            full_name: safeProfile.full_name,
+            role: safeProfile.role,
+            approval: safeProfile.approval,
+            store_id: safeProfile.store_id ?? null,
+            store: safeProfile.store
+          }
+        ]
+      : [];
+  } else {
+    const admin = createAdminClient();
+    const { data } = await admin
+      .from("profiles")
+      .select("id, full_name, role, approval, store_id, store:stores(name)")
+      .eq("approval", "approved")
+      .not("store_id", "is", null)
+      .in("role", ["employee", "manager"])
+      .order("full_name", { ascending: true });
+
+    storeProfilesData = (data as ManagerProfileRow[] | null) ?? [];
+  }
+
+  const storeProfiles = (storeProfilesData ?? []).filter(
     (item) => item.full_name && item.store?.name
   );
 

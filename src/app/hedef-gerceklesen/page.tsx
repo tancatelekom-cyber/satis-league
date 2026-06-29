@@ -14,6 +14,7 @@ import {
   GoalStoreRow,
   fetchGoalActualRows,
   fetchGoalDayStats,
+  fetchGoalLivePrimeSettings,
   fetchGoalProductPointRows,
   fetchGoalProductionRewardRows,
   fetchGoalStoreRows
@@ -95,6 +96,7 @@ type ProductionRewardPlan = {
   projectedPoints: number;
   actualPoints: number;
   projectedReward: string | null;
+  actualReward: string | null;
   nextReward: string | null;
   rows: ProductionRewardPlanRow[];
 };
@@ -105,6 +107,30 @@ type StoreEmployeeProductionPlan = {
   projectedPoints: number;
   projectedReward: string | null;
   rows: ProductionRewardPlanRow[];
+};
+
+type GoalLivePrimeSettings = {
+  workedDays: number;
+  totalDays: number;
+  accessoryScaleRows: Array<{
+    thresholdPercent: number;
+    ratePercent: number;
+  }>;
+};
+
+type EmployeePrimeForecast = {
+  productionCurrentReward: number;
+  productionProjectedReward: number;
+  livePrimeCurrentReward: number;
+  livePrimeProjectedReward: number;
+  accessoryCurrentBase: number;
+  accessoryProjectedBase: number;
+  accessoryCurrentRate: number;
+  accessoryProjectedRate: number;
+  accessoryCurrentReward: number;
+  accessoryProjectedReward: number;
+  totalCurrentReward: number;
+  totalProjectedReward: number;
 };
 
 type CoachingMetric = {
@@ -596,6 +622,17 @@ function formatPercent(value: number | null | undefined) {
   })}`;
 }
 
+function formatCurrency(value: number | null | undefined) {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return "-";
+  }
+
+  return `${value.toLocaleString("tr-TR", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2
+  })} TL`;
+}
+
 function formatRewardValue(value: string | null | undefined) {
   if (!value) {
     return "-";
@@ -607,6 +644,16 @@ function formatRewardValue(value: string | null | undefined) {
   }
 
   return value;
+}
+
+function parseRewardValueNumber(value: string | null | undefined) {
+  if (!value) {
+    return 0;
+  }
+
+  const normalized = value.trim().replace(/\./g, "").replace(",", ".").replace(/[^\d.-]/g, "");
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : 0;
 }
 
 function getProductionRewardStatus(row: ProductionRewardPlanRow) {
@@ -830,12 +877,14 @@ function buildProductionRewardPlan(
 
   const actualPoints = summary.actual;
   const projectedPoints = summary.projectedActual ?? summary.actual;
+  const actualRewardRow = [...rewardRows].reverse().find((row) => actualPoints >= row.points) ?? null;
   const projectedRewardRow = [...rewardRows].reverse().find((row) => projectedPoints >= row.points) ?? null;
   const nextRewardRow = rewardRows.find((row) => row.points > projectedPoints) ?? null;
 
   return {
     actualPoints,
     projectedPoints,
+    actualReward: actualRewardRow?.reward ?? null,
     projectedReward: projectedRewardRow?.reward ?? null,
     nextReward: nextRewardRow?.reward ?? null,
     rows: rewardRows.map((row) => {
@@ -1480,6 +1529,88 @@ function buildEmployeeDailyNeedSummaryRows(
     });
 }
 
+function isSepeteTaksitCategory(title: string | null | undefined) {
+  return normalizeCategoryKey(String(title ?? "")).includes("SEPETE TAKSIT");
+}
+
+function findLivePrimeAccessoryRate(
+  scaleRows: GoalLivePrimeSettings["accessoryScaleRows"],
+  tempoPercent: number | null | undefined
+) {
+  if (!scaleRows.length || tempoPercent === null || tempoPercent === undefined || Number.isNaN(tempoPercent)) {
+    return 0;
+  }
+
+  return (
+    [...scaleRows]
+      .sort((left, right) => left.thresholdPercent - right.thresholdPercent)
+      .filter((row) => tempoPercent >= row.thresholdPercent)
+      .at(-1)?.ratePercent ?? 0
+  );
+}
+
+function buildEmployeePrimeForecast(
+  employeeCategories: GoalCategorySummary[],
+  employeeLivePrimeCategories: GoalCategorySummary[],
+  productionRewardRows: GoalProductionRewardRow[],
+  livePrimeSettings: GoalLivePrimeSettings
+) {
+  const productionCategory = employeeCategories.find((category) => isProductionPointCategory(category.title));
+  const productionRewardPlan = productionCategory
+    ? buildProductionRewardPlan(productionCategory, productionRewardRows, 0)
+    : null;
+
+  const productionCurrentReward = parseRewardValueNumber(productionRewardPlan?.actualReward ?? null);
+  const productionProjectedReward = parseRewardValueNumber(productionRewardPlan?.projectedReward ?? null);
+
+  const livePrimeCurrentReward = employeeLivePrimeCategories.reduce((sum, category) => sum + category.actual, 0);
+  const livePrimeWorkedDays =
+    livePrimeSettings.workedDays > 0 ? livePrimeSettings.workedDays : 0;
+  const livePrimeTotalDays =
+    livePrimeSettings.totalDays > 0 ? livePrimeSettings.totalDays : livePrimeWorkedDays;
+  const livePrimeProjectedReward =
+    livePrimeWorkedDays > 0
+      ? Math.floor((livePrimeCurrentReward / livePrimeWorkedDays) * livePrimeTotalDays)
+      : livePrimeCurrentReward;
+
+  const accessoryCategory = employeeCategories.find(
+    (category) => normalizeCategoryKey(category.title) === normalizeCategoryKey("AKSESUAR KARLILIK")
+  );
+  const accessoryChildren = accessoryCategory?.children ?? [];
+  const accessoryRelevantChildren = accessoryChildren.filter((child) => !isSepeteTaksitCategory(child.title));
+  const accessoryCurrentBase = accessoryRelevantChildren.length
+    ? accessoryRelevantChildren.reduce((sum, child) => sum + child.actual, 0)
+    : 0;
+  const accessoryProjectedBase = accessoryRelevantChildren.length
+    ? accessoryRelevantChildren.reduce((sum, child) => sum + (child.projectedActual ?? child.actual), 0)
+    : 0;
+  const accessoryCurrentRate = findLivePrimeAccessoryRate(
+    livePrimeSettings.accessoryScaleRows,
+    accessoryCategory?.actualPercent ?? null
+  );
+  const accessoryProjectedRate = findLivePrimeAccessoryRate(
+    livePrimeSettings.accessoryScaleRows,
+    accessoryCategory?.projectedPercent ?? accessoryCategory?.actualPercent ?? null
+  );
+  const accessoryCurrentReward = accessoryCurrentBase * (accessoryCurrentRate / 100);
+  const accessoryProjectedReward = accessoryProjectedBase * (accessoryProjectedRate / 100);
+
+  return {
+    productionCurrentReward,
+    productionProjectedReward,
+    livePrimeCurrentReward,
+    livePrimeProjectedReward,
+    accessoryCurrentBase,
+    accessoryProjectedBase,
+    accessoryCurrentRate,
+    accessoryProjectedRate,
+    accessoryCurrentReward,
+    accessoryProjectedReward,
+    totalCurrentReward: productionCurrentReward + livePrimeCurrentReward + accessoryCurrentReward,
+    totalProjectedReward: productionProjectedReward + livePrimeProjectedReward + accessoryProjectedReward
+  } satisfies EmployeePrimeForecast;
+}
+
 function GoalCategoryCards({
   categories,
   remainingDays = 0,
@@ -2036,16 +2167,18 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
   let productPointRows: GoalProductPointRow[] = [];
   let documentIssueRows = await Promise.resolve([] as Awaited<ReturnType<typeof fetchDocumentIssueRows>>);
   let dayStats: GoalDayStats = EMPTY_DAY_STATS;
+  let livePrimeSettings: GoalLivePrimeSettings = { workedDays: 0, totalDays: 0, accessoryScaleRows: [] };
   let sheetError = "";
 
   try {
-    [employeeRows, storeRows, dayStats, productionRewardRows, productPointRows, documentIssueRows] = await Promise.all([
+    [employeeRows, storeRows, dayStats, productionRewardRows, productPointRows, documentIssueRows, livePrimeSettings] = await Promise.all([
       fetchGoalActualRows(),
       fetchGoalStoreRows(),
       fetchGoalDayStats(),
       fetchGoalProductionRewardRows(),
       fetchGoalProductPointRows(),
-      fetchDocumentIssueRows().catch(() => [])
+      fetchDocumentIssueRows().catch(() => []),
+      fetchGoalLivePrimeSettings().catch(() => ({ workedDays: 0, totalDays: 0, accessoryScaleRows: [] }))
     ]);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Google Sheet verisi okunamadi.";
@@ -2322,6 +2455,18 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
     dayStats.workedDays,
     dayStats.totalDays
   );
+  const employeeAccessoryCategory = employeeCategorySummaries.find(
+    (category) => normalizeCategoryKey(category.title) === normalizeCategoryKey("AKSESUAR KARLILIK")
+  );
+  const employeePrimeForecast =
+    effectiveView === "employee" && employeeCategorySummaries.length
+      ? buildEmployeePrimeForecast(
+          employeeCategorySummaries,
+          employeeLivePrimeCategorySummaries,
+          productionRewardRows,
+          livePrimeSettings
+        )
+      : null;
   const employeeStoreRows = employeeScopedStoreCode
     ? filteredStoreRows.filter((row) => normalizeStoreKey(row.storeCode) === normalizeStoreKey(employeeScopedStoreCode))
     : [];
@@ -2994,6 +3139,68 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                     ) : (
                       <p className="subtle">Bu sube icin hedef tanimli kalem bulunamadi.</p>
                     )}
+                  </div>
+                ) : null}
+
+                {effectiveView === "employee" && employeePrimeForecast ? (
+                  <div className="goal-company-trend-panel">
+                    <div className="goal-live-prime-head">
+                      <h3>Prim Ongoru</h3>
+                      <span>Uretim puani, canli prim ve aksesuar karlilik bazli mevcut ve ay sonu prim tahmini</span>
+                    </div>
+
+                    <div className="goal-company-trend-table-wrap">
+                      <table className="goal-company-trend-table goal-employee-prime-forecast-table">
+                        <thead>
+                          <tr>
+                            <th>Kalem</th>
+                            <th>Mevcut</th>
+                            <th>Ay Sonu Ongorusu</th>
+                            <th>Aciklama</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <th>Uretim Puani Kazanimi</th>
+                            <td>{formatCurrency(employeePrimeForecast.productionCurrentReward)}</td>
+                            <td>{formatCurrency(employeePrimeForecast.productionProjectedReward)}</td>
+                            <td>
+                              Mevcut skala ve ay sonu puan ongorusu esas alindi.
+                            </td>
+                          </tr>
+                          <tr>
+                            <th>Canli Prim</th>
+                            <td>{formatCurrency(employeePrimeForecast.livePrimeCurrentReward)}</td>
+                            <td>{formatCurrency(employeePrimeForecast.livePrimeProjectedReward)}</td>
+                            <td>
+                              Canli prim sheetindeki calisilan gun {formatNumber(livePrimeSettings.workedDays)} / toplam gun{" "}
+                              {formatNumber(livePrimeSettings.totalDays)} temposuna gore hesaplandi.
+                            </td>
+                          </tr>
+                          <tr>
+                            <th>Aksesuar Karlilik Primi</th>
+                            <td>{formatCurrency(employeePrimeForecast.accessoryCurrentReward)}</td>
+                            <td>{formatCurrency(employeePrimeForecast.accessoryProjectedReward)}</td>
+                            <td>
+                              Tempo {formatPercent(employeeAccessoryCategory?.actualPercent ?? null)} /{" "}
+                              {formatPercent(employeeAccessoryCategory?.projectedPercent ?? null)} ve sepete taksit haric baz {formatCurrency(
+                                employeePrimeForecast.accessoryCurrentBase
+                              )} / {formatCurrency(employeePrimeForecast.accessoryProjectedBase)} uzerinden %{
+                                employeePrimeForecast.accessoryCurrentRate
+                              } / %{employeePrimeForecast.accessoryProjectedRate}.
+                            </td>
+                          </tr>
+                        </tbody>
+                        <tfoot>
+                          <tr>
+                            <th>Toplam Prim</th>
+                            <td>{formatCurrency(employeePrimeForecast.totalCurrentReward)}</td>
+                            <td>{formatCurrency(employeePrimeForecast.totalProjectedReward)}</td>
+                            <td>Uretim puani + canli prim + aksesuar karlilik toplami</td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
                   </div>
                 ) : null}
 

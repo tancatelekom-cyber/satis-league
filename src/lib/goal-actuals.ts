@@ -34,6 +34,17 @@ export type GoalProductPointRow = {
   points: number;
 };
 
+export type GoalLivePrimeAccessoryScaleRow = {
+  thresholdPercent: number;
+  ratePercent: number;
+};
+
+export type GoalLivePrimeSettings = {
+  workedDays: number;
+  totalDays: number;
+  accessoryScaleRows: GoalLivePrimeAccessoryScaleRow[];
+};
+
 const GOAL_SHEET_ID = "1Ppf_vGtlD6RInm0fxy3lDaV5Sy3LWggkH6Gw1wgciuA";
 const PRS_SHEET_NAME = "PRS";
 const GN_SHEET_NAME = "GN";
@@ -42,6 +53,7 @@ const GN_SHEET_GID = "2046012697";
 const STORE_SHEET_GID = "650800232";
 const PRODUCTION_REWARD_SHEET_GID = "2009769454";
 const PRODUCT_POINT_SHEET_GID = "1779133571";
+const LIVE_PRIME_SETTINGS_SHEET_GID = "206171589";
 
 function buildSheetUrl(sheetName?: string, gid?: string) {
   const params = new URLSearchParams();
@@ -312,6 +324,47 @@ async function fetchGoalProductPointRowsFromSheet() {
     .sort((left, right) => right.points - left.points || left.product.localeCompare(right.product, "tr"));
 }
 
+async function fetchGoalLivePrimeSettingsFromSheet() {
+  const response = await fetch(buildSheetUrl(undefined, LIVE_PRIME_SETTINGS_SHEET_GID), {
+    cache: "no-store",
+    next: { revalidate: 0 },
+    headers: {
+      accept: "text/csv, text/plain, */*",
+      "user-agent": "Mozilla/5.0 (compatible; TancaSuperLigBot/1.0; +https://vercel.app)"
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`Canli prim ayarlari sayfasi okunamadi: ${response.status}`);
+  }
+
+  const rows = parseCsv(await response.text());
+  const statsRow = rows[1] ?? rows[0] ?? [];
+  const accessoryScaleRows = rows
+    .slice(1)
+    .map((row): GoalLivePrimeAccessoryScaleRow | null => {
+      const thresholdPercent = parseLocalizedNumber(normalizeText(row[0] ?? ""));
+      const ratePercent = parseLocalizedNumber(normalizeText(row[1] ?? ""));
+
+      if (!thresholdPercent || !ratePercent) {
+        return null;
+      }
+
+      return {
+        thresholdPercent,
+        ratePercent
+      };
+    })
+    .filter((row): row is GoalLivePrimeAccessoryScaleRow => Boolean(row))
+    .sort((left, right) => left.thresholdPercent - right.thresholdPercent);
+
+  return {
+    workedDays: parseLocalizedNumber(statsRow[5] ?? ""),
+    totalDays: parseLocalizedNumber(statsRow[6] ?? ""),
+    accessoryScaleRows
+  } satisfies GoalLivePrimeSettings;
+}
+
 export const fetchGoalActualRows = fetchGoalActualRowsFromSheet;
 
 export const fetchGoalDayStats = fetchGoalDayStatsFromSheet;
@@ -321,3 +374,5 @@ export const fetchGoalStoreRows = fetchGoalStoreRowsFromSheet;
 export const fetchGoalProductionRewardRows = fetchGoalProductionRewardRowsFromSheet;
 
 export const fetchGoalProductPointRows = fetchGoalProductPointRowsFromSheet;
+
+export const fetchGoalLivePrimeSettings = fetchGoalLivePrimeSettingsFromSheet;

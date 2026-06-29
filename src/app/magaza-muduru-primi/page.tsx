@@ -18,9 +18,17 @@ type ManagerProfileRow = {
   full_name: string;
   role: UserRole;
   approval: string;
+  store_id?: string | null;
   store: {
     name: string;
   } | null;
+};
+
+type ManagerStoreOption = {
+  id: string;
+  managerName: string;
+  managerRole: UserRole;
+  storeName: string;
 };
 
 function formatNumber(value: number | null | undefined, digits = 0) {
@@ -82,7 +90,7 @@ export default async function ManagerPrimePage({ searchParams }: PageProps) {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, full_name, role, approval, store:stores(name)")
+    .select("id, full_name, role, approval, store_id, store:stores(name)")
     .eq("id", user.id)
     .single();
 
@@ -101,35 +109,77 @@ export default async function ManagerPrimePage({ searchParams }: PageProps) {
     redirect("/");
   }
 
-  const { data: managerProfilesData } = await supabase
+  const { data: storeProfilesData } = await supabase
     .from("profiles")
-    .select("id, full_name, role, approval, store:stores(name)")
+    .select("id, full_name, role, approval, store_id, store:stores(name)")
     .eq("approval", "approved")
-    .eq("role", "manager")
+    .not("store_id", "is", null)
+    .in("role", ["employee", "manager"])
     .order("full_name", { ascending: true });
 
-  const allManagers = ((managerProfilesData as ManagerProfileRow[] | null) ?? []).filter((item) => item.full_name);
+  const storeProfiles = ((storeProfilesData as ManagerProfileRow[] | null) ?? []).filter(
+    (item) => item.full_name && item.store?.name
+  );
+
+  const managerStoreMap = new Map<string, ManagerStoreOption>();
+  for (const item of storeProfiles) {
+    const storeName = item.store?.name?.trim();
+    if (!storeName) {
+      continue;
+    }
+
+    const existing = managerStoreMap.get(storeName);
+    const preferredRole = item.role === "manager";
+    const currentIsManager = existing?.managerRole === "manager";
+
+    if (!existing) {
+      managerStoreMap.set(storeName, {
+        id: item.id,
+        managerName: item.full_name,
+        managerRole: item.role,
+        storeName
+      });
+      continue;
+    }
+
+    if (preferredRole && !currentIsManager) {
+      managerStoreMap.set(storeName, {
+        id: item.id,
+        managerName: item.full_name,
+        managerRole: item.role,
+        storeName
+      });
+    }
+  }
+
+  const allManagers = Array.from(managerStoreMap.values()).sort((left, right) =>
+    left.storeName.localeCompare(right.storeName, "tr")
+  );
+
+  const ownStoreName = safeProfile.store?.name?.trim() ?? "";
   const visibleManagers =
-    safeProfile.role === "manager" ? allManagers.filter((item) => item.id === safeProfile.id) : allManagers;
+    safeProfile.role === "manager" && ownStoreName
+      ? allManagers.filter((item) => item.storeName === ownStoreName)
+      : allManagers;
 
   if (!visibleManagers.length) {
     return (
       <main>
         <h1 className="page-title">Magaza Muduru Prim Kazanimi</h1>
-        <p className="page-subtitle">Gosterilecek magaza muduru kaydi bulunamadi.</p>
+        <p className="page-subtitle">Gosterilecek magaza veya magaza muduru kaydi bulunamadi.</p>
       </main>
     );
   }
 
   const requestedManagerId = String(params?.manager ?? "").trim();
   const selectedManager = visibleManagers.find((item) => item.id === requestedManagerId) ?? visibleManagers[0];
-  const summary = await buildManagerPrimeSummary(selectedManager.full_name, selectedManager.store?.name ?? "");
+  const summary = await buildManagerPrimeSummary(selectedManager.managerName, selectedManager.storeName);
 
   if (!summary) {
     return (
       <main>
         <h1 className="page-title">Magaza Muduru Prim Kazanimi</h1>
-        <p className="page-subtitle">{selectedManager.full_name} icin hedef gerceklesen verisi bulunamadi.</p>
+        <p className="page-subtitle">{selectedManager.storeName} icin hedef gerceklesen verisi bulunamadi.</p>
       </main>
     );
   }
@@ -145,13 +195,13 @@ export default async function ManagerPrimePage({ searchParams }: PageProps) {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 14 }}>
           <article className="campaign-summary-card">
             <span>Secili Mudur</span>
-            <strong>{summary.managerName}</strong>
+            <strong>{selectedManager.managerName}</strong>
             <p>{summary.storeName}</p>
           </article>
           <article className="campaign-summary-card">
             <span>Rol</span>
-            <strong>{roleLabels[selectedManager.role]}</strong>
-            <p>Prim hesabi bu profil icin olusturuldu.</p>
+            <strong>{roleLabels[selectedManager.managerRole]}</strong>
+            <p>Prim hesabi secili magaza verisine gore olusturuldu.</p>
           </article>
           <article className="campaign-summary-card">
             <span>Mevcut Prim</span>
@@ -196,7 +246,7 @@ export default async function ManagerPrimePage({ searchParams }: PageProps) {
                 ariaLabel="Magaza muduru secimi"
                 value={buildManagerHref(selectedManager.id)}
                 options={visibleManagers.map((item) => ({
-                  label: `${item.full_name}${item.store?.name ? ` | ${item.store.name}` : ""}`,
+                  label: `${item.storeName} | ${item.managerName}`,
                   value: buildManagerHref(item.id)
                 }))}
               />

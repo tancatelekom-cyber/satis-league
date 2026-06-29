@@ -44,6 +44,7 @@ export default async function RootLayout({
   let canEvaluate = false;
   let canOpenEvaluationPresentation = false;
   let canOpenWorkSchedule = false;
+  let canOpenManagerPrime = false;
   let canOpenWebKontor = false;
   let canOpenMissingDocs = false;
 
@@ -70,6 +71,8 @@ export default async function RootLayout({
       canOpenWorkSchedule = profile?.approval === "approved";
 
       if (profile?.approval === "approved") {
+        const resolvedManagerPrimeAccess = await getResolvedFeatureAccessForProfile("mudur-primi", user.id, profile.role);
+        canOpenManagerPrime = resolvedManagerPrimeAccess.allowed;
         const resolvedFeatureAccess = await getResolvedFeatureAccessForProfile("web-kontor", user.id, profile.role);
         canOpenWebKontor = resolvedFeatureAccess.allowed;
         const resolvedMissingDocsAccess = await getResolvedFeatureAccessForProfile("eksik-evrak", user.id, profile.role);
@@ -81,6 +84,7 @@ export default async function RootLayout({
     canEvaluate = false;
     canOpenEvaluationPresentation = false;
     canOpenWorkSchedule = false;
+    canOpenManagerPrime = false;
     canOpenWebKontor = false;
     canOpenMissingDocs = false;
   }
@@ -88,6 +92,10 @@ export default async function RootLayout({
   return (
     <html lang="tr">
       <head>
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="theme-color" content="#0b2143" />
         <link rel="shortcut icon" href="/favicon.ico?v=7" />
         <link rel="icon" type="image/x-icon" href="/favicon.ico?v=7" />
         <link rel="icon" type="image/png" sizes="64x64" href="/favicon.png?v=7" />
@@ -103,6 +111,7 @@ export default async function RootLayout({
             initialCanEvaluate={canEvaluate}
             initialCanOpenEvaluationPresentation={canOpenEvaluationPresentation}
             initialCanOpenWorkSchedule={canOpenWorkSchedule}
+            initialCanOpenManagerPrime={canOpenManagerPrime}
             initialCanOpenWebKontor={canOpenWebKontor}
             initialCanOpenMissingDocs={canOpenMissingDocs}
           />

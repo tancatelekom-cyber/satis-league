@@ -373,6 +373,26 @@ create table if not exists public.pos_commission_settings (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.manager_prime_settings (
+  id uuid primary key default gen_random_uuid(),
+  scale_column text not null default 'A',
+  recontract_category text not null default 'REKONTRATLAMA',
+  recontract_column text not null default 'B',
+  production_category text not null default 'URETIM PUANI',
+  production_column text not null default 'D',
+  activation_category text not null default 'AKTIVASYON',
+  activation_column text not null default 'E',
+  terminal_category text not null default 'TERMINAL',
+  terminal_column text not null default 'F',
+  sol_category text not null default 'SOL',
+  sol_column text not null default 'G',
+  accessory_category text not null default 'AKSESUAR KARLILIK',
+  accessory_column text not null default 'H',
+  updated_by uuid references public.profiles(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 insert into public.manager_presentation_sections (section_key, label, sort_order, is_visible)
 values
   ('cover', 'Kapak ve Ozet', 0, true),
@@ -396,7 +416,8 @@ insert into public.feature_menu_permissions (
 )
 values
   ('web-kontor', 'Web Kontor Menusu', false, true, true, true),
-  ('eksik-evrak', 'Eksik Evrak Menusu', true, true, true, true)
+  ('eksik-evrak', 'Eksik Evrak Menusu', true, true, true, true),
+  ('mudur-primi', 'Magaza Muduru Prim Menusu', false, true, true, true)
 on conflict (feature_key) do nothing;
 
 insert into public.pos_commission_settings (commission_percent)
@@ -404,6 +425,40 @@ select 0
 where not exists (
   select 1
   from public.pos_commission_settings
+);
+
+insert into public.manager_prime_settings (
+  scale_column,
+  recontract_category,
+  recontract_column,
+  production_category,
+  production_column,
+  activation_category,
+  activation_column,
+  terminal_category,
+  terminal_column,
+  sol_category,
+  sol_column,
+  accessory_category,
+  accessory_column
+)
+select
+  'A',
+  'REKONTRATLAMA',
+  'B',
+  'URETIM PUANI',
+  'D',
+  'AKTIVASYON',
+  'E',
+  'TERMINAL',
+  'F',
+  'SOL',
+  'G',
+  'AKSESUAR KARLILIK',
+  'H'
+where not exists (
+  select 1
+  from public.manager_prime_settings
 );
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
@@ -529,6 +584,7 @@ alter table public.weekly_work_schedules enable row level security;
 alter table public.feature_menu_permissions enable row level security;
 alter table public.feature_profile_permissions enable row level security;
 alter table public.pos_commission_settings enable row level security;
+alter table public.manager_prime_settings enable row level security;
 
 drop policy if exists "active stores are visible to everyone" on public.stores;
 create policy "active stores are visible to everyone" on public.stores
@@ -633,4 +689,8 @@ for select using (
 
 drop policy if exists "authenticated users can view pos commission settings" on public.pos_commission_settings;
 create policy "authenticated users can view pos commission settings" on public.pos_commission_settings
+for select using (auth.uid() is not null);
+
+drop policy if exists "authenticated users can view manager prime settings" on public.manager_prime_settings;
+create policy "authenticated users can view manager prime settings" on public.manager_prime_settings
 for select using (auth.uid() is not null);

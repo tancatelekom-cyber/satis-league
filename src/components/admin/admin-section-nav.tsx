@@ -9,6 +9,7 @@ const adminLinks = [
   { href: "/admin/bildirimler", label: "Popup Bildirimler", description: "Ana ekran duyurularini yonet" },
   { href: "/admin/tarifeler", label: "Tarifeler", description: "Tarife ekle, duzenle, kategorilere ayir" },
   { href: "/admin/web-kontor", label: "Web Kontor", description: "Menu yetkisini ve gorunurlugunu yonet" },
+  { href: "/admin/mudur-primi", label: "Mudur Primi", description: "Magaza muduru prim menusu ve kolon eslesmelerini yonet" },
   { href: "/admin/eksik-evrak", label: "Eksik Evrak", description: "Menu yetkisini ve gorunurlugunu yonet" },
   { href: "/admin/pos-komisyon", label: "POS Komisyon", description: "POS komisyon oranini tanimla ve guncelle" },
   { href: "/admin/magazalar", label: "Magazalar", description: "Magaza ekle, pasif yap, duzenle" },

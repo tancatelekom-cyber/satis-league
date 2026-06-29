@@ -2968,15 +2968,6 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                   </div>
                 ) : null}
 
-                {effectiveView === "employee" && employeeLivePrimeCategorySummaries.length ? (
-                  <div className="goal-live-prime-panel">
-                    <div className="goal-live-prime-head">
-                      <h3>Canli Primler</h3>
-                    </div>
-                    <GoalActualOnlyCategoryCards categories={employeeLivePrimeCategorySummaries} />
-                  </div>
-                ) : null}
-
                 {visibleTrendStoreCodes.length && companyTrendSummaryRows.length ? (
                   <div className="goal-company-trend-panel">
                     <div className="goal-live-prime-head">
@@ -3181,12 +3172,25 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                             </td>
                           </tr>
                           <tr>
-                            <th>Canli Prim</th>
-                            <td>{formatCurrency(employeePrimeForecast.livePrimeCurrentReward)}</td>
-                            <td>{formatCurrency(employeePrimeForecast.livePrimeProjectedReward)}</td>
-                            <td>
-                              Canli prim sheetindeki calisilan gun {formatNumber(livePrimeSettings.workedDays)} / toplam gun{" "}
-                              {formatNumber(livePrimeSettings.totalDays)} temposuna gore hesaplandi.
+                            <td colSpan={4} className="goal-employee-prime-forecast-live-prime-cell">
+                              <details className="goal-employee-prime-forecast-live-prime-details">
+                                <summary className="goal-employee-prime-forecast-live-prime-summary">
+                                  <span className="goal-employee-prime-forecast-live-prime-title">Canli Prim</span>
+                                  <span className="goal-employee-prime-forecast-live-prime-values">
+                                    <span>{formatCurrency(employeePrimeForecast.livePrimeCurrentReward)}</span>
+                                    <span>{formatCurrency(employeePrimeForecast.livePrimeProjectedReward)}</span>
+                                  </span>
+                                </summary>
+                                <div className="goal-employee-prime-forecast-live-prime-meta">
+                                  Canli prim sheetindeki calisilan gun {formatNumber(livePrimeSettings.workedDays)} / toplam gun{" "}
+                                  {formatNumber(livePrimeSettings.totalDays)} temposuna gore hesaplandi.
+                                </div>
+                                {employeeLivePrimeCategorySummaries.length ? (
+                                  <div className="goal-live-prime-panel goal-live-prime-panel-inline">
+                                    <GoalActualOnlyCategoryCards categories={employeeLivePrimeCategorySummaries} />
+                                  </div>
+                                ) : null}
+                              </details>
                             </td>
                           </tr>
                           <tr>

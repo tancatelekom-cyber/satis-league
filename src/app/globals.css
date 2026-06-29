@@ -7229,6 +7229,68 @@ textarea::placeholder {
   box-shadow: 0 20px 34px rgba(8, 22, 40, 0.18);
 }
 
+.goal-live-prime-panel-inline {
+  margin-top: 12px;
+  padding: 14px;
+  border-radius: 18px;
+}
+
+.goal-employee-prime-forecast-live-prime-cell {
+  padding: 0 !important;
+}
+
+.goal-employee-prime-forecast-live-prime-details {
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px;
+}
+
+.goal-employee-prime-forecast-live-prime-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.8fr) minmax(0, 0.8fr) auto;
+  align-items: center;
+  gap: 10px;
+  list-style: none;
+  cursor: pointer;
+  color: #11284a;
+  font-weight: 800;
+}
+
+.goal-employee-prime-forecast-live-prime-summary::-webkit-details-marker {
+  display: none;
+}
+
+.goal-employee-prime-forecast-live-prime-summary::after {
+  content: "v";
+  color: #1d4764;
+  font-size: 0.9rem;
+  transition: transform 0.2s ease;
+}
+
+.goal-employee-prime-forecast-live-prime-details[open] .goal-employee-prime-forecast-live-prime-summary::after {
+  transform: rotate(180deg);
+}
+
+.goal-employee-prime-forecast-live-prime-title {
+  font-weight: 900;
+}
+
+.goal-employee-prime-forecast-live-prime-values {
+  display: contents;
+}
+
+.goal-employee-prime-forecast-live-prime-values span {
+  text-align: center;
+  color: #173250;
+  font-weight: 800;
+}
+
+.goal-employee-prime-forecast-live-prime-meta {
+  color: #4f6780;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
 .goal-live-prime-head {
   display: grid;
   gap: 2px;

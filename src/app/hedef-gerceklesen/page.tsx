@@ -1537,6 +1537,11 @@ function isSepeteTaksitHaricCategory(title: string | null | undefined) {
   return normalizeCategoryKey(String(title ?? "")).includes("SEPETE TAKSIT HARIC");
 }
 
+function isServiceFeeCategory(title: string | null | undefined) {
+  const normalized = normalizeCategoryKey(String(title ?? ""));
+  return normalized.includes("HIZMET") && normalized.includes("BEDEL");
+}
+
 function findLivePrimeAccessoryRate(
   scaleRows: GoalLivePrimeSettings["accessoryScaleRows"],
   tempoPercent: number | null | undefined
@@ -1562,10 +1567,19 @@ function resolveAccessoryBase(
   }
 
   const sepeteTaksitHaricRow = category.children.find((child) => isSepeteTaksitHaricCategory(child.title));
+  const serviceFeeRow = category.children.find((child) => isServiceFeeCategory(child.title));
+  const serviceFeeValue = serviceFeeRow
+    ? valueKey === "actual"
+      ? serviceFeeRow.actual
+      : (serviceFeeRow.projectedActual ?? serviceFeeRow.actual)
+    : 0;
+
   if (sepeteTaksitHaricRow) {
-    return valueKey === "actual"
-      ? sepeteTaksitHaricRow.actual
-      : (sepeteTaksitHaricRow.projectedActual ?? sepeteTaksitHaricRow.actual);
+    const sepeteTaksitHaricValue =
+      valueKey === "actual"
+        ? sepeteTaksitHaricRow.actual
+        : (sepeteTaksitHaricRow.projectedActual ?? sepeteTaksitHaricRow.actual);
+    return sepeteTaksitHaricValue + serviceFeeValue;
   }
 
   const totalValue = valueKey === "actual" ? category.actual : (category.projectedActual ?? category.actual);

@@ -71,6 +71,18 @@ type EmployeePrimeForecast = {
   monthlyNetProjectedReward: number;
   totalCurrentReward: number;
   totalProjectedReward: number;
+  monthlyDeductionCurrentDetails: Array<{
+    categoryTitle: string;
+    deductionPercent: number;
+    deductionAmount: number;
+    triggered: boolean;
+  }>;
+  monthlyDeductionProjectedDetails: Array<{
+    categoryTitle: string;
+    deductionPercent: number;
+    deductionAmount: number;
+    triggered: boolean;
+  }>;
 };
 
 function safeFileName(value: string) {
@@ -314,23 +326,34 @@ function resolveMonthlyPrimeDeduction(
   rules: GoalLivePrimeSettings["monthlyPrimeDeductionRules"],
   valueKey: "actual" | "projectedActual"
 ) {
+  const details = rules.map((rule) => {
+    const category = categories.find(
+      (item) => normalizeCategoryKey(item.title) === normalizeCategoryKey(rule.categoryTitle)
+    );
+
+    if (!category) {
+      return {
+        categoryTitle: rule.categoryTitle,
+        deductionPercent: rule.deductionPercent,
+        triggered: false
+      };
+    }
+
+    const comparisonValue = valueKey === "actual" ? category.actual : (category.projectedActual ?? category.actual);
+
+    return {
+      categoryTitle: rule.categoryTitle,
+      deductionPercent: rule.deductionPercent,
+      triggered: comparisonValue < rule.minimumValue
+    };
+  });
+
   const totalRate = Math.min(
-    rules.reduce((sum, rule) => {
-      const category = categories.find(
-        (item) => normalizeCategoryKey(item.title) === normalizeCategoryKey(rule.categoryTitle)
-      );
-
-      if (!category) {
-        return sum;
-      }
-
-      const comparisonValue = valueKey === "actual" ? category.actual : (category.projectedActual ?? category.actual);
-      return comparisonValue < rule.minimumValue ? sum + rule.deductionPercent : sum;
-    }, 0),
+    details.reduce((sum, detail) => (detail.triggered ? sum + detail.deductionPercent : sum), 0),
     100
   );
 
-  return totalRate;
+  return { totalRate, details };
 }
 
 function buildEmployeePrimeForecast(
@@ -372,16 +395,18 @@ function buildEmployeePrimeForecast(
   const accessoryProjectedReward = accessoryProjectedBase * (accessoryProjectedRate / 100);
   const monthlyGrossCurrentReward = productionCurrentReward + accessoryCurrentReward;
   const monthlyGrossProjectedReward = productionProjectedReward + accessoryProjectedReward;
-  const monthlyDeductionCurrentRate = resolveMonthlyPrimeDeduction(
+  const monthlyCurrentDeduction = resolveMonthlyPrimeDeduction(
     employeeCategories,
     livePrimeSettings.monthlyPrimeDeductionRules,
     "actual"
   );
-  const monthlyDeductionProjectedRate = resolveMonthlyPrimeDeduction(
+  const monthlyProjectedDeduction = resolveMonthlyPrimeDeduction(
     employeeCategories,
     livePrimeSettings.monthlyPrimeDeductionRules,
     "projectedActual"
   );
+  const monthlyDeductionCurrentRate = monthlyCurrentDeduction.totalRate;
+  const monthlyDeductionProjectedRate = monthlyProjectedDeduction.totalRate;
   const monthlyDeductionCurrentAmount = productionCurrentReward * (monthlyDeductionCurrentRate / 100);
   const monthlyDeductionProjectedAmount = productionProjectedReward * (monthlyDeductionProjectedRate / 100);
   const monthlyNetCurrentReward = Math.max(monthlyGrossCurrentReward - monthlyDeductionCurrentAmount, 0);
@@ -407,7 +432,19 @@ function buildEmployeePrimeForecast(
     monthlyNetCurrentReward,
     monthlyNetProjectedReward,
     totalCurrentReward: monthlyNetCurrentReward + livePrimeCurrentReward,
-    totalProjectedReward: monthlyNetProjectedReward + livePrimeProjectedReward
+    totalProjectedReward: monthlyNetProjectedReward + livePrimeProjectedReward,
+    monthlyDeductionCurrentDetails: monthlyCurrentDeduction.details.map((detail) => ({
+      categoryTitle: detail.categoryTitle,
+      deductionPercent: detail.deductionPercent,
+      deductionAmount: detail.triggered ? productionCurrentReward * (detail.deductionPercent / 100) : 0,
+      triggered: detail.triggered
+    })),
+    monthlyDeductionProjectedDetails: monthlyProjectedDeduction.details.map((detail) => ({
+      categoryTitle: detail.categoryTitle,
+      deductionPercent: detail.deductionPercent,
+      deductionAmount: detail.triggered ? productionProjectedReward * (detail.deductionPercent / 100) : 0,
+      triggered: detail.triggered
+    }))
   } satisfies EmployeePrimeForecast;
 }
 
@@ -478,7 +515,11 @@ export async function GET() {
           liveCurrent: forecast.livePrimeCurrentReward,
           liveProjected: forecast.livePrimeProjectedReward,
           accessoryCurrent: forecast.accessoryCurrentReward,
-          accessoryProjected: forecast.accessoryProjectedReward
+          accessoryProjected: forecast.accessoryProjectedReward,
+          monthlyDeductionCurrentAmount: forecast.monthlyDeductionCurrentAmount,
+          monthlyDeductionProjectedAmount: forecast.monthlyDeductionProjectedAmount,
+          monthlyDeductionCurrentDetails: forecast.monthlyDeductionCurrentDetails,
+          monthlyDeductionProjectedDetails: forecast.monthlyDeductionProjectedDetails
         };
       })
       .sort(
@@ -487,6 +528,10 @@ export async function GET() {
           b.currentTotal - a.currentTotal ||
           a.employeeName.localeCompare(b.employeeName, "tr")
       );
+
+    const deductionCategoryTitles = Array.from(
+      new Set(livePrimeSettings.monthlyPrimeDeductionRules.map((rule) => rule.categoryTitle.trim()).filter(Boolean))
+    );
 
     const csv = buildCsv([
       [
@@ -499,7 +544,10 @@ export async function GET() {
         "Canli Prim",
         "Ay Sonu Canli Prim",
         "Aksesuar Prim",
-        "Ay Sonu Aksesuar Prim"
+        "Ay Sonu Aksesuar Prim",
+        "Toplam Kesinti",
+        "Ay Sonu Toplam Kesinti",
+        ...deductionCategoryTitles.flatMap((title) => [`${title} Kesinti`, `${title} Ay Sonu Kesinti`])
       ],
       ...rankingRows.map((row, index) => [
         String(index + 1),
@@ -511,7 +559,26 @@ export async function GET() {
         formatCurrency(row.liveCurrent),
         formatCurrency(row.liveProjected),
         formatCurrency(row.accessoryCurrent),
-        formatCurrency(row.accessoryProjected)
+        formatCurrency(row.accessoryProjected),
+        formatCurrency(row.monthlyDeductionCurrentAmount),
+        formatCurrency(row.monthlyDeductionProjectedAmount),
+        ...deductionCategoryTitles.flatMap((title) => {
+          const currentDetail = row.monthlyDeductionCurrentDetails.find(
+            (detail) => normalizeCategoryKey(detail.categoryTitle) === normalizeCategoryKey(title)
+          );
+          const projectedDetail = row.monthlyDeductionProjectedDetails.find(
+            (detail) => normalizeCategoryKey(detail.categoryTitle) === normalizeCategoryKey(title)
+          );
+
+          return [
+            currentDetail?.triggered
+              ? `%${currentDetail.deductionPercent} | ${formatCurrency(currentDetail.deductionAmount)}`
+              : "-",
+            projectedDetail?.triggered
+              ? `%${projectedDetail.deductionPercent} | ${formatCurrency(projectedDetail.deductionAmount)}`
+              : "-"
+          ];
+        })
       ])
     ]);
 

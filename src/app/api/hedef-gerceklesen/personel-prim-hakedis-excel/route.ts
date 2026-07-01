@@ -382,8 +382,8 @@ function buildEmployeePrimeForecast(
     livePrimeSettings.monthlyPrimeDeductionRules,
     "projectedActual"
   );
-  const monthlyDeductionCurrentAmount = monthlyGrossCurrentReward * (monthlyDeductionCurrentRate / 100);
-  const monthlyDeductionProjectedAmount = monthlyGrossProjectedReward * (monthlyDeductionProjectedRate / 100);
+  const monthlyDeductionCurrentAmount = productionCurrentReward * (monthlyDeductionCurrentRate / 100);
+  const monthlyDeductionProjectedAmount = productionProjectedReward * (monthlyDeductionProjectedRate / 100);
   const monthlyNetCurrentReward = Math.max(monthlyGrossCurrentReward - monthlyDeductionCurrentAmount, 0);
   const monthlyNetProjectedReward = Math.max(monthlyGrossProjectedReward - monthlyDeductionProjectedAmount, 0);
 

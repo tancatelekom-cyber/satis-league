@@ -1734,8 +1734,8 @@ function buildEmployeePrimeForecast(
     livePrimeSettings.monthlyPrimeDeductionRules,
     "projectedActual"
   );
-  const monthlyDeductionCurrentAmount = monthlyGrossCurrentReward * (monthlyCurrentDeduction.totalRate / 100);
-  const monthlyDeductionProjectedAmount = monthlyGrossProjectedReward * (monthlyProjectedDeduction.totalRate / 100);
+  const monthlyDeductionCurrentAmount = productionCurrentReward * (monthlyCurrentDeduction.totalRate / 100);
+  const monthlyDeductionProjectedAmount = productionProjectedReward * (monthlyProjectedDeduction.totalRate / 100);
   const monthlyNetCurrentReward = Math.max(monthlyGrossCurrentReward - monthlyDeductionCurrentAmount, 0);
   const monthlyNetProjectedReward = Math.max(monthlyGrossProjectedReward - monthlyDeductionProjectedAmount, 0);
 
@@ -3453,7 +3453,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                             <td>Uretim puani kazanimi + aksesuar karlilik primi brut toplami</td>
                           </tr>
                           <tr>
-                            <th>Aylik Prim Kesintisi</th>
+                            <th>Uretim Puani Kesintisi</th>
                             <td>{formatCurrency(employeePrimeForecast.monthlyDeductionCurrentAmount)}</td>
                             <td>{formatCurrency(employeePrimeForecast.monthlyDeductionProjectedAmount)}</td>
                             <td>
@@ -3472,7 +3472,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                             <th>Aylik Prim Neti</th>
                             <td>{formatCurrency(employeePrimeForecast.monthlyNetCurrentReward)}</td>
                             <td>{formatCurrency(employeePrimeForecast.monthlyNetProjectedReward)}</td>
-                            <td>Aylik prim brut toplami - kesinti tutari</td>
+                            <td>Uretim puani kazanimi + aksesuar karlilik primi - sadece uretim puani kesintisi</td>
                           </tr>
                           <tr>
                             <td colSpan={4} className="goal-employee-prime-forecast-live-prime-cell">

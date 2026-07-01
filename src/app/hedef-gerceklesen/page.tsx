@@ -124,6 +124,11 @@ type GoalLivePrimeSettings = {
     thresholdPercent: number;
     ratePercent: number;
   }>;
+  monthlyPrimeDeductionRules: Array<{
+    categoryTitle: string;
+    minimumValue: number;
+    deductionPercent: number;
+  }>;
 };
 
 type EmployeePrimeForecast = {
@@ -137,8 +142,18 @@ type EmployeePrimeForecast = {
   accessoryProjectedRate: number;
   accessoryCurrentReward: number;
   accessoryProjectedReward: number;
+  monthlyGrossCurrentReward: number;
+  monthlyGrossProjectedReward: number;
+  monthlyDeductionCurrentRate: number;
+  monthlyDeductionProjectedRate: number;
+  monthlyDeductionCurrentAmount: number;
+  monthlyDeductionProjectedAmount: number;
+  monthlyNetCurrentReward: number;
+  monthlyNetProjectedReward: number;
   totalCurrentReward: number;
   totalProjectedReward: number;
+  monthlyDeductionCurrentReasons: Array<string>;
+  monthlyDeductionProjectedReasons: Array<string>;
 };
 
 type CoachingMetric = {
@@ -1615,6 +1630,59 @@ function resolveAccessoryBase(
   return nonSepeteChildTotal > 0 ? nonSepeteChildTotal : totalValue;
 }
 
+function resolveMonthlyPrimeDeduction(
+  categories: GoalCategorySummary[],
+  rules: GoalLivePrimeSettings["monthlyPrimeDeductionRules"],
+  valueKey: "actual" | "projectedActual"
+) {
+  const triggeredRules = rules
+    .map((rule) => {
+      const category = categories.find(
+        (item) => normalizeCategoryKey(item.title) === normalizeCategoryKey(rule.categoryTitle)
+      );
+
+      if (!category) {
+        return null;
+      }
+
+      const comparisonValue = valueKey === "actual" ? category.actual : (category.projectedActual ?? category.actual);
+
+      if (comparisonValue >= rule.minimumValue) {
+        return null;
+      }
+
+      return {
+        ...rule,
+        comparisonValue
+      };
+    })
+    .filter(
+      (
+        row
+      ): row is {
+        categoryTitle: string;
+        minimumValue: number;
+        deductionPercent: number;
+        comparisonValue: number;
+      } => Boolean(row)
+    );
+
+  const totalRate = Math.min(
+    triggeredRules.reduce((sum, rule) => sum + rule.deductionPercent, 0),
+    100
+  );
+
+  return {
+    totalRate,
+    reasons: triggeredRules.map(
+      (rule) =>
+        `${rule.categoryTitle} ${formatNumber(rule.comparisonValue)} < alt limit ${formatNumber(rule.minimumValue)} (-%${formatNumber(
+          rule.deductionPercent
+        )})`
+    )
+  };
+}
+
 function buildEmployeePrimeForecast(
   employeeCategories: GoalCategorySummary[],
   employeeLivePrimeCategories: GoalCategorySummary[],
@@ -1654,6 +1722,22 @@ function buildEmployeePrimeForecast(
   );
   const accessoryCurrentReward = accessoryCurrentBase * (accessoryCurrentRate / 100);
   const accessoryProjectedReward = accessoryProjectedBase * (accessoryProjectedRate / 100);
+  const monthlyGrossCurrentReward = productionCurrentReward + accessoryCurrentReward;
+  const monthlyGrossProjectedReward = productionProjectedReward + accessoryProjectedReward;
+  const monthlyCurrentDeduction = resolveMonthlyPrimeDeduction(
+    employeeCategories,
+    livePrimeSettings.monthlyPrimeDeductionRules,
+    "actual"
+  );
+  const monthlyProjectedDeduction = resolveMonthlyPrimeDeduction(
+    employeeCategories,
+    livePrimeSettings.monthlyPrimeDeductionRules,
+    "projectedActual"
+  );
+  const monthlyDeductionCurrentAmount = monthlyGrossCurrentReward * (monthlyCurrentDeduction.totalRate / 100);
+  const monthlyDeductionProjectedAmount = monthlyGrossProjectedReward * (monthlyProjectedDeduction.totalRate / 100);
+  const monthlyNetCurrentReward = Math.max(monthlyGrossCurrentReward - monthlyDeductionCurrentAmount, 0);
+  const monthlyNetProjectedReward = Math.max(monthlyGrossProjectedReward - monthlyDeductionProjectedAmount, 0);
 
   return {
     productionCurrentReward,
@@ -1666,8 +1750,18 @@ function buildEmployeePrimeForecast(
     accessoryProjectedRate,
     accessoryCurrentReward,
     accessoryProjectedReward,
-    totalCurrentReward: productionCurrentReward + livePrimeCurrentReward + accessoryCurrentReward,
-    totalProjectedReward: productionProjectedReward + livePrimeProjectedReward + accessoryProjectedReward
+    monthlyGrossCurrentReward,
+    monthlyGrossProjectedReward,
+    monthlyDeductionCurrentRate: monthlyCurrentDeduction.totalRate,
+    monthlyDeductionProjectedRate: monthlyProjectedDeduction.totalRate,
+    monthlyDeductionCurrentAmount,
+    monthlyDeductionProjectedAmount,
+    monthlyNetCurrentReward,
+    monthlyNetProjectedReward,
+    totalCurrentReward: monthlyNetCurrentReward + livePrimeCurrentReward,
+    totalProjectedReward: monthlyNetProjectedReward + livePrimeProjectedReward,
+    monthlyDeductionCurrentReasons: monthlyCurrentDeduction.reasons,
+    monthlyDeductionProjectedReasons: monthlyProjectedDeduction.reasons
   } satisfies EmployeePrimeForecast;
 }
 
@@ -2228,7 +2322,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
   let productPointRows: GoalProductPointRow[] = [];
   let documentIssueRows = await Promise.resolve([] as Awaited<ReturnType<typeof fetchDocumentIssueRows>>);
   let dayStats: GoalDayStats = EMPTY_DAY_STATS;
-  let livePrimeSettings: GoalLivePrimeSettings = { workedDays: 0, totalDays: 0, accessoryScaleRows: [] };
+  let livePrimeSettings: GoalLivePrimeSettings = { workedDays: 0, totalDays: 0, accessoryScaleRows: [], monthlyPrimeDeductionRules: [] };
   let sheetError = "";
 
   try {
@@ -2239,7 +2333,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
       fetchGoalProductionRewardRows(),
       fetchGoalProductPointRows(),
       fetchDocumentIssueRows().catch(() => []),
-      fetchGoalLivePrimeSettings().catch(() => ({ workedDays: 0, totalDays: 0, accessoryScaleRows: [] }))
+      fetchGoalLivePrimeSettings().catch(() => ({ workedDays: 0, totalDays: 0, accessoryScaleRows: [], monthlyPrimeDeductionRules: [] }))
     ]);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Google Sheet verisi okunamadi.";
@@ -2585,10 +2679,10 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
           )
         : null;
     const employeePrimeSubtotalCurrent = employeePrimeForecast
-      ? employeePrimeForecast.productionCurrentReward + employeePrimeForecast.accessoryCurrentReward
+      ? employeePrimeForecast.monthlyGrossCurrentReward
       : 0;
     const employeePrimeSubtotalProjected = employeePrimeForecast
-      ? employeePrimeForecast.productionProjectedReward + employeePrimeForecast.accessoryProjectedReward
+      ? employeePrimeForecast.monthlyGrossProjectedReward
       : 0;
   const employeeStoreRows = employeeScopedStoreCode
     ? filteredStoreRows.filter((row) => normalizeStoreKey(row.storeCode) === normalizeStoreKey(employeeScopedStoreCode))
@@ -3356,7 +3450,29 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                             <th>Aylik Prim Ongorusu Toplami</th>
                             <td>{formatCurrency(employeePrimeSubtotalCurrent)}</td>
                             <td>{formatCurrency(employeePrimeSubtotalProjected)}</td>
-                            <td>Uretim puani kazanimi + aksesuar karlilik primi toplami</td>
+                            <td>Uretim puani kazanimi + aksesuar karlilik primi brut toplami</td>
+                          </tr>
+                          <tr>
+                            <th>Aylik Prim Kesintisi</th>
+                            <td>{formatCurrency(employeePrimeForecast.monthlyDeductionCurrentAmount)}</td>
+                            <td>{formatCurrency(employeePrimeForecast.monthlyDeductionProjectedAmount)}</td>
+                            <td>
+                              {employeePrimeForecast.monthlyDeductionCurrentRate > 0 ||
+                              employeePrimeForecast.monthlyDeductionProjectedRate > 0
+                                ? `Kesinti oranı mevcut %${formatNumber(employeePrimeForecast.monthlyDeductionCurrentRate)} | ay sonu %${formatNumber(
+                                    employeePrimeForecast.monthlyDeductionProjectedRate
+                                  )}. ${
+                                    employeePrimeForecast.monthlyDeductionProjectedReasons.join(" | ") ||
+                                    employeePrimeForecast.monthlyDeductionCurrentReasons.join(" | ")
+                                  }`
+                                : "Kesinti koşulu oluşmadı."}
+                            </td>
+                          </tr>
+                          <tr>
+                            <th>Aylik Prim Neti</th>
+                            <td>{formatCurrency(employeePrimeForecast.monthlyNetCurrentReward)}</td>
+                            <td>{formatCurrency(employeePrimeForecast.monthlyNetProjectedReward)}</td>
+                            <td>Aylik prim brut toplami - kesinti tutari</td>
                           </tr>
                           <tr>
                             <td colSpan={4} className="goal-employee-prime-forecast-live-prime-cell">
@@ -3390,7 +3506,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                             <th>Primler Toplami</th>
                             <td>{formatCurrency(employeePrimeForecast.totalCurrentReward)}</td>
                             <td>{formatCurrency(employeePrimeForecast.totalProjectedReward)}</td>
-                            <td>Aylik prim ongorusu toplami + canli prim toplami</td>
+                            <td>Aylik prim neti + canli prim toplami</td>
                           </tr>
                         </tfoot>
                       </table>

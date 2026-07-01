@@ -39,10 +39,17 @@ export type GoalLivePrimeAccessoryScaleRow = {
   ratePercent: number;
 };
 
+export type GoalMonthlyPrimeDeductionRule = {
+  categoryTitle: string;
+  minimumValue: number;
+  deductionPercent: number;
+};
+
 export type GoalLivePrimeSettings = {
   workedDays: number;
   totalDays: number;
   accessoryScaleRows: GoalLivePrimeAccessoryScaleRow[];
+  monthlyPrimeDeductionRules: GoalMonthlyPrimeDeductionRule[];
 };
 
 const GOAL_SHEET_ID = "1Ppf_vGtlD6RInm0fxy3lDaV5Sy3LWggkH6Gw1wgciuA";
@@ -357,11 +364,30 @@ async function fetchGoalLivePrimeSettingsFromSheet() {
     })
     .filter((row): row is GoalLivePrimeAccessoryScaleRow => Boolean(row))
     .sort((left, right) => left.thresholdPercent - right.thresholdPercent);
+  const monthlyPrimeDeductionRules = rows
+    .slice(1)
+    .map((row): GoalMonthlyPrimeDeductionRule | null => {
+      const categoryTitle = normalizeText(row[9] ?? "");
+      const minimumValue = parseLocalizedNumber(normalizeText(row[10] ?? ""));
+      const deductionPercent = parseLocalizedNumber(normalizeText(row[11] ?? ""));
+
+      if (!categoryTitle || !minimumValue || !deductionPercent) {
+        return null;
+      }
+
+      return {
+        categoryTitle,
+        minimumValue,
+        deductionPercent
+      };
+    })
+    .filter((row): row is GoalMonthlyPrimeDeductionRule => Boolean(row));
 
   return {
     workedDays: parseLocalizedNumber(statsRow[5] ?? ""),
     totalDays: parseLocalizedNumber(statsRow[6] ?? ""),
-    accessoryScaleRows
+    accessoryScaleRows,
+    monthlyPrimeDeductionRules
   } satisfies GoalLivePrimeSettings;
 }
 

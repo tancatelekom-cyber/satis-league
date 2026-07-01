@@ -61,6 +61,14 @@ type EmployeePrimeForecast = {
   accessoryProjectedRate: number;
   accessoryCurrentReward: number;
   accessoryProjectedReward: number;
+  monthlyGrossCurrentReward: number;
+  monthlyGrossProjectedReward: number;
+  monthlyDeductionCurrentRate: number;
+  monthlyDeductionProjectedRate: number;
+  monthlyDeductionCurrentAmount: number;
+  monthlyDeductionProjectedAmount: number;
+  monthlyNetCurrentReward: number;
+  monthlyNetProjectedReward: number;
   totalCurrentReward: number;
   totalProjectedReward: number;
 };
@@ -301,6 +309,30 @@ function resolveAccessoryBase(category: GoalCategorySummary | undefined, valueKe
   return nonSepeteChildTotal > 0 ? nonSepeteChildTotal : totalValue;
 }
 
+function resolveMonthlyPrimeDeduction(
+  categories: GoalCategorySummary[],
+  rules: GoalLivePrimeSettings["monthlyPrimeDeductionRules"],
+  valueKey: "actual" | "projectedActual"
+) {
+  const totalRate = Math.min(
+    rules.reduce((sum, rule) => {
+      const category = categories.find(
+        (item) => normalizeCategoryKey(item.title) === normalizeCategoryKey(rule.categoryTitle)
+      );
+
+      if (!category) {
+        return sum;
+      }
+
+      const comparisonValue = valueKey === "actual" ? category.actual : (category.projectedActual ?? category.actual);
+      return comparisonValue < rule.minimumValue ? sum + rule.deductionPercent : sum;
+    }, 0),
+    100
+  );
+
+  return totalRate;
+}
+
 function buildEmployeePrimeForecast(
   employeeCategories: GoalCategorySummary[],
   employeeLivePrimeCategories: GoalCategorySummary[],
@@ -338,6 +370,22 @@ function buildEmployeePrimeForecast(
   );
   const accessoryCurrentReward = accessoryCurrentBase * (accessoryCurrentRate / 100);
   const accessoryProjectedReward = accessoryProjectedBase * (accessoryProjectedRate / 100);
+  const monthlyGrossCurrentReward = productionCurrentReward + accessoryCurrentReward;
+  const monthlyGrossProjectedReward = productionProjectedReward + accessoryProjectedReward;
+  const monthlyDeductionCurrentRate = resolveMonthlyPrimeDeduction(
+    employeeCategories,
+    livePrimeSettings.monthlyPrimeDeductionRules,
+    "actual"
+  );
+  const monthlyDeductionProjectedRate = resolveMonthlyPrimeDeduction(
+    employeeCategories,
+    livePrimeSettings.monthlyPrimeDeductionRules,
+    "projectedActual"
+  );
+  const monthlyDeductionCurrentAmount = monthlyGrossCurrentReward * (monthlyDeductionCurrentRate / 100);
+  const monthlyDeductionProjectedAmount = monthlyGrossProjectedReward * (monthlyDeductionProjectedRate / 100);
+  const monthlyNetCurrentReward = Math.max(monthlyGrossCurrentReward - monthlyDeductionCurrentAmount, 0);
+  const monthlyNetProjectedReward = Math.max(monthlyGrossProjectedReward - monthlyDeductionProjectedAmount, 0);
 
   return {
     productionCurrentReward,
@@ -350,8 +398,16 @@ function buildEmployeePrimeForecast(
     accessoryProjectedRate,
     accessoryCurrentReward,
     accessoryProjectedReward,
-    totalCurrentReward: productionCurrentReward + livePrimeCurrentReward + accessoryCurrentReward,
-    totalProjectedReward: productionProjectedReward + livePrimeProjectedReward + accessoryProjectedReward
+    monthlyGrossCurrentReward,
+    monthlyGrossProjectedReward,
+    monthlyDeductionCurrentRate,
+    monthlyDeductionProjectedRate,
+    monthlyDeductionCurrentAmount,
+    monthlyDeductionProjectedAmount,
+    monthlyNetCurrentReward,
+    monthlyNetProjectedReward,
+    totalCurrentReward: monthlyNetCurrentReward + livePrimeCurrentReward,
+    totalProjectedReward: monthlyNetProjectedReward + livePrimeProjectedReward
   } satisfies EmployeePrimeForecast;
 }
 

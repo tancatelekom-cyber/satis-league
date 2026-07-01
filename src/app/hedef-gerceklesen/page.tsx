@@ -44,6 +44,14 @@ type EmployeeSummary = {
   projectedPercent: number | null;
   hasTarget: boolean;
   showProjection: boolean;
+  totalPrimeCurrentReward: number;
+  totalPrimeProjectedReward: number;
+  productionPrimeCurrentReward: number;
+  productionPrimeProjectedReward: number;
+  livePrimeCurrentReward: number;
+  livePrimeProjectedReward: number;
+  accessoryPrimeCurrentReward: number;
+  accessoryPrimeProjectedReward: number;
 };
 
 type GoalMetricSummary = {
@@ -684,7 +692,15 @@ function buildEmployeeSummary(rows: GoalActualRow[], workedDays: number, totalDa
     projectedActual,
     projectedPercent: hasTarget ? (projectedActual / totalTarget) * 100 : null,
     hasTarget,
-    showProjection: true
+    showProjection: true,
+    totalPrimeCurrentReward: 0,
+    totalPrimeProjectedReward: 0,
+    productionPrimeCurrentReward: 0,
+    productionPrimeProjectedReward: 0,
+    livePrimeCurrentReward: 0,
+    livePrimeProjectedReward: 0,
+    accessoryPrimeCurrentReward: 0,
+    accessoryPrimeProjectedReward: 0
   };
 }
 
@@ -2184,6 +2200,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
   }
 
   const canViewAll = canViewAllGoalActual(profile.role);
+  const isAdminViewer = profile.role === "admin";
   const currentUserFullName = String((profile as { full_name?: string | null }).full_name ?? "").trim();
   const currentUserStore = (profile as { store?: Array<{ name: string }> | { name: string } | null }).store;
   const currentUserStoreName = Array.isArray(currentUserStore)
@@ -2275,6 +2292,43 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
     employeeMap.set(row.employeeName, current);
   });
 
+  const employeePrimeCoreMap = new Map<string, GoalActualRow[]>();
+  allFilteredEmployeeCoreRows.forEach((row) => {
+    const current = employeePrimeCoreMap.get(row.employeeName) ?? [];
+    current.push(row);
+    employeePrimeCoreMap.set(row.employeeName, current);
+  });
+
+  const employeeLivePrimeMap = new Map<string, GoalActualRow[]>();
+  allFilteredEmployeeRows
+    .filter((row) => isLivePrimeCategory(row.mainCategory))
+    .forEach((row) => {
+      const current = employeeLivePrimeMap.get(row.employeeName) ?? [];
+      current.push(row);
+      employeeLivePrimeMap.set(row.employeeName, current);
+    });
+
+  const employeePrimeForecastMap = new Map<string, EmployeePrimeForecast>();
+  Array.from(new Set([...employeePrimeCoreMap.keys(), ...employeeLivePrimeMap.keys()])).forEach((employeeName) => {
+    const employeeCoreRows = employeePrimeCoreMap.get(employeeName) ?? [];
+    const employeeLiveRows = employeeLivePrimeMap.get(employeeName) ?? [];
+
+    if (!employeeCoreRows.length && !employeeLiveRows.length) {
+      return;
+    }
+
+    const employeeCoreSummaries = buildCategorySummaries(employeeCoreRows, dayStats.workedDays, dayStats.totalDays);
+    const employeeLiveSummaries = buildCategorySummaries(employeeLiveRows, dayStats.workedDays, dayStats.totalDays);
+    const forecast = buildEmployeePrimeForecast(
+      employeeCoreSummaries,
+      employeeLiveSummaries,
+      productionRewardRows,
+      livePrimeSettings
+    );
+
+    employeePrimeForecastMap.set(employeeName, forecast);
+  });
+
   const employeeSummaries = Array.from(employeeMap.entries())
     .map(([, rows]) => buildEmployeeSummary(rows, dayStats.workedDays, dayStats.totalDays))
     .sort((a, b) => {
@@ -2287,15 +2341,6 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
       }
 
       return b.projectedActual - a.projectedActual || b.totalActual - a.totalActual;
-    });
-
-  const employeeLivePrimeMap = new Map<string, GoalActualRow[]>();
-  allFilteredEmployeeRows
-    .filter((row) => isLivePrimeCategory(row.mainCategory))
-    .forEach((row) => {
-      const current = employeeLivePrimeMap.get(row.employeeName) ?? [];
-      current.push(row);
-      employeeLivePrimeMap.set(row.employeeName, current);
     });
 
   const employeeLivePrimeRankingSummaries = Array.from(employeeLivePrimeMap.entries())
@@ -2311,6 +2356,34 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
 
       return b.projectedActual - a.projectedActual || b.totalActual - a.totalActual;
     });
+
+  const employeePrimeRankingSummaries = Array.from(employeePrimeCoreMap.entries())
+    .map(([employeeName, rows]) => {
+      const summary = buildEmployeeSummary(rows, dayStats.workedDays, dayStats.totalDays);
+      const forecast = employeePrimeForecastMap.get(employeeName);
+
+      if (!forecast) {
+        return summary;
+      }
+
+      return {
+        ...summary,
+        totalPrimeCurrentReward: forecast.totalCurrentReward,
+        totalPrimeProjectedReward: forecast.totalProjectedReward,
+        productionPrimeCurrentReward: forecast.productionCurrentReward,
+        productionPrimeProjectedReward: forecast.productionProjectedReward,
+        livePrimeCurrentReward: forecast.livePrimeCurrentReward,
+        livePrimeProjectedReward: forecast.livePrimeProjectedReward,
+        accessoryPrimeCurrentReward: forecast.accessoryCurrentReward,
+        accessoryPrimeProjectedReward: forecast.accessoryProjectedReward
+      } satisfies EmployeeSummary;
+    })
+    .sort(
+      (a, b) =>
+        b.totalPrimeProjectedReward - a.totalPrimeProjectedReward ||
+        b.totalPrimeCurrentReward - a.totalPrimeCurrentReward ||
+        b.projectedActual - a.projectedActual
+    );
 
   const storeMap = new Map<string, GoalStoreRow[]>();
   storeRankingRows.forEach((row) => {
@@ -2861,6 +2934,59 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                           </div>
                           <strong className="goal-ranking-score">
                             {formatNumber(summary.actual)}
+                          </strong>
+                        </a>
+                      ))}
+                    </div>
+                  </details>
+                ) : null}
+
+                {effectiveView === "employee" && isAdminViewer && employeePrimeRankingSummaries.length ? (
+                  <details className="campaign-section-card goal-ranking-card goal-live-prime-ranking-card" open>
+                    <summary className="goal-live-prime-ranking-summary">
+                      <div className="goal-section-head">
+                        <h2>Personel Prim Hakedişi Sıralaması</h2>
+                        <span>Kategori kırılımlı toplam prim görünümü</span>
+                      </div>
+                      <span className="goal-live-prime-ranking-caret">v</span>
+                    </summary>
+
+                    <div className="goal-live-prime-ranking-export">
+                      <a
+                        className="button-secondary export-link-button"
+                        href="/api/hedef-gerceklesen/personel-prim-hakedis-excel"
+                      >
+                        Excele Indir
+                      </a>
+                    </div>
+
+                    <div className="goal-ranking-list goal-live-prime-ranking-list">
+                      {employeePrimeRankingSummaries.map((summary, index) => (
+                        <a
+                          key={`employee-prime-${summary.name}`}
+                          className={`goal-ranking-row goal-live-prime-ranking-row ${
+                            summary.name === activeEmployeeName ? "goal-ranking-row-active" : ""
+                          }`}
+                          href={buildHref("employee", { employee: summary.name, panel: "detail" })}
+                        >
+                          <span className="goal-rank-badge">{index + 1}</span>
+                          <div className="goal-ranking-main">
+                            <strong>{summary.name}</strong>
+                            <span>
+                              {`Toplam prim ${formatCurrency(summary.totalPrimeCurrentReward)}${
+                                summary.totalPrimeProjectedReward > 0
+                                  ? ` | Ay sonu ${formatCurrency(summary.totalPrimeProjectedReward)}`
+                                  : ""
+                              }`}
+                            </span>
+                            <span>
+                              {`Uretim ${formatCurrency(summary.productionPrimeCurrentReward)} | Canli ${formatCurrency(
+                                summary.livePrimeCurrentReward
+                              )} | Aksesuar ${formatCurrency(summary.accessoryPrimeCurrentReward)}`}
+                            </span>
+                          </div>
+                          <strong className="goal-ranking-score">
+                            {formatCurrency(summary.totalPrimeCurrentReward)}
                           </strong>
                         </a>
                       ))}

@@ -45,8 +45,17 @@ function parseOptionalLink(value: FormDataEntryValue | null) {
     return null;
   }
 
+  if (rawValue.startsWith("/")) {
+    return rawValue;
+  }
+
+  const normalizedValue =
+    rawValue.startsWith("www.") || (!rawValue.includes("://") && rawValue.includes("."))
+      ? `https://${rawValue}`
+      : rawValue;
+
   try {
-    const parsedUrl = new URL(rawValue);
+    const parsedUrl = new URL(normalizedValue);
     if (!["http:", "https:"].includes(parsedUrl.protocol)) {
       return null;
     }

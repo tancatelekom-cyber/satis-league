@@ -11,6 +11,7 @@ export function HomePopupAnnouncement({ announcements }: HomePopupAnnouncementPr
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isImageOpen, setIsImageOpen] = useState(false);
   const announcement = announcements[currentIndex] ?? null;
+  const isInternalLink = announcement?.link_url?.startsWith("/") ?? false;
 
   useEffect(() => {
     setCurrentIndex(0);
@@ -51,8 +52,9 @@ export function HomePopupAnnouncement({ announcements }: HomePopupAnnouncementPr
             <a
               className="button-secondary"
               href={announcement.link_url}
-              target="_blank"
-              rel="noreferrer"
+              target={isInternalLink ? undefined : "_blank"}
+              rel={isInternalLink ? undefined : "noreferrer"}
+              onClick={closePopup}
             >
               Detaya Git
             </a>

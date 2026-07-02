@@ -22,7 +22,7 @@ export default async function MonthlyCampaignsPage() {
     <main>
       <h1 className="page-title">Aylik Kampanyalar</h1>
       <p className="page-subtitle">
-        Bu ayin gorsellerini kayarak takip edin. Yeni kampanya afisleri burada otomatik yenilenir.
+        Bu ayin gorsellerini manuel kaydirarak takip edin. Yeni kampanya afisleri burada listelenir.
       </p>
 
       <MonthlyCampaignSlider slides={slides} />

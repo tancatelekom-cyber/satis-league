@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { MonthlyCampaignSlide } from "@/lib/monthly-campaigns";
 
 type MonthlyCampaignSliderProps = {
@@ -9,18 +9,6 @@ type MonthlyCampaignSliderProps = {
 
 export function MonthlyCampaignSlider({ slides }: MonthlyCampaignSliderProps) {
   const [activeIndex, setActiveIndex] = useState(0);
-
-  useEffect(() => {
-    if (slides.length < 2) {
-      return;
-    }
-
-    const timer = window.setInterval(() => {
-      setActiveIndex((current) => (current + 1) % slides.length);
-    }, 4500);
-
-    return () => window.clearInterval(timer);
-  }, [slides.length]);
 
   if (slides.length === 0) {
     return (

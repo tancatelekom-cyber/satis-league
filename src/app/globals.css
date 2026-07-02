@@ -11501,7 +11501,27 @@ textarea::placeholder {
 .home-popup-actions {
   display: flex;
   justify-content: flex-end;
+  gap: 12px;
   margin-top: 22px;
+}
+
+.home-popup-actions .button-secondary,
+.home-popup-actions .button-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 118px;
+  text-decoration: none;
+}
+
+.home-popup-actions .button-secondary {
+  color: #10203b;
+  background: rgba(16, 32, 59, 0.08);
+  border: 1px solid rgba(16, 32, 59, 0.16);
+}
+
+.home-popup-actions .button-secondary:hover {
+  background: rgba(16, 32, 59, 0.12);
 }
 
 .home-popup-image-viewer {

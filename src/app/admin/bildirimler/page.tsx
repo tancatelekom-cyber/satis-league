@@ -103,7 +103,7 @@ export default async function AdminPopupAnnouncementsPage({ searchParams }: Admi
 
           <label className="field">
             <span>Detay Linki</span>
-            <input name="linkUrl" placeholder="https://ornnek.com/detay" type="url" />
+            <input name="linkUrl" placeholder="/aylik-kampanyalar veya https://ornek.com/detay" type="text" />
           </label>
 
           <label className="field">
@@ -206,7 +206,12 @@ export default async function AdminPopupAnnouncementsPage({ searchParams }: Admi
 
                     <label className="field">
                       <span>Detay Linki</span>
-                      <input name="linkUrl" defaultValue={announcement.link_url ?? ""} placeholder="https://ornnek.com/detay" type="url" />
+                      <input
+                        name="linkUrl"
+                        defaultValue={announcement.link_url ?? ""}
+                        placeholder="/aylik-kampanyalar veya https://ornek.com/detay"
+                        type="text"
+                      />
                     </label>
 
                     <label className="field">

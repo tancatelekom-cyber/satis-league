@@ -78,6 +78,14 @@ function buildManagerHref(managerId: string) {
   return `/magaza-muduru-primi?${params.toString()}`;
 }
 
+function buildManagerExcelHref(managerId: string) {
+  const params = new URLSearchParams();
+  if (managerId) {
+    params.set("manager", managerId);
+  }
+  return `/magaza-muduru-primi/excel?${params.toString()}`;
+}
+
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -241,6 +249,7 @@ export default async function ManagerPrimePage({ searchParams }: PageProps) {
   const requestedManagerId = String(params?.manager ?? "").trim();
   const selectedManager = visibleManagers.find((item) => item.id === requestedManagerId) ?? visibleManagers[0];
   const summary = await buildManagerPrimeSummary(selectedManager.managerName, selectedManager.storeName);
+  const excelHref = buildManagerExcelHref(selectedManager.id);
 
   if (!summary) {
     return (
@@ -260,6 +269,19 @@ export default async function ManagerPrimePage({ searchParams }: PageProps) {
       </p>
 
       <section className="guide-card game-brief-card" style={{ display: "grid", gap: 18 }}>
+        <div
+          className="goal-section-head web-kontor-section-head"
+          style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}
+        >
+          <div style={{ display: "grid", gap: 4 }}>
+            <strong style={{ fontSize: "1rem" }}>Magaza Muduru Prim Ozeti</strong>
+            <span className="goal-panel-subtitle">Secili magaza muduru primi tek tikla Excele indirilebilir.</span>
+          </div>
+          <a className="button-secondary export-link-button" href={excelHref}>
+            Excele Indir
+          </a>
+        </div>
+
         {safeProfile.role !== "manager" ? (
           <div className="admin-form manager-prime-selector-form">
             <label className="field">

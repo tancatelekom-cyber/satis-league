@@ -78,9 +78,12 @@ export function formatPopupTargets(targetRoles: UserRole[] | null | undefined) {
 
 async function mapPopupAnnouncement(row: PopupAnnouncementRow): Promise<PopupAnnouncementRecord> {
   const imageUrl = await resolvePopupImageUrl(row.image_path);
+  const normalizedLink =
+    typeof row.link_url === "string" && row.link_url.trim().length > 0 ? row.link_url.trim() : null;
 
   return {
     ...row,
+    link_url: normalizedLink,
     imageUrl
   };
 }

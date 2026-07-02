@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { PopupAnnouncementRecord } from "@/lib/popup-announcements";
 
@@ -11,7 +12,9 @@ export function HomePopupAnnouncement({ announcements }: HomePopupAnnouncementPr
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isImageOpen, setIsImageOpen] = useState(false);
   const announcement = announcements[currentIndex] ?? null;
-  const isInternalLink = announcement?.link_url?.startsWith("/") ?? false;
+  const currentLink = typeof announcement?.link_url === "string" ? announcement.link_url.trim() : "";
+  const hasLink = currentLink.length > 0;
+  const isInternalLink = currentLink.startsWith("/");
 
   useEffect(() => {
     setCurrentIndex(0);
@@ -28,7 +31,13 @@ export function HomePopupAnnouncement({ announcements }: HomePopupAnnouncementPr
   }
 
   return (
-    <div className="home-popup-backdrop" role="dialog" aria-modal="true" aria-labelledby="home-popup-title">
+    <div
+      key={`${announcement.id}-${currentIndex}`}
+      className="home-popup-backdrop"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="home-popup-title"
+    >
       <article className="home-popup-card">
         <button className="home-popup-close" type="button" onClick={closePopup} aria-label="Bildirimi kapat">
           x
@@ -48,16 +57,22 @@ export function HomePopupAnnouncement({ announcements }: HomePopupAnnouncementPr
         <p>{announcement.body}</p>
 
         <div className="home-popup-actions">
-          {announcement.link_url ? (
-            <a
-              className="button-secondary"
-              href={announcement.link_url}
-              target={isInternalLink ? undefined : "_blank"}
-              rel={isInternalLink ? undefined : "noreferrer"}
-              onClick={closePopup}
-            >
-              Detaya Git
-            </a>
+          {hasLink ? (
+            isInternalLink ? (
+              <Link className="button-secondary" href={currentLink} onClick={closePopup}>
+                Detaya Git
+              </Link>
+            ) : (
+              <a
+                className="button-secondary"
+                href={currentLink}
+                target="_blank"
+                rel="noreferrer"
+                onClick={closePopup}
+              >
+                Detaya Git
+              </a>
+            )
           ) : null}
           <button className="button-primary" type="button" onClick={closePopup}>
             Kapat

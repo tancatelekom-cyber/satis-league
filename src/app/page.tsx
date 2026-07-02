@@ -108,6 +108,7 @@ function buildDocumentIssuePopup(
     id: `document-issues-${unreachableCount}-${missingCount}`,
     title: "Evrak Uyarisi",
     body: lines.join("\n"),
+    link_url: "/eksik-evrak",
     image_path: null,
     imageUrl: null,
     target_roles: ["employee", "manager", "management", "admin"] satisfies UserRole[],
@@ -132,6 +133,7 @@ function buildInactiveLoginPopup(fullName: string, inactiveDays: number): PopupA
       "Hedef gerceklesen ve kazanc takibiniz icin gunluk girisinizi rica ederiz.",
       "Bol satislar dileriz."
     ].join("\n"),
+    link_url: null,
     image_path: null,
     imageUrl: null,
     target_roles: ["employee", "manager", "management", "admin"] satisfies UserRole[],

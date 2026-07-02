@@ -47,6 +47,16 @@ export function HomePopupAnnouncement({ announcements }: HomePopupAnnouncementPr
         <p>{announcement.body}</p>
 
         <div className="home-popup-actions">
+          {announcement.link_url ? (
+            <a
+              className="button-secondary"
+              href={announcement.link_url}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Detaya Git
+            </a>
+          ) : null}
           <button className="button-primary" type="button" onClick={closePopup}>
             Kapat
           </button>

@@ -102,6 +102,11 @@ export default async function AdminPopupAnnouncementsPage({ searchParams }: Admi
           </label>
 
           <label className="field">
+            <span>Detay Linki</span>
+            <input name="linkUrl" placeholder="https://ornnek.com/detay" type="url" />
+          </label>
+
+          <label className="field">
             <span>Gorsel</span>
             <input accept="image/png,image/jpeg,image/webp" name="image" type="file" />
           </label>
@@ -170,6 +175,11 @@ export default async function AdminPopupAnnouncementsPage({ searchParams }: Admi
                   <span>
                     {formatLocalDateTime(announcement.show_from)} - {formatLocalDateTime(announcement.show_until)}
                   </span>
+                  {announcement.link_url ? (
+                    <a href={announcement.link_url} target="_blank" rel="noreferrer">
+                      Detay linki
+                    </a>
+                  ) : null}
                 </div>
 
                 <details className="popup-edit-details">
@@ -192,6 +202,11 @@ export default async function AdminPopupAnnouncementsPage({ searchParams }: Admi
                     <label className="field">
                       <span>Bildirim Metni</span>
                       <textarea className="text-area" name="body" rows={5} defaultValue={announcement.body} required />
+                    </label>
+
+                    <label className="field">
+                      <span>Detay Linki</span>
+                      <input name="linkUrl" defaultValue={announcement.link_url ?? ""} placeholder="https://ornnek.com/detay" type="url" />
                     </label>
 
                     <label className="field">

@@ -7,6 +7,7 @@ export type PopupAnnouncementRecord = {
   id: string;
   title: string;
   body: string;
+  link_url: string | null;
   image_path: string | null;
   imageUrl: string | null;
   target_roles: UserRole[] | null;
@@ -20,6 +21,7 @@ type PopupAnnouncementRow = {
   id: string;
   title: string;
   body: string;
+  link_url: string | null;
   image_path: string | null;
   target_roles: UserRole[] | null;
   show_from: string;
@@ -97,7 +99,7 @@ export async function getActivePopupAnnouncementsForProfile(profile: {
 
   const { data, error } = await admin
     .from("popup_announcements")
-    .select("id, title, body, image_path, target_roles, show_from, show_until, is_active, created_at")
+    .select("id, title, body, link_url, image_path, target_roles, show_from, show_until, is_active, created_at")
     .eq("is_active", true)
     .lte("show_from", nowIso)
     .gte("show_until", nowIso)
@@ -124,7 +126,7 @@ export async function getAdminPopupAnnouncements() {
 
   const { data, error } = await admin
     .from("popup_announcements")
-    .select("id, title, body, image_path, target_roles, show_from, show_until, is_active, created_at")
+    .select("id, title, body, link_url, image_path, target_roles, show_from, show_until, is_active, created_at")
     .order("created_at", { ascending: false })
     .limit(60);
 

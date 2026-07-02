@@ -38,6 +38,24 @@ function parseTargetRoles(formData: FormData) {
   return Array.from(new Set(rawRoles)).filter((role): role is UserRole => roleValues.has(role as UserRole));
 }
 
+function parseOptionalLink(value: FormDataEntryValue | null) {
+  const rawValue = typeof value === "string" ? value.trim() : "";
+
+  if (!rawValue) {
+    return null;
+  }
+
+  try {
+    const parsedUrl = new URL(rawValue);
+    if (!["http:", "https:"].includes(parsedUrl.protocol)) {
+      return null;
+    }
+    return parsedUrl.toString();
+  } catch {
+    return null;
+  }
+}
+
 async function uploadPopupAnnouncementImage(file: File) {
   if (!file || file.size === 0) {
     return null;
@@ -61,6 +79,7 @@ export async function createPopupAnnouncementAction(formData: FormData) {
   try {
     const title = String(formData.get("title") ?? "").trim();
     const body = String(formData.get("body") ?? "").trim();
+    const linkUrl = parseOptionalLink(formData.get("linkUrl"));
     const showFrom = toIstanbulIso(formData.get("showFrom"));
     const showUntil = toIstanbulIso(formData.get("showUntil"));
     const targetRoles = parseTargetRoles(formData);
@@ -79,6 +98,7 @@ export async function createPopupAnnouncementAction(formData: FormData) {
     const { error } = await admin.from("popup_announcements").insert({
       title,
       body,
+      link_url: linkUrl,
       image_path: uploadedImagePath,
       target_roles: targetRoles,
       show_from: showFrom,
@@ -110,6 +130,7 @@ export async function updatePopupAnnouncementAction(formData: FormData) {
     const id = String(formData.get("id") ?? "").trim();
     const title = String(formData.get("title") ?? "").trim();
     const body = String(formData.get("body") ?? "").trim();
+    const linkUrl = parseOptionalLink(formData.get("linkUrl"));
     const showFrom = toIstanbulIso(formData.get("showFrom"));
     const showUntil = toIstanbulIso(formData.get("showUntil"));
     const targetRoles = parseTargetRoles(formData);
@@ -149,6 +170,7 @@ export async function updatePopupAnnouncementAction(formData: FormData) {
     const updatePayload = {
       title,
       body,
+      link_url: linkUrl,
       image_path: nextImagePath,
       target_roles: targetRoles,
       show_from: showFrom,

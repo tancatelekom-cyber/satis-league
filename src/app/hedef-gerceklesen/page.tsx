@@ -243,10 +243,18 @@ type StoreDailyNeedSummaryRow = {
 
 type GoalSeparateInfoRow = {
   title: string;
+  groupTitle: string;
+  subCategoryTitle: string | null;
   target: number | null;
   actual: number;
   hasTarget: boolean;
   isBelowTarget: boolean;
+};
+
+type GoalSeparateInfoGroup = {
+  title: string;
+  hasChildren: boolean;
+  rows: GoalSeparateInfoRow[];
 };
 
 type EmployeeDailyNeedSummaryRow = {
@@ -1409,11 +1417,53 @@ function toSeparateInfoRow(row: Pick<GoalStoreRow, "mainCategory" | "subCategory
 
   return {
     title: buildSeparateInfoTitle(row),
+    groupTitle: row.mainCategory,
+    subCategoryTitle: row.subCategory || null,
     target: hasTarget ? row.target : null,
     actual: row.actual,
     hasTarget,
     isBelowTarget: hasTarget ? row.actual < (row.target ?? 0) : false
   };
+}
+
+function buildSeparateInfoGroups(rows: GoalSeparateInfoRow[]) {
+  const grouped = new Map<string, GoalSeparateInfoRow[]>();
+
+  rows.forEach((row) => {
+    const current = grouped.get(row.groupTitle) ?? [];
+    current.push(row);
+    grouped.set(row.groupTitle, current);
+  });
+
+  return Array.from(grouped.entries())
+    .sort((a, b) => a[0].localeCompare(b[0], "tr"))
+    .map(([title, groupRows]) => {
+      const sortedRows = [...groupRows].sort((a, b) => {
+        if (!a.subCategoryTitle && !b.subCategoryTitle) {
+          return a.title.localeCompare(b.title, "tr");
+        }
+
+        if (!a.subCategoryTitle) {
+          return -1;
+        }
+
+        if (!b.subCategoryTitle) {
+          return 1;
+        }
+
+        return a.subCategoryTitle.localeCompare(b.subCategoryTitle, "tr");
+      });
+
+      const hasChildren = sortedRows.some((row) => Boolean(row.subCategoryTitle));
+      const childRows = sortedRows.filter((row) => Boolean(row.subCategoryTitle));
+      const mainRows = sortedRows.filter((row) => !row.subCategoryTitle);
+
+      return {
+        title,
+        hasChildren,
+        rows: hasChildren ? childRows : mainRows
+      } satisfies GoalSeparateInfoGroup;
+    });
 }
 
 function buildStoreSeparateInfoRows(rows: GoalStoreRow[]) {
@@ -1441,6 +1491,8 @@ function SeparateInfoTable({
   }
 
   const hasAnyTarget = rows.some((row) => row.hasTarget);
+  const groups = buildSeparateInfoGroups(rows);
+  const columnCount = hasAnyTarget ? 3 : 2;
 
   return (
     <div className="goal-company-trend-panel">
@@ -1456,25 +1508,60 @@ function SeparateInfoTable({
               <th>{hasAnyTarget ? "Hedef" : "Gerceklesen"}</th>
               {hasAnyTarget ? <th>Gerceklesen</th> : null}
             </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={`separate-info-${row.title}`}>
-                <th>{row.title}</th>
-                {row.hasTarget ? (
-                  <>
-                    <td>{formatNumber(row.target)}</td>
-                    <td className={row.isBelowTarget ? "goal-company-trend-bad" : ""}>{formatNumber(row.actual)}</td>
-                  </>
+            </thead>
+            <tbody>
+              {groups.map((group) =>
+                group.hasChildren ? (
+                  <tr key={`separate-info-group-${group.title}`}>
+                    <td colSpan={columnCount} className="goal-separate-info-group-cell">
+                      <details className="goal-separate-info-group-details">
+                        <summary className="goal-separate-info-group-summary">
+                          <span>{group.title}</span>
+                          <span className="goal-separate-info-group-hint">Alt kategorileri goster</span>
+                        </summary>
+
+                        <table className="goal-company-trend-table goal-separate-info-nested-table">
+                          <tbody>
+                            {group.rows.map((row) => (
+                              <tr key={`separate-info-${group.title}-${row.title}`}>
+                                <th>{row.subCategoryTitle ?? row.title}</th>
+                                {row.hasTarget ? (
+                                  <>
+                                    <td>{formatNumber(row.target)}</td>
+                                    <td className={row.isBelowTarget ? "goal-company-trend-bad" : ""}>
+                                      {formatNumber(row.actual)}
+                                    </td>
+                                  </>
+                                ) : (
+                                  <td colSpan={hasAnyTarget ? 2 : 1}>{formatNumber(row.actual)}</td>
+                                )}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </details>
+                    </td>
+                  </tr>
                 ) : (
-                  <td colSpan={hasAnyTarget ? 2 : 1}>{formatNumber(row.actual)}</td>
-                )}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                  group.rows.map((row) => (
+                    <tr key={`separate-info-${row.title}`}>
+                      <th>{row.title}</th>
+                      {row.hasTarget ? (
+                        <>
+                          <td>{formatNumber(row.target)}</td>
+                          <td className={row.isBelowTarget ? "goal-company-trend-bad" : ""}>{formatNumber(row.actual)}</td>
+                        </>
+                      ) : (
+                        <td colSpan={hasAnyTarget ? 2 : 1}>{formatNumber(row.actual)}</td>
+                      )}
+                    </tr>
+                  ))
+                )
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
   );
 }
 

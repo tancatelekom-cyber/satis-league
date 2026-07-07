@@ -1431,11 +1431,9 @@ function buildCompanySeparateInfoRows(rows: GoalStoreRow[]) {
 
 function SeparateInfoTable({
   title,
-  subtitle,
   rows
 }: {
   title: string;
-  subtitle: string;
   rows: GoalSeparateInfoRow[];
 }) {
   if (!rows.length) {
@@ -1448,7 +1446,6 @@ function SeparateInfoTable({
     <div className="goal-company-trend-panel">
       <div className="goal-live-prime-head">
         <h3>{title}</h3>
-        <span>{subtitle}</span>
       </div>
 
       <div className="goal-company-trend-table-wrap">
@@ -3209,7 +3206,6 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                 {effectiveView === "company" ? (
                   <SeparateInfoTable
                     title="Bilgilendirme Kalemleri"
-                    subtitle="H sutununda E olan kalemler ana hedef tablosu disinda ayrica listelenir."
                     rows={companySeparateInfoRows}
                   />
                 ) : null}
@@ -3217,7 +3213,6 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                 {effectiveView === "store" ? (
                   <SeparateInfoTable
                     title="Bilgilendirme Kalemleri"
-                    subtitle="Bu magazaya ait H sutununda E olan kalemler ana hedef tablosu disinda ayrica listelenir."
                     rows={storeSeparateInfoRows}
                   />
                 ) : null}

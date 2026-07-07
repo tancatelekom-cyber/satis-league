@@ -14,6 +14,8 @@ export type GoalStoreRow = {
   subCategory: string;
   target: number | null;
   actual: number;
+  targetIsPercent?: boolean;
+  actualIsPercent?: boolean;
   includeProjection: boolean;
   companyMode: "sum" | "average";
   separateInfo: boolean;
@@ -242,6 +244,8 @@ async function fetchGoalStoreRowsFromSheet() {
       const projectionFlag = normalizeText(row[5] ?? "").toUpperCase();
       const companyModeFlag = normalizeText(row[6] ?? "").toUpperCase();
       const separateInfoFlag = normalizeText(row[7] ?? "").toUpperCase();
+      const targetIsPercent = targetRaw.includes("%");
+      const actualIsPercent = actualRaw.includes("%");
 
       if (!storeCode) {
         return null;
@@ -256,6 +260,8 @@ async function fetchGoalStoreRowsFromSheet() {
         subCategory,
         target: target && target > 0 ? target : null,
         actual,
+        targetIsPercent,
+        actualIsPercent,
         includeProjection: projectionFlag === "E",
         companyMode: companyModeFlag === "H" ? "average" : "sum",
         separateInfo: separateInfoFlag === "E"

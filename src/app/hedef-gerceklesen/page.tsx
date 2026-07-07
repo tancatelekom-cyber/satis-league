@@ -247,8 +247,11 @@ type GoalSeparateInfoRow = {
   subCategoryTitle: string | null;
   target: number | null;
   actual: number;
+  targetIsPercent: boolean;
+  actualIsPercent: boolean;
   hasTarget: boolean;
   isBelowTarget: boolean;
+  isAtOrAboveTarget: boolean;
 };
 
 type GoalSeparateInfoGroup = {
@@ -663,6 +666,10 @@ function formatPercent(value: number | null | undefined) {
     minimumFractionDigits: 0,
     maximumFractionDigits: 1
   })}`;
+}
+
+function formatGoalValue(value: number | null | undefined, isPercent: boolean) {
+  return isPercent ? formatPercent(value) : formatNumber(value);
 }
 
 function formatCurrency(value: number | null | undefined) {
@@ -1395,16 +1402,18 @@ function buildCompanyRows(rows: GoalStoreRow[]): GoalStoreRow[] {
         ? average
         : (values: number[]) => values.reduce((sum, value) => sum + value, 0);
 
-    return {
-      storeCode: "Firma",
-      mainCategory: first.mainCategory,
-      subCategory: first.subCategory,
-      target: targets.length ? aggregate(targets) : null,
-      actual: aggregate(actuals),
-      includeProjection: first.includeProjection,
-      companyMode: first.companyMode,
-      separateInfo: first.separateInfo
-    };
+      return {
+        storeCode: "Firma",
+        mainCategory: first.mainCategory,
+        subCategory: first.subCategory,
+        target: targets.length ? aggregate(targets) : null,
+        actual: aggregate(actuals),
+        targetIsPercent: first.targetIsPercent ?? false,
+        actualIsPercent: first.actualIsPercent ?? false,
+        includeProjection: first.includeProjection,
+        companyMode: first.companyMode,
+        separateInfo: first.separateInfo
+      };
   });
 }
 
@@ -1412,7 +1421,9 @@ function buildSeparateInfoTitle(row: Pick<GoalStoreRow, "mainCategory" | "subCat
   return row.subCategory ? `${row.mainCategory} / ${row.subCategory}` : row.mainCategory;
 }
 
-function toSeparateInfoRow(row: Pick<GoalStoreRow, "mainCategory" | "subCategory" | "target" | "actual">): GoalSeparateInfoRow {
+function toSeparateInfoRow(
+  row: Pick<GoalStoreRow, "mainCategory" | "subCategory" | "target" | "actual" | "targetIsPercent" | "actualIsPercent">
+): GoalSeparateInfoRow {
   const hasTarget = row.target !== null && row.target > 0;
 
   return {
@@ -1421,8 +1432,11 @@ function toSeparateInfoRow(row: Pick<GoalStoreRow, "mainCategory" | "subCategory
     subCategoryTitle: row.subCategory || null,
     target: hasTarget ? row.target : null,
     actual: row.actual,
+    targetIsPercent: row.targetIsPercent ?? false,
+    actualIsPercent: row.actualIsPercent ?? false,
     hasTarget,
-    isBelowTarget: hasTarget ? row.actual < (row.target ?? 0) : false
+    isBelowTarget: hasTarget ? row.actual < (row.target ?? 0) : false,
+    isAtOrAboveTarget: hasTarget ? row.actual >= (row.target ?? 0) : false
   };
 }
 
@@ -1524,16 +1538,24 @@ function SeparateInfoTable({
                           <tbody>
                             {group.rows.map((row) => (
                               <tr key={`separate-info-${group.title}-${row.title}`}>
-                                <th>{row.subCategoryTitle ?? row.title}</th>
-                                {row.hasTarget ? (
-                                  <>
-                                    <td>{formatNumber(row.target)}</td>
-                                    <td className={row.isBelowTarget ? "goal-company-trend-bad" : ""}>
-                                      {formatNumber(row.actual)}
+                                  <th>{row.subCategoryTitle ?? row.title}</th>
+                                  {row.hasTarget ? (
+                                    <>
+                                    <td>{formatGoalValue(row.target, row.targetIsPercent)}</td>
+                                    <td
+                                      className={
+                                        row.isAtOrAboveTarget
+                                          ? "goal-company-trend-good"
+                                          : row.isBelowTarget
+                                            ? "goal-company-trend-bad"
+                                            : ""
+                                      }
+                                    >
+                                      {formatGoalValue(row.actual, row.actualIsPercent)}
                                     </td>
                                   </>
                                 ) : (
-                                  <td colSpan={hasAnyTarget ? 2 : 1}>{formatNumber(row.actual)}</td>
+                                  <td colSpan={hasAnyTarget ? 2 : 1}>{formatGoalValue(row.actual, row.actualIsPercent)}</td>
                                 )}
                               </tr>
                             ))}
@@ -1548,11 +1570,21 @@ function SeparateInfoTable({
                       <th>{row.title}</th>
                       {row.hasTarget ? (
                         <>
-                          <td>{formatNumber(row.target)}</td>
-                          <td className={row.isBelowTarget ? "goal-company-trend-bad" : ""}>{formatNumber(row.actual)}</td>
+                          <td>{formatGoalValue(row.target, row.targetIsPercent)}</td>
+                          <td
+                            className={
+                              row.isAtOrAboveTarget
+                                ? "goal-company-trend-good"
+                                : row.isBelowTarget
+                                  ? "goal-company-trend-bad"
+                                  : ""
+                            }
+                          >
+                            {formatGoalValue(row.actual, row.actualIsPercent)}
+                          </td>
                         </>
                       ) : (
-                        <td colSpan={hasAnyTarget ? 2 : 1}>{formatNumber(row.actual)}</td>
+                        <td colSpan={hasAnyTarget ? 2 : 1}>{formatGoalValue(row.actual, row.actualIsPercent)}</td>
                       )}
                     </tr>
                   ))

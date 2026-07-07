@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth/require-user";
 import { getCampaignDashboardData } from "@/lib/campaign/get-campaign-dashboard-data";
 import { fetchDocumentIssueRows, sameDocumentIssueProfileId, sameDocumentIssueStore } from "@/lib/document-issues";
+import { buildGoalReminderPopup } from "@/lib/goal-popup-reminders";
 import { getActivePopupAnnouncementsForProfile, type PopupAnnouncementRecord } from "@/lib/popup-announcements";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { SeasonRecord, type UserRole } from "@/lib/types";
@@ -227,6 +228,17 @@ export default async function HomePage() {
           }
         })()
       : Promise.resolve(null);
+  const goalReminderPopupPromise =
+    campaignDashboard?.profile.approval === "approved"
+      ? buildGoalReminderPopup({
+          role: campaignDashboard.profile.role,
+          fullName: campaignDashboard.profile.full_name || "Calisan",
+          personnelId: user.id,
+          storeName: getProfileStoreName(
+            campaignDashboard.profile.store as Array<{ name: string }> | { name: string } | null | undefined
+          )
+        }).catch(() => null)
+      : Promise.resolve(null);
   const liveCampaignLeaderboard =
     campaignDashboard?.profile.approval === "approved"
       ? campaignDashboard.activeLeaderboards.find(
@@ -237,14 +249,16 @@ export default async function HomePage() {
       : null;
 
   const [{ data: seasons }, { data: profiles }, { data: stores }, { data: seasonSales }] = await seasonDataPromise;
-  const [activePopupAnnouncements, inactiveLoginPopup, documentIssuePopup] = await Promise.all([
+  const [activePopupAnnouncements, inactiveLoginPopup, documentIssuePopup, goalReminderPopup] = await Promise.all([
     activePopupAnnouncementsPromise,
     inactiveLoginPopupPromise,
-    documentIssuePopupPromise
+    documentIssuePopupPromise,
+    goalReminderPopupPromise
   ]);
   const popupAnnouncements = [
     ...(inactiveLoginPopup ? [inactiveLoginPopup] : []),
     ...(documentIssuePopup ? [documentIssuePopup] : []),
+    ...(goalReminderPopup ? [goalReminderPopup] : []),
     ...activePopupAnnouncements
   ];
 

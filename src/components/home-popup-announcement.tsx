@@ -8,6 +8,15 @@ type HomePopupAnnouncementProps = {
   announcements: PopupAnnouncementRecord[];
 };
 
+function isPopupHeadingLine(line: string) {
+  const normalized = line.trim().toLowerCase();
+  return (
+    normalized === "gunluk ihtiyaclar:" ||
+    normalized.startsWith("eksik kalan kalemler:") ||
+    normalized.startsWith("gercekleseni sifir olan kalemler:")
+  );
+}
+
 export function HomePopupAnnouncement({ announcements }: HomePopupAnnouncementProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isImageOpen, setIsImageOpen] = useState(false);
@@ -15,6 +24,10 @@ export function HomePopupAnnouncement({ announcements }: HomePopupAnnouncementPr
   const currentLink = typeof announcement?.link_url === "string" ? announcement.link_url.trim() : "";
   const hasLink = currentLink.length > 0;
   const isInternalLink = currentLink.startsWith("/");
+  const bodyLines = (announcement?.body ?? "")
+    .split("\n")
+    .map((line) => line.trimEnd())
+    .filter((line, index, lines) => !(line.length === 0 && lines[index - 1]?.length === 0));
 
   useEffect(() => {
     setCurrentIndex(0);
@@ -55,7 +68,18 @@ export function HomePopupAnnouncement({ announcements }: HomePopupAnnouncementPr
           </button>
         ) : null}
         <div className="home-popup-body">
-          <p>{announcement.body}</p>
+          {bodyLines.map((line, index) =>
+            line.length === 0 ? (
+              <div key={`empty-${index}`} className="home-popup-line-spacer" aria-hidden="true" />
+            ) : (
+              <p
+                key={`${announcement.id}-line-${index}`}
+                className={`home-popup-line${isPopupHeadingLine(line) ? " home-popup-line-heading" : ""}`}
+              >
+                {line}
+              </p>
+            ),
+          )}
         </div>
 
         <div className="home-popup-actions">

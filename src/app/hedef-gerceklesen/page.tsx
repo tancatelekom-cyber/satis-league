@@ -3338,13 +3338,19 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
 
                 {effectiveView === "company" ? (
                   companyCategorySummaries.length ? (
-                    <GoalCategoryCards categories={companyCategorySummaries} />
+                    <EmployeeGoalCategoryTable
+                      categories={companyCategorySummaries}
+                      remainingDays={dayStats.remainingDays}
+                    />
                   ) : (
                     <p className="subtle">Firma verisi bulunamadi.</p>
                   )
                 ) : effectiveView === "store" ? (
                   storeCategorySummaries.length ? (
-                    <GoalCategoryCards categories={storeCategorySummaries} />
+                    <EmployeeGoalCategoryTable
+                      categories={storeCategorySummaries}
+                      remainingDays={dayStats.remainingDays}
+                    />
                   ) : (
                     <p className="subtle">Bu magaza icin kategori verisi bulunamadi.</p>
                   )

@@ -491,7 +491,6 @@ function buildCompanyZeroActualItems(rows: GoalStoreRow[]) {
 function buildPopupBody(
   fullName: string,
   needLines: string[],
-  lowestCategoryLines: string[],
   missingLabels: string[],
   zeroActualLabels: string[]
 ) {
@@ -500,11 +499,6 @@ function buildPopupBody(
   if (needLines.length > 0) {
     lines.push("Gunluk Ihtiyaclar:");
     lines.push(...needLines.map((line) => `- ${line}`));
-  }
-
-  if (lowestCategoryLines.length > 0) {
-    lines.push("Orani en dusuk 3 kategori:");
-    lines.push(...lowestCategoryLines.map((line) => `- ${line}`));
   }
 
   if (missingLabels.length > 0) {
@@ -545,18 +539,6 @@ function toEmployeeNeedLines(rows: EmployeeDailyNeedSummaryRow[]) {
     .sort((a, b) => b.dailyRequired - a.dailyRequired || a.title.localeCompare(b.title, "tr"));
 }
 
-function toLowestCategoryLines(categories: GoalCategorySummary[]) {
-  return categories
-    .filter((category) => category.hasTarget && category.actualPercent !== null)
-    .sort(
-      (a, b) =>
-        (a.actualPercent ?? 0) - (b.actualPercent ?? 0) ||
-        a.title.localeCompare(b.title, "tr")
-    )
-    .slice(0, 3)
-    .map((category) => `${category.title}: %${(category.actualPercent ?? 0).toLocaleString("tr-TR", { maximumFractionDigits: 1 })}`);
-}
-
 export async function buildGoalReminderPopup(args: {
   role: UserRole;
   fullName: string;
@@ -587,7 +569,6 @@ export async function buildGoalReminderPopup(args: {
     const dailyNeedRows = toEmployeeNeedLines(
       buildEmployeeDailyNeedSummaryRows(categorySummaries, remainingDays, productionRewardRows)
     );
-    const lowestCategoryLines = toLowestCategoryLines(categorySummaries);
     const missingLabels = dailyNeedRows.map((row) => row.title);
     const zeroActualLabels = buildEmployeeZeroActualItems(employeeRows);
 
@@ -601,7 +582,6 @@ export async function buildGoalReminderPopup(args: {
       body: buildPopupBody(
         args.fullName,
         dailyNeedRows.map((row) => `${row.title}: ${row.dailyRequired > 0 ? formatNumber(row.dailyRequired) : "Tamamlandi"}`),
-        lowestCategoryLines,
         missingLabels.slice(0, 6),
         zeroActualLabels.slice(0, 6)
       ),
@@ -627,7 +607,6 @@ export async function buildGoalReminderPopup(args: {
 
     const categorySummaries = buildStoreCategorySummaries(activeStoreRows, dayStats.workedDays, dayStats.totalDays);
     const dailyNeedRows = toStoreNeedLines(buildStoreDailyNeedSummaryRows(categorySummaries, remainingDays));
-    const lowestCategoryLines = toLowestCategoryLines(categorySummaries);
     const missingLabels = dailyNeedRows.map((row) => row.title);
     const zeroActualLabels = buildStoreZeroActualItems(activeStoreRows);
 
@@ -641,7 +620,6 @@ export async function buildGoalReminderPopup(args: {
       body: buildPopupBody(
         args.fullName,
         dailyNeedRows.map((row) => `${row.title}: ${row.dailyRequired > 0 ? formatNumber(row.dailyRequired) : "Tamamlandi"}`),
-        lowestCategoryLines,
         missingLabels.slice(0, 6),
         zeroActualLabels.slice(0, 6)
       ),
@@ -659,7 +637,6 @@ export async function buildGoalReminderPopup(args: {
   const companyRows = goalStoreRows.filter((row) => !isLivePrimeCategory(row.mainCategory));
   const companySummaries = buildCompanyCategorySummaries(companyRows, dayStats.workedDays, dayStats.totalDays);
   const dailyNeedRows = toStoreNeedLines(buildStoreDailyNeedSummaryRows(companySummaries, remainingDays));
-  const lowestCategoryLines = toLowestCategoryLines(companySummaries);
   const missingLabels = dailyNeedRows.map((row) => row.title);
   const zeroActualLabels = buildCompanyZeroActualItems(companyRows);
 
@@ -673,7 +650,6 @@ export async function buildGoalReminderPopup(args: {
     body: buildPopupBody(
       args.fullName,
       dailyNeedRows.map((row) => `${row.title}: ${row.dailyRequired > 0 ? formatNumber(row.dailyRequired) : "Tamamlandi"}`),
-      lowestCategoryLines,
       missingLabels.slice(0, 6),
       zeroActualLabels.slice(0, 6)
     ),

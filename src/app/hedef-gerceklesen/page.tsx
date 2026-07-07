@@ -1507,12 +1507,26 @@ function SeparateInfoTable({
   const hasAnyTarget = rows.some((row) => row.hasTarget);
   const groups = buildSeparateInfoGroups(rows);
   const columnCount = hasAnyTarget ? 3 : 2;
+  const belowTargetRows = rows
+    .filter((row) => row.hasTarget && row.isBelowTarget)
+    .sort((a, b) => a.title.localeCompare(b.title, "tr"));
 
   return (
     <div className="goal-company-trend-panel">
       <div className="goal-live-prime-head">
         <h3>{title}</h3>
       </div>
+
+      {belowTargetRows.length ? (
+        <div className="evaluation-zero-alert goal-separate-info-alert">
+          <strong>Hedefin altinda kalan kalemler</strong>
+          <div>
+            {belowTargetRows.map((row) => (
+              <span key={`separate-info-under-target-${row.title}`}>{row.subCategoryTitle ?? row.title}</span>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       <div className="goal-company-trend-table-wrap">
         <table className="goal-company-trend-table goal-separate-info-table">

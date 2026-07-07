@@ -12,6 +12,7 @@ function isPopupHeadingLine(line: string) {
   const normalized = line.trim().toLowerCase();
   return (
     normalized === "gunluk ihtiyaclar:" ||
+    normalized === "bilgilendirme kalemleri:" ||
     normalized.startsWith("eksik kalan kalemler:") ||
     normalized.startsWith("gercekleseni sifir olan kalemler:")
   );

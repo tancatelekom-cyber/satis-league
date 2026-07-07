@@ -88,6 +88,21 @@ function formatNumber(value: number) {
   return value.toLocaleString("tr-TR");
 }
 
+function formatPercent(value: number | null | undefined) {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return "-";
+  }
+
+  return `%${value.toLocaleString("tr-TR", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 1
+  })}`;
+}
+
+function formatGoalValue(value: number | null | undefined, isPercent: boolean) {
+  return isPercent ? formatPercent(value) : formatNumber(value ?? 0);
+}
+
 function average(values: number[]) {
   if (!values.length) {
     return 0;
@@ -280,6 +295,16 @@ function buildCompanyRows(rows: GoalStoreRow[]) {
 
 function buildCompanyCategorySummaries(rows: GoalStoreRow[], workedDays: number, totalDays: number): GoalCategorySummary[] {
   return buildStoreCategorySummaries(buildCompanyRows(rows), workedDays, totalDays);
+}
+
+function buildSeparateInfoPopupLines(rows: GoalStoreRow[]) {
+  return rows
+    .filter((row) => row.separateInfo && row.target !== null && row.target > 0 && row.actual < row.target)
+    .map((row) => ({
+      title: row.subCategory || row.mainCategory,
+      actualLabel: formatGoalValue(row.actual, Boolean(row.actualIsPercent))
+    }))
+    .sort((a, b) => a.title.localeCompare(b.title, "tr"));
 }
 
 function buildNeedRows(
@@ -491,6 +516,7 @@ function buildCompanyZeroActualItems(rows: GoalStoreRow[]) {
 function buildPopupBody(
   fullName: string,
   needLines: string[],
+  separateInfoLines: string[],
   missingLabels: string[],
   zeroActualLabels: string[]
 ) {
@@ -499,6 +525,11 @@ function buildPopupBody(
   if (needLines.length > 0) {
     lines.push("Gunluk Ihtiyaclar:");
     lines.push(...needLines.map((line) => `- ${line}`));
+  }
+
+  if (separateInfoLines.length > 0) {
+    lines.push("Bilgilendirme Kalemleri:");
+    lines.push(...separateInfoLines.map((line) => `- ${line}`));
   }
 
   if (missingLabels.length > 0) {
@@ -582,6 +613,7 @@ export async function buildGoalReminderPopup(args: {
       body: buildPopupBody(
         args.fullName,
         dailyNeedRows.map((row) => `${row.title}: ${row.dailyRequired > 0 ? formatNumber(row.dailyRequired) : "Tamamlandi"}`),
+        [],
         missingLabels.slice(0, 6),
         zeroActualLabels.slice(0, 6)
       ),
@@ -597,20 +629,24 @@ export async function buildGoalReminderPopup(args: {
   }
 
   if (args.role === "manager") {
-    const activeStoreRows = goalStoreRows.filter(
+    const scopedStoreRows = goalStoreRows.filter(
       (row) => normalizeStoreKey(row.storeCode) === normalizeStoreKey(args.storeName) && !isLivePrimeCategory(row.mainCategory)
     );
 
-    if (!activeStoreRows.length) {
+    if (!scopedStoreRows.length) {
       return null;
     }
 
+    const activeStoreRows = scopedStoreRows.filter((row) => !row.separateInfo);
+    const separateInfoLines = buildSeparateInfoPopupLines(scopedStoreRows).map(
+      (row) => `${row.title}: mevcut gerceklesen ${row.actualLabel}. Bu alani gelistirmen gerekli.`
+    );
     const categorySummaries = buildStoreCategorySummaries(activeStoreRows, dayStats.workedDays, dayStats.totalDays);
     const dailyNeedRows = toStoreNeedLines(buildStoreDailyNeedSummaryRows(categorySummaries, remainingDays));
     const missingLabels = dailyNeedRows.map((row) => row.title);
     const zeroActualLabels = buildStoreZeroActualItems(activeStoreRows);
 
-    if (!dailyNeedRows.length && !zeroActualLabels.length) {
+    if (!dailyNeedRows.length && !zeroActualLabels.length && !separateInfoLines.length) {
       return null;
     }
 
@@ -620,6 +656,7 @@ export async function buildGoalReminderPopup(args: {
       body: buildPopupBody(
         args.fullName,
         dailyNeedRows.map((row) => `${row.title}: ${row.dailyRequired > 0 ? formatNumber(row.dailyRequired) : "Tamamlandi"}`),
+        separateInfoLines,
         missingLabels.slice(0, 6),
         zeroActualLabels.slice(0, 6)
       ),
@@ -634,13 +671,17 @@ export async function buildGoalReminderPopup(args: {
     };
   }
 
-  const companyRows = goalStoreRows.filter((row) => !isLivePrimeCategory(row.mainCategory));
+  const scopedCompanyRows = goalStoreRows.filter((row) => !isLivePrimeCategory(row.mainCategory));
+  const companyRows = scopedCompanyRows.filter((row) => !row.separateInfo);
+  const companySeparateInfoLines = buildSeparateInfoPopupLines(buildCompanyRows(scopedCompanyRows.filter((row) => row.separateInfo))).map(
+    (row) => `${row.title}: mevcut gerceklesen ${row.actualLabel}. Bu alani gelistirmen gerekli.`
+  );
   const companySummaries = buildCompanyCategorySummaries(companyRows, dayStats.workedDays, dayStats.totalDays);
   const dailyNeedRows = toStoreNeedLines(buildStoreDailyNeedSummaryRows(companySummaries, remainingDays));
   const missingLabels = dailyNeedRows.map((row) => row.title);
   const zeroActualLabels = buildCompanyZeroActualItems(companyRows);
 
-  if (!dailyNeedRows.length && !zeroActualLabels.length) {
+  if (!dailyNeedRows.length && !zeroActualLabels.length && !companySeparateInfoLines.length) {
     return null;
   }
 
@@ -650,6 +691,7 @@ export async function buildGoalReminderPopup(args: {
     body: buildPopupBody(
       args.fullName,
       dailyNeedRows.map((row) => `${row.title}: ${row.dailyRequired > 0 ? formatNumber(row.dailyRequired) : "Tamamlandi"}`),
+      companySeparateInfoLines,
       missingLabels.slice(0, 6),
       zeroActualLabels.slice(0, 6)
     ),

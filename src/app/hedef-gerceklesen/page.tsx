@@ -52,6 +52,10 @@ type EmployeeSummary = {
   livePrimeProjectedReward: number;
   accessoryPrimeCurrentReward: number;
   accessoryPrimeProjectedReward: number;
+  monthlyDeductionCurrentAmount: number;
+  monthlyDeductionProjectedAmount: number;
+  monthlyNetCurrentReward: number;
+  monthlyNetProjectedReward: number;
 };
 
 type GoalMetricSummary = {
@@ -235,6 +239,14 @@ type StoreDailyNeedSummaryRow = {
   level: number;
   hasChildren: boolean;
   cells: GoalNeedRow[];
+};
+
+type GoalSeparateInfoRow = {
+  title: string;
+  target: number | null;
+  actual: number;
+  hasTarget: boolean;
+  isBelowTarget: boolean;
 };
 
 type EmployeeDailyNeedSummaryRow = {
@@ -708,15 +720,19 @@ function buildEmployeeSummary(rows: GoalActualRow[], workedDays: number, totalDa
     projectedPercent: hasTarget ? (projectedActual / totalTarget) * 100 : null,
     hasTarget,
     showProjection: true,
-    totalPrimeCurrentReward: 0,
-    totalPrimeProjectedReward: 0,
-    productionPrimeCurrentReward: 0,
-    productionPrimeProjectedReward: 0,
-    livePrimeCurrentReward: 0,
-    livePrimeProjectedReward: 0,
-    accessoryPrimeCurrentReward: 0,
-    accessoryPrimeProjectedReward: 0
-  };
+  totalPrimeCurrentReward: 0,
+  totalPrimeProjectedReward: 0,
+  productionPrimeCurrentReward: 0,
+  productionPrimeProjectedReward: 0,
+  livePrimeCurrentReward: 0,
+  livePrimeProjectedReward: 0,
+  accessoryPrimeCurrentReward: 0,
+  accessoryPrimeProjectedReward: 0,
+  monthlyDeductionCurrentAmount: 0,
+  monthlyDeductionProjectedAmount: 0,
+  monthlyNetCurrentReward: 0,
+  monthlyNetProjectedReward: 0
+};
 }
 
 function buildCategoryGroups(rows: GoalActualRow[]) {
@@ -1378,9 +1394,91 @@ function buildCompanyRows(rows: GoalStoreRow[]): GoalStoreRow[] {
       target: targets.length ? aggregate(targets) : null,
       actual: aggregate(actuals),
       includeProjection: first.includeProjection,
-      companyMode: first.companyMode
+      companyMode: first.companyMode,
+      separateInfo: first.separateInfo
     };
   });
+}
+
+function buildSeparateInfoTitle(row: Pick<GoalStoreRow, "mainCategory" | "subCategory">) {
+  return row.subCategory ? `${row.mainCategory} / ${row.subCategory}` : row.mainCategory;
+}
+
+function toSeparateInfoRow(row: Pick<GoalStoreRow, "mainCategory" | "subCategory" | "target" | "actual">): GoalSeparateInfoRow {
+  const hasTarget = row.target !== null && row.target > 0;
+
+  return {
+    title: buildSeparateInfoTitle(row),
+    target: hasTarget ? row.target : null,
+    actual: row.actual,
+    hasTarget,
+    isBelowTarget: hasTarget ? row.actual < (row.target ?? 0) : false
+  };
+}
+
+function buildStoreSeparateInfoRows(rows: GoalStoreRow[]) {
+  return rows
+    .filter((row) => row.separateInfo)
+    .map((row) => toSeparateInfoRow(row))
+    .sort((a, b) => a.title.localeCompare(b.title, "tr"));
+}
+
+function buildCompanySeparateInfoRows(rows: GoalStoreRow[]) {
+  return buildCompanyRows(rows.filter((row) => row.separateInfo))
+    .map((row) => toSeparateInfoRow(row))
+    .sort((a, b) => a.title.localeCompare(b.title, "tr"));
+}
+
+function SeparateInfoTable({
+  title,
+  subtitle,
+  rows
+}: {
+  title: string;
+  subtitle: string;
+  rows: GoalSeparateInfoRow[];
+}) {
+  if (!rows.length) {
+    return null;
+  }
+
+  const hasAnyTarget = rows.some((row) => row.hasTarget);
+
+  return (
+    <div className="goal-company-trend-panel">
+      <div className="goal-live-prime-head">
+        <h3>{title}</h3>
+        <span>{subtitle}</span>
+      </div>
+
+      <div className="goal-company-trend-table-wrap">
+        <table className="goal-company-trend-table goal-separate-info-table">
+          <thead>
+            <tr>
+              <th>Kalem</th>
+              <th>{hasAnyTarget ? "Hedef" : "Gerceklesen"}</th>
+              {hasAnyTarget ? <th>Gerceklesen</th> : null}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={`separate-info-${row.title}`}>
+                <th>{row.title}</th>
+                {row.hasTarget ? (
+                  <>
+                    <td>{formatNumber(row.target)}</td>
+                    <td className={row.isBelowTarget ? "goal-company-trend-bad" : ""}>{formatNumber(row.actual)}</td>
+                  </>
+                ) : (
+                  <td colSpan={hasAnyTarget ? 2 : 1}>{formatNumber(row.actual)}</td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
 }
 
 function buildCompanyCategorySummaries(rows: GoalStoreRow[], workedDays: number, totalDays: number): GoalCategorySummary[] {
@@ -2354,7 +2452,8 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
   const filteredEmployeeRows = scopedEmployeeRows.filter((row) => !isAggregateCategoryLabel(row.mainCategory));
   const allFilteredEmployeeCoreRows = allFilteredEmployeeRows.filter((row) => !isLivePrimeCategory(row.mainCategory));
   const filteredEmployeeCoreRows = filteredEmployeeRows.filter((row) => !isLivePrimeCategory(row.mainCategory));
-  const filteredStoreRows = storeRows.filter((row) => !isAggregateCategoryLabel(row.mainCategory));
+  const filteredStoreRows = storeRows.filter((row) => !isAggregateCategoryLabel(row.mainCategory) && !row.separateInfo);
+  const separateInfoStoreRows = storeRows.filter((row) => !isAggregateCategoryLabel(row.mainCategory) && row.separateInfo);
 
   const employeeNames = Array.from(new Set(filteredEmployeeRows.map((row) => row.employeeName))).sort((a, b) => a.localeCompare(b, "tr"));
   const employeeCategoryOptions = Array.from(new Set(allFilteredEmployeeCoreRows.map((row) => row.mainCategory))).sort((a, b) =>
@@ -2658,6 +2757,8 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
     ? filteredEmployeeCoreRows.filter((row) => row.employeeName === activeEmployeeName)
     : [];
   const activeStoreRows = activeStoreName ? filteredStoreRows.filter((row) => row.storeCode === activeStoreName) : [];
+  const activeStoreSeparateInfoRows =
+    activeStoreName ? separateInfoStoreRows.filter((row) => row.storeCode === activeStoreName) : [];
   const activeEmployeeStoreCode = resolveStoreCodeFromEmployeeRows(activeEmployeeRows, storeNames, currentUserStoreName);
   const employeeScopedStoreCode = activeEmployeeStoreCode || currentUserStoreName;
   const employeeCategorySummaries = buildCategorySummaries(activeEmployeeCoreRows, dayStats.workedDays, dayStats.totalDays);
@@ -2713,6 +2814,8 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
     dayStats.remainingDays
   );
   const companyCategorySummaries = buildCompanyCategorySummaries(filteredStoreRows, dayStats.workedDays, dayStats.totalDays);
+  const storeSeparateInfoRows = buildStoreSeparateInfoRows(activeStoreSeparateInfoRows);
+  const companySeparateInfoRows = buildCompanySeparateInfoRows(separateInfoStoreRows);
   const storeDailyNeedSummaryRows = buildStoreDailyNeedSummaryRows(storeCategorySummaries, dayStats.remainingDays);
   const detailCategorySummaries =
     effectiveView === "company"
@@ -3102,6 +3205,22 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                   </h2>
                   <span>{effectiveView === "company" ? "Kategori bazli toplu ozet" : "Kategori bazli detay"}</span>
                 </div>
+
+                {effectiveView === "company" ? (
+                  <SeparateInfoTable
+                    title="Bilgilendirme Kalemleri"
+                    subtitle="H sutununda E olan kalemler ana hedef tablosu disinda ayrica listelenir."
+                    rows={companySeparateInfoRows}
+                  />
+                ) : null}
+
+                {effectiveView === "store" ? (
+                  <SeparateInfoTable
+                    title="Bilgilendirme Kalemleri"
+                    subtitle="Bu magazaya ait H sutununda E olan kalemler ana hedef tablosu disinda ayrica listelenir."
+                    rows={storeSeparateInfoRows}
+                  />
+                ) : null}
 
                 {effectiveView === "company" ? (
                   companyCategorySummaries.length ? (

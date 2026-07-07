@@ -16,6 +16,7 @@ export type GoalStoreRow = {
   actual: number;
   includeProjection: boolean;
   companyMode: "sum" | "average";
+  separateInfo: boolean;
 };
 
 export type GoalDayStats = {
@@ -240,6 +241,7 @@ async function fetchGoalStoreRowsFromSheet() {
       const actualRaw = normalizeText(row[4] ?? "");
       const projectionFlag = normalizeText(row[5] ?? "").toUpperCase();
       const companyModeFlag = normalizeText(row[6] ?? "").toUpperCase();
+      const separateInfoFlag = normalizeText(row[7] ?? "").toUpperCase();
 
       if (!storeCode) {
         return null;
@@ -255,7 +257,8 @@ async function fetchGoalStoreRowsFromSheet() {
         target: target && target > 0 ? target : null,
         actual,
         includeProjection: projectionFlag === "E",
-        companyMode: companyModeFlag === "H" ? "average" : "sum"
+        companyMode: companyModeFlag === "H" ? "average" : "sum",
+        separateInfo: separateInfoFlag === "E"
       };
     })
     .filter((row): row is GoalStoreRow => Boolean(row));

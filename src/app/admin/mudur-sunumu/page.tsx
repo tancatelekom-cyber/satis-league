@@ -233,7 +233,8 @@ function buildCompanyRows(rows: GoalStoreRow[]) {
       target: targets.length ? aggregate(targets) : null,
       actual: aggregate(actuals),
       includeProjection: first.includeProjection,
-      companyMode: first.companyMode
+      companyMode: first.companyMode,
+      separateInfo: first.separateInfo
     } satisfies GoalStoreRow;
   });
 }

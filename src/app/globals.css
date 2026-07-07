@@ -11700,6 +11700,10 @@ textarea::placeholder {
   box-shadow: 0 12px 26px rgba(8, 22, 40, 0.08);
 }
 
+.popup-admin-card-auto {
+  grid-template-columns: minmax(0, 1.3fr) minmax(320px, 0.9fr);
+}
+
 .popup-admin-card-head,
 .popup-admin-actions,
 .popup-admin-meta {
@@ -11802,6 +11806,19 @@ textarea::placeholder {
 
 .popup-edit-form {
   margin-top: 16px;
+}
+
+.popup-auto-form {
+  align-self: stretch;
+  padding: 16px;
+  border-radius: 20px;
+  background: rgba(4, 92, 96, 0.06);
+  border: 1px solid rgba(4, 92, 96, 0.1);
+}
+
+.popup-auto-actions {
+  display: flex;
+  justify-content: flex-end;
 }
 
 .popup-remove-image-option {

@@ -1,3 +1,4 @@
+import { canShowAutoPopupForRole, getAutoPopupSettingsMap } from "@/lib/auto-popup-settings";
 import Link from "next/link";
 import { requireUser } from "@/lib/auth/require-user";
 import { getCampaignDashboardData } from "@/lib/campaign/get-campaign-dashboard-data";
@@ -175,12 +176,15 @@ export default async function HomePage() {
   ]);
 
   const campaignDashboard = await campaignDashboardPromise;
+  const autoPopupSettingsMap =
+    campaignDashboard?.profile.approval === "approved" ? await getAutoPopupSettingsMap() : new Map();
   const activePopupAnnouncementsPromise =
     campaignDashboard?.profile.approval === "approved"
       ? getActivePopupAnnouncementsForProfile(campaignDashboard.profile)
       : Promise.resolve([]);
   const inactiveLoginPopupPromise =
-    campaignDashboard?.profile.approval === "approved"
+    campaignDashboard?.profile.approval === "approved" &&
+    canShowAutoPopupForRole(autoPopupSettingsMap, "inactive-login-reminder", campaignDashboard.profile.role)
       ? Promise.resolve(
           (() => {
             const lastSignInAt = user.last_sign_in_at ? new Date(user.last_sign_in_at) : null;
@@ -195,7 +199,8 @@ export default async function HomePage() {
         )
       : Promise.resolve(null);
   const documentIssuePopupPromise =
-    campaignDashboard?.profile.approval === "approved"
+    campaignDashboard?.profile.approval === "approved" &&
+    canShowAutoPopupForRole(autoPopupSettingsMap, "document-issue-reminder", campaignDashboard.profile.role)
       ? (async () => {
           try {
             const rows = await fetchDocumentIssueRows();
@@ -229,7 +234,8 @@ export default async function HomePage() {
         })()
       : Promise.resolve(null);
   const goalReminderPopupPromise =
-    campaignDashboard?.profile.approval === "approved"
+    campaignDashboard?.profile.approval === "approved" &&
+    canShowAutoPopupForRole(autoPopupSettingsMap, "goal-daily-need-reminder", campaignDashboard.profile.role)
       ? buildGoalReminderPopup({
           role: campaignDashboard.profile.role,
           fullName: campaignDashboard.profile.full_name || "Calisan",

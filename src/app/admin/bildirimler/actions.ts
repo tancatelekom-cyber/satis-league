@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireAdminAccess } from "@/lib/auth/require-admin";
+import { autoPopupSettingDefaults } from "@/lib/auto-popup-settings";
 import { POPUP_ANNOUNCEMENT_BUCKET } from "@/lib/popup-announcements";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { UserRole } from "@/lib/types";
@@ -36,6 +37,13 @@ function parseTargetRoles(formData: FormData) {
   const rawRoles = formData.getAll("targetRoles").map((value) => String(value));
 
   return Array.from(new Set(rawRoles)).filter((role): role is UserRole => roleValues.has(role as UserRole));
+}
+
+function parseAutoPopupTargetRoles(formData: FormData) {
+  const rawRoles = formData.getAll("targetRoles").map((value) => String(value));
+  const uniqueRoles = Array.from(new Set(rawRoles)).filter((role): role is UserRole => roleValues.has(role as UserRole));
+
+  return uniqueRoles.length > 0 ? uniqueRoles : ["employee", "manager", "management", "admin"];
 }
 
 function parseOptionalLink(value: FormDataEntryValue | null) {
@@ -278,4 +286,39 @@ export async function deletePopupAnnouncementAction(formData: FormData) {
   revalidatePath("/");
   revalidatePath("/admin/bildirimler");
   redirectWithMessage("Bildirim silindi.");
+}
+
+export async function updateAutoPopupSettingAction(formData: FormData) {
+  await requireAdminAccess();
+
+  const notificationKey = String(formData.get("notificationKey") ?? "").trim();
+  const defaultSetting = autoPopupSettingDefaults.find((item) => item.key === notificationKey);
+
+  if (!defaultSetting) {
+    redirectWithMessage("Otomatik bildirim ayari bulunamadi.", "error");
+  }
+
+  const isActive = String(formData.get("isActive") ?? "") === "true";
+  const targetRoles = parseAutoPopupTargetRoles(formData);
+  const admin = createAdminClient();
+
+  const { error } = await admin.from("auto_popup_notification_settings").upsert(
+    {
+      notification_key: defaultSetting.key,
+      label: defaultSetting.label,
+      description: defaultSetting.description,
+      is_active: isActive,
+      target_roles: targetRoles,
+      updated_at: new Date().toISOString()
+    },
+    { onConflict: "notification_key" }
+  );
+
+  if (error) {
+    redirectWithMessage(`Otomatik popup ayari guncellenemedi: ${error.message}`, "error");
+  }
+
+  revalidatePath("/");
+  revalidatePath("/admin/bildirimler");
+  redirectWithMessage("Otomatik popup ayari guncellendi.");
 }

@@ -1,4 +1,5 @@
 import { requireAdminAccess } from "@/lib/auth/require-admin";
+import { getAdminAutoPopupSettings } from "@/lib/auto-popup-settings";
 import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
 import { AdminSetupNotice } from "@/components/admin/admin-setup-notice";
 import { AdminSectionNav } from "@/components/admin/admin-section-nav";
@@ -7,6 +8,7 @@ import {
   createPopupAnnouncementAction,
   deletePopupAnnouncementAction,
   togglePopupAnnouncementAction,
+  updateAutoPopupSettingAction,
   updatePopupAnnouncementAction
 } from "@/app/admin/bildirimler/actions";
 
@@ -58,7 +60,10 @@ export default async function AdminPopupAnnouncementsPage({ searchParams }: Admi
     return <AdminSetupNotice />;
   }
 
-  const announcements = await getAdminPopupAnnouncements();
+  const [announcements, autoPopupSettings] = await Promise.all([
+    getAdminPopupAnnouncements(),
+    getAdminAutoPopupSettings()
+  ]);
 
   return (
     <main>
@@ -140,6 +145,65 @@ export default async function AdminPopupAnnouncementsPage({ searchParams }: Admi
             Bildirimi Yayina Al
           </button>
         </form>
+      </section>
+
+      <section className="popup-admin-list">
+        <div className="section-title compact-title">
+          <div>
+            <h2>Otomatik Popup Bildirimler</h2>
+            <p>Manuel yayinlanan popup disindaki sistem bildirimlerini rol bazli aktif/pasif yonetin.</p>
+          </div>
+        </div>
+
+        {autoPopupSettings.map((setting) => (
+          <article key={setting.key} className="popup-admin-card popup-admin-card-auto">
+            <div>
+              <div className="popup-admin-card-head">
+                <strong>{setting.label}</strong>
+                <span className={setting.is_active ? "popup-status-active" : "popup-status-passive"}>
+                  {setting.is_active ? "Aktif" : "Pasif"}
+                </span>
+              </div>
+              <p>{setting.description}</p>
+              <div className="popup-admin-meta">
+                <span>{formatPopupTargets(setting.target_roles)}</span>
+                <span>{setting.updated_at ? `Son guncelleme: ${formatLocalDateTime(setting.updated_at)}` : "Varsayilan ayar"}</span>
+              </div>
+            </div>
+
+            <form action={updateAutoPopupSettingAction} className="popup-admin-form popup-auto-form">
+              <input type="hidden" name="notificationKey" value={setting.key} />
+
+              <div className="popup-target-card">
+                <strong>Aktif profiller</strong>
+                <p>Bu otomatik popup sadece secili rollerde gosterilir.</p>
+                <label className="popup-remove-image-option">
+                  <input name="isActive" type="checkbox" value="true" defaultChecked={setting.is_active} />
+                  <span>Otomatik popup aktif</span>
+                </label>
+                <div className="popup-target-grid">
+                  {popupTargetOptions.map((option) => (
+                    <label key={`${setting.key}-${option.value}`} className="popup-target-option">
+                      <input
+                        name="targetRoles"
+                        type="checkbox"
+                        value={option.value}
+                        defaultChecked={setting.target_roles.includes(option.value)}
+                      />
+                      <span>{option.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="popup-auto-actions">
+                <button className="button-secondary" type="submit">
+                  Ayari Kaydet
+                </button>
+              </div>
+            </form>
+          </article>
+        ))}
       </section>
 
       <section className="popup-admin-list">

@@ -258,6 +258,17 @@ create table if not exists public.popup_announcement_dismissals (
   unique (announcement_id, profile_id)
 );
 
+create table if not exists public.auto_popup_notification_settings (
+  id uuid primary key default gen_random_uuid(),
+  notification_key text not null unique,
+  label text not null,
+  description text not null,
+  is_active boolean not null default true,
+  target_roles text[] not null default '{}'::text[],
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists public.tariffs (
   id uuid primary key default gen_random_uuid(),
   provider text not null default 'Turkcell',

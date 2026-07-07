@@ -340,9 +340,16 @@ function buildEmployeeDailyNeedReference(
   remainingDays: number
 ) {
   if (!isProductionPointCategory(summary.title)) {
-    const needRow = buildNeedRows(summary, remainingDays).find((row) => row.threshold === 100);
+    const needRows = buildNeedRows(summary, remainingDays);
+    const needRow =
+      needRows.find((row) => row.threshold === 100 && row.dailyRequired > 0) ??
+      needRows.find((row) => row.threshold === 110 && row.dailyRequired > 0) ??
+      needRows.find((row) => row.threshold === 120 && row.dailyRequired > 0) ??
+      needRows.find((row) => row.threshold === 120) ??
+      null;
+
     return {
-      referenceLabel: "%100 Hedef",
+      referenceLabel: needRow ? `%${needRow.threshold} Hedef` : "%100 Hedef",
       dailyRequired: needRow?.dailyRequired ?? 0
     };
   }
@@ -386,13 +393,19 @@ function buildEmployeeDailyNeedSummaryRows(
       const childRows = category.children
         .filter((child) => child.hasTarget)
         .map((child) => {
-          const needRow = buildNeedRows(child, remainingDays).find((row) => row.threshold === 100);
+          const needRows = buildNeedRows(child, remainingDays);
+          const needRow =
+            needRows.find((row) => row.threshold === 100 && row.dailyRequired > 0) ??
+            needRows.find((row) => row.threshold === 110 && row.dailyRequired > 0) ??
+            needRows.find((row) => row.threshold === 120 && row.dailyRequired > 0) ??
+            needRows.find((row) => row.threshold === 120) ??
+            null;
 
           return {
             title: child.title,
             groupKey: category.title,
             level: 1,
-            referenceLabel: "%100 Hedef",
+            referenceLabel: needRow ? `%${needRow.threshold} Hedef` : "%100 Hedef",
             dailyRequired: needRow?.dailyRequired ?? 0
           } satisfies EmployeeDailyNeedSummaryRow;
         });
@@ -477,16 +490,21 @@ function buildCompanyZeroActualItems(rows: GoalStoreRow[]) {
 
 function buildPopupBody(
   fullName: string,
-  scopeLabel: string,
   needLines: string[],
+  lowestCategoryLines: string[],
   missingLabels: string[],
   zeroActualLabels: string[]
 ) {
   const lines: string[] = [`Sayin ${fullName},`];
 
   if (needLines.length > 0) {
-    lines.push(`${scopeLabel} gunluk ihtiyaclar:`);
+    lines.push("Gunluk Ihtiyaclar:");
     lines.push(...needLines.map((line) => `- ${line}`));
+  }
+
+  if (lowestCategoryLines.length > 0) {
+    lines.push("Orani en dusuk 3 kategori:");
+    lines.push(...lowestCategoryLines.map((line) => `- ${line}`));
   }
 
   if (missingLabels.length > 0) {
@@ -504,23 +522,39 @@ function buildPopupBody(
 
 function toStoreNeedLines(rows: StoreDailyNeedSummaryRow[]) {
   return rows
+    .filter((row) => row.level === 0)
     .map((row) => {
-      const hundredNeed = row.cells.find((cell) => cell.threshold === 100);
-      return hundredNeed && hundredNeed.dailyRequired > 0
-        ? {
-            title: row.title,
-            dailyRequired: hundredNeed.dailyRequired
-          }
-        : null;
+      const selectedNeed =
+        row.cells.find((cell) => cell.threshold === 100 && cell.dailyRequired > 0) ??
+        row.cells.find((cell) => cell.threshold === 110 && cell.dailyRequired > 0) ??
+        row.cells.find((cell) => cell.threshold === 120 && cell.dailyRequired > 0) ??
+        row.cells.find((cell) => cell.threshold === 120) ??
+        null;
+
+      return {
+        title: row.title,
+        dailyRequired: selectedNeed?.dailyRequired ?? 0
+      };
     })
-    .filter((row): row is { title: string; dailyRequired: number } => Boolean(row))
     .sort((a, b) => b.dailyRequired - a.dailyRequired || a.title.localeCompare(b.title, "tr"));
 }
 
 function toEmployeeNeedLines(rows: EmployeeDailyNeedSummaryRow[]) {
   return rows
-    .filter((row) => row.dailyRequired > 0)
+    .filter((row) => row.level === 0)
     .sort((a, b) => b.dailyRequired - a.dailyRequired || a.title.localeCompare(b.title, "tr"));
+}
+
+function toLowestCategoryLines(categories: GoalCategorySummary[]) {
+  return categories
+    .filter((category) => category.hasTarget && category.actualPercent !== null)
+    .sort(
+      (a, b) =>
+        (a.actualPercent ?? 0) - (b.actualPercent ?? 0) ||
+        a.title.localeCompare(b.title, "tr")
+    )
+    .slice(0, 3)
+    .map((category) => `${category.title}: %${(category.actualPercent ?? 0).toLocaleString("tr-TR", { maximumFractionDigits: 1 })}`);
 }
 
 export async function buildGoalReminderPopup(args: {
@@ -553,6 +587,7 @@ export async function buildGoalReminderPopup(args: {
     const dailyNeedRows = toEmployeeNeedLines(
       buildEmployeeDailyNeedSummaryRows(categorySummaries, remainingDays, productionRewardRows)
     );
+    const lowestCategoryLines = toLowestCategoryLines(categorySummaries);
     const missingLabels = dailyNeedRows.map((row) => row.title);
     const zeroActualLabels = buildEmployeeZeroActualItems(employeeRows);
 
@@ -562,11 +597,11 @@ export async function buildGoalReminderPopup(args: {
 
     return {
       id: `goal-reminder-${args.role}-${args.personnelId}`,
-      title: "Gunluk Hedef Hatirlatmasi",
+      title: "Gunluk Ihtiyaclar",
       body: buildPopupBody(
         args.fullName,
-        "Kisisel",
-        dailyNeedRows.slice(0, 5).map((row) => `${row.title}: gunluk en az ${formatNumber(row.dailyRequired)}`),
+        dailyNeedRows.map((row) => `${row.title}: ${row.dailyRequired > 0 ? formatNumber(row.dailyRequired) : "Tamamlandi"}`),
+        lowestCategoryLines,
         missingLabels.slice(0, 6),
         zeroActualLabels.slice(0, 6)
       ),
@@ -592,6 +627,7 @@ export async function buildGoalReminderPopup(args: {
 
     const categorySummaries = buildStoreCategorySummaries(activeStoreRows, dayStats.workedDays, dayStats.totalDays);
     const dailyNeedRows = toStoreNeedLines(buildStoreDailyNeedSummaryRows(categorySummaries, remainingDays));
+    const lowestCategoryLines = toLowestCategoryLines(categorySummaries);
     const missingLabels = dailyNeedRows.map((row) => row.title);
     const zeroActualLabels = buildStoreZeroActualItems(activeStoreRows);
 
@@ -601,11 +637,11 @@ export async function buildGoalReminderPopup(args: {
 
     return {
       id: `goal-reminder-${args.role}-${normalizeStoreKey(args.storeName)}`,
-      title: "Gunluk Hedef Hatirlatmasi",
+      title: "Gunluk Ihtiyaclar",
       body: buildPopupBody(
         args.fullName,
-        "Magaza bazli",
-        dailyNeedRows.slice(0, 5).map((row) => `${row.title}: gunluk en az ${formatNumber(row.dailyRequired)}`),
+        dailyNeedRows.map((row) => `${row.title}: ${row.dailyRequired > 0 ? formatNumber(row.dailyRequired) : "Tamamlandi"}`),
+        lowestCategoryLines,
         missingLabels.slice(0, 6),
         zeroActualLabels.slice(0, 6)
       ),
@@ -623,6 +659,7 @@ export async function buildGoalReminderPopup(args: {
   const companyRows = goalStoreRows.filter((row) => !isLivePrimeCategory(row.mainCategory));
   const companySummaries = buildCompanyCategorySummaries(companyRows, dayStats.workedDays, dayStats.totalDays);
   const dailyNeedRows = toStoreNeedLines(buildStoreDailyNeedSummaryRows(companySummaries, remainingDays));
+  const lowestCategoryLines = toLowestCategoryLines(companySummaries);
   const missingLabels = dailyNeedRows.map((row) => row.title);
   const zeroActualLabels = buildCompanyZeroActualItems(companyRows);
 
@@ -632,11 +669,11 @@ export async function buildGoalReminderPopup(args: {
 
   return {
     id: `goal-reminder-${args.role}-company`,
-    title: "Gunluk Hedef Hatirlatmasi",
+    title: "Gunluk Ihtiyaclar",
     body: buildPopupBody(
       args.fullName,
-      "Firma geneli",
-      dailyNeedRows.slice(0, 5).map((row) => `${row.title}: gunluk en az ${formatNumber(row.dailyRequired)}`),
+      dailyNeedRows.map((row) => `${row.title}: ${row.dailyRequired > 0 ? formatNumber(row.dailyRequired) : "Tamamlandi"}`),
+      lowestCategoryLines,
       missingLabels.slice(0, 6),
       zeroActualLabels.slice(0, 6)
     ),

@@ -54,7 +54,9 @@ export function HomePopupAnnouncement({ announcements }: HomePopupAnnouncementPr
             <img className="home-popup-image" src={announcement.imageUrl} alt={announcement.title} />
           </button>
         ) : null}
-        <p>{announcement.body}</p>
+        <div className="home-popup-body">
+          <p>{announcement.body}</p>
+        </div>
 
         <div className="home-popup-actions">
           {hasLink ? (

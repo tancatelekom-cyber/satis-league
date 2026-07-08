@@ -11540,21 +11540,21 @@ textarea::placeholder {
   margin-top: 2px;
 }
 
-.home-popup-line-heading {
+.home-popup-card p.home-popup-line-heading {
   margin-top: 14px;
   color: #0a1730;
   font-weight: 900;
 }
 
-.home-popup-line-alert-heading {
-  color: #7f1d1d;
+.home-popup-card p.home-popup-line-alert-heading {
+  color: #991b1b;
   font-weight: 950;
   text-transform: uppercase;
   letter-spacing: 0.02em;
   animation: homePopupAlertBlink 1.2s ease-in-out infinite;
 }
 
-.home-popup-line-alert-item {
+.home-popup-card p.home-popup-line-alert-item {
   color: #b91c1c;
   font-weight: 800;
   animation: homePopupAlertBlink 1.2s ease-in-out infinite;

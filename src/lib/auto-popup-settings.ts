@@ -4,7 +4,8 @@ import type { UserRole } from "@/lib/types";
 export type AutoPopupSettingKey =
   | "inactive-login-reminder"
   | "document-issue-reminder"
-  | "goal-daily-need-reminder";
+  | "goal-daily-need-reminder"
+  | "weekly-schedule-reminder";
 
 export type AutoPopupSetting = {
   key: AutoPopupSettingKey;
@@ -45,6 +46,13 @@ export const autoPopupSettingDefaults: AutoPopupSetting[] = [
     description: "Hedef Gerceklesen verilerine gore kisinin veya magazanin gunluk ihtiyaclarini popup icinde gosterir.",
     is_active: true,
     target_roles: ["employee", "manager", "management", "admin"]
+  },
+  {
+    key: "weekly-schedule-reminder",
+    label: "Haftalik Calisma Programi Hatirlatmasi",
+    description: "Magaza mudurune kendi magazasi, yonetim ve admine ise eksik magazalar icin haftalik program uyarisi gosterir.",
+    is_active: true,
+    target_roles: ["manager", "management", "admin"]
   }
 ];
 

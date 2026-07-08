@@ -7,6 +7,7 @@ import { buildGoalReminderPopup } from "@/lib/goal-popup-reminders";
 import { getActivePopupAnnouncementsForProfile, type PopupAnnouncementRecord } from "@/lib/popup-announcements";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { SeasonRecord, type UserRole } from "@/lib/types";
+import { normalizeWeekStart } from "@/lib/work-schedules";
 import { HomePopupAnnouncement } from "@/components/home-popup-announcement";
 
 export const dynamic = "force-dynamic";
@@ -150,6 +151,45 @@ function buildInactiveLoginPopup(fullName: string, inactiveDays: number): PopupA
   };
 }
 
+function buildWeeklyScheduleReminderPopup(
+  fullName: string,
+  role: UserRole,
+  weekStart: string,
+  storeNames: string[]
+): PopupAnnouncementRecord | null {
+  if (!storeNames.length) {
+    return null;
+  }
+
+  const title = "Haftalik Calisma Programi Uyarisi";
+  const lines = [`Sayin ${fullName},`];
+
+  if (role === "manager") {
+    lines.push(`${storeNames[0]} haftalik calisma programini doldurmamistir.`);
+    lines.push("Lutfen bu haftanin calisma programini doldurunuz.");
+  } else {
+    lines.push("Asagidaki magazalar haftalik calisma programini doldurmamistir:");
+    storeNames.forEach((storeName) => lines.push(`- ${storeName}`));
+    lines.push("Lutfen Haftalik Calisma Programi menusunden kontrol ediniz.");
+  }
+
+  return {
+    id: `weekly-schedule-reminder-${role}-${weekStart}-${storeNames.join("-")}`,
+    title,
+    body: lines.join("\n"),
+    link_url: "/haftalik-calisma-programi",
+    image_path: null,
+    imageUrl: null,
+    target_mode: "role",
+    target_roles: role === "manager" ? ["manager"] : role === "admin" ? ["admin"] : ["management"],
+    target_profile_ids: [],
+    show_from: new Date().toISOString(),
+    show_until: new Date().toISOString(),
+    is_active: true,
+    created_at: new Date().toISOString()
+  };
+}
+
 export default async function HomePage() {
   const user = await requireUser();
 
@@ -249,6 +289,72 @@ export default async function HomePage() {
           )
         }).catch(() => null)
       : Promise.resolve(null);
+  const weeklySchedulePopupPromise =
+    campaignDashboard?.profile.approval === "approved" &&
+    canShowAutoPopupForRole(autoPopupSettingsMap, "weekly-schedule-reminder", campaignDashboard.profile.role) &&
+    ["manager", "management", "admin"].includes(campaignDashboard.profile.role)
+      ? (async () => {
+          const currentWeekStart = normalizeWeekStart();
+          const role = campaignDashboard.profile.role;
+          const fullName = campaignDashboard.profile.full_name || "Kullanici";
+
+          if (role === "manager") {
+            const storeId = campaignDashboard.profile.store_id ?? null;
+            const storeName = getProfileStoreName(
+              campaignDashboard.profile.store as Array<{ name: string }> | { name: string } | null | undefined
+            );
+
+            if (!storeId || !storeName) {
+              return null;
+            }
+
+            const [{ count: teamCount }, { count: scheduleCount }] = await Promise.all([
+              admin
+                .from("profiles")
+                .select("*", { count: "exact", head: true })
+                .eq("approval", "approved")
+                .eq("store_id", storeId)
+                .in("role", ["employee", "manager"]),
+              admin
+                .from("weekly_work_schedules")
+                .select("*", { count: "exact", head: true })
+                .eq("week_start", currentWeekStart)
+                .eq("store_id", storeId)
+            ]);
+
+            if ((teamCount ?? 0) <= 0 || (scheduleCount ?? 0) > 0) {
+              return null;
+            }
+
+            return buildWeeklyScheduleReminderPopup(fullName, role, currentWeekStart, [storeName]);
+          }
+
+          const [{ data: activeStores }, { data: approvedProfiles }, { data: scheduleRows }] = await Promise.all([
+            admin.from("stores").select("id, name").eq("is_active", true).order("name"),
+            admin
+              .from("profiles")
+              .select("id, role, approval, store_id")
+              .eq("approval", "approved")
+              .in("role", ["employee", "manager"]),
+            admin
+              .from("weekly_work_schedules")
+              .select("store_id")
+              .eq("week_start", currentWeekStart)
+          ]);
+
+          const stores = (activeStores as Array<{ id: string; name: string }> | null) ?? [];
+          const profiles = (approvedProfiles as Array<{ store_id: string | null }> | null) ?? [];
+          const schedules = (scheduleRows as Array<{ store_id: string | null }> | null) ?? [];
+
+          const storeIdsWithTeam = new Set(profiles.map((profile) => profile.store_id).filter(Boolean));
+          const storeIdsWithSchedule = new Set(schedules.map((row) => row.store_id).filter(Boolean));
+          const missingStoreNames = stores
+            .filter((store) => storeIdsWithTeam.has(store.id) && !storeIdsWithSchedule.has(store.id))
+            .map((store) => store.name);
+
+          return buildWeeklyScheduleReminderPopup(fullName, role, currentWeekStart, missingStoreNames);
+        })()
+      : Promise.resolve(null);
   const liveCampaignLeaderboard =
     campaignDashboard?.profile.approval === "approved"
       ? campaignDashboard.activeLeaderboards.find(
@@ -259,15 +365,17 @@ export default async function HomePage() {
       : null;
 
   const [{ data: seasons }, { data: profiles }, { data: stores }, { data: seasonSales }] = await seasonDataPromise;
-  const [activePopupAnnouncements, inactiveLoginPopup, documentIssuePopup, goalReminderPopup] = await Promise.all([
+  const [activePopupAnnouncements, inactiveLoginPopup, documentIssuePopup, goalReminderPopup, weeklySchedulePopup] = await Promise.all([
     activePopupAnnouncementsPromise,
     inactiveLoginPopupPromise,
     documentIssuePopupPromise,
-    goalReminderPopupPromise
+    goalReminderPopupPromise,
+    weeklySchedulePopupPromise
   ]);
   const popupAnnouncements = [
     ...(inactiveLoginPopup ? [inactiveLoginPopup] : []),
     ...(documentIssuePopup ? [documentIssuePopup] : []),
+    ...(weeklySchedulePopup ? [weeklySchedulePopup] : []),
     ...(goalReminderPopup ? [goalReminderPopup] : []),
     ...activePopupAnnouncements
   ];

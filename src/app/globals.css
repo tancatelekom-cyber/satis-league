@@ -11555,9 +11555,8 @@ textarea::placeholder {
 }
 
 .home-popup-card p.home-popup-line-alert-item {
-  color: #b91c1c;
-  font-weight: 800;
-  animation: homePopupAlertBlink 1.2s ease-in-out infinite;
+  color: #0f172a;
+  font-weight: 400;
   padding-left: 8px;
 }
 

@@ -13,14 +13,14 @@ function isPopupHeadingLine(line: string) {
   return (
     normalized === "gunluk ihtiyaclar:" ||
     normalized === "bilgilendirme kalemleri:" ||
-    normalized === "eksik kalan kalemler:" ||
+    normalized === "hedefe gitmeyen kalemler:" ||
     normalized === "gercekleseni sifir olan kalemler:"
   );
 }
 
 function isPopupAlertHeadingLine(line: string) {
   const normalized = line.trim().toLowerCase();
-  return normalized === "eksik kalan kalemler:" || normalized === "gercekleseni sifir olan kalemler:";
+  return normalized === "hedefe gitmeyen kalemler:" || normalized === "gercekleseni sifir olan kalemler:";
 }
 
 function isPopupAlertItemLine(lines: string[], index: number) {

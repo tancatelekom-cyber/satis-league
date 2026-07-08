@@ -539,7 +539,7 @@ function buildPopupBody(
   }
 
   if (missingLabels.length > 0) {
-    lines.push("Hedefe gitmeyen kalemler:");
+    lines.push("HEDEFE GITMEYEN KALEMLER:");
     lines.push(...missingLabels.map((label) => `- ${label}`));
   }
 

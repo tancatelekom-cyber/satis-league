@@ -13,9 +13,42 @@ function isPopupHeadingLine(line: string) {
   return (
     normalized === "gunluk ihtiyaclar:" ||
     normalized === "bilgilendirme kalemleri:" ||
-    normalized.startsWith("eksik kalan kalemler:") ||
-    normalized.startsWith("gercekleseni sifir olan kalemler:")
+    normalized === "eksik kalan kalemler:" ||
+    normalized === "gercekleseni sifir olan kalemler:"
   );
+}
+
+function isPopupAlertHeadingLine(line: string) {
+  const normalized = line.trim().toLowerCase();
+  return normalized === "eksik kalan kalemler:" || normalized === "gercekleseni sifir olan kalemler:";
+}
+
+function isPopupAlertItemLine(lines: string[], index: number) {
+  const currentLine = lines[index]?.trim() ?? "";
+  if (!currentLine.startsWith("- ")) {
+    return false;
+  }
+
+  for (let previousIndex = index - 1; previousIndex >= 0; previousIndex -= 1) {
+    const previousLine = lines[previousIndex]?.trim() ?? "";
+    if (!previousLine) {
+      continue;
+    }
+
+    if (isPopupAlertHeadingLine(previousLine)) {
+      return true;
+    }
+
+    if (isPopupHeadingLine(previousLine)) {
+      return false;
+    }
+
+    if (!previousLine.startsWith("- ")) {
+      return false;
+    }
+  }
+
+  return false;
 }
 
 export function HomePopupAnnouncement({ announcements }: HomePopupAnnouncementProps) {
@@ -69,18 +102,31 @@ export function HomePopupAnnouncement({ announcements }: HomePopupAnnouncementPr
           </button>
         ) : null}
         <div className="home-popup-body">
-          {bodyLines.map((line, index) =>
-            line.length === 0 ? (
-              <div key={`empty-${index}`} className="home-popup-line-spacer" aria-hidden="true" />
-            ) : (
+          {bodyLines.map((line, index) => {
+            if (line.length === 0) {
+              return <div key={`empty-${index}`} className="home-popup-line-spacer" aria-hidden="true" />;
+            }
+
+            const isHeading = isPopupHeadingLine(line);
+            const isAlertHeading = isPopupAlertHeadingLine(line);
+            const isAlertItem = isPopupAlertItemLine(bodyLines, index);
+
+            return (
               <p
                 key={`${announcement.id}-line-${index}`}
-                className={`home-popup-line${isPopupHeadingLine(line) ? " home-popup-line-heading" : ""}`}
+                className={[
+                  "home-popup-line",
+                  isHeading ? "home-popup-line-heading" : "",
+                  isAlertHeading ? "home-popup-line-alert-heading" : "",
+                  isAlertItem ? "home-popup-line-alert-item" : ""
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
               >
                 {line}
               </p>
-            ),
-          )}
+            );
+          })}
         </div>
 
         <div className="home-popup-actions">

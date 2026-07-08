@@ -533,11 +533,13 @@ function buildPopupBody(
   }
 
   if (missingLabels.length > 0) {
-    lines.push(`Eksik kalan kalemler: ${missingLabels.join(", ")}`);
+    lines.push("Eksik kalan kalemler:");
+    lines.push(...missingLabels.map((label) => `- ${label}`));
   }
 
   if (zeroActualLabels.length > 0) {
-    lines.push(`Gercekleseni sifir olan kalemler: ${zeroActualLabels.join(", ")}`);
+    lines.push("Gercekleseni sifir olan kalemler:");
+    lines.push(...zeroActualLabels.map((label) => `- ${label}`));
   }
 
   lines.push("Detay icin Hedef Gerceklesen menusunu kontrol ediniz.");

@@ -11547,8 +11547,10 @@ textarea::placeholder {
 }
 
 .home-popup-line-alert-heading {
-  color: #b91c1c;
-  font-weight: 900;
+  color: #7f1d1d;
+  font-weight: 950;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
   animation: homePopupAlertBlink 1.2s ease-in-out infinite;
 }
 

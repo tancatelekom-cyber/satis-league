@@ -10643,13 +10643,25 @@ textarea::placeholder {
   font-weight: 900;
 }
 
+.goal-store-production-table thead th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  background: #cfe0f2;
+  box-shadow: 8px 0 14px rgba(11, 33, 67, 0.08);
+}
+
 .goal-store-production-table tbody th {
+  position: sticky;
+  left: 0;
+  z-index: 2;
   background: #d8e6f5;
   color: #0b2143;
   text-align: left;
   white-space: nowrap;
   font-size: 0.92rem;
   font-weight: 900;
+  box-shadow: 8px 0 14px rgba(11, 33, 67, 0.08);
 }
 
 .goal-store-production-head-points,

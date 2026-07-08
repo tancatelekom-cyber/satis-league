@@ -1016,7 +1016,13 @@ function buildStoreEmployeeProductionPlans(
       } satisfies StoreEmployeeProductionPlan;
     })
     .filter((row): row is StoreEmployeeProductionPlan => Boolean(row))
-    .sort((a, b) => a.employeeName.localeCompare(b.employeeName, "tr"));
+    .sort((a, b) => {
+      if (b.actualPoints !== a.actualPoints) {
+        return b.actualPoints - a.actualPoints;
+      }
+
+      return a.employeeName.localeCompare(b.employeeName, "tr");
+    });
 }
 
 function aggregateStoreActual(rows: GoalStoreRow[]) {

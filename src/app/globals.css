@@ -10623,14 +10623,14 @@ textarea::placeholder {
 
 .goal-store-production-table {
   width: 100%;
-  min-width: 980px;
+  min-width: 940px;
   border-collapse: collapse;
   color: #10203b;
 }
 
 .goal-store-production-table th,
 .goal-store-production-table td {
-  padding: 12px 12px;
+  padding: 10px 9px;
   border: 1px solid rgba(16, 32, 59, 0.12);
   text-align: center;
   vertical-align: middle;
@@ -10660,7 +10660,7 @@ textarea::placeholder {
   text-align: left;
   white-space: nowrap;
   font-size: 0.92rem;
-  font-weight: 900;
+  font-weight: 600;
   box-shadow: 8px 0 14px rgba(11, 33, 67, 0.08);
 }
 
@@ -11268,12 +11268,12 @@ textarea::placeholder {
   }
 
   .goal-store-production-table {
-    min-width: 840px;
+    min-width: 800px;
   }
 
   .goal-store-production-table th,
   .goal-store-production-table td {
-    padding: 8px 6px;
+    padding: 7px 5px;
   }
 
   .goal-store-production-table thead th,

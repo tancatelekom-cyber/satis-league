@@ -297,6 +297,12 @@ function buildCompanyCategorySummaries(rows: GoalStoreRow[], workedDays: number,
   return buildStoreCategorySummaries(buildCompanyRows(rows), workedDays, totalDays);
 }
 
+function buildMissingCategoryLabels(categories: GoalCategorySummary[]) {
+  return categories
+    .filter((category) => category.hasTarget && (category.actualPercent ?? 0) < 100)
+    .map((category) => category.title);
+}
+
 function buildSeparateInfoPopupLines(rows: GoalStoreRow[]) {
   return rows
     .filter((row) => row.separateInfo && row.target !== null && row.target > 0 && row.actual < row.target)
@@ -533,7 +539,7 @@ function buildPopupBody(
   }
 
   if (missingLabels.length > 0) {
-    lines.push("Eksik kalan kalemler:");
+    lines.push("Hedefe gitmeyen kalemler:");
     lines.push(...missingLabels.map((label) => `- ${label}`));
   }
 
@@ -602,7 +608,7 @@ export async function buildGoalReminderPopup(args: {
     const dailyNeedRows = toEmployeeNeedLines(
       buildEmployeeDailyNeedSummaryRows(categorySummaries, remainingDays, productionRewardRows)
     );
-    const missingLabels = dailyNeedRows.map((row) => row.title);
+    const missingLabels = buildMissingCategoryLabels(categorySummaries);
     const zeroActualLabels = buildEmployeeZeroActualItems(employeeRows);
 
     if (!dailyNeedRows.length && !zeroActualLabels.length) {
@@ -616,8 +622,8 @@ export async function buildGoalReminderPopup(args: {
         args.fullName,
         dailyNeedRows.map((row) => `${row.title}: ${row.dailyRequired > 0 ? formatNumber(row.dailyRequired) : "Tamamlandi"}`),
         [],
-        missingLabels.slice(0, 6),
-        zeroActualLabels.slice(0, 6)
+        missingLabels,
+        zeroActualLabels
       ),
       link_url: "/hedef-gerceklesen",
       image_path: null,
@@ -645,7 +651,7 @@ export async function buildGoalReminderPopup(args: {
     );
     const categorySummaries = buildStoreCategorySummaries(activeStoreRows, dayStats.workedDays, dayStats.totalDays);
     const dailyNeedRows = toStoreNeedLines(buildStoreDailyNeedSummaryRows(categorySummaries, remainingDays));
-    const missingLabels = dailyNeedRows.map((row) => row.title);
+    const missingLabels = buildMissingCategoryLabels(categorySummaries);
     const zeroActualLabels = buildStoreZeroActualItems(activeStoreRows);
 
     if (!dailyNeedRows.length && !zeroActualLabels.length && !separateInfoLines.length) {
@@ -659,8 +665,8 @@ export async function buildGoalReminderPopup(args: {
         args.fullName,
         dailyNeedRows.map((row) => `${row.title}: ${row.dailyRequired > 0 ? formatNumber(row.dailyRequired) : "Tamamlandi"}`),
         separateInfoLines,
-        missingLabels.slice(0, 6),
-        zeroActualLabels.slice(0, 6)
+        missingLabels,
+        zeroActualLabels
       ),
       link_url: "/hedef-gerceklesen",
       image_path: null,
@@ -680,7 +686,7 @@ export async function buildGoalReminderPopup(args: {
   );
   const companySummaries = buildCompanyCategorySummaries(companyRows, dayStats.workedDays, dayStats.totalDays);
   const dailyNeedRows = toStoreNeedLines(buildStoreDailyNeedSummaryRows(companySummaries, remainingDays));
-  const missingLabels = dailyNeedRows.map((row) => row.title);
+  const missingLabels = buildMissingCategoryLabels(companySummaries);
   const zeroActualLabels = buildCompanyZeroActualItems(companyRows);
 
   if (!dailyNeedRows.length && !zeroActualLabels.length && !companySeparateInfoLines.length) {
@@ -694,8 +700,8 @@ export async function buildGoalReminderPopup(args: {
       args.fullName,
       dailyNeedRows.map((row) => `${row.title}: ${row.dailyRequired > 0 ? formatNumber(row.dailyRequired) : "Tamamlandi"}`),
       companySeparateInfoLines,
-      missingLabels.slice(0, 6),
-      zeroActualLabels.slice(0, 6)
+      missingLabels,
+      zeroActualLabels
     ),
     link_url: "/hedef-gerceklesen",
     image_path: null,

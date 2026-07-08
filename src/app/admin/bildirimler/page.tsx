@@ -3,7 +3,13 @@ import { getAdminAutoPopupSettings } from "@/lib/auto-popup-settings";
 import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
 import { AdminSetupNotice } from "@/components/admin/admin-setup-notice";
 import { AdminSectionNav } from "@/components/admin/admin-section-nav";
-import { formatPopupTargets, getAdminPopupAnnouncements, popupTargetOptions } from "@/lib/popup-announcements";
+import {
+  formatPopupAudience,
+  formatPopupTargets,
+  getAdminPopupAnnouncements,
+  getApprovedPopupTargetProfiles,
+  popupTargetOptions
+} from "@/lib/popup-announcements";
 import {
   createPopupAnnouncementAction,
   deletePopupAnnouncementAction,
@@ -51,6 +57,10 @@ function isoToDateTimeLocal(value: string) {
   return `${year}-${month}-${day}T${hour}:${minute}`;
 }
 
+function getRoleLabel(role: string) {
+  return popupTargetOptions.find((option) => option.value === role)?.label ?? role;
+}
+
 export default async function AdminPopupAnnouncementsPage({ searchParams }: AdminPopupAnnouncementsPageProps) {
   const params = searchParams ? await searchParams : undefined;
 
@@ -60,10 +70,12 @@ export default async function AdminPopupAnnouncementsPage({ searchParams }: Admi
     return <AdminSetupNotice />;
   }
 
-  const [announcements, autoPopupSettings] = await Promise.all([
+  const [announcements, autoPopupSettings, approvedProfiles] = await Promise.all([
     getAdminPopupAnnouncements(),
-    getAdminAutoPopupSettings()
+    getAdminAutoPopupSettings(),
+    getApprovedPopupTargetProfiles()
   ]);
+  const approvedProfilesById = new Map(approvedProfiles.map((profile) => [profile.id, profile]));
 
   return (
     <main>
@@ -118,14 +130,50 @@ export default async function AdminPopupAnnouncementsPage({ searchParams }: Admi
 
           <div className="popup-target-card">
             <strong>Kime gidecek?</strong>
-            <p>Hic rol secmezsen tum onayli kullanicilar gorur.</p>
-            <div className="popup-target-grid">
-              {popupTargetOptions.map((option) => (
-                <label key={option.value} className="popup-target-option">
-                  <input name="targetRoles" type="checkbox" value={option.value} />
-                  <span>{option.label}</span>
-                </label>
-              ))}
+            <p>Gorev bazli veya kisi bazli gonderim tipini secin.</p>
+            <div className="popup-target-mode-grid">
+              <label className="popup-target-mode-option">
+                <input name="targetMode" type="radio" value="role" defaultChecked />
+                <span>Gorev bazli</span>
+              </label>
+              <label className="popup-target-mode-option">
+                <input name="targetMode" type="radio" value="profile" />
+                <span>Kisi bazli</span>
+              </label>
+            </div>
+
+            <div className="popup-target-split-grid">
+              <div>
+                <strong>Gorev bazli secim</strong>
+                <p>Hic rol secmezsen tum onayli kullanicilar gorur.</p>
+                <div className="popup-target-grid">
+                  {popupTargetOptions.map((option) => (
+                    <label key={option.value} className="popup-target-option">
+                      <input name="targetRoles" type="checkbox" value={option.value} />
+                      <span>{option.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <strong>Kisi bazli secim</strong>
+                <p>Sadece secilen kullanicilar popup bildirimi gorur.</p>
+                <div className="popup-profile-grid">
+                  {approvedProfiles.map((profile) => (
+                    <label key={profile.id} className="popup-target-option popup-profile-option">
+                      <input name="targetProfileIds" type="checkbox" value={profile.id} />
+                      <span>
+                        {profile.full_name}
+                        <small>
+                          {getRoleLabel(profile.role)}
+                          {profile.store_name ? ` | ${profile.store_name}` : ""}
+                        </small>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 
@@ -235,7 +283,7 @@ export default async function AdminPopupAnnouncementsPage({ searchParams }: Admi
                 ) : null}
                 <p>{announcement.body}</p>
                 <div className="popup-admin-meta">
-                  <span>{formatPopupTargets(announcement.target_roles)}</span>
+                  <span>{formatPopupAudience(announcement, approvedProfilesById)}</span>
                   <span>
                     {formatLocalDateTime(announcement.show_from)} - {formatLocalDateTime(announcement.show_until)}
                   </span>
@@ -292,19 +340,73 @@ export default async function AdminPopupAnnouncementsPage({ searchParams }: Admi
 
                     <div className="popup-target-card">
                       <strong>Kime gidecek?</strong>
-                      <p>Hic rol secmezsen tum onayli kullanicilar gorur.</p>
-                      <div className="popup-target-grid">
-                        {popupTargetOptions.map((option) => (
-                          <label key={`${announcement.id}-${option.value}`} className="popup-target-option">
-                            <input
-                              name="targetRoles"
-                              type="checkbox"
-                              value={option.value}
-                              defaultChecked={announcement.target_roles?.includes(option.value) ?? false}
-                            />
-                            <span>{option.label}</span>
-                          </label>
-                        ))}
+                      <p>Gorev bazli veya kisi bazli gonderim tipini guncelleyebilirsiniz.</p>
+                      <div className="popup-target-mode-grid">
+                        <label className="popup-target-mode-option">
+                          <input
+                            name="targetMode"
+                            type="radio"
+                            value="role"
+                            defaultChecked={announcement.target_mode !== "profile"}
+                          />
+                          <span>Gorev bazli</span>
+                        </label>
+                        <label className="popup-target-mode-option">
+                          <input
+                            name="targetMode"
+                            type="radio"
+                            value="profile"
+                            defaultChecked={announcement.target_mode === "profile"}
+                          />
+                          <span>Kisi bazli</span>
+                        </label>
+                      </div>
+
+                      <div className="popup-target-split-grid">
+                        <div>
+                          <strong>Gorev bazli secim</strong>
+                          <p>Hic rol secmezsen tum onayli kullanicilar gorur.</p>
+                          <div className="popup-target-grid">
+                            {popupTargetOptions.map((option) => (
+                              <label key={`${announcement.id}-${option.value}`} className="popup-target-option">
+                                <input
+                                  name="targetRoles"
+                                  type="checkbox"
+                                  value={option.value}
+                                  defaultChecked={announcement.target_roles?.includes(option.value) ?? false}
+                                />
+                                <span>{option.label}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div>
+                          <strong>Kisi bazli secim</strong>
+                          <p>Sadece secilen kullanicilar popup bildirimi gorur.</p>
+                          <div className="popup-profile-grid">
+                            {approvedProfiles.map((profile) => (
+                              <label
+                                key={`${announcement.id}-${profile.id}`}
+                                className="popup-target-option popup-profile-option"
+                              >
+                                <input
+                                  name="targetProfileIds"
+                                  type="checkbox"
+                                  value={profile.id}
+                                  defaultChecked={announcement.target_profile_ids?.includes(profile.id) ?? false}
+                                />
+                                <span>
+                                  {profile.full_name}
+                                  <small>
+                                    {getRoleLabel(profile.role)}
+                                    {profile.store_name ? ` | ${profile.store_name}` : ""}
+                                  </small>
+                                </span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
                       </div>
                     </div>
 

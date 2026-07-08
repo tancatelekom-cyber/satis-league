@@ -7,6 +7,7 @@ import { autoPopupSettingDefaults } from "@/lib/auto-popup-settings";
 import { POPUP_ANNOUNCEMENT_BUCKET } from "@/lib/popup-announcements";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { UserRole } from "@/lib/types";
+import type { PopupAnnouncementTargetMode } from "@/lib/popup-announcements";
 
 const roleValues = new Set<UserRole>(["employee", "manager", "management", "admin"]);
 const allowedPopupImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -37,6 +38,21 @@ function parseTargetRoles(formData: FormData) {
   const rawRoles = formData.getAll("targetRoles").map((value) => String(value));
 
   return Array.from(new Set(rawRoles)).filter((role): role is UserRole => roleValues.has(role as UserRole));
+}
+
+function parseTargetMode(formData: FormData): PopupAnnouncementTargetMode {
+  return String(formData.get("targetMode") ?? "").trim() === "profile" ? "profile" : "role";
+}
+
+function parseTargetProfileIds(formData: FormData) {
+  return Array.from(
+    new Set(
+      formData
+        .getAll("targetProfileIds")
+        .map((value) => String(value).trim())
+        .filter(Boolean)
+    )
+  );
 }
 
 function parseAutoPopupTargetRoles(formData: FormData) {
@@ -99,7 +115,9 @@ export async function createPopupAnnouncementAction(formData: FormData) {
     const linkUrl = parseOptionalLink(formData.get("linkUrl"));
     const showFrom = toIstanbulIso(formData.get("showFrom"));
     const showUntil = toIstanbulIso(formData.get("showUntil"));
+    const targetMode = parseTargetMode(formData);
     const targetRoles = parseTargetRoles(formData);
+    const targetProfileIds = parseTargetProfileIds(formData);
     const imageFile = formData.get("image");
 
     if (!title || !body || !showFrom || !showUntil) {
@@ -110,6 +128,10 @@ export async function createPopupAnnouncementAction(formData: FormData) {
       redirectWithMessage("Bitis tarihi baslangic tarihinden sonra olmali.", "error");
     }
 
+    if (targetMode === "profile" && targetProfileIds.length === 0) {
+      redirectWithMessage("Kisi bazli gonderim icin en az bir kullanici secmelisiniz.", "error");
+    }
+
     const admin = createAdminClient();
     const uploadedImagePath = imageFile instanceof File ? await uploadPopupAnnouncementImage(imageFile) : null;
     const { error } = await admin.from("popup_announcements").insert({
@@ -117,7 +139,9 @@ export async function createPopupAnnouncementAction(formData: FormData) {
       body,
       link_url: linkUrl,
       image_path: uploadedImagePath,
-      target_roles: targetRoles,
+      target_mode: targetMode,
+      target_roles: targetMode === "role" ? targetRoles : [],
+      target_profile_ids: targetMode === "profile" ? targetProfileIds : [],
       show_from: showFrom,
       show_until: showUntil,
       created_by: profile.id
@@ -150,7 +174,9 @@ export async function updatePopupAnnouncementAction(formData: FormData) {
     const linkUrl = parseOptionalLink(formData.get("linkUrl"));
     const showFrom = toIstanbulIso(formData.get("showFrom"));
     const showUntil = toIstanbulIso(formData.get("showUntil"));
+    const targetMode = parseTargetMode(formData);
     const targetRoles = parseTargetRoles(formData);
+    const targetProfileIds = parseTargetProfileIds(formData);
     const imageFile = formData.get("image");
     const removeImage = String(formData.get("removeImage") ?? "") === "true";
 
@@ -164,6 +190,10 @@ export async function updatePopupAnnouncementAction(formData: FormData) {
 
     if (new Date(showUntil).getTime() <= new Date(showFrom).getTime()) {
       redirectWithMessage("Bitis tarihi baslangic tarihinden sonra olmali.", "error");
+    }
+
+    if (targetMode === "profile" && targetProfileIds.length === 0) {
+      redirectWithMessage("Kisi bazli gonderim icin en az bir kullanici secmelisiniz.", "error");
     }
 
     const admin = createAdminClient();
@@ -189,7 +219,9 @@ export async function updatePopupAnnouncementAction(formData: FormData) {
       body,
       link_url: linkUrl,
       image_path: nextImagePath,
-      target_roles: targetRoles,
+      target_mode: targetMode,
+      target_roles: targetMode === "role" ? targetRoles : [],
+      target_profile_ids: targetMode === "profile" ? targetProfileIds : [],
       show_from: showFrom,
       show_until: showUntil,
       updated_at: new Date().toISOString()

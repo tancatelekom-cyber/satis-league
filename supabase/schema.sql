@@ -235,7 +235,9 @@ create table if not exists public.popup_announcements (
   body text not null,
   link_url text,
   image_path text,
+  target_mode text not null default 'role',
   target_roles text[] not null default '{}'::text[],
+  target_profile_ids uuid[] not null default '{}'::uuid[],
   show_from timestamptz not null,
   show_until timestamptz not null,
   is_active boolean not null default true,
@@ -249,6 +251,12 @@ alter table public.popup_announcements
 
 alter table public.popup_announcements
   add column if not exists link_url text;
+
+alter table public.popup_announcements
+  add column if not exists target_mode text not null default 'role';
+
+alter table public.popup_announcements
+  add column if not exists target_profile_ids uuid[] not null default '{}'::uuid[];
 
 create table if not exists public.popup_announcement_dismissals (
   id uuid primary key default gen_random_uuid(),

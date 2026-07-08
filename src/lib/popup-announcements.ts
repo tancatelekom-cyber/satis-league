@@ -2,6 +2,14 @@ import type { UserRole } from "@/lib/types";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const POPUP_ANNOUNCEMENT_BUCKET = "popup-announcements";
+export type PopupAnnouncementTargetMode = "role" | "profile";
+
+export type PopupAnnouncementTargetProfile = {
+  id: string;
+  full_name: string;
+  role: UserRole;
+  store_name: string | null;
+};
 
 export type PopupAnnouncementRecord = {
   id: string;
@@ -10,7 +18,9 @@ export type PopupAnnouncementRecord = {
   link_url: string | null;
   image_path: string | null;
   imageUrl: string | null;
+  target_mode: PopupAnnouncementTargetMode;
   target_roles: UserRole[] | null;
+  target_profile_ids: string[] | null;
   show_from: string;
   show_until: string;
   is_active: boolean;
@@ -23,7 +33,9 @@ type PopupAnnouncementRow = {
   body: string;
   link_url: string | null;
   image_path: string | null;
+  target_mode: PopupAnnouncementTargetMode | null;
   target_roles: UserRole[] | null;
+  target_profile_ids: string[] | null;
   show_from: string;
   show_until: string;
   is_active: boolean;
@@ -66,6 +78,10 @@ function isTargeted(targetRoles: UserRole[] | null | undefined, role: UserRole) 
   return !targetRoles || targetRoles.length === 0 || targetRoles.includes(role);
 }
 
+function isProfileTargeted(targetProfileIds: string[] | null | undefined, profileId: string) {
+  return Array.isArray(targetProfileIds) && targetProfileIds.includes(profileId);
+}
+
 export function formatPopupTargets(targetRoles: UserRole[] | null | undefined) {
   if (!targetRoles || targetRoles.length === 0) {
     return "Tum kullanicilar";
@@ -76,6 +92,27 @@ export function formatPopupTargets(targetRoles: UserRole[] | null | undefined) {
     .join(", ");
 }
 
+export function formatPopupAudience(
+  announcement: Pick<PopupAnnouncementRecord, "target_mode" | "target_roles" | "target_profile_ids">,
+  profilesById?: Map<string, PopupAnnouncementTargetProfile>
+) {
+  if (announcement.target_mode === "profile") {
+    const targetIds = announcement.target_profile_ids ?? [];
+
+    if (!targetIds.length) {
+      return "Kisi bazli: secili kullanici yok";
+    }
+
+    const labels = targetIds.map((id) => profilesById?.get(id)?.full_name ?? "Bilinmeyen kullanici");
+    const preview = labels.slice(0, 4).join(", ");
+    const extraCount = labels.length - 4;
+
+    return extraCount > 0 ? `Kisi bazli: ${preview} +${extraCount}` : `Kisi bazli: ${preview}`;
+  }
+
+  return `Gorev bazli: ${formatPopupTargets(announcement.target_roles)}`;
+}
+
 async function mapPopupAnnouncement(row: PopupAnnouncementRow): Promise<PopupAnnouncementRecord> {
   const imageUrl = await resolvePopupImageUrl(row.image_path);
   const normalizedLink =
@@ -83,6 +120,8 @@ async function mapPopupAnnouncement(row: PopupAnnouncementRow): Promise<PopupAnn
 
   return {
     ...row,
+    target_mode: row.target_mode === "profile" ? "profile" : "role",
+    target_profile_ids: row.target_profile_ids ?? [],
     link_url: normalizedLink,
     imageUrl
   };
@@ -102,7 +141,9 @@ export async function getActivePopupAnnouncementsForProfile(profile: {
 
   const { data, error } = await admin
     .from("popup_announcements")
-    .select("id, title, body, link_url, image_path, target_roles, show_from, show_until, is_active, created_at")
+    .select(
+      "id, title, body, link_url, image_path, target_mode, target_roles, target_profile_ids, show_from, show_until, is_active, created_at"
+    )
     .eq("is_active", true)
     .lte("show_from", nowIso)
     .gte("show_until", nowIso)
@@ -114,7 +155,8 @@ export async function getActivePopupAnnouncementsForProfile(profile: {
   }
 
   const targetedRows = ((data as PopupAnnouncementRow[] | null) ?? []).filter((row) =>
-    isTargeted(row.target_roles, profile.role)
+    (row.target_mode === "profile" && isProfileTargeted(row.target_profile_ids, profile.id)) ||
+    ((row.target_mode === "role" || !row.target_mode) && isTargeted(row.target_roles, profile.role))
   );
 
   if (targetedRows.length === 0) {
@@ -129,7 +171,9 @@ export async function getAdminPopupAnnouncements() {
 
   const { data, error } = await admin
     .from("popup_announcements")
-    .select("id, title, body, link_url, image_path, target_roles, show_from, show_until, is_active, created_at")
+    .select(
+      "id, title, body, link_url, image_path, target_mode, target_roles, target_profile_ids, show_from, show_until, is_active, created_at"
+    )
     .order("created_at", { ascending: false })
     .limit(60);
 
@@ -138,4 +182,31 @@ export async function getAdminPopupAnnouncements() {
   }
 
   return await Promise.all(((data as PopupAnnouncementRow[] | null) ?? []).map((row) => mapPopupAnnouncement(row)));
+}
+
+export async function getApprovedPopupTargetProfiles() {
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("profiles")
+    .select("id, full_name, role, store:stores(name)")
+    .eq("approval", "approved")
+    .order("full_name", { ascending: true });
+
+  if (error) {
+    return [] as PopupAnnouncementTargetProfile[];
+  }
+
+  return ((data as Array<{
+    id: string;
+    full_name: string;
+    role: UserRole;
+    store: { name: string } | { name: string }[] | null;
+  }> | null) ?? [])
+    .filter((profile) => profile.full_name)
+    .map((profile) => ({
+      id: profile.id,
+      full_name: profile.full_name,
+      role: profile.role,
+      store_name: Array.isArray(profile.store) ? (profile.store[0]?.name ?? null) : (profile.store?.name ?? null)
+    }));
 }

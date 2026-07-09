@@ -164,7 +164,9 @@ function buildCategoryPeriodSummaries(rows: RevenueExpenseRow[], kind: "gelir" |
 
   return Array.from(categoryMap.entries())
     .map(([category, categoryRows]) => {
-      const months = buildMonthlySummary(categoryRows);
+      const months = buildMonthlySummary(categoryRows).filter((monthRow) =>
+        kind === "gelir" ? monthRow.income > 0 : monthRow.expense > 0
+      );
       const total = categoryRows.reduce((sum, row) => sum + row.amount, 0);
 
       return {
@@ -173,6 +175,7 @@ function buildCategoryPeriodSummaries(rows: RevenueExpenseRow[], kind: "gelir" |
         total
       } satisfies CategoryPeriodSummaryRow;
     })
+    .filter((row) => row.total > 0 && row.months.length > 0)
     .sort((left, right) => right.total - left.total || left.category.localeCompare(right.category, "tr"));
 }
 
@@ -729,27 +732,27 @@ export default async function RevenueExpensePage({ searchParams }: PageProps) {
                   </summary>
 
                   <div style={{ padding: "0 18px 18px", display: "grid", gap: 10 }}>
-                    <p style={{ margin: 0, color: "#56708c" }}>Ay ay gelir dagilimi</p>
+                    <p style={{ margin: 0, color: "#45607c", fontWeight: 700 }}>Ay ay gelir dagilimi</p>
                     <div style={{ overflowX: "auto" }}>
                       <table className="goal-company-trend-table web-kontor-trend-table">
                         <thead>
                           <tr>
-                            <th>Donem</th>
-                            <th>Tutar</th>
+                            <th style={{ color: "#0b2143", fontWeight: 800 }}>Donem</th>
+                            <th style={{ color: "#0b2143", fontWeight: 800, minWidth: 180, textAlign: "right" }}>Tutar</th>
                           </tr>
                         </thead>
                         <tbody>
                           {row.months.map((monthRow) => (
                             <tr key={`income-category-period-${row.category}-${monthRow.periodKey}`}>
-                              <th>{monthRow.periodLabel}</th>
-                              <td style={{ color: "#15803d" }}>{formatCurrency(monthRow.income)}</td>
+                              <th style={{ color: "#0b2143", fontWeight: 700 }}>{monthRow.periodLabel}</th>
+                              <td style={{ color: "#15803d", fontWeight: 700, textAlign: "right" }}>{formatCurrency(monthRow.income)}</td>
                             </tr>
                           ))}
                         </tbody>
                         <tfoot>
                           <tr>
-                            <th>Toplam</th>
-                            <td>{formatCurrency(row.total)}</td>
+                            <th style={{ color: "#0b2143", fontWeight: 800 }}>Toplam</th>
+                            <td style={{ color: "#166534", fontWeight: 800, textAlign: "right" }}>{formatCurrency(row.total)}</td>
                           </tr>
                         </tfoot>
                       </table>
@@ -800,27 +803,27 @@ export default async function RevenueExpensePage({ searchParams }: PageProps) {
                   </summary>
 
                   <div style={{ padding: "0 18px 18px", display: "grid", gap: 10 }}>
-                    <p style={{ margin: 0, color: "#56708c" }}>Ay ay gider dagilimi</p>
+                    <p style={{ margin: 0, color: "#45607c", fontWeight: 700 }}>Ay ay gider dagilimi</p>
                     <div style={{ overflowX: "auto" }}>
                       <table className="goal-company-trend-table web-kontor-trend-table">
                         <thead>
                           <tr>
-                            <th>Donem</th>
-                            <th>Tutar</th>
+                            <th style={{ color: "#0b2143", fontWeight: 800 }}>Donem</th>
+                            <th style={{ color: "#0b2143", fontWeight: 800, minWidth: 180, textAlign: "right" }}>Tutar</th>
                           </tr>
                         </thead>
                         <tbody>
                           {row.months.map((monthRow) => (
                             <tr key={`expense-category-period-${row.category}-${monthRow.periodKey}`}>
-                              <th>{monthRow.periodLabel}</th>
-                              <td style={{ color: "#dc2626" }}>{formatCurrency(monthRow.expense)}</td>
+                              <th style={{ color: "#0b2143", fontWeight: 700 }}>{monthRow.periodLabel}</th>
+                              <td style={{ color: "#dc2626", fontWeight: 700, textAlign: "right" }}>{formatCurrency(monthRow.expense)}</td>
                             </tr>
                           ))}
                         </tbody>
                         <tfoot>
                           <tr>
-                            <th>Toplam</th>
-                            <td>{formatCurrency(row.total)}</td>
+                            <th style={{ color: "#0b2143", fontWeight: 800 }}>Toplam</th>
+                            <td style={{ color: "#b91c1c", fontWeight: 800, textAlign: "right" }}>{formatCurrency(row.total)}</td>
                           </tr>
                         </tfoot>
                       </table>

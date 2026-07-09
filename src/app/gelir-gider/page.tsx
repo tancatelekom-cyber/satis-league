@@ -428,12 +428,16 @@ export default async function RevenueExpensePage({ searchParams }: PageProps) {
     gap: 6
   };
 
+  const sectionSubtitleStyle: CSSProperties = {
+    color: "#4b647f"
+  };
+
   return (
     <main className="web-kontor-page">
       <RevenueExpenseAccessWatcher />
 
       <h1 className="page-title">Gelir Gider Analizi</h1>
-      <p className="page-subtitle">
+      <p className="page-subtitle" style={{ color: "#3d5875" }}>
         Firma gelirlerini, giderlerini ve net karlilik akisini ay ay takip edin. Donem filtrelerini degistirerek tum tablo ve grafikler aninda guncellenir.
       </p>
 
@@ -490,11 +494,6 @@ export default async function RevenueExpensePage({ searchParams }: PageProps) {
               {formatCurrency(totalNet)}
             </strong>
             <span style={{ color: "#37516f" }}>Gelir eksi gider sonucu olusan net bakiye.</span>
-          </article>
-          <article style={summaryCardStyle}>
-            <span style={{ color: "#56708c", fontWeight: 700 }}>Kayit Adedi</span>
-            <strong style={{ color: "#0b2143", fontSize: "2rem", lineHeight: 1 }}>{formatNumber(filteredRows.length)}</strong>
-            <span style={{ color: "#37516f" }}>Secilen donemde dahil edilen toplam gelir-gider satiri.</span>
           </article>
         </div>
 
@@ -554,7 +553,9 @@ export default async function RevenueExpensePage({ searchParams }: PageProps) {
         <div className="goal-section-head web-kontor-section-head">
           <div>
             <h2 className="goal-panel-title">Aylik Gelir Gider Grafigi</h2>
-            <p className="goal-panel-subtitle">Gelir, gider ve net karlilik cizgileri secili doneme gore birlikte izlenir.</p>
+            <p className="goal-panel-subtitle" style={sectionSubtitleStyle}>
+              Gelir, gider ve net karlilik cizgileri secili doneme gore birlikte izlenir.
+            </p>
           </div>
         </div>
 
@@ -641,7 +642,9 @@ export default async function RevenueExpensePage({ searchParams }: PageProps) {
         <div className="goal-section-head web-kontor-section-head">
           <div>
             <h2 className="goal-panel-title">Aylik Ozet Tablosu</h2>
-            <p className="goal-panel-subtitle">Her donemde toplam gelir, toplam gider ve net karlilik birlikte listelenir.</p>
+            <p className="goal-panel-subtitle" style={sectionSubtitleStyle}>
+              Her donemde toplam gelir, toplam gider ve net karlilik birlikte listelenir.
+            </p>
           </div>
         </div>
 
@@ -681,7 +684,7 @@ export default async function RevenueExpensePage({ searchParams }: PageProps) {
         <div className="goal-section-head web-kontor-section-head">
           <div>
             <h2 className="goal-panel-title">Kategori Kirilimlari</h2>
-            <p className="goal-panel-subtitle">
+            <p className="goal-panel-subtitle" style={sectionSubtitleStyle}>
               Bir kategoriye tiklayarak secili filtreye gore ay ay gelir veya gider dagilimini detayli gorun.
             </p>
           </div>
@@ -836,7 +839,9 @@ export default async function RevenueExpensePage({ searchParams }: PageProps) {
         <div className="goal-section-head web-kontor-section-head">
           <div>
             <h2 className="goal-panel-title">Magaza Bazli Karlilik</h2>
-            <p className="goal-panel-subtitle">Secili donemde magazalarin gelir, gider ve net sonuc dagilimi tek tabloda izlenir.</p>
+            <p className="goal-panel-subtitle" style={sectionSubtitleStyle}>
+              Secili donemde magazalarin gelir, gider ve net sonuc dagilimi tek tabloda izlenir.
+            </p>
           </div>
         </div>
 

@@ -127,7 +127,9 @@ function buildMonthlySummary(rows: RevenueExpenseRow[]) {
     periodMap.set(row.periodKey, existing);
   }
 
-  return Array.from(periodMap.values()).sort((left, right) => left.periodKey.localeCompare(right.periodKey));
+  return Array.from(periodMap.values())
+    .filter((row) => row.income > 0 || row.expense > 0)
+    .sort((left, right) => left.periodKey.localeCompare(right.periodKey));
 }
 
 function buildCategorySummary(rows: RevenueExpenseRow[], kind: "gelir" | "gider") {
@@ -355,7 +357,9 @@ export default async function RevenueExpensePage({ searchParams }: PageProps) {
     return true;
   });
 
-  const availableMonths = [...new Set(monthScopedRows.map((row) => row.month))].sort((left, right) => left - right);
+  const availableMonths = [...new Set(monthScopedRows.filter((row) => row.amount > 0).map((row) => row.month))].sort(
+    (left, right) => left - right
+  );
 
   const filteredRows = rows.filter((row) => {
     if (selectedYear !== ALL_FILTER_VALUE && row.year !== Number(selectedYear)) {

@@ -393,6 +393,7 @@ export default async function RevenueExpensePage({ searchParams }: PageProps) {
       }
     ]
   }));
+  const chartAreaHeight = 250;
 
   const summaryCardStyle: CSSProperties = {
     padding: "18px 20px",
@@ -577,7 +578,7 @@ export default async function RevenueExpensePage({ searchParams }: PageProps) {
                   >
                     <div
                       style={{
-                        height: 280,
+                        height: chartAreaHeight,
                         display: "flex",
                         alignItems: "flex-end",
                         justifyContent: "center",
@@ -588,15 +589,18 @@ export default async function RevenueExpensePage({ searchParams }: PageProps) {
                     >
                       {group.bars.map((bar) => {
                         const magnitude = Math.abs(bar.renderValue ?? bar.value);
-                        const heightPercent = Math.max(8, (magnitude / chartMax) * 100);
+                        const heightPx = Math.max(22, (magnitude / chartMax) * chartAreaHeight);
                         const label = formatChartValue(bar.value);
                         return (
                           <div
                             key={`revenue-chart-bar-${group.periodKey}-${bar.key}`}
                             style={{
                               width: 26,
-                              display: "grid",
-                              justifyItems: "center",
+                              height: "100%",
+                              display: "flex",
+                              flexDirection: "column",
+                              justifyContent: "flex-end",
+                              alignItems: "center",
                               gap: 6
                             }}
                           >
@@ -606,8 +610,8 @@ export default async function RevenueExpensePage({ searchParams }: PageProps) {
                                 lineHeight: 1.1,
                                 fontWeight: 800,
                                 color: bar.textColor,
-                                writingMode: magnitude > chartMax * 0.42 ? "vertical-rl" : "horizontal-tb",
-                                transform: magnitude > chartMax * 0.42 ? "rotate(180deg)" : "none",
+                                writingMode: magnitude > chartMax * 0.5 ? "vertical-rl" : "horizontal-tb",
+                                transform: magnitude > chartMax * 0.5 ? "rotate(180deg)" : "none",
                                 whiteSpace: "nowrap"
                               }}
                             >
@@ -617,8 +621,7 @@ export default async function RevenueExpensePage({ searchParams }: PageProps) {
                               title={`${group.periodLabel} - ${bar.label}: ${label}`}
                               style={{
                                 width: "100%",
-                                height: `${heightPercent}%`,
-                                minHeight: 22,
+                                height: heightPx,
                                 borderRadius: 10,
                                 background: bar.color,
                                 boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.18)"

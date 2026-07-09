@@ -45,6 +45,12 @@ type CategorySummaryRow = {
   amount: number;
 };
 
+type CategoryPeriodSummaryRow = {
+  category: string;
+  months: MonthlySummaryRow[];
+  total: number;
+};
+
 type StoreSummaryRow = {
   storeName: string;
   income: number;
@@ -141,6 +147,33 @@ function buildCategorySummary(rows: RevenueExpenseRow[], kind: "gelir" | "gider"
       amount
     }))
     .sort((left, right) => right.amount - left.amount || left.category.localeCompare(right.category, "tr"));
+}
+
+function buildCategoryPeriodSummaries(rows: RevenueExpenseRow[], kind: "gelir" | "gider") {
+  const categoryMap = new Map<string, RevenueExpenseRow[]>();
+
+  for (const row of rows) {
+    if (row.kind !== kind) {
+      continue;
+    }
+
+    const bucket = categoryMap.get(row.category) ?? [];
+    bucket.push(row);
+    categoryMap.set(row.category, bucket);
+  }
+
+  return Array.from(categoryMap.entries())
+    .map(([category, categoryRows]) => {
+      const months = buildMonthlySummary(categoryRows);
+      const total = categoryRows.reduce((sum, row) => sum + row.amount, 0);
+
+      return {
+        category,
+        months,
+        total
+      } satisfies CategoryPeriodSummaryRow;
+    })
+    .sort((left, right) => right.total - left.total || left.category.localeCompare(right.category, "tr"));
 }
 
 function buildStoreSummary(rows: RevenueExpenseRow[]) {
@@ -308,6 +341,20 @@ export default async function RevenueExpensePage({ searchParams }: PageProps) {
   const matchedStore = stores.find((storeName) => sameRevenueExpenseStore(storeName, requestedStore)) ?? null;
   const selectedStore = requestedStore === ALL_FILTER_VALUE ? ALL_FILTER_VALUE : matchedStore?.trim() || ALL_FILTER_VALUE;
 
+  const monthScopedRows = rows.filter((row) => {
+    if (selectedYear !== ALL_FILTER_VALUE && row.year !== Number(selectedYear)) {
+      return false;
+    }
+
+    if (selectedStore !== ALL_FILTER_VALUE && !sameRevenueExpenseStore(row.storeName, selectedStore)) {
+      return false;
+    }
+
+    return true;
+  });
+
+  const availableMonths = [...new Set(monthScopedRows.map((row) => row.month))].sort((left, right) => left - right);
+
   const filteredRows = rows.filter((row) => {
     if (selectedYear !== ALL_FILTER_VALUE && row.year !== Number(selectedYear)) {
       return false;
@@ -330,7 +377,27 @@ export default async function RevenueExpensePage({ searchParams }: PageProps) {
   const monthlySummary = buildMonthlySummary(filteredRows);
   const incomeCategories = buildCategorySummary(filteredRows, "gelir");
   const expenseCategories = buildCategorySummary(filteredRows, "gider");
+  const incomeCategoryPeriods = buildCategoryPeriodSummaries(filteredRows, "gelir");
+  const expenseCategoryPeriods = buildCategoryPeriodSummaries(filteredRows, "gider");
   const storeSummary = buildStoreSummary(filteredRows);
+  const activeStoreCount = new Set(filteredRows.map((row) => row.storeName)).size;
+  const activeCategoryCount = new Set(filteredRows.map((row) => `${row.kind}:${row.category}`)).size;
+  const selectedStoreLabel = selectedStore === ALL_FILTER_VALUE ? "Tum Magazalar" : selectedStore;
+  const selectedPeriodLabel = (() => {
+    if (selectedYear === ALL_FILTER_VALUE && selectedMonth === ALL_FILTER_VALUE) {
+      return "Tum Donemler";
+    }
+
+    if (selectedYear !== ALL_FILTER_VALUE && selectedMonth === ALL_FILTER_VALUE) {
+      return `${selectedYear} Tum Aylar`;
+    }
+
+    if (selectedYear === ALL_FILTER_VALUE && selectedMonth !== ALL_FILTER_VALUE) {
+      return `${getRevenueExpenseMonthLabel(Number(selectedMonth))} Tum Yillar`;
+    }
+
+    return `${getRevenueExpenseMonthLabel(Number(selectedMonth))} ${selectedYear}`;
+  })();
 
   const chartWidth = 940;
   const chartHeight = 320;
@@ -371,6 +438,35 @@ export default async function RevenueExpensePage({ searchParams }: PageProps) {
       </p>
 
       <section className="guide-card game-brief-card" style={{ display: "grid", gap: 18 }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+            gap: 14
+          }}
+        >
+          <article style={summaryCardStyle}>
+            <span style={{ color: "#56708c", fontWeight: 700 }}>Secili Magaza</span>
+            <strong style={{ color: "#0b2143", fontSize: "1.6rem", lineHeight: 1.1 }}>{selectedStoreLabel}</strong>
+            <span style={{ color: "#37516f" }}>Tek magazayi ya da tumunu ayrintili olarak inceleyin.</span>
+          </article>
+          <article style={summaryCardStyle}>
+            <span style={{ color: "#56708c", fontWeight: 700 }}>Secili Donem</span>
+            <strong style={{ color: "#0b2143", fontSize: "1.6rem", lineHeight: 1.1 }}>{selectedPeriodLabel}</strong>
+            <span style={{ color: "#37516f" }}>Grafik ve tum tablolar bu doneme gore hesaplanir.</span>
+          </article>
+          <article style={summaryCardStyle}>
+            <span style={{ color: "#56708c", fontWeight: 700 }}>Magaza Sayisi</span>
+            <strong style={{ color: "#0b2143", fontSize: "1.6rem", lineHeight: 1 }}>{formatNumber(activeStoreCount)}</strong>
+            <span style={{ color: "#37516f" }}>Secili gorunumde hesaplanan magaza adedi.</span>
+          </article>
+          <article style={summaryCardStyle}>
+            <span style={{ color: "#56708c", fontWeight: 700 }}>Kategori Sayisi</span>
+            <strong style={{ color: "#0b2143", fontSize: "1.6rem", lineHeight: 1 }}>{formatNumber(activeCategoryCount)}</strong>
+            <span style={{ color: "#37516f" }}>Gelir ve gider tarafinda bulunan aktif kategori sayisi.</span>
+          </article>
+        </div>
+
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>
           <article style={summaryCardStyle}>
             <span style={{ color: "#56708c", fontWeight: 700 }}>Toplam Gelir</span>
@@ -405,6 +501,21 @@ export default async function RevenueExpensePage({ searchParams }: PageProps) {
         <div className="admin-form" style={{ display: "grid", gap: 14 }}>
           <div className="user-management-grid">
             <label className="field">
+              <span>Magaza</span>
+              <FilterSelectNav
+                ariaLabel="Gelir gider magaza secimi"
+                value={buildRevenueExpenseHref({ year: selectedYear, month: selectedMonth, store: selectedStore })}
+                options={[
+                  { label: "Tumu", value: buildRevenueExpenseHref({ year: selectedYear, month: selectedMonth, store: ALL_FILTER_VALUE }) },
+                  ...stores.map((storeName) => ({
+                    label: storeName,
+                    value: buildRevenueExpenseHref({ year: selectedYear, month: selectedMonth, store: storeName })
+                  }))
+                ]}
+              />
+            </label>
+
+            <label className="field">
               <span>Yil</span>
               <FilterSelectNav
                 ariaLabel="Gelir gider yil secimi"
@@ -426,28 +537,12 @@ export default async function RevenueExpensePage({ searchParams }: PageProps) {
                 value={buildRevenueExpenseHref({ year: selectedYear, month: selectedMonth, store: selectedStore })}
                 options={[
                   { label: "Tumu", value: buildRevenueExpenseHref({ year: selectedYear, month: ALL_FILTER_VALUE, store: selectedStore }) },
-                  ...Array.from({ length: 12 }, (_, index) => {
-                    const month = index + 1;
+                  ...availableMonths.map((month) => {
                     return {
                       label: getRevenueExpenseMonthLabel(month),
                       value: buildRevenueExpenseHref({ year: selectedYear, month: String(month), store: selectedStore })
                     };
                   })
-                ]}
-              />
-            </label>
-
-            <label className="field">
-              <span>Magaza</span>
-              <FilterSelectNav
-                ariaLabel="Gelir gider magaza secimi"
-                value={buildRevenueExpenseHref({ year: selectedYear, month: selectedMonth, store: selectedStore })}
-                options={[
-                  { label: "Tum Magazalar", value: buildRevenueExpenseHref({ year: selectedYear, month: selectedMonth, store: ALL_FILTER_VALUE }) },
-                  ...stores.map((storeName) => ({
-                    label: storeName,
-                    value: buildRevenueExpenseHref({ year: selectedYear, month: selectedMonth, store: storeName })
-                  }))
                 ]}
               />
             </label>
@@ -586,48 +681,154 @@ export default async function RevenueExpensePage({ searchParams }: PageProps) {
         <div className="goal-section-head web-kontor-section-head">
           <div>
             <h2 className="goal-panel-title">Kategori Kirilimlari</h2>
-            <p className="goal-panel-subtitle">Gelir ve gider kalemleri kendi icinde buyukten kucuge siralanir.</p>
+            <p className="goal-panel-subtitle">
+              Bir kategoriye tiklayarak secili filtreye gore ay ay gelir veya gider dagilimini detayli gorun.
+            </p>
           </div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16 }}>
-          <div style={{ overflowX: "auto" }}>
-            <table className="goal-company-trend-table web-kontor-trend-table">
-              <thead>
-                <tr>
-                  <th>Gelir Kategorisi</th>
-                  <th>Tutar</th>
-                </tr>
-              </thead>
-              <tbody>
-                {incomeCategories.map((row) => (
-                  <tr key={`income-category-${row.category}`}>
-                    <th>{row.category}</th>
-                    <td style={{ color: "#15803d" }}>{formatCurrency(row.amount)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 16 }}>
+          <section className="campaign-summary-card" style={{ padding: 18, display: "grid", gap: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+              <strong style={{ color: "#166534", fontSize: "1.1rem" }}>Gelir Kategorileri</strong>
+              <span className="status-chip approve" style={{ background: "rgba(34, 197, 94, 0.12)", color: "#15803d" }}>
+                {formatNumber(incomeCategories.length)} kategori
+              </span>
+            </div>
 
-          <div style={{ overflowX: "auto" }}>
-            <table className="goal-company-trend-table web-kontor-trend-table">
-              <thead>
-                <tr>
-                  <th>Gider Kategorisi</th>
-                  <th>Tutar</th>
-                </tr>
-              </thead>
-              <tbody>
-                {expenseCategories.map((row) => (
-                  <tr key={`expense-category-${row.category}`}>
-                    <th>{row.category}</th>
-                    <td style={{ color: "#dc2626" }}>{formatCurrency(row.amount)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+            {incomeCategoryPeriods.length ? (
+              incomeCategoryPeriods.map((row, index) => (
+                <details
+                  key={`income-category-detail-${row.category}`}
+                  open={index === 0}
+                  style={{
+                    borderRadius: 20,
+                    border: "1px solid rgba(22, 101, 52, 0.16)",
+                    background: "rgba(255,255,255,0.88)",
+                    overflow: "hidden"
+                  }}
+                >
+                  <summary
+                    style={{
+                      cursor: "pointer",
+                      listStyle: "none",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: 12,
+                      padding: "16px 18px",
+                      color: "#0b2143",
+                      fontWeight: 800
+                    }}
+                  >
+                    <span>{row.category}</span>
+                    <span style={{ color: "#15803d" }}>{formatCurrency(row.total)}</span>
+                  </summary>
+
+                  <div style={{ padding: "0 18px 18px", display: "grid", gap: 10 }}>
+                    <p style={{ margin: 0, color: "#56708c" }}>Ay ay gelir dagilimi</p>
+                    <div style={{ overflowX: "auto" }}>
+                      <table className="goal-company-trend-table web-kontor-trend-table">
+                        <thead>
+                          <tr>
+                            <th>Donem</th>
+                            <th>Tutar</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {row.months.map((monthRow) => (
+                            <tr key={`income-category-period-${row.category}-${monthRow.periodKey}`}>
+                              <th>{monthRow.periodLabel}</th>
+                              <td style={{ color: "#15803d" }}>{formatCurrency(monthRow.income)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                        <tfoot>
+                          <tr>
+                            <th>Toplam</th>
+                            <td>{formatCurrency(row.total)}</td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  </div>
+                </details>
+              ))
+            ) : (
+              <p style={{ margin: 0, color: "#56708c" }}>Secili filtrelerde gelir kategorisi bulunamadi.</p>
+            )}
+          </section>
+
+          <section className="campaign-summary-card" style={{ padding: 18, display: "grid", gap: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+              <strong style={{ color: "#991b1b", fontSize: "1.1rem" }}>Gider Kategorileri</strong>
+              <span className="status-chip" style={{ background: "rgba(239, 68, 68, 0.12)", color: "#dc2626" }}>
+                {formatNumber(expenseCategories.length)} kategori
+              </span>
+            </div>
+
+            {expenseCategoryPeriods.length ? (
+              expenseCategoryPeriods.map((row, index) => (
+                <details
+                  key={`expense-category-detail-${row.category}`}
+                  open={index === 0}
+                  style={{
+                    borderRadius: 20,
+                    border: "1px solid rgba(153, 27, 27, 0.14)",
+                    background: "rgba(255,255,255,0.88)",
+                    overflow: "hidden"
+                  }}
+                >
+                  <summary
+                    style={{
+                      cursor: "pointer",
+                      listStyle: "none",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: 12,
+                      padding: "16px 18px",
+                      color: "#0b2143",
+                      fontWeight: 800
+                    }}
+                  >
+                    <span>{row.category}</span>
+                    <span style={{ color: "#dc2626" }}>{formatCurrency(row.total)}</span>
+                  </summary>
+
+                  <div style={{ padding: "0 18px 18px", display: "grid", gap: 10 }}>
+                    <p style={{ margin: 0, color: "#56708c" }}>Ay ay gider dagilimi</p>
+                    <div style={{ overflowX: "auto" }}>
+                      <table className="goal-company-trend-table web-kontor-trend-table">
+                        <thead>
+                          <tr>
+                            <th>Donem</th>
+                            <th>Tutar</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {row.months.map((monthRow) => (
+                            <tr key={`expense-category-period-${row.category}-${monthRow.periodKey}`}>
+                              <th>{monthRow.periodLabel}</th>
+                              <td style={{ color: "#dc2626" }}>{formatCurrency(monthRow.expense)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                        <tfoot>
+                          <tr>
+                            <th>Toplam</th>
+                            <td>{formatCurrency(row.total)}</td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  </div>
+                </details>
+              ))
+            ) : (
+              <p style={{ margin: 0, color: "#56708c" }}>Secili filtrelerde gider kategorisi bulunamadi.</p>
+            )}
+          </section>
         </div>
       </section>
 

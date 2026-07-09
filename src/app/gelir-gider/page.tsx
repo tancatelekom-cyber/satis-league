@@ -210,24 +210,6 @@ function buildStoreSummary(rows: RevenueExpenseRow[]) {
   );
 }
 
-function buildChartLabelIndexes(count: number) {
-  if (count <= 8) {
-    return Array.from({ length: count }, (_, index) => index);
-  }
-
-  const step = Math.ceil(count / 6);
-  const indexes: number[] = [];
-  for (let index = 0; index < count; index += step) {
-    indexes.push(index);
-  }
-
-  if (!indexes.includes(count - 1)) {
-    indexes.push(count - 1);
-  }
-
-  return indexes;
-}
-
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -379,51 +361,38 @@ export default async function RevenueExpensePage({ searchParams }: PageProps) {
     return `${getRevenueExpenseMonthLabel(Number(selectedMonth))} ${selectedYear}`;
   })();
 
-  const chartWidth = 940;
-  const chartHeight = 340;
-  const chartPadding = 36;
   const incomeValues = monthlySummary.map((item) => item.income);
   const expenseValues = monthlySummary.map((item) => item.expense);
-  const netValues = monthlySummary.map((item) => item.net);
+  const netValues = monthlySummary.map((item) => Math.abs(item.net));
   const chartMax = Math.max(1, ...incomeValues, ...expenseValues, ...netValues);
-  const chartMin = Math.min(0, ...netValues);
-  const zeroRange = Math.max(1, chartMax - chartMin);
-  const zeroY = chartPadding + (chartHeight - chartPadding * 2) - ((0 - chartMin) / zeroRange) * (chartHeight - chartPadding * 2);
-  const chartLabelIndexes = buildChartLabelIndexes(monthlySummary.length);
-  const chartUsableWidth = chartWidth - chartPadding * 2;
-  const chartUsableHeight = chartHeight - chartPadding * 2;
-  const periodSlotWidth = monthlySummary.length ? chartUsableWidth / monthlySummary.length : chartUsableWidth;
-  const groupWidth = Math.max(40, periodSlotWidth * 0.74);
-  const barGap = 8;
-  const barWidth = Math.max(10, (groupWidth - barGap * 2) / 3);
-
-  const getBarY = (value: number) => chartPadding + chartUsableHeight - ((value - chartMin) / zeroRange) * chartUsableHeight;
-  const chartBars = monthlySummary.map((item, index) => {
-    const groupStartX = chartPadding + index * periodSlotWidth + (periodSlotWidth - groupWidth) / 2;
-    const buildBar = (value: number, order: number, color: string) => {
-      const valueY = getBarY(value);
-      const top = Math.min(valueY, zeroY);
-      const height = Math.max(2, Math.abs(zeroY - valueY));
-      const centerX = groupStartX + order * (barWidth + barGap) + barWidth / 2;
-      const centerY = top + height / 2;
-      return {
-        x: groupStartX + order * (barWidth + barGap),
-        y: top,
-        width: barWidth,
-        height,
-        fill: color,
-        centerX,
-        centerY,
-        value
-      };
-    };
-
-    return {
-      income: buildBar(item.income, 0, "#22c55e"),
-      expense: buildBar(item.expense, 1, "#ef4444"),
-      net: buildBar(item.net, 2, "#0b2143")
-    };
-  });
+  const chartGroups = monthlySummary.map((item) => ({
+    periodKey: item.periodKey,
+    periodLabel: item.periodLabel,
+    bars: [
+      {
+        key: "income",
+        label: "Gelir",
+        value: item.income,
+        color: "#22c55e",
+        textColor: "#166534"
+      },
+      {
+        key: "expense",
+        label: "Gider",
+        value: item.expense,
+        color: "#ef4444",
+        textColor: "#b91c1c"
+      },
+      {
+        key: "net",
+        label: "Net",
+        value: item.net,
+        renderValue: Math.abs(item.net),
+        color: item.net >= 0 ? "#0b2143" : "#f97316",
+        textColor: item.net >= 0 ? "#0b2143" : "#c2410c"
+      }
+    ]
+  }));
 
   const summaryCardStyle: CSSProperties = {
     padding: "18px 20px",
@@ -580,91 +549,103 @@ export default async function RevenueExpensePage({ searchParams }: PageProps) {
               </span>
             </div>
 
-            <div style={{ overflowX: "auto" }}>
-              <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} style={{ width: "100%", minWidth: 640, height: "auto" }} role="img" aria-label="Gelir gider cubuk grafigi">
-                <rect x="0" y="0" width={chartWidth} height={chartHeight} rx="28" fill="rgba(255,255,255,0.9)" />
-                <line x1={chartPadding} y1={zeroY} x2={chartWidth - chartPadding} y2={zeroY} stroke="rgba(11,33,67,0.12)" strokeWidth="2" />
-                {[0.25, 0.5, 0.75].map((ratio) => {
-                  const y = chartPadding + (chartHeight - chartPadding * 2) * ratio;
-                  return (
-                    <line
-                      key={`grid-${ratio}`}
-                      x1={chartPadding}
-                      y1={y}
-                      x2={chartWidth - chartPadding}
-                      y2={y}
-                      stroke="rgba(11,33,67,0.08)"
-                      strokeDasharray="6 8"
-                    />
-                  );
-                })}
-
-                {chartBars.map((barGroup, index) => (
-                  <g key={`bar-group-${monthlySummary[index]?.periodKey ?? index}`}>
-                    <rect x={barGroup.income.x} y={barGroup.income.y} width={barGroup.income.width} height={barGroup.income.height} rx="8" fill={barGroup.income.fill} />
-                    <rect x={barGroup.expense.x} y={barGroup.expense.y} width={barGroup.expense.width} height={barGroup.expense.height} rx="8" fill={barGroup.expense.fill} />
-                    <rect x={barGroup.net.x} y={barGroup.net.y} width={barGroup.net.width} height={barGroup.net.height} rx="8" fill={barGroup.net.fill} />
-
-                    {[barGroup.income, barGroup.expense, barGroup.net].map((bar, barIndex) => {
-                      const label = formatChartValue(bar.value);
-                      const compactHeight = bar.height < 42;
-
-                      if (compactHeight) {
-                        return (
-                          <text
-                            key={`bar-label-top-${index}-${barIndex}`}
-                            x={bar.centerX}
-                            y={bar.y - 6}
-                            textAnchor="middle"
-                            fill={bar.fill}
-                            fontSize="11"
-                            fontWeight="800"
-                          >
-                            {label}
-                          </text>
-                        );
-                      }
-
-                      return (
-                        <text
-                          key={`bar-label-vertical-${index}-${barIndex}`}
-                          x={bar.centerX}
-                          y={bar.centerY}
-                          textAnchor="middle"
-                          dominantBaseline="middle"
-                          fill="#ffffff"
-                          fontSize="11"
-                          fontWeight="800"
-                          transform={`rotate(-90 ${bar.centerX} ${bar.centerY})`}
-                        >
-                          {label}
-                        </text>
-                      );
-                    })}
-                  </g>
-                ))}
-
-                {chartLabelIndexes.map((index) => {
-                  const x =
-                    chartPadding +
-                    index * periodSlotWidth +
-                    periodSlotWidth / 2;
-
-                  return (
-                    <text
-                      key={`label-${monthlySummary[index]?.periodKey ?? index}`}
-                      x={x}
-                      y={chartHeight - 10}
-                      textAnchor="middle"
-                      fill="#37516f"
-                      fontSize="14"
-                      fontWeight="700"
+            <div
+              style={{
+                overflowX: "auto",
+                padding: "20px 16px 8px",
+                borderRadius: 28,
+                background: "rgba(255,255,255,0.92)",
+                border: "1px solid rgba(11,33,67,0.08)"
+              }}
+            >
+              <div
+                style={{
+                  minWidth: Math.max(680, chartGroups.length * 122),
+                  display: "flex",
+                  alignItems: "flex-end",
+                  gap: 18
+                }}
+              >
+                {chartGroups.map((group) => (
+                  <div
+                    key={`revenue-chart-group-${group.periodKey}`}
+                    style={{
+                      flex: "0 0 104px",
+                      display: "grid",
+                      gap: 10
+                    }}
+                  >
+                    <div
+                      style={{
+                        height: 280,
+                        display: "flex",
+                        alignItems: "flex-end",
+                        justifyContent: "center",
+                        gap: 8,
+                        padding: "0 4px",
+                        borderBottom: "2px solid rgba(11,33,67,0.12)"
+                      }}
                     >
-                      {monthlySummary[index]?.periodLabel ?? ""}
-                    </text>
-                  );
-                })}
-              </svg>
+                      {group.bars.map((bar) => {
+                        const magnitude = Math.abs(bar.renderValue ?? bar.value);
+                        const heightPercent = Math.max(8, (magnitude / chartMax) * 100);
+                        const label = formatChartValue(bar.value);
+                        return (
+                          <div
+                            key={`revenue-chart-bar-${group.periodKey}-${bar.key}`}
+                            style={{
+                              width: 26,
+                              display: "grid",
+                              justifyItems: "center",
+                              gap: 6
+                            }}
+                          >
+                            <span
+                              style={{
+                                fontSize: 10,
+                                lineHeight: 1.1,
+                                fontWeight: 800,
+                                color: bar.textColor,
+                                writingMode: magnitude > chartMax * 0.42 ? "vertical-rl" : "horizontal-tb",
+                                transform: magnitude > chartMax * 0.42 ? "rotate(180deg)" : "none",
+                                whiteSpace: "nowrap"
+                              }}
+                            >
+                              {label}
+                            </span>
+                            <div
+                              title={`${group.periodLabel} - ${bar.label}: ${label}`}
+                              style={{
+                                width: "100%",
+                                height: `${heightPercent}%`,
+                                minHeight: 22,
+                                borderRadius: 10,
+                                background: bar.color,
+                                boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.18)"
+                              }}
+                            />
+                            <span
+                              style={{
+                                fontSize: 10,
+                                lineHeight: 1,
+                                fontWeight: 700,
+                                color: "#5b7089",
+                                textAlign: "center"
+                              }}
+                            >
+                              {bar.label}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <div style={{ textAlign: "center", color: "#0b2143", fontWeight: 800, fontSize: 13, lineHeight: 1.2 }}>
+                      {group.periodLabel}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         ) : (

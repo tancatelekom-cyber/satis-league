@@ -45,6 +45,7 @@ export default async function RootLayout({
   let canOpenEvaluationPresentation = false;
   let canOpenWorkSchedule = false;
   let canOpenManagerPrime = false;
+  let canOpenRevenueExpense = false;
   let canOpenWebKontor = false;
   let canOpenMissingDocs = false;
 
@@ -73,6 +74,8 @@ export default async function RootLayout({
       if (profile?.approval === "approved") {
         const resolvedManagerPrimeAccess = await getResolvedFeatureAccessForProfile("mudur-primi", user.id, profile.role);
         canOpenManagerPrime = resolvedManagerPrimeAccess.allowed;
+        const resolvedRevenueExpenseAccess = await getResolvedFeatureAccessForProfile("gelir-gider", user.id, profile.role);
+        canOpenRevenueExpense = resolvedRevenueExpenseAccess.allowed;
         const resolvedFeatureAccess = await getResolvedFeatureAccessForProfile("web-kontor", user.id, profile.role);
         canOpenWebKontor = resolvedFeatureAccess.allowed;
         const resolvedMissingDocsAccess = await getResolvedFeatureAccessForProfile("eksik-evrak", user.id, profile.role);
@@ -85,6 +88,7 @@ export default async function RootLayout({
     canOpenEvaluationPresentation = false;
     canOpenWorkSchedule = false;
     canOpenManagerPrime = false;
+    canOpenRevenueExpense = false;
     canOpenWebKontor = false;
     canOpenMissingDocs = false;
   }
@@ -112,6 +116,7 @@ export default async function RootLayout({
             initialCanOpenEvaluationPresentation={canOpenEvaluationPresentation}
             initialCanOpenWorkSchedule={canOpenWorkSchedule}
             initialCanOpenManagerPrime={canOpenManagerPrime}
+            initialCanOpenRevenueExpense={canOpenRevenueExpense}
             initialCanOpenWebKontor={canOpenWebKontor}
             initialCanOpenMissingDocs={canOpenMissingDocs}
           />

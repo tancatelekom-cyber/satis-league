@@ -1,0 +1,667 @@
+import type { CSSProperties } from "react";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { FilterSelectNav } from "@/components/ui/filter-select-nav";
+import { requireUser } from "@/lib/auth/require-user";
+import { getResolvedFeatureAccessForProfile } from "@/lib/feature-menu-permissions";
+import {
+  fetchRevenueExpensePassword,
+  fetchRevenueExpenseRows,
+  getRevenueExpenseMonthLabel,
+  sameRevenueExpenseStore,
+  type RevenueExpenseRow
+} from "@/lib/revenue-expense";
+import { createClient } from "@/lib/supabase/server";
+import type { UserRole } from "@/lib/types";
+import { RevenueExpenseAccessWatcher } from "./access-watcher";
+import { unlockRevenueExpensePage } from "./actions";
+import { REVENUE_EXPENSE_ACCESS_COOKIE } from "./constants";
+
+type PageProps = {
+  searchParams?: Promise<{
+    year?: string;
+    month?: string;
+    store?: string;
+    hata?: string;
+  }>;
+};
+
+type RevenueExpenseProfile = {
+  id: string;
+  role: UserRole;
+  approval: string;
+};
+
+type MonthlySummaryRow = {
+  periodKey: string;
+  periodLabel: string;
+  income: number;
+  expense: number;
+  net: number;
+};
+
+type CategorySummaryRow = {
+  category: string;
+  amount: number;
+};
+
+type StoreSummaryRow = {
+  storeName: string;
+  income: number;
+  expense: number;
+  net: number;
+};
+
+const ALL_FILTER_VALUE = "__all__";
+
+function formatCurrency(value: number | null | undefined, digits = 0) {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return "-";
+  }
+
+  return `${value.toLocaleString("tr-TR", {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits
+  })} TL`;
+}
+
+function formatNumber(value: number | null | undefined, digits = 0) {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return "-";
+  }
+
+  return value.toLocaleString("tr-TR", {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits
+  });
+}
+
+function buildRevenueExpenseHref(filters: {
+  year?: string;
+  month?: string;
+  store?: string;
+}) {
+  const params = new URLSearchParams();
+
+  if (filters.year && filters.year !== ALL_FILTER_VALUE) {
+    params.set("year", filters.year);
+  }
+
+  if (filters.month && filters.month !== ALL_FILTER_VALUE) {
+    params.set("month", filters.month);
+  }
+
+  if (filters.store && filters.store !== ALL_FILTER_VALUE) {
+    params.set("store", filters.store);
+  }
+
+  const query = params.toString();
+  return query ? `/gelir-gider?${query}` : "/gelir-gider";
+}
+
+function buildMonthlySummary(rows: RevenueExpenseRow[]) {
+  const periodMap = new Map<string, MonthlySummaryRow>();
+
+  for (const row of rows) {
+    const existing = periodMap.get(row.periodKey) ?? {
+      periodKey: row.periodKey,
+      periodLabel: row.periodLabel,
+      income: 0,
+      expense: 0,
+      net: 0
+    };
+
+    if (row.kind === "gelir") {
+      existing.income += row.amount;
+    } else {
+      existing.expense += row.amount;
+    }
+
+    existing.net = existing.income - existing.expense;
+    periodMap.set(row.periodKey, existing);
+  }
+
+  return Array.from(periodMap.values()).sort((left, right) => left.periodKey.localeCompare(right.periodKey));
+}
+
+function buildCategorySummary(rows: RevenueExpenseRow[], kind: "gelir" | "gider") {
+  const categoryMap = new Map<string, number>();
+
+  for (const row of rows) {
+    if (row.kind !== kind) {
+      continue;
+    }
+
+    categoryMap.set(row.category, (categoryMap.get(row.category) ?? 0) + row.amount);
+  }
+
+  return Array.from(categoryMap.entries())
+    .map(([category, amount]) => ({
+      category,
+      amount
+    }))
+    .sort((left, right) => right.amount - left.amount || left.category.localeCompare(right.category, "tr"));
+}
+
+function buildStoreSummary(rows: RevenueExpenseRow[]) {
+  const storeMap = new Map<string, StoreSummaryRow>();
+
+  for (const row of rows) {
+    const existing = storeMap.get(row.storeName) ?? {
+      storeName: row.storeName,
+      income: 0,
+      expense: 0,
+      net: 0
+    };
+
+    if (row.kind === "gelir") {
+      existing.income += row.amount;
+    } else {
+      existing.expense += row.amount;
+    }
+
+    existing.net = existing.income - existing.expense;
+    storeMap.set(row.storeName, existing);
+  }
+
+  return Array.from(storeMap.values()).sort(
+    (left, right) => right.net - left.net || left.storeName.localeCompare(right.storeName, "tr")
+  );
+}
+
+function buildPolyline(values: number[], minValue: number, maxValue: number, width: number, height: number, padding: number) {
+  if (!values.length) {
+    return "";
+  }
+
+  const usableWidth = width - padding * 2;
+  const usableHeight = height - padding * 2;
+  const range = Math.max(1, maxValue - minValue);
+
+  return values
+    .map((value, index) => {
+      const x = padding + (values.length === 1 ? usableWidth / 2 : (usableWidth * index) / (values.length - 1));
+      const y = padding + usableHeight - ((value - minValue) / range) * usableHeight;
+      return `${x},${y}`;
+    })
+    .join(" ");
+}
+
+function getChartDots(values: number[], minValue: number, maxValue: number, width: number, height: number, padding: number) {
+  const usableWidth = width - padding * 2;
+  const usableHeight = height - padding * 2;
+  const range = Math.max(1, maxValue - minValue);
+
+  return values.map((value, index) => ({
+    x: padding + (values.length === 1 ? usableWidth / 2 : (usableWidth * index) / Math.max(1, values.length - 1)),
+    y: padding + usableHeight - ((value - minValue) / range) * usableHeight,
+    value
+  }));
+}
+
+function buildChartLabelIndexes(count: number) {
+  if (count <= 8) {
+    return Array.from({ length: count }, (_, index) => index);
+  }
+
+  const step = Math.ceil(count / 6);
+  const indexes: number[] = [];
+  for (let index = 0; index < count; index += step) {
+    indexes.push(index);
+  }
+
+  if (!indexes.includes(count - 1)) {
+    indexes.push(count - 1);
+  }
+
+  return indexes;
+}
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+export default async function RevenueExpensePage({ searchParams }: PageProps) {
+  await requireUser();
+
+  const params = searchParams ? await searchParams : undefined;
+  const supabase = await createClient();
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/giris");
+  }
+
+  const { data: profile } = await supabase.from("profiles").select("id, role, approval").eq("id", user.id).single();
+  const safeProfile = (profile as RevenueExpenseProfile | null) ?? null;
+
+  if (!safeProfile || safeProfile.approval !== "approved") {
+    redirect("/hesabim");
+  }
+
+  const resolvedFeatureAccess = await getResolvedFeatureAccessForProfile("gelir-gider", user.id, safeProfile.role);
+  if (!resolvedFeatureAccess.allowed) {
+    redirect("/");
+  }
+
+  if (!["management", "admin"].includes(safeProfile.role)) {
+    redirect("/");
+  }
+
+  const expectedPassword = await fetchRevenueExpensePassword();
+  const cookieStore = await cookies();
+  const storedPassword = cookieStore.get(REVENUE_EXPENSE_ACCESS_COOKIE)?.value?.trim() ?? "";
+  const requiresPassword = Boolean(expectedPassword);
+  const passwordError = String(params?.hata ?? "").trim() === "sifre";
+
+  if (requiresPassword && storedPassword !== expectedPassword) {
+    return (
+      <main className="web-kontor-page">
+        <h1 className="page-title">Gelir Gider Analizi</h1>
+        <p className="page-subtitle">
+          Bu sayfa icin Sheet uzerinde tanimli sifre gereklidir. Devam etmek icin gecerli sifreyi girin.
+        </p>
+
+        <section className="guide-card game-brief-card manager-prime-password-card">
+          <form action={unlockRevenueExpensePage} className="admin-form manager-prime-password-form">
+            <label className="field manager-prime-password-field">
+              <span>Sayfa Sifresi</span>
+              <input
+                type="password"
+                name="password"
+                placeholder="Sifreyi girin"
+                autoComplete="current-password"
+                autoFocus
+                required
+              />
+            </label>
+
+            {passwordError ? <p className="manager-prime-password-error">Girilen sifre hatali. Lutfen tekrar deneyin.</p> : null}
+
+            <button type="submit" className="button-primary manager-prime-password-button">
+              Sayfayi Ac
+            </button>
+          </form>
+        </section>
+      </main>
+    );
+  }
+
+  const rows = await fetchRevenueExpenseRows();
+  const years = [...new Set(rows.map((row) => row.year))].sort((left, right) => right - left);
+  const stores = [...new Set(rows.map((row) => row.storeName))].sort((left, right) => left.localeCompare(right, "tr"));
+
+  const requestedYear = String(params?.year ?? ALL_FILTER_VALUE).trim() || ALL_FILTER_VALUE;
+  const selectedYear =
+    requestedYear === ALL_FILTER_VALUE || years.some((year) => String(year) === requestedYear) ? requestedYear : ALL_FILTER_VALUE;
+
+  const requestedMonth = String(params?.month ?? ALL_FILTER_VALUE).trim() || ALL_FILTER_VALUE;
+  const selectedMonth =
+    requestedMonth === ALL_FILTER_VALUE || (Number(requestedMonth) >= 1 && Number(requestedMonth) <= 12)
+      ? requestedMonth === ALL_FILTER_VALUE
+        ? ALL_FILTER_VALUE
+        : String(Number(requestedMonth))
+      : ALL_FILTER_VALUE;
+
+  const requestedStore = String(params?.store ?? ALL_FILTER_VALUE).trim() || ALL_FILTER_VALUE;
+  const matchedStore = stores.find((storeName) => sameRevenueExpenseStore(storeName, requestedStore)) ?? null;
+  const selectedStore = requestedStore === ALL_FILTER_VALUE ? ALL_FILTER_VALUE : matchedStore?.trim() || ALL_FILTER_VALUE;
+
+  const filteredRows = rows.filter((row) => {
+    if (selectedYear !== ALL_FILTER_VALUE && row.year !== Number(selectedYear)) {
+      return false;
+    }
+
+    if (selectedMonth !== ALL_FILTER_VALUE && row.month !== Number(selectedMonth)) {
+      return false;
+    }
+
+    if (selectedStore !== ALL_FILTER_VALUE && !sameRevenueExpenseStore(row.storeName, selectedStore)) {
+      return false;
+    }
+
+    return true;
+  });
+
+  const totalIncome = filteredRows.filter((row) => row.kind === "gelir").reduce((sum, row) => sum + row.amount, 0);
+  const totalExpense = filteredRows.filter((row) => row.kind === "gider").reduce((sum, row) => sum + row.amount, 0);
+  const totalNet = totalIncome - totalExpense;
+  const monthlySummary = buildMonthlySummary(filteredRows);
+  const incomeCategories = buildCategorySummary(filteredRows, "gelir");
+  const expenseCategories = buildCategorySummary(filteredRows, "gider");
+  const storeSummary = buildStoreSummary(filteredRows);
+
+  const chartWidth = 940;
+  const chartHeight = 320;
+  const chartPadding = 36;
+  const incomeValues = monthlySummary.map((item) => item.income);
+  const expenseValues = monthlySummary.map((item) => item.expense);
+  const netValues = monthlySummary.map((item) => item.net);
+  const chartMax = Math.max(1, ...incomeValues, ...expenseValues, ...netValues);
+  const chartMin = Math.min(0, ...netValues);
+  const zeroRange = Math.max(1, chartMax - chartMin);
+  const zeroY = chartPadding + (chartHeight - chartPadding * 2) - ((0 - chartMin) / zeroRange) * (chartHeight - chartPadding * 2);
+  const chartLabelIndexes = buildChartLabelIndexes(monthlySummary.length);
+
+  const incomePoints = buildPolyline(incomeValues, chartMin, chartMax, chartWidth, chartHeight, chartPadding);
+  const expensePoints = buildPolyline(expenseValues, chartMin, chartMax, chartWidth, chartHeight, chartPadding);
+  const netPoints = buildPolyline(netValues, chartMin, chartMax, chartWidth, chartHeight, chartPadding);
+  const incomeDots = getChartDots(incomeValues, chartMin, chartMax, chartWidth, chartHeight, chartPadding);
+  const expenseDots = getChartDots(expenseValues, chartMin, chartMax, chartWidth, chartHeight, chartPadding);
+  const netDots = getChartDots(netValues, chartMin, chartMax, chartWidth, chartHeight, chartPadding);
+
+  const summaryCardStyle: CSSProperties = {
+    padding: "18px 20px",
+    borderRadius: 24,
+    background: "rgba(255,255,255,0.92)",
+    border: "1px solid rgba(4, 92, 96, 0.16)",
+    boxShadow: "0 16px 28px rgba(8, 22, 40, 0.08)",
+    display: "grid",
+    gap: 6
+  };
+
+  return (
+    <main className="web-kontor-page">
+      <RevenueExpenseAccessWatcher />
+
+      <h1 className="page-title">Gelir Gider Analizi</h1>
+      <p className="page-subtitle">
+        Firma gelirlerini, giderlerini ve net karlilik akisini ay ay takip edin. Donem filtrelerini degistirerek tum tablo ve grafikler aninda guncellenir.
+      </p>
+
+      <section className="guide-card game-brief-card" style={{ display: "grid", gap: 18 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>
+          <article style={summaryCardStyle}>
+            <span style={{ color: "#56708c", fontWeight: 700 }}>Toplam Gelir</span>
+            <strong style={{ color: "#0b2143", fontSize: "2rem", lineHeight: 1 }}>{formatCurrency(totalIncome)}</strong>
+            <span style={{ color: "#37516f" }}>Secili filtrede gelir tarafinin toplam tutari.</span>
+          </article>
+          <article style={summaryCardStyle}>
+            <span style={{ color: "#56708c", fontWeight: 700 }}>Toplam Gider</span>
+            <strong style={{ color: "#0b2143", fontSize: "2rem", lineHeight: 1 }}>{formatCurrency(totalExpense)}</strong>
+            <span style={{ color: "#37516f" }}>Secili filtrede gider tarafinin toplam tutari.</span>
+          </article>
+          <article style={summaryCardStyle}>
+            <span style={{ color: "#56708c", fontWeight: 700 }}>Net Karlilik</span>
+            <strong
+              style={{
+                color: totalNet >= 0 ? "#047857" : "#dc2626",
+                fontSize: "2rem",
+                lineHeight: 1
+              }}
+            >
+              {formatCurrency(totalNet)}
+            </strong>
+            <span style={{ color: "#37516f" }}>Gelir eksi gider sonucu olusan net bakiye.</span>
+          </article>
+          <article style={summaryCardStyle}>
+            <span style={{ color: "#56708c", fontWeight: 700 }}>Kayit Adedi</span>
+            <strong style={{ color: "#0b2143", fontSize: "2rem", lineHeight: 1 }}>{formatNumber(filteredRows.length)}</strong>
+            <span style={{ color: "#37516f" }}>Secilen donemde dahil edilen toplam gelir-gider satiri.</span>
+          </article>
+        </div>
+
+        <div className="admin-form" style={{ display: "grid", gap: 14 }}>
+          <div className="user-management-grid">
+            <label className="field">
+              <span>Yil</span>
+              <FilterSelectNav
+                ariaLabel="Gelir gider yil secimi"
+                value={buildRevenueExpenseHref({ year: selectedYear, month: selectedMonth, store: selectedStore })}
+                options={[
+                  { label: "Tumu", value: buildRevenueExpenseHref({ year: ALL_FILTER_VALUE, month: selectedMonth, store: selectedStore }) },
+                  ...years.map((year) => ({
+                    label: String(year),
+                    value: buildRevenueExpenseHref({ year: String(year), month: selectedMonth, store: selectedStore })
+                  }))
+                ]}
+              />
+            </label>
+
+            <label className="field">
+              <span>Ay</span>
+              <FilterSelectNav
+                ariaLabel="Gelir gider ay secimi"
+                value={buildRevenueExpenseHref({ year: selectedYear, month: selectedMonth, store: selectedStore })}
+                options={[
+                  { label: "Tumu", value: buildRevenueExpenseHref({ year: selectedYear, month: ALL_FILTER_VALUE, store: selectedStore }) },
+                  ...Array.from({ length: 12 }, (_, index) => {
+                    const month = index + 1;
+                    return {
+                      label: getRevenueExpenseMonthLabel(month),
+                      value: buildRevenueExpenseHref({ year: selectedYear, month: String(month), store: selectedStore })
+                    };
+                  })
+                ]}
+              />
+            </label>
+
+            <label className="field">
+              <span>Magaza</span>
+              <FilterSelectNav
+                ariaLabel="Gelir gider magaza secimi"
+                value={buildRevenueExpenseHref({ year: selectedYear, month: selectedMonth, store: selectedStore })}
+                options={[
+                  { label: "Tum Magazalar", value: buildRevenueExpenseHref({ year: selectedYear, month: selectedMonth, store: ALL_FILTER_VALUE }) },
+                  ...stores.map((storeName) => ({
+                    label: storeName,
+                    value: buildRevenueExpenseHref({ year: selectedYear, month: selectedMonth, store: storeName })
+                  }))
+                ]}
+              />
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <section className="campaign-section-card" style={{ display: "grid", gap: 16 }}>
+        <div className="goal-section-head web-kontor-section-head">
+          <div>
+            <h2 className="goal-panel-title">Aylik Gelir Gider Grafigi</h2>
+            <p className="goal-panel-subtitle">Gelir, gider ve net karlilik cizgileri secili doneme gore birlikte izlenir.</p>
+          </div>
+        </div>
+
+        {monthlySummary.length ? (
+          <div style={{ display: "grid", gap: 16 }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+              <span className="status-chip approve" style={{ background: "rgba(34, 197, 94, 0.12)", color: "#15803d" }}>
+                Gelir
+              </span>
+              <span className="status-chip" style={{ background: "rgba(239, 68, 68, 0.12)", color: "#dc2626" }}>
+                Gider
+              </span>
+              <span className="status-chip" style={{ background: "rgba(11, 33, 67, 0.1)", color: "#0b2143" }}>
+                Net Karlilik
+              </span>
+            </div>
+
+            <div style={{ overflowX: "auto" }}>
+              <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} style={{ width: "100%", minWidth: 640, height: "auto" }} role="img" aria-label="Gelir gider cizgi grafigi">
+                <rect x="0" y="0" width={chartWidth} height={chartHeight} rx="28" fill="rgba(255,255,255,0.9)" />
+                <line x1={chartPadding} y1={zeroY} x2={chartWidth - chartPadding} y2={zeroY} stroke="rgba(11,33,67,0.12)" strokeWidth="2" />
+                {[0.25, 0.5, 0.75].map((ratio) => {
+                  const y = chartPadding + (chartHeight - chartPadding * 2) * ratio;
+                  return (
+                    <line
+                      key={`grid-${ratio}`}
+                      x1={chartPadding}
+                      y1={y}
+                      x2={chartWidth - chartPadding}
+                      y2={y}
+                      stroke="rgba(11,33,67,0.08)"
+                      strokeDasharray="6 8"
+                    />
+                  );
+                })}
+
+                <polyline fill="none" stroke="#22c55e" strokeWidth="4" strokeLinejoin="round" strokeLinecap="round" points={incomePoints} />
+                <polyline fill="none" stroke="#ef4444" strokeWidth="4" strokeLinejoin="round" strokeLinecap="round" points={expensePoints} />
+                <polyline fill="none" stroke="#0b2143" strokeWidth="4" strokeLinejoin="round" strokeLinecap="round" points={netPoints} />
+
+                {incomeDots.map((dot, index) => (
+                  <circle key={`income-dot-${index}`} cx={dot.x} cy={dot.y} r="5" fill="#22c55e" />
+                ))}
+                {expenseDots.map((dot, index) => (
+                  <circle key={`expense-dot-${index}`} cx={dot.x} cy={dot.y} r="5" fill="#ef4444" />
+                ))}
+                {netDots.map((dot, index) => (
+                  <circle key={`net-dot-${index}`} cx={dot.x} cy={dot.y} r="5" fill="#0b2143" />
+                ))}
+
+                {chartLabelIndexes.map((index) => {
+                  const x =
+                    chartPadding +
+                    (monthlySummary.length === 1
+                      ? (chartWidth - chartPadding * 2) / 2
+                      : ((chartWidth - chartPadding * 2) * index) / Math.max(1, monthlySummary.length - 1));
+
+                  return (
+                    <text
+                      key={`label-${monthlySummary[index]?.periodKey ?? index}`}
+                      x={x}
+                      y={chartHeight - 10}
+                      textAnchor="middle"
+                      fill="#37516f"
+                      fontSize="14"
+                      fontWeight="700"
+                    >
+                      {monthlySummary[index]?.periodLabel ?? ""}
+                    </text>
+                  );
+                })}
+              </svg>
+            </div>
+          </div>
+        ) : (
+          <div className="campaign-summary-card">
+            <strong>Secili filtrelerde gelir-gider verisi bulunamadi.</strong>
+            <p>Yil, ay veya magaza secimini degistirerek kayitlari kontrol edin.</p>
+          </div>
+        )}
+      </section>
+
+      <section className="campaign-section-card" style={{ display: "grid", gap: 16 }}>
+        <div className="goal-section-head web-kontor-section-head">
+          <div>
+            <h2 className="goal-panel-title">Aylik Ozet Tablosu</h2>
+            <p className="goal-panel-subtitle">Her donemde toplam gelir, toplam gider ve net karlilik birlikte listelenir.</p>
+          </div>
+        </div>
+
+        <div style={{ overflowX: "auto" }}>
+          <table className="goal-company-trend-table web-kontor-trend-table">
+            <thead>
+              <tr>
+                <th>Donem</th>
+                <th>Gelir</th>
+                <th>Gider</th>
+                <th>Net Karlilik</th>
+              </tr>
+            </thead>
+            <tbody>
+              {monthlySummary.map((row) => (
+                <tr key={`revenue-period-${row.periodKey}`}>
+                  <th>{row.periodLabel}</th>
+                  <td style={{ color: "#15803d" }}>{formatCurrency(row.income)}</td>
+                  <td style={{ color: "#dc2626" }}>{formatCurrency(row.expense)}</td>
+                  <td style={{ color: row.net >= 0 ? "#15803d" : "#dc2626" }}>{formatCurrency(row.net)}</td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr>
+                <th>Genel Toplam</th>
+                <td>{formatCurrency(totalIncome)}</td>
+                <td>{formatCurrency(totalExpense)}</td>
+                <td>{formatCurrency(totalNet)}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </section>
+
+      <section className="campaign-section-card" style={{ display: "grid", gap: 16 }}>
+        <div className="goal-section-head web-kontor-section-head">
+          <div>
+            <h2 className="goal-panel-title">Kategori Kirilimlari</h2>
+            <p className="goal-panel-subtitle">Gelir ve gider kalemleri kendi icinde buyukten kucuge siralanir.</p>
+          </div>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16 }}>
+          <div style={{ overflowX: "auto" }}>
+            <table className="goal-company-trend-table web-kontor-trend-table">
+              <thead>
+                <tr>
+                  <th>Gelir Kategorisi</th>
+                  <th>Tutar</th>
+                </tr>
+              </thead>
+              <tbody>
+                {incomeCategories.map((row) => (
+                  <tr key={`income-category-${row.category}`}>
+                    <th>{row.category}</th>
+                    <td style={{ color: "#15803d" }}>{formatCurrency(row.amount)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div style={{ overflowX: "auto" }}>
+            <table className="goal-company-trend-table web-kontor-trend-table">
+              <thead>
+                <tr>
+                  <th>Gider Kategorisi</th>
+                  <th>Tutar</th>
+                </tr>
+              </thead>
+              <tbody>
+                {expenseCategories.map((row) => (
+                  <tr key={`expense-category-${row.category}`}>
+                    <th>{row.category}</th>
+                    <td style={{ color: "#dc2626" }}>{formatCurrency(row.amount)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section className="campaign-section-card" style={{ display: "grid", gap: 16 }}>
+        <div className="goal-section-head web-kontor-section-head">
+          <div>
+            <h2 className="goal-panel-title">Magaza Bazli Karlilik</h2>
+            <p className="goal-panel-subtitle">Secili donemde magazalarin gelir, gider ve net sonuc dagilimi tek tabloda izlenir.</p>
+          </div>
+        </div>
+
+        <div style={{ overflowX: "auto" }}>
+          <table className="goal-company-trend-table web-kontor-trend-table">
+            <thead>
+              <tr>
+                <th>Magaza</th>
+                <th>Gelir</th>
+                <th>Gider</th>
+                <th>Net Karlilik</th>
+              </tr>
+            </thead>
+            <tbody>
+              {storeSummary.map((row) => (
+                <tr key={`store-summary-${row.storeName}`}>
+                  <th>{row.storeName}</th>
+                  <td style={{ color: "#15803d" }}>{formatCurrency(row.income)}</td>
+                  <td style={{ color: "#dc2626" }}>{formatCurrency(row.expense)}</td>
+                  <td style={{ color: row.net >= 0 ? "#15803d" : "#dc2626" }}>{formatCurrency(row.net)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  );
+}

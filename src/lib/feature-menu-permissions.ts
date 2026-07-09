@@ -1,7 +1,7 @@
 import type { UserRole } from "@/lib/types";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-export type FeatureMenuKey = "web-kontor" | "eksik-evrak" | "mudur-primi";
+export type FeatureMenuKey = "web-kontor" | "eksik-evrak" | "mudur-primi" | "gelir-gider";
 
 export type FeatureMenuPermission = {
   key: FeatureMenuKey;
@@ -57,6 +57,14 @@ const DEFAULT_FEATURE_MENU_PERMISSIONS: FeatureMenuPermission[] = [
     label: "Magaza Muduru Prim Menusu",
     employeeVisible: false,
     managerVisible: true,
+    managementVisible: true,
+    adminVisible: true
+  },
+  {
+    key: "gelir-gider",
+    label: "Gelir Gider Menusu",
+    employeeVisible: false,
+    managerVisible: false,
     managementVisible: true,
     adminVisible: true
   }

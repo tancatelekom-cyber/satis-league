@@ -16,6 +16,7 @@ const baseNavItems: NavItem[] = [
   { href: "/", label: "Ana Sayfa" },
   { href: "/hedef-gerceklesen", label: "Hedef Gerceklesen", mobileLabel: "Hedef", icon: "H" },
   { href: "/magaza-muduru-primi", label: "Magaza Muduru Primi", mobileLabel: "Mudur Prim", icon: "R" },
+  { href: "/gelir-gider", label: "Gelir Gider", mobileLabel: "Gelir", icon: "G" },
   { href: "/web-kontor", label: "Web Kontor", mobileLabel: "Kontor", icon: "O" },
   { href: "/eksik-evrak", label: "Eksik Evrak", mobileLabel: "Evrak", icon: "E" },
   { href: "/pos-komisyon", label: "POS Komisyon", mobileLabel: "POS", icon: "M" },
@@ -40,6 +41,7 @@ type AppShellHeaderProps = {
   initialCanOpenEvaluationPresentation?: boolean;
   initialCanOpenWorkSchedule?: boolean;
   initialCanOpenManagerPrime?: boolean;
+  initialCanOpenRevenueExpense?: boolean;
   initialCanOpenWebKontor?: boolean;
   initialCanOpenMissingDocs?: boolean;
 };
@@ -50,6 +52,7 @@ export function AppShellHeader({
   initialCanOpenEvaluationPresentation = false,
   initialCanOpenWorkSchedule = false,
   initialCanOpenManagerPrime = false,
+  initialCanOpenRevenueExpense = false,
   initialCanOpenWebKontor = false,
   initialCanOpenMissingDocs = false
 }: AppShellHeaderProps) {
@@ -65,9 +68,13 @@ export function AppShellHeader({
       ? items
       : items.filter((item) => item.href !== "/magaza-muduru-primi");
 
-    const itemsWithManagerPrimeAndWebKontor = initialCanOpenWebKontor
+    const itemsWithRevenueExpense = initialCanOpenRevenueExpense
       ? itemsWithManagerPrime
-      : itemsWithManagerPrime.filter((item) => item.href !== "/web-kontor");
+      : itemsWithManagerPrime.filter((item) => item.href !== "/gelir-gider");
+
+    const itemsWithManagerPrimeAndWebKontor = initialCanOpenWebKontor
+      ? itemsWithRevenueExpense
+      : itemsWithRevenueExpense.filter((item) => item.href !== "/web-kontor");
 
     const itemsWithMissingDocs = initialCanOpenMissingDocs
       ? itemsWithManagerPrimeAndWebKontor
@@ -84,7 +91,7 @@ export function AppShellHeader({
     return initialIsAdmin
       ? [...itemsWithPresentation, { href: "/admin", label: "Admin Paneli", mobileLabel: "Admin", icon: "Y" }]
       : itemsWithPresentation;
-  }, [initialCanEvaluate, initialCanOpenEvaluationPresentation, initialCanOpenManagerPrime, initialCanOpenMissingDocs, initialCanOpenWebKontor, initialCanOpenWorkSchedule, initialIsAdmin]);
+  }, [initialCanEvaluate, initialCanOpenEvaluationPresentation, initialCanOpenManagerPrime, initialCanOpenMissingDocs, initialCanOpenRevenueExpense, initialCanOpenWebKontor, initialCanOpenWorkSchedule, initialIsAdmin]);
 
   return (
     <header className="topbar topbar-app">

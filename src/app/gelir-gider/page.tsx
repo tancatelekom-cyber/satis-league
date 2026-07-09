@@ -737,17 +737,20 @@ export default async function RevenueExpensePage({ searchParams }: PageProps) {
                   <div style={{ padding: "0 18px 18px", display: "grid", gap: 10 }}>
                     <p style={{ margin: 0, color: "#45607c", fontWeight: 700 }}>Ay ay gelir dagilimi</p>
                     {row.months.length ? (
-                      <div style={{ overflowX: "auto" }}>
-                        <table className="goal-company-trend-table web-kontor-trend-table">
+                      <div>
+                        <table
+                          className="goal-company-trend-table web-kontor-trend-table"
+                          style={{ width: "100%", minWidth: "unset", tableLayout: "fixed" }}
+                        >
                           <thead>
                             <tr>
-                              <th style={{ color: "#0b2143", fontWeight: 800 }}>Donem</th>
-                              <th style={{ color: "#0b2143", fontWeight: 800, minWidth: 180, textAlign: "right" }}>Tutar</th>
+                              <th style={{ color: "#0b2143", fontWeight: 800, width: "58%" }}>Donem</th>
+                              <th style={{ color: "#0b2143", fontWeight: 800, width: "42%", textAlign: "right" }}>Tutar</th>
                             </tr>
                           </thead>
                           <tbody>
-                            {row.months.map((monthRow) => (
-                              <tr key={`income-category-period-${row.category}-${monthRow.periodKey}`}>
+                          {row.months.map((monthRow) => (
+                            <tr key={`income-category-period-${row.category}-${monthRow.periodKey}`}>
                                 <th style={{ color: "#0b2143", fontWeight: 700 }}>{monthRow.periodLabel}</th>
                                 <td style={{ color: "#15803d", fontWeight: 700, textAlign: "right" }}>{formatCurrency(monthRow.income)}</td>
                               </tr>
@@ -812,17 +815,20 @@ export default async function RevenueExpensePage({ searchParams }: PageProps) {
                   <div style={{ padding: "0 18px 18px", display: "grid", gap: 10 }}>
                     <p style={{ margin: 0, color: "#45607c", fontWeight: 700 }}>Ay ay gider dagilimi</p>
                     {row.months.length ? (
-                      <div style={{ overflowX: "auto" }}>
-                        <table className="goal-company-trend-table web-kontor-trend-table">
+                      <div>
+                        <table
+                          className="goal-company-trend-table web-kontor-trend-table"
+                          style={{ width: "100%", minWidth: "unset", tableLayout: "fixed" }}
+                        >
                           <thead>
                             <tr>
-                              <th style={{ color: "#0b2143", fontWeight: 800 }}>Donem</th>
-                              <th style={{ color: "#0b2143", fontWeight: 800, minWidth: 180, textAlign: "right" }}>Tutar</th>
+                              <th style={{ color: "#0b2143", fontWeight: 800, width: "58%" }}>Donem</th>
+                              <th style={{ color: "#0b2143", fontWeight: 800, width: "42%", textAlign: "right" }}>Tutar</th>
                             </tr>
                           </thead>
                           <tbody>
-                            {row.months.map((monthRow) => (
-                              <tr key={`expense-category-period-${row.category}-${monthRow.periodKey}`}>
+                          {row.months.map((monthRow) => (
+                            <tr key={`expense-category-period-${row.category}-${monthRow.periodKey}`}>
                                 <th style={{ color: "#0b2143", fontWeight: 700 }}>{monthRow.periodLabel}</th>
                                 <td style={{ color: "#dc2626", fontWeight: 700, textAlign: "right" }}>{formatCurrency(monthRow.expense)}</td>
                               </tr>

@@ -13,6 +13,11 @@ const roleValues = new Set<UserRole>(["employee", "manager", "management", "admi
 const allowedPopupImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 const maxPopupImageSize = 5 * 1024 * 1024;
 
+function isPopupTargetSchemaMissingError(message: string | undefined) {
+  const normalized = (message ?? "").toLowerCase();
+  return normalized.includes("target_mode") || normalized.includes("target_profile_ids");
+}
+
 function redirectWithMessage(message: string, type: "success" | "error" = "success"): never {
   const params = new URLSearchParams({ message, type });
   redirect(`/admin/bildirimler?${params.toString()}`);
@@ -134,7 +139,7 @@ export async function createPopupAnnouncementAction(formData: FormData) {
 
     const admin = createAdminClient();
     const uploadedImagePath = imageFile instanceof File ? await uploadPopupAnnouncementImage(imageFile) : null;
-    const { error } = await admin.from("popup_announcements").insert({
+    let { error } = await admin.from("popup_announcements").insert({
       title,
       body,
       link_url: linkUrl,
@@ -146,6 +151,28 @@ export async function createPopupAnnouncementAction(formData: FormData) {
       show_until: showUntil,
       created_by: profile.id
     });
+
+    if (error && isPopupTargetSchemaMissingError(error.message)) {
+      if (targetMode === "profile") {
+        redirectWithMessage(
+          "Kisi bazli popup icin once popup announcement SQL guncellemesini uygulamaniz gerekir.",
+          "error"
+        );
+      }
+
+      const fallback = await admin.from("popup_announcements").insert({
+        title,
+        body,
+        link_url: linkUrl,
+        image_path: uploadedImagePath,
+        target_roles: targetRoles,
+        show_from: showFrom,
+        show_until: showUntil,
+        created_by: profile.id
+      });
+
+      error = fallback.error;
+    }
 
     if (error) {
       redirectWithMessage(`Bildirim olusturulamadi: ${error.message}`, "error");
@@ -227,12 +254,40 @@ export async function updatePopupAnnouncementAction(formData: FormData) {
       updated_at: new Date().toISOString()
     };
 
-    const { data: updatedAnnouncement, error } = await admin
+    let { data: updatedAnnouncement, error } = await admin
       .from("popup_announcements")
       .update(updatePayload)
       .eq("id", id)
       .select("id, title")
       .single();
+
+    if (error && isPopupTargetSchemaMissingError(error.message)) {
+      if (targetMode === "profile") {
+        redirectWithMessage(
+          "Kisi bazli popup guncellemesi icin once popup announcement SQL guncellemesini uygulamaniz gerekir.",
+          "error"
+        );
+      }
+
+      const fallback = await admin
+        .from("popup_announcements")
+        .update({
+          title,
+          body,
+          link_url: linkUrl,
+          image_path: nextImagePath,
+          target_roles: targetRoles,
+          show_from: showFrom,
+          show_until: showUntil,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", id)
+        .select("id, title")
+        .single();
+
+      updatedAnnouncement = fallback.data;
+      error = fallback.error;
+    }
 
     if (error) {
       redirectWithMessage(`Bildirim guncellenemedi: ${error.message}`, "error");

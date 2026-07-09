@@ -42,6 +42,11 @@ type PopupAnnouncementRow = {
   created_at: string;
 };
 
+function isPopupTargetSchemaMissingError(message: string | undefined) {
+  const normalized = (message ?? "").toLowerCase();
+  return normalized.includes("target_mode") || normalized.includes("target_profile_ids");
+}
+
 async function resolvePopupImageUrl(imagePath: string | null) {
   if (!imagePath) {
     return null;
@@ -139,7 +144,10 @@ export async function getActivePopupAnnouncementsForProfile(profile: {
   const admin = createAdminClient();
   const nowIso = new Date().toISOString();
 
-  const { data, error } = await admin
+  let data: PopupAnnouncementRow[] | null = null;
+  let error: { message?: string } | null = null;
+
+  const primary = await admin
     .from("popup_announcements")
     .select(
       "id, title, body, link_url, image_path, target_mode, target_roles, target_profile_ids, show_from, show_until, is_active, created_at"
@@ -149,6 +157,33 @@ export async function getActivePopupAnnouncementsForProfile(profile: {
     .gte("show_until", nowIso)
     .order("created_at", { ascending: false })
     .limit(12);
+
+  data = (primary.data as PopupAnnouncementRow[] | null) ?? null;
+  error = primary.error;
+
+  if (error && isPopupTargetSchemaMissingError(error.message)) {
+    const fallback = await admin
+      .from("popup_announcements")
+      .select("id, title, body, link_url, image_path, target_roles, show_from, show_until, is_active, created_at")
+      .eq("is_active", true)
+      .lte("show_from", nowIso)
+      .gte("show_until", nowIso)
+      .order("created_at", { ascending: false })
+      .limit(12);
+
+    data =
+      ((fallback.data as Array<
+        Omit<PopupAnnouncementRow, "target_mode" | "target_profile_ids"> & {
+          target_mode?: PopupAnnouncementTargetMode | null;
+          target_profile_ids?: string[] | null;
+        }
+      > | null) ?? []).map((row) => ({
+        ...row,
+        target_mode: "role",
+        target_profile_ids: []
+      })) ?? null;
+    error = fallback.error;
+  }
 
   if (error) {
     return [];
@@ -169,13 +204,40 @@ export async function getActivePopupAnnouncementsForProfile(profile: {
 export async function getAdminPopupAnnouncements() {
   const admin = createAdminClient();
 
-  const { data, error } = await admin
+  let data: PopupAnnouncementRow[] | null = null;
+  let error: { message?: string } | null = null;
+
+  const primary = await admin
     .from("popup_announcements")
     .select(
       "id, title, body, link_url, image_path, target_mode, target_roles, target_profile_ids, show_from, show_until, is_active, created_at"
     )
     .order("created_at", { ascending: false })
     .limit(60);
+
+  data = (primary.data as PopupAnnouncementRow[] | null) ?? null;
+  error = primary.error;
+
+  if (error && isPopupTargetSchemaMissingError(error.message)) {
+    const fallback = await admin
+      .from("popup_announcements")
+      .select("id, title, body, link_url, image_path, target_roles, show_from, show_until, is_active, created_at")
+      .order("created_at", { ascending: false })
+      .limit(60);
+
+    data =
+      ((fallback.data as Array<
+        Omit<PopupAnnouncementRow, "target_mode" | "target_profile_ids"> & {
+          target_mode?: PopupAnnouncementTargetMode | null;
+          target_profile_ids?: string[] | null;
+        }
+      > | null) ?? []).map((row) => ({
+        ...row,
+        target_mode: "role",
+        target_profile_ids: []
+      })) ?? null;
+    error = fallback.error;
+  }
 
   if (error) {
     return [];

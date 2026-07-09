@@ -82,6 +82,10 @@ function formatNumber(value: number | null | undefined, digits = 0) {
   });
 }
 
+function formatChartValue(value: number) {
+  return formatNumber(Math.round(value));
+}
+
 function buildRevenueExpenseHref(filters: {
   year?: string;
   month?: string;
@@ -204,36 +208,6 @@ function buildStoreSummary(rows: RevenueExpenseRow[]) {
   return Array.from(storeMap.values()).sort(
     (left, right) => right.net - left.net || left.storeName.localeCompare(right.storeName, "tr")
   );
-}
-
-function buildPolyline(values: number[], minValue: number, maxValue: number, width: number, height: number, padding: number) {
-  if (!values.length) {
-    return "";
-  }
-
-  const usableWidth = width - padding * 2;
-  const usableHeight = height - padding * 2;
-  const range = Math.max(1, maxValue - minValue);
-
-  return values
-    .map((value, index) => {
-      const x = padding + (values.length === 1 ? usableWidth / 2 : (usableWidth * index) / (values.length - 1));
-      const y = padding + usableHeight - ((value - minValue) / range) * usableHeight;
-      return `${x},${y}`;
-    })
-    .join(" ");
-}
-
-function getChartDots(values: number[], minValue: number, maxValue: number, width: number, height: number, padding: number) {
-  const usableWidth = width - padding * 2;
-  const usableHeight = height - padding * 2;
-  const range = Math.max(1, maxValue - minValue);
-
-  return values.map((value, index) => ({
-    x: padding + (values.length === 1 ? usableWidth / 2 : (usableWidth * index) / Math.max(1, values.length - 1)),
-    y: padding + usableHeight - ((value - minValue) / range) * usableHeight,
-    value
-  }));
 }
 
 function buildChartLabelIndexes(count: number) {
@@ -406,7 +380,7 @@ export default async function RevenueExpensePage({ searchParams }: PageProps) {
   })();
 
   const chartWidth = 940;
-  const chartHeight = 320;
+  const chartHeight = 340;
   const chartPadding = 36;
   const incomeValues = monthlySummary.map((item) => item.income);
   const expenseValues = monthlySummary.map((item) => item.expense);
@@ -416,13 +390,40 @@ export default async function RevenueExpensePage({ searchParams }: PageProps) {
   const zeroRange = Math.max(1, chartMax - chartMin);
   const zeroY = chartPadding + (chartHeight - chartPadding * 2) - ((0 - chartMin) / zeroRange) * (chartHeight - chartPadding * 2);
   const chartLabelIndexes = buildChartLabelIndexes(monthlySummary.length);
+  const chartUsableWidth = chartWidth - chartPadding * 2;
+  const chartUsableHeight = chartHeight - chartPadding * 2;
+  const periodSlotWidth = monthlySummary.length ? chartUsableWidth / monthlySummary.length : chartUsableWidth;
+  const groupWidth = Math.max(40, periodSlotWidth * 0.74);
+  const barGap = 8;
+  const barWidth = Math.max(10, (groupWidth - barGap * 2) / 3);
 
-  const incomePoints = buildPolyline(incomeValues, chartMin, chartMax, chartWidth, chartHeight, chartPadding);
-  const expensePoints = buildPolyline(expenseValues, chartMin, chartMax, chartWidth, chartHeight, chartPadding);
-  const netPoints = buildPolyline(netValues, chartMin, chartMax, chartWidth, chartHeight, chartPadding);
-  const incomeDots = getChartDots(incomeValues, chartMin, chartMax, chartWidth, chartHeight, chartPadding);
-  const expenseDots = getChartDots(expenseValues, chartMin, chartMax, chartWidth, chartHeight, chartPadding);
-  const netDots = getChartDots(netValues, chartMin, chartMax, chartWidth, chartHeight, chartPadding);
+  const getBarY = (value: number) => chartPadding + chartUsableHeight - ((value - chartMin) / zeroRange) * chartUsableHeight;
+  const chartBars = monthlySummary.map((item, index) => {
+    const groupStartX = chartPadding + index * periodSlotWidth + (periodSlotWidth - groupWidth) / 2;
+    const buildBar = (value: number, order: number, color: string) => {
+      const valueY = getBarY(value);
+      const top = Math.min(valueY, zeroY);
+      const height = Math.max(2, Math.abs(zeroY - valueY));
+      const centerX = groupStartX + order * (barWidth + barGap) + barWidth / 2;
+      const centerY = top + height / 2;
+      return {
+        x: groupStartX + order * (barWidth + barGap),
+        y: top,
+        width: barWidth,
+        height,
+        fill: color,
+        centerX,
+        centerY,
+        value
+      };
+    };
+
+    return {
+      income: buildBar(item.income, 0, "#22c55e"),
+      expense: buildBar(item.expense, 1, "#ef4444"),
+      net: buildBar(item.net, 2, "#0b2143")
+    };
+  });
 
   const summaryCardStyle: CSSProperties = {
     padding: "18px 20px",
@@ -580,7 +581,7 @@ export default async function RevenueExpensePage({ searchParams }: PageProps) {
             </div>
 
             <div style={{ overflowX: "auto" }}>
-              <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} style={{ width: "100%", minWidth: 640, height: "auto" }} role="img" aria-label="Gelir gider cizgi grafigi">
+              <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} style={{ width: "100%", minWidth: 640, height: "auto" }} role="img" aria-label="Gelir gider cubuk grafigi">
                 <rect x="0" y="0" width={chartWidth} height={chartHeight} rx="28" fill="rgba(255,255,255,0.9)" />
                 <line x1={chartPadding} y1={zeroY} x2={chartWidth - chartPadding} y2={zeroY} stroke="rgba(11,33,67,0.12)" strokeWidth="2" />
                 {[0.25, 0.5, 0.75].map((ratio) => {
@@ -598,26 +599,56 @@ export default async function RevenueExpensePage({ searchParams }: PageProps) {
                   );
                 })}
 
-                <polyline fill="none" stroke="#22c55e" strokeWidth="4" strokeLinejoin="round" strokeLinecap="round" points={incomePoints} />
-                <polyline fill="none" stroke="#ef4444" strokeWidth="4" strokeLinejoin="round" strokeLinecap="round" points={expensePoints} />
-                <polyline fill="none" stroke="#0b2143" strokeWidth="4" strokeLinejoin="round" strokeLinecap="round" points={netPoints} />
+                {chartBars.map((barGroup, index) => (
+                  <g key={`bar-group-${monthlySummary[index]?.periodKey ?? index}`}>
+                    <rect x={barGroup.income.x} y={barGroup.income.y} width={barGroup.income.width} height={barGroup.income.height} rx="8" fill={barGroup.income.fill} />
+                    <rect x={barGroup.expense.x} y={barGroup.expense.y} width={barGroup.expense.width} height={barGroup.expense.height} rx="8" fill={barGroup.expense.fill} />
+                    <rect x={barGroup.net.x} y={barGroup.net.y} width={barGroup.net.width} height={barGroup.net.height} rx="8" fill={barGroup.net.fill} />
 
-                {incomeDots.map((dot, index) => (
-                  <circle key={`income-dot-${index}`} cx={dot.x} cy={dot.y} r="5" fill="#22c55e" />
-                ))}
-                {expenseDots.map((dot, index) => (
-                  <circle key={`expense-dot-${index}`} cx={dot.x} cy={dot.y} r="5" fill="#ef4444" />
-                ))}
-                {netDots.map((dot, index) => (
-                  <circle key={`net-dot-${index}`} cx={dot.x} cy={dot.y} r="5" fill="#0b2143" />
+                    {[barGroup.income, barGroup.expense, barGroup.net].map((bar, barIndex) => {
+                      const label = formatChartValue(bar.value);
+                      const compactHeight = bar.height < 42;
+
+                      if (compactHeight) {
+                        return (
+                          <text
+                            key={`bar-label-top-${index}-${barIndex}`}
+                            x={bar.centerX}
+                            y={bar.y - 6}
+                            textAnchor="middle"
+                            fill={bar.fill}
+                            fontSize="11"
+                            fontWeight="800"
+                          >
+                            {label}
+                          </text>
+                        );
+                      }
+
+                      return (
+                        <text
+                          key={`bar-label-vertical-${index}-${barIndex}`}
+                          x={bar.centerX}
+                          y={bar.centerY}
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                          fill="#ffffff"
+                          fontSize="11"
+                          fontWeight="800"
+                          transform={`rotate(-90 ${bar.centerX} ${bar.centerY})`}
+                        >
+                          {label}
+                        </text>
+                      );
+                    })}
+                  </g>
                 ))}
 
                 {chartLabelIndexes.map((index) => {
                   const x =
                     chartPadding +
-                    (monthlySummary.length === 1
-                      ? (chartWidth - chartPadding * 2) / 2
-                      : ((chartWidth - chartPadding * 2) * index) / Math.max(1, monthlySummary.length - 1));
+                    index * periodSlotWidth +
+                    periodSlotWidth / 2;
 
                   return (
                     <text

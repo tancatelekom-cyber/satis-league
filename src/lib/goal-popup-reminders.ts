@@ -299,7 +299,16 @@ function buildCompanyCategorySummaries(rows: GoalStoreRow[], workedDays: number,
 
 function buildMissingCategoryLabels(categories: GoalCategorySummary[]) {
   return categories
-    .filter((category) => category.hasTarget && (category.actualPercent ?? 0) < 100)
+    .filter((category) => {
+      if (!category.hasTarget) {
+        return false;
+      }
+
+      const referencePercent =
+        category.showProjection && category.projectedPercent !== null ? category.projectedPercent : category.actualPercent;
+
+      return (referencePercent ?? 0) < 100;
+    })
     .map((category) => category.title);
 }
 

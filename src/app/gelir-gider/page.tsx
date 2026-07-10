@@ -86,6 +86,17 @@ function formatChartValue(value: number) {
   return formatNumber(Math.round(value));
 }
 
+function formatPercentValue(value: number | null | undefined, digits = 1) {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return "-";
+  }
+
+  return `%${value.toLocaleString("tr-TR", {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits
+  })}`;
+}
+
 function buildRevenueExpenseHref(filters: {
   year?: string;
   month?: string;
@@ -746,7 +757,12 @@ export default async function RevenueExpensePage({ searchParams }: PageProps) {
                     }}
                   >
                     <span>{row.category}</span>
-                    <span style={{ color: "#15803d" }}>{formatCurrency(row.total)}</span>
+                    <span style={{ display: "grid", justifyItems: "end", gap: 2 }}>
+                      <span style={{ color: "#15803d" }}>{formatCurrency(row.total)}</span>
+                      <span style={{ color: "#5a728c", fontSize: 12, fontWeight: 700 }}>
+                        {formatPercentValue(totalIncome > 0 ? (row.total / totalIncome) * 100 : 0)} gelir payi
+                      </span>
+                    </span>
                   </summary>
 
                   <div style={{ padding: "0 18px 18px", display: "grid", gap: 10 }}>
@@ -775,6 +791,12 @@ export default async function RevenueExpensePage({ searchParams }: PageProps) {
                             <tr>
                               <th style={{ color: "#0b2143", fontWeight: 800 }}>Toplam</th>
                               <td style={{ color: "#166534", fontWeight: 800, textAlign: "right" }}>{formatCurrency(row.total)}</td>
+                            </tr>
+                            <tr>
+                              <th style={{ color: "#0b2143", fontWeight: 800 }}>Gelir Payi</th>
+                              <td style={{ color: "#4b647f", fontWeight: 800, textAlign: "right" }}>
+                                {formatPercentValue(totalIncome > 0 ? (row.total / totalIncome) * 100 : 0)}
+                              </td>
                             </tr>
                           </tfoot>
                         </table>
@@ -824,7 +846,12 @@ export default async function RevenueExpensePage({ searchParams }: PageProps) {
                     }}
                   >
                     <span>{row.category}</span>
-                    <span style={{ color: "#dc2626" }}>{formatCurrency(row.total)}</span>
+                    <span style={{ display: "grid", justifyItems: "end", gap: 2 }}>
+                      <span style={{ color: "#dc2626" }}>{formatCurrency(row.total)}</span>
+                      <span style={{ color: "#5a728c", fontSize: 12, fontWeight: 700 }}>
+                        {formatPercentValue(totalExpense > 0 ? (row.total / totalExpense) * 100 : 0)} gider payi
+                      </span>
+                    </span>
                   </summary>
 
                   <div style={{ padding: "0 18px 18px", display: "grid", gap: 10 }}>
@@ -853,6 +880,12 @@ export default async function RevenueExpensePage({ searchParams }: PageProps) {
                             <tr>
                               <th style={{ color: "#0b2143", fontWeight: 800 }}>Toplam</th>
                               <td style={{ color: "#b91c1c", fontWeight: 800, textAlign: "right" }}>{formatCurrency(row.total)}</td>
+                            </tr>
+                            <tr>
+                              <th style={{ color: "#0b2143", fontWeight: 800 }}>Gider Payi</th>
+                              <td style={{ color: "#4b647f", fontWeight: 800, textAlign: "right" }}>
+                                {formatPercentValue(totalExpense > 0 ? (row.total / totalExpense) * 100 : 0)}
+                              </td>
                             </tr>
                           </tfoot>
                         </table>

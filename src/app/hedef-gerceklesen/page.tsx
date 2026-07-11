@@ -3349,11 +3349,132 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                   <span>{effectiveView === "company" ? "Kategori bazli toplu ozet" : "Kategori bazli detay"}</span>
                 </div>
 
-                {effectiveView === "company" ? (
-                  <SeparateInfoTable
-                    title="Bilgilendirme Kalemleri"
-                    rows={companySeparateInfoRows}
-                  />
+                {effectiveView === "company" && visibleTrendStoreCodes.length && companyTrendSummaryRows.length ? (
+                  <div className="goal-company-trend-panel">
+                    <div className="goal-live-prime-head">
+                      <h3>Ay Sonu Gidisat Ozeti</h3>
+                    </div>
+
+                    <div className="goal-company-trend-table-wrap">
+                      <table className="goal-company-trend-table">
+                        <thead>
+                          <tr>
+                            <th>Kategori</th>
+                            {visibleTrendStoreCodes.map((storeCode) => (
+                              <th
+                                key={`trend-head-${storeCode}`}
+                                className={storeCode === highlightedTrendStoreCode ? "goal-company-trend-selected" : ""}
+                              >
+                                {storeCode}
+                              </th>
+                            ))}
+                            <th>Firma</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {companyTrendSummaryRows.map((row) => (
+                            <tr key={`trend-row-${row.title}`}>
+                              <th>{row.title}</th>
+                              {visibleTrendStoreCodes.map((storeCode) => {
+                                const store = row.stores.find((item) => item.storeCode === storeCode);
+                                const comparisonState =
+                                  storeCode === highlightedTrendStoreCode && row.title !== "Giris Sayilari"
+                                    ? getTrendComparisonState(store?.projectedPercent, row.companyProjectedPercent)
+                                    : null;
+                                const cellClasses = [
+                                  storeCode === highlightedTrendStoreCode ? "goal-company-trend-selected" : "",
+                                  store?.projectedPercent !== null &&
+                                  store?.projectedPercent !== undefined &&
+                                  store.projectedPercent >= 100
+                                    ? "goal-company-trend-good"
+                                    : ""
+                                ]
+                                  .filter(Boolean)
+                                  .join(" ");
+
+                                return (
+                                  <td key={`trend-${row.title}-${storeCode}`} className={cellClasses}>
+                                    <span className="goal-company-trend-value">
+                                      <span>{formatPercent(store?.projectedPercent)}</span>
+                                      {comparisonState ? (
+                                        <span
+                                          className={`goal-company-trend-indicator goal-company-trend-indicator-${comparisonState}`}
+                                          aria-hidden="true"
+                                        />
+                                      ) : null}
+                                    </span>
+                                  </td>
+                                );
+                              })}
+                              <td
+                                className={`goal-company-trend-company ${
+                                  row.companyProjectedPercent !== null && row.companyProjectedPercent >= 100
+                                    ? "goal-company-trend-good"
+                                    : ""
+                                }`}
+                              >
+                                {formatPercent(row.companyProjectedPercent)}
+                              </td>
+                            </tr>
+                          ))}
+
+                          {companyCurrentSummaryRows.map((row) => (
+                            <tr key={`current-row-${row.title}`}>
+                              <th>{row.title}</th>
+                              {visibleTrendStoreCodes.map((storeCode) => {
+                                const store = row.stores.find((item) => item.storeCode === storeCode);
+                                const isGood =
+                                  row.title === "Memnuniyet"
+                                    ? (store?.actual ?? 0) >= 4.4
+                                    : row.title === "Pin Orani"
+                                      ? (store?.actual ?? 0) >= 70
+                                      : true;
+                                const comparisonState =
+                                  storeCode === highlightedTrendStoreCode && row.title !== "Giris Sayilari"
+                                    ? getTrendComparisonState(store?.actual, row.companyActual)
+                                    : null;
+                                const cellClasses = [
+                                  storeCode === highlightedTrendStoreCode ? "goal-company-trend-selected" : "",
+                                  isGood ? "goal-company-trend-good" : "goal-company-trend-bad"
+                                ]
+                                  .filter(Boolean)
+                                  .join(" ");
+
+                                return (
+                                  <td key={`current-${row.title}-${storeCode}`} className={cellClasses}>
+                                    <span className="goal-company-trend-value">
+                                      <span>{row.valueType === "percent" ? formatPercent(store?.actual) : formatNumber(store?.actual)}</span>
+                                      {comparisonState ? (
+                                        <span
+                                          className={`goal-company-trend-indicator goal-company-trend-indicator-${comparisonState}`}
+                                          aria-hidden="true"
+                                        />
+                                      ) : null}
+                                    </span>
+                                  </td>
+                                );
+                              })}
+                              <td
+                                className={`goal-company-trend-company ${
+                                  row.title === "Memnuniyet"
+                                    ? (row.companyActual ?? 0) >= 4.4
+                                      ? "goal-company-trend-good"
+                                      : "goal-company-trend-bad"
+                                    : row.title === "Pin Orani"
+                                      ? (row.companyActual ?? 0) >= 70
+                                        ? "goal-company-trend-good"
+                                        : "goal-company-trend-bad"
+                                      : "goal-company-trend-good"
+                                }`}
+                              >
+                                {row.valueType === "percent" ? formatPercent(row.companyActual) : formatNumber(row.companyActual)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
                 ) : null}
 
                 {effectiveView === "company" ? (
@@ -3416,6 +3537,69 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                   <SeparateInfoTable title="Bilgilendirme Kalemleri" rows={storeSeparateInfoRows} />
                 ) : null}
 
+                {effectiveView === "company" && visibleTrendStoreCodes.length && companyDailyNeedSummaryRows.length ? (
+                  <div className="goal-company-trend-panel">
+                    <div className="goal-live-prime-head">
+                      <h3>Gunluk Ihtiyaclar</h3>
+                    </div>
+
+                    <CompanyDailyNeedsTable
+                      rows={companyDailyNeedSummaryRows}
+                      visibleTrendStoreCodes={visibleTrendStoreCodes}
+                    />
+                  </div>
+                ) : null}
+
+                {effectiveView === "company" ? (
+                  <SeparateInfoTable title="Bilgilendirme Kalemleri" rows={companySeparateInfoRows} />
+                ) : null}
+
+                {effectiveView === "company" && shouldShowDocumentIssueAlert ? (
+                  <a href="/eksik-evrak" className="evaluation-zero-alert goal-document-issue-alert goal-document-issue-link">
+                    <strong>Firma Geneli Evrak Uyarisi Var</strong>
+                    <p>Firma geneli detay icin Eksik Evrak menusunden kontrol ediniz.</p>
+                    <div>
+                      {relevantUnreachableDocumentCount > 0 ? (
+                        <span className="goal-document-issue-badge">Ulasmayan Evrak: {relevantUnreachableDocumentCount}</span>
+                      ) : null}
+                      {relevantMissingDocumentCount > 0 ? (
+                        <span className="goal-document-issue-badge">Eksik Evrak: {relevantMissingDocumentCount}</span>
+                      ) : null}
+                    </div>
+                  </a>
+                ) : null}
+
+                {effectiveView === "company" && detailZeroActualItems.length ? (
+                  <div className="evaluation-zero-alert">
+                    <strong>Gozden kacirdigin kalemler</strong>
+                    <p>Gercekleseni 0 olan bu kalemler bugun mutlaka kontrol edilmeli.</p>
+                    <div>
+                      {detailZeroActualItems.map((item) => (
+                        <span key={item.key}>{item.label}</span>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                {effectiveView === "company" && companyStoreZeroActualGroups.length ? (
+                  <div className="evaluation-zero-alert evaluation-zero-alert-stores">
+                    <strong>Subelerin gozden kacirdigi kalemler</strong>
+                    <p>Firma toplaminda sifir kalan kalemler sube bazinda asagida listelenir.</p>
+                    <div className="evaluation-zero-store-list">
+                      {companyStoreZeroActualGroups.map((group) => (
+                        <div key={group.storeCode} className="evaluation-zero-store-card">
+                          <strong>{group.storeCode}</strong>
+                          <div>
+                            {group.items.map((item) => (
+                              <span key={`${group.storeCode}-${item}`}>{item}</span>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
                 {effectiveView === "store" && shouldShowDocumentIssueAlert ? (
                   <a href="/eksik-evrak" className="evaluation-zero-alert goal-document-issue-alert goal-document-issue-link">
                     <strong>Magazana Ait Evrak Uyarisi Var</strong>
@@ -3443,26 +3627,18 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                   </div>
                 ) : null}
 
-                {detailCategorySummaries.length && effectiveView !== "store" ? (
+                {detailCategorySummaries.length && effectiveView === "employee" ? (
                   <div className="evaluation-card">
                     <div className="evaluation-card-head">
                       <strong>{detailCardTitle}</strong>
                     </div>
 
-                    {effectiveView === "employee" ? <FormattedCoachingText text={detailCoachingText} /> : null}
+                    <FormattedCoachingText text={detailCoachingText} />
 
                     {shouldShowDocumentIssueAlert ? (
                       <a href="/eksik-evrak" className="evaluation-zero-alert goal-document-issue-alert goal-document-issue-link">
-                        <strong>
-                          {effectiveView === "employee"
-                            ? "Evrak Uyarin Var"
-                            : "Firma Geneli Evrak Uyarisi Var"}
-                        </strong>
-                        <p>
-                          {effectiveView === "company"
-                            ? "Firma geneli detay icin Eksik Evrak menusunden kontrol ediniz."
-                            : "Detay icin Eksik Evrak menusunden kontrol ediniz."}
-                        </p>
+                        <strong>Evrak Uyarin Var</strong>
+                        <p>Detay icin Eksik Evrak menusunden kontrol ediniz.</p>
                         <div>
                           {relevantUnreachableDocumentCount > 0 ? (
                             <span className="goal-document-issue-badge">
@@ -3490,36 +3666,17 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                       </div>
                     ) : null}
 
-                    {effectiveView === "company" && companyStoreZeroActualGroups.length ? (
-                      <div className="evaluation-zero-alert evaluation-zero-alert-stores">
-                        <strong>Subelerin gozden kacirdigi kalemler</strong>
-                        <p>Firma toplaminda sifir kalan kalemler sube bazinda asagida listelenir.</p>
-                        <div className="evaluation-zero-store-list">
-                          {companyStoreZeroActualGroups.map((group) => (
-                            <div key={group.storeCode} className="evaluation-zero-store-card">
-                              <strong>{group.storeCode}</strong>
-                              <div>
-                                {group.items.map((item) => (
-                                  <span key={`${group.storeCode}-${item}`}>{item}</span>
-                                ))}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ) : null}
-
                     <div className="evaluation-card-actions evaluation-card-actions-bottom">
                       <SpeakCoachingButton text={detailCoachingText} />
-                      {effectiveView === "employee" ? <CopyCoachingButton text={detailCoachingText} /> : null}
+                      <CopyCoachingButton text={detailCoachingText} />
                     </div>
                   </div>
                 ) : null}
 
-                {visibleTrendStoreCodes.length && companyTrendSummaryRows.length && effectiveView !== "store" ? (
+                {visibleTrendStoreCodes.length && companyTrendSummaryRows.length && effectiveView === "employee" ? (
                   <div className="goal-company-trend-panel">
                     <div className="goal-live-prime-head">
-                      <h3>{effectiveView === "employee" ? "Sube Ay Sonu Gidisat Ozeti" : "Ay Sonu Gidisat Ozeti"}</h3>
+                      <h3>Sube Ay Sonu Gidisat Ozeti</h3>
                     </div>
 
                     <div className="goal-company-trend-table-wrap">
@@ -3535,7 +3692,6 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                                 {storeCode}
                               </th>
                             ))}
-                            {effectiveView !== "employee" ? <th>Firma</th> : null}
                           </tr>
                         </thead>
                         <tbody>
@@ -3573,17 +3729,6 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                                   </td>
                                 );
                               })}
-                              {effectiveView !== "employee" ? (
-                                <td
-                                  className={`goal-company-trend-company ${
-                                    row.companyProjectedPercent !== null && row.companyProjectedPercent >= 100
-                                      ? "goal-company-trend-good"
-                                      : ""
-                                  }`}
-                                >
-                                  {formatPercent(row.companyProjectedPercent)}
-                                </td>
-                              ) : null}
                             </tr>
                           ))}
 
@@ -3623,42 +3768,12 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                                   </td>
                                 );
                               })}
-                              {effectiveView !== "employee" ? (
-                                <td
-                                  className={`goal-company-trend-company ${
-                                    row.title === "Memnuniyet"
-                                      ? (row.companyActual ?? 0) >= 4.4
-                                        ? "goal-company-trend-good"
-                                        : "goal-company-trend-bad"
-                                      : row.title === "Pin Orani"
-                                        ? (row.companyActual ?? 0) >= 70
-                                          ? "goal-company-trend-good"
-                                          : "goal-company-trend-bad"
-                                        : "goal-company-trend-good"
-                                  }`}
-                                >
-                                  {row.valueType === "percent" ? formatPercent(row.companyActual) : formatNumber(row.companyActual)}
-                                </td>
-                              ) : null}
                             </tr>
                           ))}
                         </tbody>
                       </table>
                     </div>
 
-                  </div>
-                ) : null}
-
-                {effectiveView === "company" && visibleTrendStoreCodes.length && companyDailyNeedSummaryRows.length ? (
-                  <div className="goal-company-trend-panel">
-                    <div className="goal-live-prime-head">
-                      <h3>Gunluk Ihtiyaclar</h3>
-                    </div>
-
-                    <CompanyDailyNeedsTable
-                      rows={companyDailyNeedSummaryRows}
-                      visibleTrendStoreCodes={visibleTrendStoreCodes}
-                    />
                   </div>
                 ) : null}
 
@@ -3708,6 +3823,14 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                           ))}
                         </tbody>
                       </table>
+                    </div>
+                  </div>
+                ) : null}
+
+                {effectiveView === "company" && detailCategorySummaries.length ? (
+                  <div className="evaluation-card">
+                    <div className="evaluation-card-actions evaluation-card-actions-bottom">
+                      <SpeakCoachingButton text={detailCoachingText} />
                     </div>
                   </div>
                 ) : null}

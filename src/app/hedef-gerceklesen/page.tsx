@@ -3356,13 +3356,6 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                   />
                 ) : null}
 
-                {effectiveView === "store" ? (
-                  <SeparateInfoTable
-                    title="Bilgilendirme Kalemleri"
-                    rows={storeSeparateInfoRows}
-                  />
-                ) : null}
-
                 {effectiveView === "company" ? (
                   companyCategorySummaries.length ? (
                     <EmployeeGoalCategoryTable
@@ -3404,7 +3397,53 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                   <p className="subtle">Bu filtreye uygun calisan verisi bulunamadi.</p>
                 )}
 
-                {detailCategorySummaries.length ? (
+                {effectiveView === "store" ? (
+                  <div className="goal-company-trend-panel">
+                    <div className="goal-live-prime-head">
+                      <h3>Gunluk Ihtiyaclar</h3>
+                      <span>Hedefli kalemler icin gunluk gereken adet / tutar</span>
+                    </div>
+
+                    {storeDailyNeedSummaryRows.length ? (
+                      <StoreDailyNeedsTable rows={storeDailyNeedSummaryRows} />
+                    ) : (
+                      <p className="subtle">Bu magazada hedef tanimli kalem bulunamadi.</p>
+                    )}
+                  </div>
+                ) : null}
+
+                {effectiveView === "store" ? (
+                  <SeparateInfoTable title="Bilgilendirme Kalemleri" rows={storeSeparateInfoRows} />
+                ) : null}
+
+                {effectiveView === "store" && shouldShowDocumentIssueAlert ? (
+                  <a href="/eksik-evrak" className="evaluation-zero-alert goal-document-issue-alert goal-document-issue-link">
+                    <strong>Magazana Ait Evrak Uyarisi Var</strong>
+                    <p>Detay icin Eksik Evrak menusunden kontrol ediniz.</p>
+                    <div>
+                      {relevantUnreachableDocumentCount > 0 ? (
+                        <span className="goal-document-issue-badge">Ulasmayan Evrak: {relevantUnreachableDocumentCount}</span>
+                      ) : null}
+                      {relevantMissingDocumentCount > 0 ? (
+                        <span className="goal-document-issue-badge">Eksik Evrak: {relevantMissingDocumentCount}</span>
+                      ) : null}
+                    </div>
+                  </a>
+                ) : null}
+
+                {effectiveView === "store" && detailZeroActualItems.length ? (
+                  <div className="evaluation-zero-alert">
+                    <strong>Gozden kacirdigin kalemler</strong>
+                    <p>Gercekleseni 0 olan bu kalemler bugun mutlaka kontrol edilmeli.</p>
+                    <div>
+                      {detailZeroActualItems.map((item) => (
+                        <span key={item.key}>{item.label}</span>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                {detailCategorySummaries.length && effectiveView !== "store" ? (
                   <div className="evaluation-card">
                     <div className="evaluation-card-head">
                       <strong>{detailCardTitle}</strong>
@@ -3417,9 +3456,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                         <strong>
                           {effectiveView === "employee"
                             ? "Evrak Uyarin Var"
-                            : effectiveView === "store"
-                              ? "Magazana Ait Evrak Uyarisi Var"
-                              : "Firma Geneli Evrak Uyarisi Var"}
+                            : "Firma Geneli Evrak Uyarisi Var"}
                         </strong>
                         <p>
                           {effectiveView === "company"
@@ -3479,20 +3516,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                   </div>
                 ) : null}
 
-                {effectiveView === "store" && storeLoginGapNotes.length ? (
-                  <div className="evaluation-zero-alert evaluation-login-alert">
-                    <strong>Portala giris yapmayan calisanlar</strong>
-                    <div>
-                      {storeLoginGapNotes.map((note) => (
-                        <span key={note.profileId}>
-                          {note.fullName} - {note.daysSinceLogin} gundur giris yapmamistir
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
-
-                {visibleTrendStoreCodes.length && companyTrendSummaryRows.length ? (
+                {visibleTrendStoreCodes.length && companyTrendSummaryRows.length && effectiveView !== "store" ? (
                   <div className="goal-company-trend-panel">
                     <div className="goal-live-prime-head">
                       <h3>{effectiveView === "employee" ? "Sube Ay Sonu Gidisat Ozeti" : "Ay Sonu Gidisat Ozeti"}</h3>
@@ -3622,22 +3646,6 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                       </table>
                     </div>
 
-                    {effectiveView === "store" ? (
-                      <div className="goal-company-trend-legend">
-                        <span>
-                          <span className="goal-company-trend-indicator goal-company-trend-indicator-down" aria-hidden="true" />
-                          Firma gerceklesen alti
-                        </span>
-                        <span>
-                          <span className="goal-company-trend-indicator goal-company-trend-indicator-up" aria-hidden="true" />
-                          Firma gerceklesen ustu
-                        </span>
-                        <span>
-                          <span className="goal-company-trend-indicator goal-company-trend-indicator-equal" aria-hidden="true" />
-                          Esit
-                        </span>
-                      </div>
-                    ) : null}
                   </div>
                 ) : null}
 
@@ -3830,21 +3838,6 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                   </div>
                 ) : null}
 
-                {effectiveView === "store" ? (
-                  <div className="goal-company-trend-panel">
-                    <div className="goal-live-prime-head">
-                      <h3>Gunluk Ihtiyaclar</h3>
-                      <span>Hedefli kalemler icin gunluk gereken adet / tutar</span>
-                    </div>
-
-                    {storeDailyNeedSummaryRows.length ? (
-                      <StoreDailyNeedsTable rows={storeDailyNeedSummaryRows} />
-                    ) : (
-                      <p className="subtle">Bu magazada hedef tanimli kalem bulunamadi.</p>
-                    )}
-                  </div>
-                ) : null}
-
                 {effectiveView === "store" && storeEmployeeProductionPlans.length ? (
                   <div className="goal-store-production-panel">
                     <div className="goal-live-prime-head">
@@ -3891,6 +3884,27 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                           ))}
                         </tbody>
                       </table>
+                    </div>
+                  </div>
+                ) : null}
+
+                {effectiveView === "store" && detailCategorySummaries.length ? (
+                  <div className="evaluation-card">
+                    <div className="evaluation-card-actions evaluation-card-actions-bottom">
+                      <SpeakCoachingButton text={detailCoachingText} />
+                    </div>
+                  </div>
+                ) : null}
+
+                {effectiveView === "store" && storeLoginGapNotes.length ? (
+                  <div className="evaluation-zero-alert evaluation-login-alert">
+                    <strong>Portala giris yapmayan calisanlar</strong>
+                    <div>
+                      {storeLoginGapNotes.map((note) => (
+                        <span key={note.profileId}>
+                          {note.fullName} - {note.daysSinceLogin} gundur giris yapmamistir
+                        </span>
+                      ))}
                     </div>
                   </div>
                 ) : null}

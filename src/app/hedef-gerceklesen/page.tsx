@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import { Fragment, type CSSProperties } from "react";
 import { redirect } from "next/navigation";
 import { CopyCoachingButton } from "@/components/evaluation/copy-coaching-button";
 import { CompanyDailyNeedsTable } from "@/components/evaluation/company-daily-needs-table";
@@ -241,6 +241,17 @@ type StoreDailyNeedSummaryRow = {
   cells: GoalNeedRow[];
 };
 
+type GoalSeparateInfoStoreDetail = {
+  storeCode: string;
+  target: number | null;
+  actual: number;
+  targetIsPercent: boolean;
+  actualIsPercent: boolean;
+  hasTarget: boolean;
+  isBelowTarget: boolean;
+  isAtOrAboveTarget: boolean;
+};
+
 type GoalSeparateInfoRow = {
   title: string;
   groupTitle: string;
@@ -252,6 +263,7 @@ type GoalSeparateInfoRow = {
   hasTarget: boolean;
   isBelowTarget: boolean;
   isAtOrAboveTarget: boolean;
+  storeDetails: GoalSeparateInfoStoreDetail[];
 };
 
 type GoalSeparateInfoGroup = {
@@ -1428,7 +1440,8 @@ function buildSeparateInfoTitle(row: Pick<GoalStoreRow, "mainCategory" | "subCat
 }
 
 function toSeparateInfoRow(
-  row: Pick<GoalStoreRow, "mainCategory" | "subCategory" | "target" | "actual" | "targetIsPercent" | "actualIsPercent">
+  row: Pick<GoalStoreRow, "mainCategory" | "subCategory" | "target" | "actual" | "targetIsPercent" | "actualIsPercent">,
+  storeDetails: GoalSeparateInfoStoreDetail[] = []
 ): GoalSeparateInfoRow {
   const hasTarget = row.target !== null && row.target > 0;
 
@@ -1442,7 +1455,8 @@ function toSeparateInfoRow(
     actualIsPercent: row.actualIsPercent ?? false,
     hasTarget,
     isBelowTarget: hasTarget ? row.actual < (row.target ?? 0) : false,
-    isAtOrAboveTarget: hasTarget ? row.actual >= (row.target ?? 0) : false
+    isAtOrAboveTarget: hasTarget ? row.actual >= (row.target ?? 0) : false,
+    storeDetails
   };
 }
 
@@ -1494,8 +1508,30 @@ function buildStoreSeparateInfoRows(rows: GoalStoreRow[]) {
 }
 
 function buildCompanySeparateInfoRows(rows: GoalStoreRow[]) {
-  return buildCompanyRows(rows.filter((row) => row.separateInfo))
-    .map((row) => toSeparateInfoRow(row))
+  const separateInfoRows = rows.filter((row) => row.separateInfo);
+
+  return buildCompanyRows(separateInfoRows)
+    .map((row) => {
+      const storeDetails = separateInfoRows
+        .filter((item) => item.mainCategory === row.mainCategory && item.subCategory === row.subCategory)
+        .sort((a, b) => a.storeCode.localeCompare(b.storeCode, "tr"))
+        .map((item) => {
+          const hasTarget = item.target !== null && item.target > 0;
+
+          return {
+            storeCode: item.storeCode,
+            target: hasTarget ? item.target : null,
+            actual: item.actual,
+            targetIsPercent: item.targetIsPercent ?? false,
+            actualIsPercent: item.actualIsPercent ?? false,
+            hasTarget,
+            isBelowTarget: hasTarget ? item.actual < (item.target ?? 0) : false,
+            isAtOrAboveTarget: hasTarget ? item.actual >= (item.target ?? 0) : false
+          } satisfies GoalSeparateInfoStoreDetail;
+        });
+
+      return toSeparateInfoRow(row, storeDetails);
+    })
     .sort((a, b) => a.title.localeCompare(b.title, "tr"));
 }
 
@@ -1516,6 +1552,87 @@ function SeparateInfoTable({
   const belowTargetRows = rows
     .filter((row) => row.hasTarget && row.isBelowTarget)
     .sort((a, b) => a.title.localeCompare(b.title, "tr"));
+  const hasStoreBreakdown = rows.some((row) => row.storeDetails.length > 0);
+
+  const renderStoreBreakdown = (row: GoalSeparateInfoRow, keyPrefix: string) => {
+    if (!row.storeDetails.length) {
+      return null;
+    }
+
+    return (
+      <tr key={`${keyPrefix}-stores`}>
+        <td colSpan={columnCount} className="goal-separate-info-store-cell">
+          <details className="goal-separate-info-store-details">
+            <summary className="goal-separate-info-store-summary">
+              <span>Şube gerçekleşenlerini göster</span>
+            </summary>
+
+            <table className="goal-company-trend-table goal-separate-info-store-table">
+              <thead>
+                <tr>
+                  <th>Şube</th>
+                  {row.hasTarget ? <th>Hedef</th> : null}
+                  <th>Gerçekleşen</th>
+                </tr>
+              </thead>
+              <tbody>
+                {row.storeDetails.map((store) => (
+                  <tr key={`${keyPrefix}-${store.storeCode}`}>
+                    <th>{store.storeCode}</th>
+                    {row.hasTarget ? (
+                      <>
+                        <td>{formatGoalValue(store.target, store.targetIsPercent)}</td>
+                        <td
+                          className={
+                            store.isAtOrAboveTarget
+                              ? "goal-company-trend-good"
+                              : store.isBelowTarget
+                                ? "goal-company-trend-bad"
+                                : ""
+                          }
+                        >
+                          {formatGoalValue(store.actual, store.actualIsPercent)}
+                        </td>
+                      </>
+                    ) : (
+                      <td>{formatGoalValue(store.actual, store.actualIsPercent)}</td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </details>
+        </td>
+      </tr>
+    );
+  };
+
+  const renderDataRow = (row: GoalSeparateInfoRow, keyPrefix: string, titleText: string) => (
+    <>
+      <tr key={keyPrefix}>
+        <th>{titleText}</th>
+        {row.hasTarget ? (
+          <>
+            <td>{formatGoalValue(row.target, row.targetIsPercent)}</td>
+            <td
+              className={
+                row.isAtOrAboveTarget
+                  ? "goal-company-trend-good"
+                  : row.isBelowTarget
+                    ? "goal-company-trend-bad"
+                    : ""
+              }
+            >
+              {formatGoalValue(row.actual, row.actualIsPercent)}
+            </td>
+          </>
+        ) : (
+          <td colSpan={hasAnyTarget ? 2 : 1}>{formatGoalValue(row.actual, row.actualIsPercent)}</td>
+        )}
+      </tr>
+      {hasStoreBreakdown ? renderStoreBreakdown(row, keyPrefix) : null}
+    </>
+  );
 
   return (
     <div className="goal-company-trend-panel">
@@ -1557,27 +1674,13 @@ function SeparateInfoTable({
                         <table className="goal-company-trend-table goal-separate-info-nested-table">
                           <tbody>
                             {group.rows.map((row) => (
-                              <tr key={`separate-info-${group.title}-${row.title}`}>
-                                  <th>{row.subCategoryTitle ?? row.title}</th>
-                                  {row.hasTarget ? (
-                                    <>
-                                    <td>{formatGoalValue(row.target, row.targetIsPercent)}</td>
-                                    <td
-                                      className={
-                                        row.isAtOrAboveTarget
-                                          ? "goal-company-trend-good"
-                                          : row.isBelowTarget
-                                            ? "goal-company-trend-bad"
-                                            : ""
-                                      }
-                                    >
-                                      {formatGoalValue(row.actual, row.actualIsPercent)}
-                                    </td>
-                                  </>
-                                ) : (
-                                  <td colSpan={hasAnyTarget ? 2 : 1}>{formatGoalValue(row.actual, row.actualIsPercent)}</td>
+                              <Fragment key={`separate-info-${group.title}-${row.title}`}>
+                                {renderDataRow(
+                                  row,
+                                  `separate-info-${group.title}-${row.title}`,
+                                  row.subCategoryTitle ?? row.title
                                 )}
-                              </tr>
+                              </Fragment>
                             ))}
                           </tbody>
                         </table>
@@ -1586,27 +1689,9 @@ function SeparateInfoTable({
                   </tr>
                 ) : (
                   group.rows.map((row) => (
-                    <tr key={`separate-info-${row.title}`}>
-                      <th>{row.title}</th>
-                      {row.hasTarget ? (
-                        <>
-                          <td>{formatGoalValue(row.target, row.targetIsPercent)}</td>
-                          <td
-                            className={
-                              row.isAtOrAboveTarget
-                                ? "goal-company-trend-good"
-                                : row.isBelowTarget
-                                  ? "goal-company-trend-bad"
-                                  : ""
-                            }
-                          >
-                            {formatGoalValue(row.actual, row.actualIsPercent)}
-                          </td>
-                        </>
-                      ) : (
-                        <td colSpan={hasAnyTarget ? 2 : 1}>{formatGoalValue(row.actual, row.actualIsPercent)}</td>
-                      )}
-                    </tr>
+                    <Fragment key={`separate-info-${row.title}`}>
+                      {renderDataRow(row, `separate-info-${row.title}`, row.title)}
+                    </Fragment>
                   ))
                 )
               )}

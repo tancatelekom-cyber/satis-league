@@ -10414,6 +10414,41 @@ textarea::placeholder {
   padding-left: 28px;
 }
 
+.goal-separate-info-store-cell {
+  padding: 0 !important;
+  background: rgba(225, 238, 255, 0.72);
+}
+
+.goal-separate-info-store-details {
+  width: 100%;
+}
+
+.goal-separate-info-store-summary {
+  list-style: none;
+  padding: 10px 18px;
+  cursor: pointer;
+  color: #375270;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.goal-separate-info-store-summary::-webkit-details-marker {
+  display: none;
+}
+
+.goal-separate-info-store-table {
+  border-top: 1px solid rgba(16, 32, 59, 0.08);
+}
+
+.goal-separate-info-store-table thead th {
+  font-size: 0.74rem;
+}
+
+.goal-separate-info-store-table tbody th,
+.goal-separate-info-store-table tbody td {
+  font-size: 0.82rem;
+}
+
 .document-issues-category-row td {
   padding: 0 !important;
   border-left: 0 !important;

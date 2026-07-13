@@ -6118,94 +6118,134 @@ textarea::placeholder {
 
 .duel-matchup-board {
   display: grid;
-  gap: 16px;
+  gap: 12px;
   margin-bottom: 20px;
 }
 
-.duel-matchup-grid {
+.duel-matchup-compact {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 14px;
+  overflow: hidden;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(4, 92, 96, 0.14);
+  box-shadow: 0 16px 36px rgba(9, 44, 76, 0.08);
 }
 
-.duel-matchup-card {
+.duel-matchup-compact-head,
+.duel-matchup-compact-row {
   display: grid;
-  gap: 12px;
-  padding: 16px;
-  border-radius: 24px;
-  background: rgba(255, 255, 255, 0.86);
-  border: 1px solid rgba(4, 92, 96, 0.12);
-  box-shadow: 0 18px 38px rgba(9, 44, 76, 0.08);
-}
-
-.duel-matchup-card-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.duel-matchup-card-head strong {
-  color: #10203b;
-  font-size: 1rem;
-  font-weight: 800;
-}
-
-.duel-matchup-card-head span {
-  color: #0f766e;
-  font-size: 0.85rem;
-  font-weight: 700;
-}
-
-.duel-matchup-table {
-  display: grid;
-  gap: 8px;
-}
-
-.duel-matchup-table-head,
-.duel-matchup-table-row,
-.duel-matchup-table-foot {
-  display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(88px, 0.9fr) minmax(82px, 0.8fr);
+  grid-template-columns: 54px minmax(0, 1fr) minmax(0, 1fr) minmax(170px, 1.15fr);
   align-items: center;
   gap: 10px;
-  padding: 10px 12px;
-  border-radius: 16px;
+  padding: 10px 14px;
 }
 
-.duel-matchup-table-head {
+.duel-matchup-compact-head {
   background: rgba(4, 92, 96, 0.08);
+  border-bottom: 1px solid rgba(4, 92, 96, 0.08);
 }
 
-.duel-matchup-table-head span {
+.duel-matchup-compact-head span {
   color: #56708c;
-  font-size: 0.72rem;
+  font-size: 0.74rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
-.duel-matchup-table-row {
-  background: rgba(240, 248, 255, 0.92);
-  border: 1px solid rgba(4, 92, 96, 0.08);
+.duel-matchup-compact-row {
+  border-bottom: 1px solid rgba(4, 92, 96, 0.08);
 }
 
-.duel-matchup-table-row span,
-.duel-matchup-table-foot span {
+.duel-matchup-compact-row:last-child {
+  border-bottom: none;
+}
+
+.duel-matchup-compact-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: rgba(255, 224, 115, 0.22);
   color: #10203b;
-  font-size: 0.88rem;
-}
-
-.duel-matchup-table-row strong,
-.duel-matchup-table-foot strong {
-  color: #0f766e;
-  font-size: 0.95rem;
+  font-size: 0.8rem;
   font-weight: 800;
 }
 
-.duel-matchup-table-foot {
-  background: rgba(255, 224, 115, 0.16);
-  border: 1px solid rgba(255, 192, 63, 0.22);
+.duel-matchup-compact-name {
+  color: #10203b;
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.duel-matchup-compact-scores {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+
+.duel-matchup-compact-scores strong {
+  color: #10203b;
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.duel-matchup-compact-vs {
+  color: #7b8ea6;
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.duel-matchup-compact-winner {
+  color: #0f8a4b !important;
+}
+
+.duel-matchup-compact-draw {
+  color: #0f766e !important;
+}
+
+@media (max-width: 720px) {
+  .duel-matchup-compact-head,
+  .duel-matchup-compact-row {
+    grid-template-columns: 38px minmax(0, 0.95fr) minmax(0, 0.95fr) minmax(92px, 0.9fr);
+    gap: 6px;
+    padding: 8px 9px;
+  }
+
+  .duel-matchup-compact-head span {
+    font-size: 0.58rem;
+    letter-spacing: 0.03em;
+  }
+
+  .duel-matchup-compact-badge {
+    width: 24px;
+    height: 24px;
+    font-size: 0.66rem;
+  }
+
+  .duel-matchup-compact-name {
+    font-size: 0.67rem;
+    line-height: 1.15;
+  }
+
+  .duel-matchup-compact-scores {
+    gap: 4px;
+  }
+
+  .duel-matchup-compact-scores strong {
+    font-size: 0.66rem;
+    line-height: 1.1;
+  }
+
+  .duel-matchup-compact-vs {
+    font-size: 0.52rem;
+  }
 }
 
 .campaign-product-summary {

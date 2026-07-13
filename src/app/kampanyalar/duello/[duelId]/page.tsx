@@ -22,19 +22,6 @@ function scoreLabel(value: number, scoring: "points" | "quantity") {
   return `${value.toFixed(0)} ${scoring === "points" ? "puan" : "adet"}`;
 }
 
-function matchupLeaderLabel(
-  leftScore: number,
-  rightScore: number,
-  leftLabel: string,
-  rightLabel: string
-) {
-  if (leftScore === rightScore) {
-    return "Berabere";
-  }
-
-  return leftScore > rightScore ? leftLabel : rightLabel;
-}
-
 export default async function DuelDetailPage({ params, searchParams }: DuelDetailPageProps) {
   const routeParams = await params;
   const pageParams = searchParams ? await searchParams : undefined;
@@ -202,58 +189,58 @@ export default async function DuelDetailPage({ params, searchParams }: DuelDetai
                 </div>
               </div>
 
-              <div className="duel-matchup-grid">
+              <div className="duel-matchup-compact">
+                <div className="duel-matchup-compact-head">
+                  <span>No</span>
+                  <span>Kisi</span>
+                  <span>Rakip</span>
+                  <span>Puanlar</span>
+                </div>
+
                 {duel.matchups.map((matchup) => {
                   const leftParticipant = matchup.participants[0] ?? null;
                   const rightParticipant = matchup.participants[1] ?? null;
                   const leftScore = leftParticipant?.score ?? 0;
                   const rightScore = rightParticipant?.score ?? 0;
-                  const scoreDifference = Math.abs(leftScore - rightScore);
-                  const leaderLabel = matchupLeaderLabel(
-                    leftScore,
-                    rightScore,
-                    leftParticipant?.label ?? "Taraf 1",
-                    rightParticipant?.label ?? "Taraf 2"
-                  );
+                  const leftWins = leftScore > rightScore;
+                  const rightWins = rightScore > leftScore;
+                  const isDraw = leftScore === rightScore;
 
                   return (
-                    <article key={`matchup-${matchup.matchupNo}`} className="duel-matchup-card">
-                      <div className="duel-matchup-card-head">
-                        <strong>Eslesme {matchup.matchupNo}</strong>
-                        <span>Lider: {leaderLabel}</span>
-                      </div>
-
-                      <div className="duel-matchup-table">
-                        <div className="duel-matchup-table-head">
-                          <span>Taraf</span>
-                          <span>Puan</span>
-                          <span>Durum</span>
-                        </div>
-
-                        {[leftParticipant, rightParticipant].map((participant, index) => {
-                          const participantScore = participant?.score ?? 0;
-                          const opponentScore = index === 0 ? rightScore : leftScore;
-                          const isLeader = participantScore > opponentScore;
-                          const isDraw = participantScore === opponentScore;
-
-                          return (
-                            <div key={participant?.id ?? `empty-${index}`} className="duel-matchup-table-row">
-                              <span>{participant?.label ?? `Taraf ${index + 1}`}</span>
-                              <strong>{scoreLabel(participantScore, duel.scoring)}</strong>
-                              <span>
-                                {isDraw ? "Berabere" : isLeader ? "Onde" : `${scoreDifference.toFixed(0)} geri`}
-                              </span>
-                            </div>
-                          );
-                        })}
-
-                        <div className="duel-matchup-table-foot">
-                          <span>Fark</span>
-                          <strong>{scoreLabel(scoreDifference, duel.scoring)}</strong>
-                          <span>{leaderLabel}</span>
-                        </div>
-                      </div>
-                    </article>
+                    <div key={`matchup-${matchup.matchupNo}`} className="duel-matchup-compact-row">
+                      <span className="duel-matchup-compact-badge">{matchup.matchupNo}</span>
+                      <span
+                        className={[
+                          "duel-matchup-compact-name",
+                          leftWins ? "duel-matchup-compact-winner" : "",
+                          isDraw ? "duel-matchup-compact-draw" : ""
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
+                      >
+                        {leftParticipant?.label ?? "Taraf 1"}
+                      </span>
+                      <span
+                        className={[
+                          "duel-matchup-compact-name",
+                          rightWins ? "duel-matchup-compact-winner" : "",
+                          isDraw ? "duel-matchup-compact-draw" : ""
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
+                      >
+                        {rightParticipant?.label ?? "Taraf 2"}
+                      </span>
+                      <span className="duel-matchup-compact-scores">
+                        <strong className={leftWins ? "duel-matchup-compact-winner" : isDraw ? "duel-matchup-compact-draw" : ""}>
+                          {scoreLabel(leftScore, duel.scoring)}
+                        </strong>
+                        <span className="duel-matchup-compact-vs">vs</span>
+                        <strong className={rightWins ? "duel-matchup-compact-winner" : isDraw ? "duel-matchup-compact-draw" : ""}>
+                          {scoreLabel(rightScore, duel.scoring)}
+                        </strong>
+                      </span>
+                    </div>
                   );
                 })}
               </div>

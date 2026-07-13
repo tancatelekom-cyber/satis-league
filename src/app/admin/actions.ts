@@ -191,8 +191,10 @@ async function parseDuelParticipants(rawParticipants: string) {
     .filter(Boolean)
     .map((line, index) => ({ line, index }));
 
-  if (rows.length < 2) {
-    throw new Error("Duello icin en az iki kisi veya grup tanimlamalisiniz.");
+  if (rows.length !== 2) {
+    throw new Error(
+      "Duello icin tam olarak iki taraf tanimlamalisiniz. Ornek: Ahmet vs Mehmet veya Grup A vs Grup B."
+    );
   }
 
   const supabase = createAdminClient();

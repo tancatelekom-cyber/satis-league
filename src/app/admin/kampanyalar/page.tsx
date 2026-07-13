@@ -208,7 +208,7 @@ export default async function CampaignAdminPage({ searchParams }: CampaignAdminP
         <article className="admin-card">
           <h3>Duello Olustur</h3>
           <p className="subtle">
-            Sececeginiz kisi veya gruplar arasinda urun bazli mini yaris kurun. Giris yetkisi ve magaza carpanlari ayrica tanimlanir.
+            Iki tarafli duello kurun. Ornek: Ahmet vs Mehmet veya grup vs grup. Giris yetkisi ve magaza carpanlari ayrica tanimlanir.
           </p>
 
           <form action={createDuelAction} className="admin-form">

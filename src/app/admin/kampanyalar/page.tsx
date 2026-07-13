@@ -1,8 +1,11 @@
 import {
   createCampaignAction,
+  createDuelAction,
   deleteCampaignSaleAction,
   deleteCampaignAction,
+  deleteDuelAction,
   endCampaignAction,
+  endDuelAction,
   updateCampaignSaleAction,
   updateCampaignAction
 } from "@/app/admin/actions";
@@ -10,6 +13,7 @@ import { AdminCampaignSaleForm } from "@/components/admin/admin-campaign-sale-fo
 import { AdminSectionNav } from "@/components/admin/admin-section-nav";
 import { AdminSetupNotice } from "@/components/admin/admin-setup-notice";
 import { CampaignBuilder } from "@/components/admin/campaign-builder";
+import { DuelBuilder } from "@/components/admin/duel-builder";
 import { requireAdminAccess } from "@/lib/auth/require-admin";
 import { formatCampaignDateTime, isoToLocalDateTimeInput } from "@/lib/campaign-utils";
 import { getAdminDashboardData } from "@/lib/admin/get-admin-dashboard-data";
@@ -32,6 +36,14 @@ export default async function CampaignAdminPage({ searchParams }: CampaignAdminP
   }
 
   const data = await getAdminDashboardData();
+  const duelSelectableProfiles = data.managedProfileRows
+    .filter((profile) => profile.approval === "approved" && !profile.is_on_leave)
+    .map((profile) => ({
+      id: profile.id,
+      full_name: profile.full_name,
+      role: profile.role,
+      store_name: profile.store?.name ?? null
+    }));
 
   return (
     <main>
@@ -191,6 +203,79 @@ export default async function CampaignAdminPage({ searchParams }: CampaignAdminP
             }))}
             initialQuantities={data.campaignLiveQuantityMap}
           />
+        </article>
+
+        <article className="admin-card">
+          <h3>Duello Olustur</h3>
+          <p className="subtle">
+            Sececeginiz kisi veya gruplar arasinda urun bazli mini yaris kurun. Giris yetkisi ve magaza carpanlari ayrica tanimlanir.
+          </p>
+
+          <form action={createDuelAction} className="admin-form">
+            <input name="redirectTo" type="hidden" value="/admin/kampanyalar" />
+
+            <div className="auth-grid">
+              <label className="field">
+                <span>Duello Adi</span>
+                <input name="name" placeholder="Ornek: Aksesuar Duellosu" required />
+              </label>
+              <label className="field">
+                <span>Olcum Tipi</span>
+                <select defaultValue="points" name="scoring">
+                  <option value="points">Puan</option>
+                  <option value="quantity">Adet</option>
+                </select>
+              </label>
+              <label className="field">
+                <span>Baslangic Tarih ve Saat</span>
+                <input name="startAt" required type="datetime-local" />
+              </label>
+              <label className="field">
+                <span>Bitis Tarih ve Saat</span>
+                <input name="endAt" required type="datetime-local" />
+              </label>
+            </div>
+
+            <label className="field">
+              <span>Aciklama</span>
+              <textarea
+                className="text-area"
+                name="description"
+                placeholder="Duellonun konusu, odagi ve giris notlari"
+                rows={3}
+              />
+            </label>
+
+            <label className="field">
+              <span>Duello Giris Yetkisi Olan Profiller</span>
+              <div className="checkbox-grid permission-checkbox-grid">
+                {data.approvedCampaignPermissionProfiles.length === 0 ? (
+                  <span className="subtle">Onayli profil bulunamadi.</span>
+                ) : (
+                  data.approvedCampaignPermissionProfiles.map((profile) => (
+                    <label key={`duel-permission-${profile.id}`} className="checkbox-card">
+                      <input name="allowedEntryProfileIds" type="checkbox" value={profile.id} />
+                      <span>
+                        {profile.full_name} | {profile.role === "employee" ? "Calisan" : profile.role === "manager" ? "Magaza Muduru" : "Yonetim"}
+                      </span>
+                    </label>
+                  ))
+                )}
+              </div>
+              <small className="subtle">Bos birakirsan onayli tum kullanicilar duello girisi yapabilir.</small>
+            </label>
+
+            <DuelBuilder
+              stores={data.storeRows.filter((store) => store.is_active)}
+              profiles={duelSelectableProfiles}
+            />
+
+            <div className="auth-actions">
+              <button className="button-primary" type="submit">
+                Duelloyu Ac
+              </button>
+            </div>
+          </form>
         </article>
 
         <article className="admin-card">
@@ -465,6 +550,96 @@ export default async function CampaignAdminPage({ searchParams }: CampaignAdminP
                   </div>
                 </div>
               ))
+            )}
+          </div>
+        </article>
+
+        <article className="admin-card">
+          <h3>Aktif ve Son Duellolar</h3>
+          <div className="approval-list">
+            {data.duelRows.length === 0 ? (
+              <div className="step-item">
+                <strong>Henuz duello yok</strong>
+                <span>Ilk duelloyu yukaridaki formdan olusturun.</span>
+              </div>
+            ) : (
+              data.duelRows.map((duel) => {
+                const duelParticipants = data.duelParticipantRows.filter((item) => item.duel_id === duel.id);
+                const duelProducts = data.duelProductRows.filter((item) => item.duel_id === duel.id);
+                const duelPermissions = data.duelEntryPermissionRows.filter((item) => item.duel_id === duel.id);
+                const duelMultipliers = data.duelMultiplierRows.filter((item) => item.duel_id === duel.id);
+                const duelScoreMap = new Map<string, number>();
+
+                data.duelEntries
+                  .filter((entry) => entry.duel_id === duel.id)
+                  .forEach((entry) => {
+                    duelScoreMap.set(
+                      entry.participant_id,
+                      Number(duelScoreMap.get(entry.participant_id) ?? 0) + Number(entry.weighted_score ?? 0)
+                    );
+                  });
+
+                return (
+                  <div key={duel.id} className="approval-row">
+                    <div>
+                      <h4>{duel.name}</h4>
+                      <p>{duel.scoring === "points" ? "Puan Bazli" : "Adet Bazli"} Duello</p>
+                      <p className="subtle">
+                        {formatCampaignDateTime(duel.start_at)} - {formatCampaignDateTime(duel.end_at)}
+                      </p>
+                      <p className="subtle">
+                        Katilimcilar:{" "}
+                        {duelParticipants
+                          .map((participant) => `${participant.label} (${participant.participant_mode === "group" ? "Grup" : "Kisi"})`)
+                          .join(", ") || "Katilimci yok"}
+                      </p>
+                      <p className="subtle">
+                        Urunler:{" "}
+                        {duelProducts
+                          .map((product) => `${product.name} (${Number(product.base_points ?? 0).toFixed(0)} ${product.unit_label})`)
+                          .join(", ") || "Urun yok"}
+                      </p>
+                      <p className="subtle">
+                        Magaza carpanlari:{" "}
+                        {duelMultipliers.map((item) => `${item.store?.name ?? "Magaza"} x${item.multiplier}`).join(", ") || "Varsayilan 1.00"}
+                      </p>
+                      <p className="subtle">
+                        Giris yetkisi olanlar:{" "}
+                        {duelPermissions.map((item) => item.profile?.full_name ?? "Profil").join(", ") || "Tum onayli kullanicilar"}
+                      </p>
+                      <p className="subtle">
+                        Skor durumu:{" "}
+                        {duelParticipants
+                          .map((participant) => `${participant.label}: ${Number(duelScoreMap.get(participant.id) ?? 0).toFixed(0)}`)
+                          .join(" | ")}
+                      </p>
+                    </div>
+
+                    <div className="campaign-manage-actions">
+                      <div className="store-status">
+                        <span>Durum</span>
+                        <strong>{duel.is_active ? "Aktif" : "Pasif"}</strong>
+                      </div>
+
+                      <form action={endDuelAction}>
+                        <input name="redirectTo" type="hidden" value="/admin/kampanyalar" />
+                        <input name="duelId" type="hidden" value={duel.id} />
+                        <button className="tiny-button" type="submit">
+                          Sonlandir
+                        </button>
+                      </form>
+
+                      <form action={deleteDuelAction}>
+                        <input name="redirectTo" type="hidden" value="/admin/kampanyalar" />
+                        <input name="duelId" type="hidden" value={duel.id} />
+                        <button className="tiny-button danger" type="submit">
+                          Sil
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                );
+              })
             )}
           </div>
         </article>

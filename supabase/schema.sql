@@ -19,6 +19,19 @@ begin
     select 1
     from pg_type t
     join pg_namespace n on n.oid = t.typnamespace
+    where t.typname = 'duel_participant_mode' and n.nspname = 'public'
+  ) then
+    create type public.duel_participant_mode as enum ('profile', 'group');
+  end if;
+end
+$$;
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_type t
+    join pg_namespace n on n.oid = t.typnamespace
     where t.typname = 'approval_status' and n.nspname = 'public'
   ) then
     create type public.approval_status as enum ('pending', 'approved', 'rejected');
@@ -198,6 +211,71 @@ create table if not exists public.sales_entries (
   raw_score numeric(10,2) not null default 0,
   weighted_score numeric(10,2) not null default 0,
   created_at timestamptz not null default now()
+);
+
+create table if not exists public.duels (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  description text,
+  scoring public.scoring_type not null default 'points',
+  start_at timestamptz not null,
+  end_at timestamptz not null,
+  is_active boolean not null default true,
+  created_by uuid references public.profiles(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.duel_products (
+  id uuid primary key default gen_random_uuid(),
+  duel_id uuid not null references public.duels(id) on delete cascade,
+  name text not null,
+  unit_label text not null default 'adet',
+  base_points numeric(10,2) not null default 1,
+  sort_order integer not null default 0
+);
+
+create table if not exists public.duel_store_multipliers (
+  id uuid primary key default gen_random_uuid(),
+  duel_id uuid not null references public.duels(id) on delete cascade,
+  store_id uuid not null references public.stores(id) on delete cascade,
+  multiplier numeric(6,2) not null default 1,
+  unique (duel_id, store_id)
+);
+
+create table if not exists public.duel_entry_permissions (
+  id uuid primary key default gen_random_uuid(),
+  duel_id uuid not null references public.duels(id) on delete cascade,
+  profile_id uuid not null references public.profiles(id) on delete cascade,
+  unique (duel_id, profile_id)
+);
+
+create table if not exists public.duel_participants (
+  id uuid primary key default gen_random_uuid(),
+  duel_id uuid not null references public.duels(id) on delete cascade,
+  label text not null,
+  participant_mode public.duel_participant_mode not null default 'profile',
+  profile_id uuid references public.profiles(id) on delete set null,
+  sort_order integer not null default 0
+);
+
+create table if not exists public.duel_participant_members (
+  id uuid primary key default gen_random_uuid(),
+  duel_participant_id uuid not null references public.duel_participants(id) on delete cascade,
+  profile_id uuid not null references public.profiles(id) on delete cascade,
+  unique (duel_participant_id, profile_id)
+);
+
+create table if not exists public.duel_entries (
+  id uuid primary key default gen_random_uuid(),
+  duel_id uuid not null references public.duels(id) on delete cascade,
+  participant_id uuid not null references public.duel_participants(id) on delete cascade,
+  product_id uuid not null references public.duel_products(id) on delete cascade,
+  actor_profile_id uuid not null references public.profiles(id) on delete cascade,
+  quantity integer not null default 0,
+  raw_score numeric(10,2) not null default 0,
+  weighted_score numeric(10,2) not null default 0,
+  created_at timestamptz not null default now(),
+  unique (duel_id, participant_id, product_id)
 );
 
 create table if not exists public.season_sales_entries (
@@ -599,6 +677,13 @@ alter table public.campaign_store_multipliers enable row level security;
 alter table public.campaign_profile_multipliers enable row level security;
 alter table public.campaign_entry_permissions enable row level security;
 alter table public.sales_entries enable row level security;
+alter table public.duels enable row level security;
+alter table public.duel_products enable row level security;
+alter table public.duel_store_multipliers enable row level security;
+alter table public.duel_entry_permissions enable row level security;
+alter table public.duel_participants enable row level security;
+alter table public.duel_participant_members enable row level security;
+alter table public.duel_entries enable row level security;
 alter table public.season_sales_entries enable row level security;
 alter table public.notifications enable row level security;
 alter table public.popup_announcements enable row level security;

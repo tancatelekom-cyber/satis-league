@@ -1,8 +1,14 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
+  AdminDuel,
   AdminCampaign,
   CampaignEntryPermissionRecord,
   AdminCampaignSaleRecord,
+  DuelEntryPermissionRecord,
+  DuelParticipantMemberRecord,
+  DuelParticipantRecord,
+  DuelProductRecord,
+  DuelStoreMultiplierRecord,
   AdminManagedProfile,
   AdminPendingProfile,
   AdminSeason,
@@ -117,6 +123,7 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
     { data: pendingProfiles },
     { data: managedProfiles },
     { data: campaigns },
+    { data: duels },
     { data: seasons },
     authUsers
   ] =
@@ -166,6 +173,11 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
         .order("created_at", { ascending: false })
         .limit(6),
       supabase
+        .from("duels")
+        .select("id, name, description, scoring, start_at, end_at, is_active, created_at")
+        .order("created_at", { ascending: false })
+        .limit(8),
+      supabase
         .from("seasons")
         .select(
           "id, name, description, start_date, end_date, mode, scoring, season_products, reward_title, reward_details, reward_first, reward_second, reward_third, is_active, created_at"
@@ -188,8 +200,10 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
     last_sign_in_at: authUserLastLoginMap.get(profile.id) ?? null
   })));
   const campaignRows = (campaigns as AdminCampaign[] | null) ?? [];
+  const duelRows = (duels as AdminDuel[] | null) ?? [];
   const seasonRows = (seasons as AdminSeason[] | null) ?? [];
   const campaignIds = campaignRows.map((campaign) => campaign.id);
+  const duelIds = duelRows.map((duel) => duel.id);
   const seasonIds = seasonRows.map((season) => season.id);
 
   const [
@@ -268,6 +282,106 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
             target_profile_id: string | null;
             target_store_id: string | null;
             quantity: number;
+          }>
+        }
+      ];
+
+  const duelParticipantIds = duelIds.length
+    ? (
+        ((await supabase
+          .from("duel_participants")
+          .select("id")
+          .in("duel_id", duelIds)).data as Array<{ id: string }> | null) ?? []
+      ).map((row) => row.id)
+    : [];
+
+  const [
+    { data: duelProducts },
+    { data: duelStoreMultipliers },
+    { data: duelEntryPermissions },
+    { data: duelParticipants },
+    { data: duelParticipantMembers },
+    { data: duelEntries }
+  ] = duelIds.length
+    ? await Promise.all([
+        supabase
+          .from("duel_products")
+          .select("id, duel_id, name, unit_label, base_points, sort_order")
+          .in("duel_id", duelIds)
+          .order("sort_order"),
+        supabase
+          .from("duel_store_multipliers")
+          .select(
+            `
+              id,
+              duel_id,
+              store_id,
+              multiplier,
+              store:stores(name)
+            `
+          )
+          .in("duel_id", duelIds),
+        supabase
+          .from("duel_entry_permissions")
+          .select(
+            `
+              id,
+              duel_id,
+              profile_id,
+              profile:profiles(full_name, role)
+            `
+          )
+          .in("duel_id", duelIds),
+        supabase
+          .from("duel_participants")
+          .select(
+            `
+              id,
+              duel_id,
+              label,
+              participant_mode,
+              profile_id,
+              sort_order,
+              profile:profiles(full_name)
+            `
+          )
+          .in("duel_id", duelIds)
+          .order("sort_order"),
+        duelParticipantIds.length
+          ? supabase
+              .from("duel_participant_members")
+              .select(
+                `
+                  id,
+                  duel_participant_id,
+                  profile_id,
+                  profile:profiles(full_name, store_id, role)
+                `
+              )
+              .in("duel_participant_id", duelParticipantIds)
+          : Promise.resolve({ data: [] as DuelParticipantMemberRecord[] }),
+        supabase
+          .from("duel_entries")
+          .select("id, duel_id, participant_id, product_id, actor_profile_id, quantity, raw_score, weighted_score, created_at")
+          .in("duel_id", duelIds)
+      ])
+    : [
+        { data: [] as DuelProductRecord[] },
+        { data: [] as DuelStoreMultiplierRecord[] },
+        { data: [] as DuelEntryPermissionRecord[] },
+        { data: [] as DuelParticipantRecord[] },
+        { data: [] as DuelParticipantMemberRecord[] },
+        {
+          data: [] as Array<{
+            id: string;
+            duel_id: string;
+            participant_id: string;
+            product_id: string;
+            actor_profile_id: string;
+            quantity: number;
+            raw_score: number;
+            weighted_score: number;
+            created_at: string;
           }>
         }
       ];
@@ -447,11 +561,29 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
     approvalRows,
     managedProfileRows,
     campaignRows,
+    duelRows,
     seasonRows,
     productRows: (campaignProducts as CampaignProductRecord[] | null) ?? [],
     multiplierRows: (campaignStoreMultipliers as CampaignStoreMultiplierRecord[] | null) ?? [],
     campaignEntryPermissionRows: (campaignEntryPermissions as CampaignEntryPermissionRecord[] | null) ?? [],
     campaignSales: (campaignSales as AdminCampaignSaleRecord[] | null) ?? [],
+    duelProductRows: (duelProducts as DuelProductRecord[] | null) ?? [],
+    duelMultiplierRows: (duelStoreMultipliers as DuelStoreMultiplierRecord[] | null) ?? [],
+    duelEntryPermissionRows: (duelEntryPermissions as DuelEntryPermissionRecord[] | null) ?? [],
+    duelParticipantRows: (duelParticipants as DuelParticipantRecord[] | null) ?? [],
+    duelParticipantMemberRows: (duelParticipantMembers as DuelParticipantMemberRecord[] | null) ?? [],
+    duelEntries:
+      ((duelEntries as Array<{
+        id: string;
+        duel_id: string;
+        participant_id: string;
+        product_id: string;
+        actor_profile_id: string;
+        quantity: number;
+        raw_score: number;
+        weighted_score: number;
+        created_at: string;
+      }> | null) ?? []),
     campaignLiveQuantityMap,
     seasonProductRows: (seasonProducts as SeasonProductRecord[] | null) ?? [],
     seasonMultiplierRows: (seasonStoreMultipliers as SeasonStoreMultiplierRecord[] | null) ?? [],

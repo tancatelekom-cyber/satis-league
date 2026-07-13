@@ -7,6 +7,7 @@ import {
 } from "@/lib/campaign-utils";
 import { createClient } from "@/lib/supabase/server";
 import { getCampaignDashboardData } from "@/lib/campaign/get-campaign-dashboard-data";
+import { getDuelDashboardData } from "@/lib/duel/get-duel-dashboard-data";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +30,7 @@ export default async function CampaignPage({ searchParams }: CampaignPageProps) 
   }
 
   const dashboard = await getCampaignDashboardData(user.id);
+  const duelDashboard = await getDuelDashboardData(user.id);
 
   if (!dashboard) {
     redirect("/hesabim");
@@ -102,6 +104,107 @@ export default async function CampaignPage({ searchParams }: CampaignPageProps) 
           <p className="subtle">Su anda acik kampanya yok. Yeni yaris actiginda burada gorunecek.</p>
         )}
       </section>
+
+      {duelDashboard?.activeDuels.length ? (
+        <section className="guide-card campaign-section-card">
+          <div className="section-title compact-title">
+            <div>
+              <h2>Aktif Duellolar</h2>
+              <p>Secilen kisi veya gruplar arasindaki mini yarislara buradan girin.</p>
+            </div>
+          </div>
+
+          <div className="campaign-directory">
+            {duelDashboard.activeDuels.map((duel) => (
+              <Link
+                key={duel.id}
+                className="campaign-directory-card"
+                href={`/kampanyalar/duello/${duel.id}`}
+              >
+                <div className="campaign-directory-head">
+                  <div>
+                    <strong>{duel.name}</strong>
+                    <span>
+                      {duel.scoring === "points" ? "Puan Bazli" : "Adet Bazli"} | {duel.participants.length} taraf
+                    </span>
+                  </div>
+                  <div className="store-status">
+                    <span>Lider</span>
+                    <strong>{duel.leaderboard[0]?.label ?? "Veri yok"}</strong>
+                  </div>
+                </div>
+
+                <div className="campaign-directory-meta">
+                  <span>
+                    Skor: {(duel.leaderboard[0]?.score ?? 0).toFixed(0)}{" "}
+                    {duel.scoring === "points" ? "puan" : "adet"}
+                  </span>
+                  <span>Bitis: {formatCampaignDateTime(duel.end_at)}</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {duelDashboard?.finishedDuels.length ? (
+        <section className="guide-card campaign-section-card">
+          <div className="section-title compact-title">
+            <div>
+              <h2>Gecmis Duellolar</h2>
+              <p>Bitmis duellolarin son siralamasi ve urun dagilimini goruntuleyin.</p>
+            </div>
+          </div>
+
+          <div className="campaign-directory">
+            {duelDashboard.finishedDuels.map((duel) => (
+              <Link
+                key={duel.id}
+                className="campaign-directory-card archive-card"
+                href={`/kampanyalar/duello/${duel.id}`}
+              >
+                <div className="campaign-directory-head">
+                  <div>
+                    <strong>{duel.name}</strong>
+                    <span>{duel.scoring === "points" ? "Puan Bazli" : "Adet Bazli"} duello</span>
+                  </div>
+                  <div className="store-status">
+                    <span>Kazanan</span>
+                    <strong>{duel.leaderboard[0]?.label ?? "Veri yok"}</strong>
+                  </div>
+                </div>
+
+                <div className="campaign-directory-meta">
+                  <span>Bitis: {formatCampaignDateTime(duel.end_at)}</span>
+                  <span>Durum: Sadece goruntuleme</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {duelDashboard?.plannedDuels.length ? (
+        <section className="guide-card campaign-section-card">
+          <h3>Planlanan Duellolar</h3>
+          <div className="approval-list">
+            {duelDashboard.plannedDuels.map((duel) => (
+              <div key={duel.id} className="approval-row">
+                <div>
+                  <h4>{duel.name}</h4>
+                  <p className="subtle">
+                    {isPlannedCampaign(duel.start_at) ? timeUntilLabel(duel.start_at) : ""}
+                  </p>
+                </div>
+                <div className="store-status">
+                  <span>Baslangic</span>
+                  <strong>{formatCampaignDateTime(duel.start_at)}</strong>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section className="guide-card campaign-section-card">
         <div className="section-title compact-title">

@@ -1,6 +1,7 @@
 export type UserRole = "employee" | "manager" | "management" | "admin";
 export type CampaignMode = "employee" | "store";
 export type ScoringType = "points" | "quantity";
+export type DuelParticipantMode = "profile" | "group";
 export type LeaguePeriod = "month" | "quarter" | "year";
 export type TariffCategoryMode = "gb" | "minutes" | "name";
 export type TariffPreset =
@@ -194,6 +195,69 @@ export type CampaignEntryPermissionRecord = {
   profile_id: string;
   profile: {
     full_name: string;
+    role: UserRole;
+  } | null;
+};
+
+export type AdminDuel = {
+  id: string;
+  name: string;
+  description: string | null;
+  scoring: ScoringType;
+  start_at: string;
+  end_at: string;
+  is_active: boolean;
+  created_at: string;
+};
+
+export type DuelProductRecord = {
+  id: string;
+  duel_id: string;
+  name: string;
+  unit_label: string;
+  base_points: number;
+  sort_order: number;
+};
+
+export type DuelStoreMultiplierRecord = {
+  id: string;
+  duel_id: string;
+  store_id: string;
+  multiplier: number;
+  store: {
+    name: string;
+  } | null;
+};
+
+export type DuelEntryPermissionRecord = {
+  id: string;
+  duel_id: string;
+  profile_id: string;
+  profile: {
+    full_name: string;
+    role: UserRole;
+  } | null;
+};
+
+export type DuelParticipantRecord = {
+  id: string;
+  duel_id: string;
+  label: string;
+  participant_mode: DuelParticipantMode;
+  profile_id: string | null;
+  sort_order: number;
+  profile: {
+    full_name: string;
+  } | null;
+};
+
+export type DuelParticipantMemberRecord = {
+  id: string;
+  duel_participant_id: string;
+  profile_id: string;
+  profile: {
+    full_name: string;
+    store_id: string | null;
     role: UserRole;
   } | null;
 };

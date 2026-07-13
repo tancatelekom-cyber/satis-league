@@ -6186,13 +6186,20 @@ textarea::placeholder {
   display: grid;
   gap: 4px;
   align-content: center;
+  justify-items: start;
 }
 
 .duel-matchup-compact-person small {
+  display: block;
   color: #35506f;
   font-size: 0.8rem;
   font-weight: 500;
   line-height: 1.15;
+  white-space: nowrap;
+}
+
+.duel-matchup-compact-person .duel-matchup-compact-name {
+  display: block;
 }
 
 .duel-matchup-compact-winner {
@@ -6200,6 +6207,16 @@ textarea::placeholder {
 }
 
 .duel-matchup-compact-draw {
+  color: #0f766e !important;
+}
+
+.duel-matchup-compact-person.duel-matchup-compact-winner .duel-matchup-compact-name,
+.duel-matchup-compact-person.duel-matchup-compact-winner small {
+  color: #0f8a4b !important;
+}
+
+.duel-matchup-compact-person.duel-matchup-compact-draw .duel-matchup-compact-name,
+.duel-matchup-compact-person.duel-matchup-compact-draw small {
   color: #0f766e !important;
 }
 

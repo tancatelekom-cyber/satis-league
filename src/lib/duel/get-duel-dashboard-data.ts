@@ -40,6 +40,7 @@ type DuelProductRecord = {
 type DuelParticipantRecord = {
   id: string;
   duel_id: string;
+  matchup_no: number;
   label: string;
   participant_mode: DuelParticipantMode;
   profile_id: string | null;
@@ -74,11 +75,17 @@ type DuelEntryRecord = {
 
 type DuelParticipantView = {
   id: string;
+  matchupNo: number;
   label: string;
   participantMode: DuelParticipantMode;
   score: number;
   memberLabels: string[];
   isViewerParticipant: boolean;
+};
+
+type DuelMatchupView = {
+  matchupNo: number;
+  participants: DuelParticipantView[];
 };
 
 type DuelCard = {
@@ -93,6 +100,7 @@ type DuelCard = {
   default_participant_id: string | null;
   products: DuelProductRecord[];
   participants: DuelParticipantView[];
+  matchups: DuelMatchupView[];
   leaderboard: DuelParticipantView[];
   productMatrix: Array<{
     id: string;
@@ -149,6 +157,7 @@ function buildDuelCard(input: {
 
     return {
       id: participant.id,
+      matchupNo: participant.matchup_no,
       label: participant.label,
       participantMode: participant.participant_mode,
       score: Number(scoreMap.get(participant.id) ?? 0),
@@ -169,6 +178,19 @@ function buildDuelCard(input: {
   }
 
   const leaderboard = [...participantViews].sort((a, b) => b.score - a.score);
+  const matchups = Array.from(
+    participantViews.reduce((map, participant) => {
+      const currentRows = map.get(participant.matchupNo) ?? [];
+      currentRows.push(participant);
+      map.set(participant.matchupNo, currentRows);
+      return map;
+    }, new Map<number, DuelParticipantView[]>())
+  )
+    .sort((a, b) => a[0] - b[0])
+    .map(([matchupNo, participants]) => ({
+      matchupNo,
+      participants: participants.slice().sort((a, b) => a.id.localeCompare(b.id))
+    }));
   const defaultParticipantId =
     participantViews.find((participant) => participant.isViewerParticipant)?.id ??
     participantViews[0]?.id ??
@@ -196,6 +218,7 @@ function buildDuelCard(input: {
     default_participant_id: defaultParticipantId,
     products: input.products,
     participants: participantViews,
+    matchups,
     leaderboard,
     productMatrix
   };

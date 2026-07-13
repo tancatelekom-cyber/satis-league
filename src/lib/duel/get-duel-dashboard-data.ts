@@ -276,6 +276,7 @@ export async function getDuelDashboardData(userId: string): Promise<DuelDashboar
             `
               id,
               duel_id,
+              matchup_no,
               label,
               participant_mode,
               profile_id,
@@ -284,6 +285,7 @@ export async function getDuelDashboardData(userId: string): Promise<DuelDashboar
             `
           )
           .in("duel_id", duelIds)
+          .order("matchup_no")
           .order("sort_order"),
         duelParticipantIds.length
           ? admin

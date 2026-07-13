@@ -252,11 +252,18 @@ create table if not exists public.duel_entry_permissions (
 create table if not exists public.duel_participants (
   id uuid primary key default gen_random_uuid(),
   duel_id uuid not null references public.duels(id) on delete cascade,
+  matchup_no integer not null default 1,
   label text not null,
   participant_mode public.duel_participant_mode not null default 'profile',
   profile_id uuid references public.profiles(id) on delete set null,
   sort_order integer not null default 0
 );
+
+alter table public.duel_participants
+add column if not exists matchup_no integer not null default 1;
+
+create index if not exists duel_participants_duel_id_matchup_no_idx
+on public.duel_participants (duel_id, matchup_no, sort_order);
 
 create table if not exists public.duel_participant_members (
   id uuid primary key default gen_random_uuid(),

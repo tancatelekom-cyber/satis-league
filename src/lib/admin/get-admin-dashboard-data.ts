@@ -338,6 +338,7 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
             `
               id,
               duel_id,
+              matchup_no,
               label,
               participant_mode,
               profile_id,
@@ -346,6 +347,7 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
             `
           )
           .in("duel_id", duelIds)
+          .order("matchup_no")
           .order("sort_order"),
         duelParticipantIds.length
           ? supabase

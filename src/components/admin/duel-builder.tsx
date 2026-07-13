@@ -29,6 +29,8 @@ type ParticipantRow = {
   profileId: string;
   label: string;
   memberIds: string[];
+  matchupNo: number;
+  side: 1 | 2;
 };
 
 type DuelBuilderProps = {
@@ -40,13 +42,15 @@ function createId(prefix: string) {
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-function createParticipantRow() {
+function createParticipantRow(matchupNo: number, side: 1 | 2): ParticipantRow {
   return {
     id: createId("participant"),
-    type: "profile" as const,
+    type: "profile",
     profileId: "",
     label: "",
-    memberIds: []
+    memberIds: [],
+    matchupNo,
+    side
   };
 }
 
@@ -58,8 +62,8 @@ export function DuelBuilder({ stores, profiles }: DuelBuilderProps) {
     { id: createId("store"), storeName: "", multiplier: "1" }
   ]);
   const [participants, setParticipants] = useState<ParticipantRow[]>([
-    createParticipantRow(),
-    createParticipantRow()
+    createParticipantRow(1, 1),
+    createParticipantRow(1, 2)
   ]);
   const [feedback, setFeedback] = useState("");
 
@@ -134,10 +138,41 @@ export function DuelBuilder({ stores, profiles }: DuelBuilderProps) {
     setFeedback("Yeni duello magaza carpani satiri eklendi.");
   }
 
+  function addMatchupRow() {
+    setParticipants((current) => {
+      const nextMatchupNo =
+        current.reduce((maxValue, participant) => Math.max(maxValue, participant.matchupNo), 0) + 1;
+
+      return [
+        ...current,
+        createParticipantRow(nextMatchupNo, 1),
+        createParticipantRow(nextMatchupNo, 2)
+      ];
+    });
+    setFeedback("Yeni duello eslesmesi eklendi.");
+  }
+
+  function removeMatchupRow(matchupNo: number) {
+    const matchupCount = new Set(participants.map((participant) => participant.matchupNo)).size;
+
+    if (matchupCount <= 1) {
+      setFeedback("Duelloda en az bir eslesme kalmali.");
+      return;
+    }
+
+    setParticipants((current) =>
+      current.filter((participant) => participant.matchupNo !== matchupNo)
+    );
+    setFeedback(`Eslesme ${matchupNo} kaldirildi.`);
+  }
+
   const productsPayload = useMemo(
     () =>
       products
-        .map((product) => `${product.name.trim()}|${product.points.trim() || "1"}|${product.unit.trim() || "adet"}`)
+        .map(
+          (product) =>
+            `${product.name.trim()}|${product.points.trim() || "1"}|${product.unit.trim() || "adet"}`
+        )
         .filter((line) => !line.startsWith("|"))
         .join("\n"),
     [products]
@@ -155,6 +190,8 @@ export function DuelBuilder({ stores, profiles }: DuelBuilderProps) {
   const participantsPayload = useMemo(
     () =>
       participants
+        .slice()
+        .sort((a, b) => a.matchupNo - b.matchupNo || a.side - b.side)
         .map((participant) => {
           if (participant.type === "profile") {
             const selectedProfile = profiles.find((profile) => profile.id === participant.profileId);
@@ -164,7 +201,7 @@ export function DuelBuilder({ stores, profiles }: DuelBuilderProps) {
             }
 
             const visibleLabel = participant.label.trim() || selectedProfile.full_name;
-            return `PROFILE|${selectedProfile.id}|${visibleLabel}`;
+            return `PROFILE|${participant.matchupNo}|${selectedProfile.id}|${visibleLabel}`;
           }
 
           const groupName = participant.label.trim();
@@ -172,108 +209,163 @@ export function DuelBuilder({ stores, profiles }: DuelBuilderProps) {
             return "";
           }
 
-          return `GROUP|${groupName}|${participant.memberIds.join(",")}`;
+          return `GROUP|${participant.matchupNo}|${groupName}|${participant.memberIds.join(",")}`;
         })
         .filter(Boolean)
         .join("\n"),
     [participants, profiles]
   );
 
+  const matchupRows = useMemo(() => {
+    const matchupMap = new Map<number, ParticipantRow[]>();
+
+    participants.forEach((participant) => {
+      const currentRows = matchupMap.get(participant.matchupNo) ?? [];
+      currentRows.push(participant);
+      matchupMap.set(participant.matchupNo, currentRows);
+    });
+
+    return Array.from(matchupMap.entries())
+      .sort((a, b) => a[0] - b[0])
+      .map(([matchupNo, rows]) => ({
+        matchupNo,
+        rows: rows.slice().sort((a, b) => a.side - b.side)
+      }));
+  }, [participants]);
+
   return (
     <>
       <div className="field-group">
         <div className="repeater-header">
           <div>
-            <span>Duello Eslesmesi</span>
+            <span>Duello Eslesmeleri</span>
             <small className="repeater-subtitle">
-              Taraf 1 ile Taraf 2 eslesir. Kisi-kisi veya grup-grup duello kurabilirsiniz.
+              Ayni duelloda birden fazla kisi-kisi veya grup-grup eslesmesi kurabilirsiniz.
             </small>
           </div>
+          <button className="tiny-button approve" onClick={addMatchupRow} type="button">
+            Eslesme Ekle
+          </button>
         </div>
 
         <div className="repeater-list">
-          {participants.map((participant, index) => {
-            const sideLabel = index === 0 ? "Taraf 1" : "Taraf 2";
-            const selectedProfile = profiles.find((profile) => profile.id === participant.profileId) ?? null;
-
-            return (
-              <div key={participant.id} className="repeater-row">
-                <label className="field compact">
-                  <span>{sideLabel} Tipi</span>
-                  <select
-                    onChange={(event) => updateParticipant(participant.id, "type", event.target.value)}
-                    value={participant.type}
+          {matchupRows.map(({ matchupNo, rows }) => (
+            <div key={`matchup-${matchupNo}`} className="field-group">
+              <div className="repeater-header">
+                <div>
+                  <span>Eslesme {matchupNo}</span>
+                  <small className="repeater-subtitle">
+                    Bu blokta iki taraf birbirine karsi yarisir.
+                  </small>
+                </div>
+                {matchupRows.length > 1 ? (
+                  <button
+                    className="tiny-button"
+                    onClick={() => removeMatchupRow(matchupNo)}
+                    type="button"
                   >
-                    <option value="profile">Kisi</option>
-                    <option value="group">Grup</option>
-                  </select>
-                </label>
+                    Sil
+                  </button>
+                ) : null}
+              </div>
 
-                {participant.type === "profile" ? (
-                  <>
-                    <label className="field compact">
-                      <span>{sideLabel} Kisi</span>
-                      <select
-                        onChange={(event) => updateParticipant(participant.id, "profileId", event.target.value)}
-                        value={participant.profileId}
-                      >
-                        <option value="">Kisi secin</option>
-                        {profiles.map((profile) => (
-                          <option key={profile.id} value={profile.id}>
-                            {profile.full_name}
-                            {profile.store_name ? ` | ${profile.store_name}` : ""}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
+              <div className="repeater-list">
+                {rows.map((participant) => {
+                  const sideLabel = participant.side === 1 ? "Taraf 1" : "Taraf 2";
+                  const selectedProfile =
+                    profiles.find((profile) => profile.id === participant.profileId) ?? null;
 
-                    <label className="field compact">
-                      <span>{sideLabel} Gorunen Adi</span>
-                      <input
-                        onChange={(event) => updateParticipant(participant.id, "label", event.target.value)}
-                        placeholder={selectedProfile?.full_name ?? "Secilen kisi adi otomatik gelir"}
-                        value={participant.label}
-                      />
-                    </label>
-                  </>
-                ) : (
-                  <>
-                    <label className="field compact">
-                      <span>{sideLabel} Grup Adi</span>
-                      <input
-                        onChange={(event) => updateParticipant(participant.id, "label", event.target.value)}
-                        placeholder="Ornek: 61 Sube Ekibi"
-                        value={participant.label}
-                      />
-                    </label>
+                  return (
+                    <div key={participant.id} className="repeater-row">
+                      <label className="field compact">
+                        <span>{sideLabel} Tipi</span>
+                        <select
+                          onChange={(event) =>
+                            updateParticipant(participant.id, "type", event.target.value)
+                          }
+                          value={participant.type}
+                        >
+                          <option value="profile">Kisi</option>
+                          <option value="group">Grup</option>
+                        </select>
+                      </label>
 
-                    <div className="field compact">
-                      <span>{sideLabel} Grup Uyeleri</span>
-                      <div className="checkbox-grid permission-checkbox-grid">
-                        {profiles.map((profile) => (
-                          <label key={`${participant.id}-${profile.id}`} className="checkbox-card">
-                            <input
-                              checked={participant.memberIds.includes(profile.id)}
-                              onChange={() => toggleMember(participant.id, profile.id)}
-                              type="checkbox"
-                            />
-                            <span>
-                              {profile.full_name}
-                              {profile.store_name ? ` | ${profile.store_name}` : ""}
-                            </span>
+                      {participant.type === "profile" ? (
+                        <>
+                          <label className="field compact">
+                            <span>{sideLabel} Kisi</span>
+                            <select
+                              onChange={(event) =>
+                                updateParticipant(participant.id, "profileId", event.target.value)
+                              }
+                              value={participant.profileId}
+                            >
+                              <option value="">Kisi secin</option>
+                              {profiles.map((profile) => (
+                                <option key={profile.id} value={profile.id}>
+                                  {profile.full_name}
+                                  {profile.store_name ? ` | ${profile.store_name}` : ""}
+                                </option>
+                              ))}
+                            </select>
                           </label>
-                        ))}
+
+                          <label className="field compact">
+                            <span>{sideLabel} Gorunen Adi</span>
+                            <input
+                              onChange={(event) =>
+                                updateParticipant(participant.id, "label", event.target.value)
+                              }
+                              placeholder={
+                                selectedProfile?.full_name ?? "Secilen kisi adi otomatik gelir"
+                              }
+                              value={participant.label}
+                            />
+                          </label>
+                        </>
+                      ) : (
+                        <>
+                          <label className="field compact">
+                            <span>{sideLabel} Grup Adi</span>
+                            <input
+                              onChange={(event) =>
+                                updateParticipant(participant.id, "label", event.target.value)
+                              }
+                              placeholder="Ornek: 61 Sube Ekibi"
+                              value={participant.label}
+                            />
+                          </label>
+
+                          <div className="field compact">
+                            <span>{sideLabel} Grup Uyeleri</span>
+                            <div className="checkbox-grid permission-checkbox-grid">
+                              {profiles.map((profile) => (
+                                <label key={`${participant.id}-${profile.id}`} className="checkbox-card">
+                                  <input
+                                    checked={participant.memberIds.includes(profile.id)}
+                                    onChange={() => toggleMember(participant.id, profile.id)}
+                                    type="checkbox"
+                                  />
+                                  <span>
+                                    {profile.full_name}
+                                    {profile.store_name ? ` | ${profile.store_name}` : ""}
+                                  </span>
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      <div className="repeater-actions">
+                        <span>{sideLabel}</span>
                       </div>
                     </div>
-                  </>
-                )}
-
-                <div className="repeater-actions">
-                  <span>{sideLabel}</span>
-                </div>
+                  );
+                })}
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       </div>
 
@@ -357,7 +449,9 @@ export function DuelBuilder({ stores, profiles }: DuelBuilderProps) {
               <label className="field compact">
                 <span>Magaza</span>
                 <select
-                  onChange={(event) => updateStoreMultiplier(item.id, "storeName", event.target.value)}
+                  onChange={(event) =>
+                    updateStoreMultiplier(item.id, "storeName", event.target.value)
+                  }
                   value={item.storeName}
                 >
                   <option value="">Magaza secin</option>
@@ -373,7 +467,9 @@ export function DuelBuilder({ stores, profiles }: DuelBuilderProps) {
                 <span>Carpan</span>
                 <input
                   min="0"
-                  onChange={(event) => updateStoreMultiplier(item.id, "multiplier", event.target.value)}
+                  onChange={(event) =>
+                    updateStoreMultiplier(item.id, "multiplier", event.target.value)
+                  }
                   step="0.01"
                   type="number"
                   value={item.multiplier}

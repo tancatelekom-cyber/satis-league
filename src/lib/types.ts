@@ -242,6 +242,7 @@ export type DuelEntryPermissionRecord = {
 export type DuelParticipantRecord = {
   id: string;
   duel_id: string;
+  matchup_no: number;
   label: string;
   participant_mode: DuelParticipantMode;
   profile_id: string | null;

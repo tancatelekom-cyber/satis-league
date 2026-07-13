@@ -208,7 +208,7 @@ export default async function CampaignAdminPage({ searchParams }: CampaignAdminP
         <article className="admin-card">
           <h3>Duello Olustur</h3>
           <p className="subtle">
-            Iki tarafli duello kurun. Ornek: Ahmet vs Mehmet veya grup vs grup. Giris yetkisi ve magaza carpanlari ayrica tanimlanir.
+            Ayni duelloda birden fazla eslesme kurun. Ornek: Ahmet vs Mehmet ve Hasan vs Cem. Giris yetkisi ve magaza carpanlari ayrica tanimlanir.
           </p>
 
           <form action={createDuelAction} className="admin-form">
@@ -569,6 +569,19 @@ export default async function CampaignAdminPage({ searchParams }: CampaignAdminP
                 const duelPermissions = data.duelEntryPermissionRows.filter((item) => item.duel_id === duel.id);
                 const duelMultipliers = data.duelMultiplierRows.filter((item) => item.duel_id === duel.id);
                 const duelScoreMap = new Map<string, number>();
+                const duelMatchups = Array.from(
+                  duelParticipants.reduce((map, participant) => {
+                    const currentRows = map.get(participant.matchup_no) ?? [];
+                    currentRows.push(participant);
+                    map.set(participant.matchup_no, currentRows);
+                    return map;
+                  }, new Map<number, typeof duelParticipants>())
+                )
+                  .sort((a, b) => a[0] - b[0])
+                  .map(([matchupNo, rows]) => ({
+                    matchupNo,
+                    rows: rows.slice().sort((a, b) => a.sort_order - b.sort_order)
+                  }));
 
                 data.duelEntries
                   .filter((entry) => entry.duel_id === duel.id)
@@ -589,9 +602,17 @@ export default async function CampaignAdminPage({ searchParams }: CampaignAdminP
                       </p>
                       <p className="subtle">
                         Katilimcilar:{" "}
-                        {duelParticipants
-                          .map((participant) => `${participant.label} (${participant.participant_mode === "group" ? "Grup" : "Kisi"})`)
-                          .join(", ") || "Katilimci yok"}
+                        {duelMatchups
+                          .map(
+                            (matchup) =>
+                              `Eslesme ${matchup.matchupNo}: ${matchup.rows
+                                .map(
+                                  (participant) =>
+                                    `${participant.label} (${participant.participant_mode === "group" ? "Grup" : "Kisi"})`
+                                )
+                                .join(" vs ")}`
+                          )
+                          .join(" | ") || "Katilimci yok"}
                       </p>
                       <p className="subtle">
                         Urunler:{" "}
@@ -609,9 +630,17 @@ export default async function CampaignAdminPage({ searchParams }: CampaignAdminP
                       </p>
                       <p className="subtle">
                         Skor durumu:{" "}
-                        {duelParticipants
-                          .map((participant) => `${participant.label}: ${Number(duelScoreMap.get(participant.id) ?? 0).toFixed(0)}`)
-                          .join(" | ")}
+                        {duelMatchups
+                          .map(
+                            (matchup) =>
+                              `Eslesme ${matchup.matchupNo}: ${matchup.rows
+                                .map(
+                                  (participant) =>
+                                    `${participant.label}: ${Number(duelScoreMap.get(participant.id) ?? 0).toFixed(0)}`
+                                )
+                                .join(" | ")}`
+                          )
+                          .join(" || ")}
                       </p>
                     </div>
 

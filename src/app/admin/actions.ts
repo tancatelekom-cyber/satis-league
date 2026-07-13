@@ -171,6 +171,7 @@ function parseAllowedEntryProfileIds(formData: FormData) {
 type ParsedDuelParticipant =
   | {
       participant_mode: "profile";
+      matchup_no: number;
       label: string;
       profile_id: string;
       sort_order: number;
@@ -178,6 +179,7 @@ type ParsedDuelParticipant =
     }
   | {
       participant_mode: "group";
+      matchup_no: number;
       label: string;
       profile_id: null;
       sort_order: number;
@@ -191,9 +193,9 @@ async function parseDuelParticipants(rawParticipants: string) {
     .filter(Boolean)
     .map((line, index) => ({ line, index }));
 
-  if (rows.length !== 2) {
+  if (rows.length < 2) {
     throw new Error(
-      "Duello icin tam olarak iki taraf tanimlamalisiniz. Ornek: Ahmet vs Mehmet veya Grup A vs Grup B."
+      "Duello icin en az bir eslesme tanimlamalisiniz. Ornek: Ahmet vs Mehmet veya Hasan vs Cem."
     );
   }
 
@@ -206,9 +208,14 @@ async function parseDuelParticipants(rawParticipants: string) {
   const approvedProfileRows = (profiles ?? []).filter((profile) => !profile.is_on_leave);
   const profileMap = new Map(approvedProfileRows.map((profile) => [profile.id, profile]));
 
-  return rows.map(({ line, index }) => {
+  const parsedRows = rows.map(({ line, index }) => {
     const parts = line.split("|").map((part) => part.trim());
-    const [kind, firstValue, secondValue] = parts;
+    const [kind, matchupValue, firstValue, secondValue] = parts;
+    const matchupNo = Number(matchupValue || "1");
+
+    if (!Number.isInteger(matchupNo) || matchupNo <= 0) {
+      throw new Error(`Duello eslesme numarasi gecersiz: ${line}`);
+    }
 
     if (kind === "PROFILE") {
       const matchedProfile = profileMap.get(firstValue);
@@ -219,6 +226,7 @@ async function parseDuelParticipants(rawParticipants: string) {
 
       return {
         participant_mode: "profile" as const,
+        matchup_no: matchupNo,
         label: secondValue || matchedProfile.full_name,
         profile_id: matchedProfile.id,
         sort_order: index,
@@ -248,6 +256,7 @@ async function parseDuelParticipants(rawParticipants: string) {
 
       return {
         participant_mode: "group" as const,
+        matchup_no: matchupNo,
         label: firstValue,
         profile_id: null,
         sort_order: index,
@@ -257,6 +266,24 @@ async function parseDuelParticipants(rawParticipants: string) {
 
     throw new Error(`Duello katilimci tipi anlasilamadi: ${line}`);
   });
+
+  const matchupCounts = new Map<number, number>();
+  parsedRows.forEach((participant) => {
+    matchupCounts.set(
+      participant.matchup_no,
+      Number(matchupCounts.get(participant.matchup_no) ?? 0) + 1
+    );
+  });
+
+  const invalidMatchup = Array.from(matchupCounts.entries()).find(([, count]) => count !== 2);
+
+  if (invalidMatchup) {
+    throw new Error(
+      `Her eslesmede tam olarak iki taraf olmali. Eslesme ${invalidMatchup[0]} hatali.`
+    );
+  }
+
+  return parsedRows;
 }
 
 async function calculateEmployeeSeasonSale(input: {
@@ -2107,6 +2134,7 @@ export async function createDuelAction(formData: FormData) {
     .insert(
       participants.map((participant) => ({
         duel_id: duelId,
+        matchup_no: participant.matchup_no,
         label: participant.label,
         participant_mode: participant.participant_mode,
         profile_id: participant.profile_id,

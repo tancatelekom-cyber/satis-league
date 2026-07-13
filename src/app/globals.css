@@ -6126,9 +6126,9 @@ textarea::placeholder {
   display: grid;
   overflow: hidden;
   border-radius: 22px;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(4, 92, 96, 0.14);
-  box-shadow: 0 16px 36px rgba(9, 44, 76, 0.08);
+  background: rgba(252, 254, 255, 0.98);
+  border: 1px solid rgba(4, 92, 96, 0.18);
+  box-shadow: 0 14px 28px rgba(9, 44, 76, 0.07);
 }
 
 .duel-matchup-compact-head,
@@ -6141,19 +6141,20 @@ textarea::placeholder {
 }
 
 .duel-matchup-compact-head {
-  background: rgba(4, 92, 96, 0.08);
-  border-bottom: 1px solid rgba(4, 92, 96, 0.08);
+  background: #dceaf1;
+  border-bottom: 1px solid rgba(4, 92, 96, 0.12);
 }
 
 .duel-matchup-compact-head span {
-  color: #56708c;
-  font-size: 0.74rem;
+  color: #284a6f;
+  font-size: 0.8rem;
   font-weight: 800;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 
 .duel-matchup-compact-row {
+  background: rgba(255, 255, 255, 0.96);
   border-bottom: 1px solid rgba(4, 92, 96, 0.08);
 }
 
@@ -6168,17 +6169,30 @@ textarea::placeholder {
   width: 32px;
   height: 32px;
   border-radius: 999px;
-  background: rgba(255, 224, 115, 0.22);
-  color: #10203b;
+  background: #f4eccd;
+  color: #284a6f;
   font-size: 0.8rem;
   font-weight: 800;
 }
 
 .duel-matchup-compact-name {
-  color: #10203b;
-  font-size: 0.88rem;
-  font-weight: 700;
+  color: #163457;
+  font-size: 0.98rem;
+  font-weight: 600;
   line-height: 1.25;
+}
+
+.duel-matchup-compact-person {
+  display: grid;
+  gap: 4px;
+  align-content: center;
+}
+
+.duel-matchup-compact-person small {
+  color: #35506f;
+  font-size: 0.8rem;
+  font-weight: 500;
+  line-height: 1.15;
 }
 
 .duel-matchup-compact-scores {
@@ -6189,16 +6203,16 @@ textarea::placeholder {
 }
 
 .duel-matchup-compact-scores strong {
-  color: #10203b;
+  color: #132f4d;
   font-size: 0.88rem;
-  font-weight: 700;
+  font-weight: 600;
   text-align: center;
 }
 
 .duel-matchup-compact-vs {
-  color: #7b8ea6;
-  font-size: 0.76rem;
-  font-weight: 700;
+  color: #8092a8;
+  font-size: 0.7rem;
+  font-weight: 600;
   text-transform: uppercase;
 }
 
@@ -6219,7 +6233,7 @@ textarea::placeholder {
   }
 
   .duel-matchup-compact-head span {
-    font-size: 0.58rem;
+    font-size: 0.64rem;
     letter-spacing: 0.03em;
   }
 
@@ -6230,8 +6244,17 @@ textarea::placeholder {
   }
 
   .duel-matchup-compact-name {
-    font-size: 0.67rem;
+    font-size: 0.74rem;
     line-height: 1.15;
+  }
+
+  .duel-matchup-compact-person {
+    gap: 2px;
+  }
+
+  .duel-matchup-compact-person small {
+    font-size: 0.62rem;
+    line-height: 1.05;
   }
 
   .duel-matchup-compact-scores {

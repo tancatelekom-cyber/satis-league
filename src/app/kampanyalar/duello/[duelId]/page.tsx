@@ -194,7 +194,7 @@ export default async function DuelDetailPage({ params, searchParams }: DuelDetai
                   <span>No</span>
                   <span>Kisi</span>
                   <span>Rakip</span>
-                  <span>Puanlar</span>
+                  <span>Sonuc</span>
                 </div>
 
                 {duel.matchups.map((matchup) => {
@@ -211,33 +211,35 @@ export default async function DuelDetailPage({ params, searchParams }: DuelDetai
                       <span className="duel-matchup-compact-badge">{matchup.matchupNo}</span>
                       <span
                         className={[
-                          "duel-matchup-compact-name",
+                          "duel-matchup-compact-person",
                           leftWins ? "duel-matchup-compact-winner" : "",
                           isDraw ? "duel-matchup-compact-draw" : ""
                         ]
                           .filter(Boolean)
                           .join(" ")}
                       >
-                        {leftParticipant?.label ?? "Taraf 1"}
+                        <strong className="duel-matchup-compact-name">{leftParticipant?.label ?? "Taraf 1"}</strong>
+                        <small>{scoreLabel(leftScore, duel.scoring)}</small>
                       </span>
                       <span
                         className={[
-                          "duel-matchup-compact-name",
+                          "duel-matchup-compact-person",
                           rightWins ? "duel-matchup-compact-winner" : "",
                           isDraw ? "duel-matchup-compact-draw" : ""
                         ]
                           .filter(Boolean)
                           .join(" ")}
                       >
-                        {rightParticipant?.label ?? "Taraf 2"}
+                        <strong className="duel-matchup-compact-name">{rightParticipant?.label ?? "Taraf 2"}</strong>
+                        <small>{scoreLabel(rightScore, duel.scoring)}</small>
                       </span>
                       <span className="duel-matchup-compact-scores">
-                        <strong className={leftWins ? "duel-matchup-compact-winner" : isDraw ? "duel-matchup-compact-draw" : ""}>
-                          {scoreLabel(leftScore, duel.scoring)}
+                        <strong className={leftWins ? "duel-matchup-compact-winner" : rightWins ? "" : "duel-matchup-compact-draw"}>
+                          {leftWins ? "Kazanan" : isDraw ? "Berabere" : "Kaybeden"}
                         </strong>
                         <span className="duel-matchup-compact-vs">vs</span>
-                        <strong className={rightWins ? "duel-matchup-compact-winner" : isDraw ? "duel-matchup-compact-draw" : ""}>
-                          {scoreLabel(rightScore, duel.scoring)}
+                        <strong className={rightWins ? "duel-matchup-compact-winner" : leftWins ? "" : "duel-matchup-compact-draw"}>
+                          {rightWins ? "Kazanan" : isDraw ? "Berabere" : "Kaybeden"}
                         </strong>
                       </span>
                     </div>

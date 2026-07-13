@@ -192,9 +192,8 @@ export default async function DuelDetailPage({ params, searchParams }: DuelDetai
               <div className="duel-matchup-compact">
                 <div className="duel-matchup-compact-head">
                   <span>No</span>
-                  <span>Kisi</span>
-                  <span>Rakip</span>
-                  <span>Sonuc</span>
+                  <span>A</span>
+                  <span>B</span>
                 </div>
 
                 {duel.matchups.map((matchup) => {
@@ -232,15 +231,6 @@ export default async function DuelDetailPage({ params, searchParams }: DuelDetai
                       >
                         <strong className="duel-matchup-compact-name">{rightParticipant?.label ?? "Taraf 2"}</strong>
                         <small>{scoreLabel(rightScore, duel.scoring)}</small>
-                      </span>
-                      <span className="duel-matchup-compact-scores">
-                        <strong className={leftWins ? "duel-matchup-compact-winner" : rightWins ? "" : "duel-matchup-compact-draw"}>
-                          {leftWins ? "Kazanan" : isDraw ? "Berabere" : "Kaybeden"}
-                        </strong>
-                        <span className="duel-matchup-compact-vs">vs</span>
-                        <strong className={rightWins ? "duel-matchup-compact-winner" : leftWins ? "" : "duel-matchup-compact-draw"}>
-                          {rightWins ? "Kazanan" : isDraw ? "Berabere" : "Kaybeden"}
-                        </strong>
                       </span>
                     </div>
                   );

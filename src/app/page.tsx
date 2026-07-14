@@ -1,4 +1,5 @@
 import { canShowAutoPopupForRole, getAutoPopupSettingsMap } from "@/lib/auto-popup-settings";
+import { cookies } from "next/headers";
 import Link from "next/link";
 import { requireUser } from "@/lib/auth/require-user";
 import { getCampaignDashboardData } from "@/lib/campaign/get-campaign-dashboard-data";
@@ -9,6 +10,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { SeasonRecord, type UserRole } from "@/lib/types";
 import { normalizeWeekStart } from "@/lib/work-schedules";
 import { HomePopupAnnouncement } from "@/components/home-popup-announcement";
+import { APP_SESSION_COOKIE } from "@/lib/auth/app-session";
 import { DuelScoreArena } from "@/components/duel/duel-score-arena";
 import { getDuelDashboardData } from "@/lib/duel/get-duel-dashboard-data";
 
@@ -194,6 +196,8 @@ function buildWeeklyScheduleReminderPopup(
 
 export default async function HomePage() {
   const user = await requireUser();
+  const cookieStore = await cookies();
+  const popupSessionKey = `${user.id}:${cookieStore.get(APP_SESSION_COOKIE)?.value ?? "session"}`;
 
   const admin = createAdminClient();
   const now = new Date();
@@ -475,7 +479,9 @@ export default async function HomePage() {
 
   return (
     <main>
-      {popupAnnouncements.length > 0 ? <HomePopupAnnouncement announcements={popupAnnouncements} /> : null}
+      {popupAnnouncements.length > 0 ? (
+        <HomePopupAnnouncement announcements={popupAnnouncements} sessionKey={popupSessionKey} />
+      ) : null}
 
       {activeHomeDuels.length > 0 ? (
         <section className="home-active-duels">

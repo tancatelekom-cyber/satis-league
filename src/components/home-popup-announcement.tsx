@@ -1,12 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { PopupAnnouncementRecord } from "@/lib/popup-announcements";
 
 type HomePopupAnnouncementProps = {
   announcements: PopupAnnouncementRecord[];
+  sessionKey: string;
 };
+
+const POPUP_SESSION_STORAGE_PREFIX = "tanca:home-popups-shown:";
+const POPUP_DAILY_ACK_STORAGE_PREFIX = "tanca:home-popup-read:";
+
+function localDayKey(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 
 function isPopupHeadingLine(line: string) {
   const normalized = line.trim().toLowerCase();
@@ -51,10 +62,13 @@ function isPopupAlertItemLine(lines: string[], index: number) {
   return false;
 }
 
-export function HomePopupAnnouncement({ announcements }: HomePopupAnnouncementProps) {
+export function HomePopupAnnouncement({ announcements, sessionKey }: HomePopupAnnouncementProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isImageOpen, setIsImageOpen] = useState(false);
-  const announcement = announcements[currentIndex] ?? null;
+  const [canShowPopups, setCanShowPopups] = useState(false);
+  const [visibleAnnouncements, setVisibleAnnouncements] = useState<PopupAnnouncementRecord[]>([]);
+  const sessionCheckedRef = useRef(false);
+  const announcement = visibleAnnouncements[currentIndex] ?? null;
   const currentLink = typeof announcement?.link_url === "string" ? announcement.link_url.trim() : "";
   const hasLink = currentLink.length > 0;
   const isInternalLink = currentLink.startsWith("/");
@@ -64,17 +78,73 @@ export function HomePopupAnnouncement({ announcements }: HomePopupAnnouncementPr
     .filter((line, index, lines) => !(line.length === 0 && lines[index - 1]?.length === 0));
 
   useEffect(() => {
+    if (sessionCheckedRef.current || !sessionKey || announcements.length === 0) {
+      return;
+    }
+
+    sessionCheckedRef.current = true;
+    const storageKey = `${POPUP_SESSION_STORAGE_PREFIX}${sessionKey}`;
+    const todayKey = localDayKey();
+    let unreadAnnouncements = announcements;
+
+    try {
+      if (window.localStorage.getItem(storageKey) === "1") {
+        setCanShowPopups(false);
+        return;
+      }
+
+      window.localStorage.setItem(storageKey, "1");
+      unreadAnnouncements = announcements.filter(
+        (item) =>
+          window.localStorage.getItem(
+            `${POPUP_DAILY_ACK_STORAGE_PREFIX}${todayKey}:${item.id}`
+          ) !== "1"
+      );
+      Object.keys(window.localStorage)
+        .filter(
+          (key) => key.startsWith(POPUP_SESSION_STORAGE_PREFIX) && key !== storageKey
+        )
+        .forEach((key) => window.localStorage.removeItem(key));
+
+      Object.keys(window.localStorage)
+        .filter(
+          (key) =>
+            key.startsWith(POPUP_DAILY_ACK_STORAGE_PREFIX) &&
+            !key.startsWith(`${POPUP_DAILY_ACK_STORAGE_PREFIX}${todayKey}:`)
+        )
+        .forEach((key) => window.localStorage.removeItem(key));
+    } catch {
+      // Depolama kapaliysa popup mevcut sayfa omrunde yine bir kez gosterilir.
+    }
+
     setCurrentIndex(0);
     setIsImageOpen(false);
-  }, [announcements]);
+    setVisibleAnnouncements(unreadAnnouncements);
+    setCanShowPopups(unreadAnnouncements.length > 0);
+  }, [announcements, sessionKey]);
 
-  if (!announcement) {
+  if (!canShowPopups || !announcement) {
     return null;
   }
 
   function closePopup() {
     setIsImageOpen(false);
     setCurrentIndex((current) => current + 1);
+  }
+
+  function acknowledgePopup() {
+    if (announcement) {
+      try {
+        window.localStorage.setItem(
+          `${POPUP_DAILY_ACK_STORAGE_PREFIX}${localDayKey()}:${announcement.id}`,
+          "1"
+        );
+      } catch {
+        // Depolama kapali olsa da mevcut popup kapatilir.
+      }
+    }
+
+    closePopup();
   }
 
   return (
@@ -147,8 +217,11 @@ export function HomePopupAnnouncement({ announcements }: HomePopupAnnouncementPr
               </a>
             )
           ) : null}
-          <button className="button-primary" type="button" onClick={closePopup}>
+          <button className="button-secondary" type="button" onClick={closePopup}>
             Kapat
+          </button>
+          <button className="button-primary" type="button" onClick={acknowledgePopup}>
+            Okudum, Anladim
           </button>
         </div>
       </article>

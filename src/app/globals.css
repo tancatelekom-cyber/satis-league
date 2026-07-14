@@ -6158,7 +6158,7 @@ textarea::placeholder {
 .duel-matchup-compact-head,
 .duel-matchup-compact-row {
   display: grid;
-  grid-template-columns: 54px minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: center;
   gap: 10px;
   padding: 10px 14px;
@@ -6187,19 +6187,6 @@ textarea::placeholder {
   border-bottom: none;
 }
 
-.duel-matchup-compact-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 999px;
-  background: #f4eccd;
-  color: #284a6f;
-  font-size: 0.8rem;
-  font-weight: 800;
-}
-
 .duel-matchup-compact-name {
   color: #163457;
   font-size: 0.98rem;
@@ -6221,6 +6208,12 @@ textarea::placeholder {
   font-weight: 500;
   line-height: 1.15;
   white-space: nowrap;
+}
+
+.duel-matchup-compact-person .duel-matchup-score {
+  font-size: 1.35rem;
+  font-weight: 900;
+  line-height: 1.1;
 }
 
 .duel-matchup-compact-person .duel-current-outcome {
@@ -6263,7 +6256,7 @@ textarea::placeholder {
 @media (max-width: 720px) {
   .duel-matchup-compact-head,
   .duel-matchup-compact-row {
-    grid-template-columns: 38px minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 6px;
     padding: 8px 9px;
   }
@@ -6271,12 +6264,6 @@ textarea::placeholder {
   .duel-matchup-compact-head span {
     font-size: 0.64rem;
     letter-spacing: 0.03em;
-  }
-
-  .duel-matchup-compact-badge {
-    width: 24px;
-    height: 24px;
-    font-size: 0.66rem;
   }
 
   .duel-matchup-compact-name {

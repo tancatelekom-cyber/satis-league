@@ -191,7 +191,6 @@ export default async function DuelDetailPage({ params, searchParams }: DuelDetai
 
               <div className="duel-matchup-compact">
                 <div className="duel-matchup-compact-head">
-                  <span>No</span>
                   <span>A</span>
                   <span>B</span>
                 </div>
@@ -207,7 +206,6 @@ export default async function DuelDetailPage({ params, searchParams }: DuelDetai
 
                   return (
                     <div key={`matchup-${matchup.matchupNo}`} className="duel-matchup-compact-row">
-                      <span className="duel-matchup-compact-badge">{matchup.matchupNo}</span>
                       <span
                         className={[
                           "duel-matchup-compact-person",
@@ -218,7 +216,7 @@ export default async function DuelDetailPage({ params, searchParams }: DuelDetai
                           .join(" ")}
                       >
                         <strong className="duel-matchup-compact-name">{leftParticipant?.label ?? "Taraf 1"}</strong>
-                        <small>{scoreLabel(leftScore, duel.scoring)}</small>
+                        <small className="duel-matchup-score">{scoreLabel(leftScore, duel.scoring)}</small>
                         <small className="duel-current-outcome">
                           {leftParticipant?.currentResult === "draw"
                             ? "Su an berabere"
@@ -236,7 +234,7 @@ export default async function DuelDetailPage({ params, searchParams }: DuelDetai
                           .join(" ")}
                       >
                         <strong className="duel-matchup-compact-name">{rightParticipant?.label ?? "Taraf 2"}</strong>
-                        <small>{scoreLabel(rightScore, duel.scoring)}</small>
+                        <small className="duel-matchup-score">{scoreLabel(rightScore, duel.scoring)}</small>
                         <small className="duel-current-outcome">
                           {rightParticipant?.currentResult === "draw"
                             ? "Su an berabere"

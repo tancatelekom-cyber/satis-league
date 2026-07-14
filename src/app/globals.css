@@ -6790,6 +6790,20 @@ textarea::placeholder {
   white-space: nowrap;
 }
 
+.campaign-matrix-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.campaign-matrix-excel-button {
+  border-color: rgba(18, 130, 77, 0.28);
+  background: linear-gradient(135deg, #d6f5df, #b8e6c8);
+  color: #0d5b35;
+  text-decoration: none;
+}
+
 .campaign-matrix-wrap {
   overflow-x: auto;
   overflow-y: auto;

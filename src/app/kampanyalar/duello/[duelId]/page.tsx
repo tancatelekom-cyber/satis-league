@@ -225,6 +225,7 @@ export default async function DuelDetailPage({ params, searchParams }: DuelDetai
 
           <CampaignSummaryMatrix
             columns={matrixColumns}
+            exportHref={`/kampanyalar/duello/${duel.id}/excel`}
             rows={duel.productMatrix}
             subtitle="Her katilimci veya grup icin urun bazli anlik ozet"
             title="Duello Urun Ozetleri"

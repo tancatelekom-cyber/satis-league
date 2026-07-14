@@ -12,6 +12,7 @@ type CampaignSummaryMatrixProps = {
     participantCells: number[];
     total: number;
   }>;
+  exportHref?: string;
 };
 
 function MatrixTable({
@@ -48,7 +49,8 @@ export function CampaignSummaryMatrix({
   title,
   subtitle,
   columns,
-  rows
+  rows,
+  exportHref
 }: CampaignSummaryMatrixProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -59,14 +61,21 @@ export function CampaignSummaryMatrix({
           <strong>{title}</strong>
           <span>{subtitle}</span>
         </div>
-        <button
-          type="button"
-          className="campaign-matrix-open-button"
-          onClick={() => setIsOpen(true)}
-          aria-label="Urun ozet tablosunu tam ekran ac"
-        >
-          Tam Ekran Ac
-        </button>
+        <div className="campaign-matrix-actions">
+          {exportHref ? (
+            <a className="campaign-matrix-open-button campaign-matrix-excel-button" href={exportHref}>
+              Excel Indir
+            </a>
+          ) : null}
+          <button
+            type="button"
+            className="campaign-matrix-open-button"
+            onClick={() => setIsOpen(true)}
+            aria-label="Urun ozet tablosunu tam ekran ac"
+          >
+            Tam Ekran Ac
+          </button>
+        </div>
       </div>
 
       <div className="campaign-matrix-wrap">

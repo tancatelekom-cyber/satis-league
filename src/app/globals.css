@@ -6071,6 +6071,29 @@ textarea::placeholder {
   margin-bottom: 4px;
 }
 
+.live-sale-target-select > span {
+  color: #173b61 !important;
+}
+
+.live-sale-target-select select {
+  color: #102f50 !important;
+  border-color: rgba(24, 72, 116, 0.24);
+  background: #ffffff;
+  color-scheme: light;
+  font-weight: 800;
+}
+
+.live-sale-target-select select:focus {
+  border-color: #167b80;
+  box-shadow: 0 0 0 3px rgba(22, 123, 128, 0.14);
+}
+
+.live-sale-target-select select option {
+  color: #102f50;
+  background: #ffffff;
+  font-weight: 700;
+}
+
 .live-sale-summary {
   display: grid;
   gap: 10px;

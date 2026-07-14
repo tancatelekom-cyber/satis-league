@@ -6295,6 +6295,35 @@ textarea::placeholder {
 }
 
 /* Game-style duel arena */
+.home-active-duels {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.home-duel-arena-card {
+  border: 1px solid rgba(43, 77, 119, 0.16);
+  background: linear-gradient(180deg, rgba(249, 252, 255, 0.98), rgba(230, 240, 249, 0.96));
+}
+
+.home-duel-arena-head {
+  align-items: center;
+}
+
+.home-duel-live-badge {
+  display: inline-flex;
+  width: fit-content;
+  margin-bottom: 5px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.1);
+}
+
 .duel-matchup-compact {
   border: 2px solid #273d64;
   border-radius: 26px;
@@ -6509,6 +6538,33 @@ textarea::placeholder {
 }
 
 @media (max-width: 720px) {
+  .home-active-duels {
+    margin-bottom: 14px;
+  }
+
+  .home-duel-arena-card {
+    padding: 10px 8px;
+  }
+
+  .home-duel-arena-head {
+    gap: 8px;
+    margin-bottom: 9px;
+  }
+
+  .home-duel-arena-head h2 {
+    font-size: 1rem;
+  }
+
+  .home-duel-arena-head p {
+    display: none;
+  }
+
+  .home-duel-arena-head .button-secondary {
+    min-height: 34px;
+    padding: 7px 9px;
+    font-size: 0.7rem;
+  }
+
   .duel-matchup-board,
   .duel-matchup-compact {
     width: 100%;

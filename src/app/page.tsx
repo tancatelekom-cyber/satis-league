@@ -9,6 +9,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { SeasonRecord, type UserRole } from "@/lib/types";
 import { normalizeWeekStart } from "@/lib/work-schedules";
 import { HomePopupAnnouncement } from "@/components/home-popup-announcement";
+import { DuelScoreArena } from "@/components/duel/duel-score-arena";
+import { getDuelDashboardData } from "@/lib/duel/get-duel-dashboard-data";
 
 export const dynamic = "force-dynamic";
 
@@ -201,6 +203,7 @@ export default async function HomePage() {
   const monthEnd = toDateString(new Date(now.getFullYear(), now.getMonth() + 1, 0));
 
   const campaignDashboardPromise = getCampaignDashboardData(user.id);
+  const duelDashboardPromise = getDuelDashboardData(user.id);
   const seasonDataPromise = Promise.all([
     admin
       .from("seasons")
@@ -219,7 +222,10 @@ export default async function HomePage() {
       .lte("entry_date", monthEnd)
   ]);
 
-  const campaignDashboard = await campaignDashboardPromise;
+  const [campaignDashboard, duelDashboard] = await Promise.all([
+    campaignDashboardPromise,
+    duelDashboardPromise
+  ]);
   const autoPopupSettingsMap =
     campaignDashboard?.profile.approval === "approved" ? await getAutoPopupSettingsMap() : new Map();
   const activePopupAnnouncementsPromise =
@@ -363,6 +369,8 @@ export default async function HomePage() {
             new Date(item.campaign.end_at).getTime() >= now.getTime()
         ) ?? null
       : null;
+  const activeHomeDuels =
+    duelDashboard?.profile.approval === "approved" ? duelDashboard.activeDuels : [];
 
   const [{ data: seasons }, { data: profiles }, { data: stores }, { data: seasonSales }] = await seasonDataPromise;
   const [activePopupAnnouncements, inactiveLoginPopup, documentIssuePopup, goalReminderPopup, weeklySchedulePopup] = await Promise.all([
@@ -468,6 +476,30 @@ export default async function HomePage() {
   return (
     <main>
       {popupAnnouncements.length > 0 ? <HomePopupAnnouncement announcements={popupAnnouncements} /> : null}
+
+      {activeHomeDuels.length > 0 ? (
+        <section className="home-active-duels">
+          {activeHomeDuels.map((duel) => (
+            <article key={duel.id} className="guide-card home-duel-arena-card">
+              <div className="section-title compact-title home-duel-arena-head">
+                <div>
+                  <span className="home-duel-live-badge">CANLI DUELLO</span>
+                  <h2>{duel.name}</h2>
+                  <p>Anlik skorlar, kazanan ve kaybeden sonuclari</p>
+                </div>
+                <Link
+                  className="button-secondary"
+                  href={`/kampanyalar/duello/${duel.id}?view=leaderboard`}
+                >
+                  Duelloyu Ac
+                </Link>
+              </div>
+
+              <DuelScoreArena matchups={duel.matchups} scoring={duel.scoring} />
+            </article>
+          ))}
+        </section>
+      ) : null}
 
       {liveCampaignLeaderboard ? (
         <>

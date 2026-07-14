@@ -495,7 +495,7 @@ export default async function HomePage() {
                 </Link>
               </div>
 
-              <DuelScoreArena matchups={duel.matchups} scoring={duel.scoring} />
+              <DuelScoreArena matchups={duel.matchups} scoring={duel.scoring} title={duel.name} />
             </article>
           ))}
         </section>

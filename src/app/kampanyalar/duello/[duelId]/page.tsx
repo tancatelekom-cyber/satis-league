@@ -190,7 +190,7 @@ export default async function DuelDetailPage({ params, searchParams }: DuelDetai
                 </div>
               </div>
 
-              <DuelScoreArena matchups={duel.matchups} scoring={duel.scoring} />
+              <DuelScoreArena matchups={duel.matchups} scoring={duel.scoring} title={duel.name} />
             </div>
           ) : null}
 

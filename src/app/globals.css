@@ -6022,6 +6022,30 @@ textarea::placeholder {
   align-items: center;
 }
 
+.campaign-edit-details[open] {
+  flex: 1 0 100%;
+  width: 100%;
+}
+
+.campaign-edit-details > summary {
+  width: fit-content;
+  list-style: none;
+  cursor: pointer;
+}
+
+.campaign-edit-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.campaign-edit-form {
+  width: 100%;
+  margin-top: 14px;
+  padding: 16px;
+  border: 1px solid rgba(4, 92, 96, 0.14);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
 .sale-form {
   display: grid;
   gap: 14px;
@@ -6197,6 +6221,21 @@ textarea::placeholder {
   font-weight: 500;
   line-height: 1.15;
   white-space: nowrap;
+}
+
+.duel-matchup-compact-person .duel-current-outcome {
+  max-width: 100%;
+  color: #5d3d07;
+  font-weight: 700;
+  line-height: 1.35;
+  white-space: normal;
+}
+
+.duel-leaderboard-outcome {
+  margin-top: 5px;
+  color: #5d3d07;
+  font-size: 0.86rem;
+  font-weight: 700;
 }
 
 .duel-matchup-compact-person .duel-matchup-compact-name {

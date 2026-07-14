@@ -170,30 +170,81 @@ function parseAllowedEntryProfileIds(formData: FormData) {
 
 type ParsedDuelParticipant =
   | {
+      id: string | null;
       participant_mode: "profile";
       matchup_no: number;
       label: string;
       profile_id: string;
       sort_order: number;
       member_profile_ids: string[];
+      winner_description: string | null;
+      loser_description: string | null;
     }
   | {
+      id: string | null;
       participant_mode: "group";
       matchup_no: number;
       label: string;
       profile_id: null;
       sort_order: number;
       member_profile_ids: string[];
+      winner_description: string | null;
+      loser_description: string | null;
     };
 
-async function parseDuelParticipants(rawParticipants: string) {
-  const rows = rawParticipants
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((line, index) => ({ line, index }));
+type ParsedDuelProduct = {
+  id: string | null;
+  name: string;
+  base_points: number;
+  unit_label: string;
+  sort_order: number;
+};
 
-  if (rows.length < 2) {
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function parseDuelProducts(rawProducts: string): ParsedDuelProduct[] {
+  let rows: Array<{ id?: unknown; name?: unknown; points?: unknown; unit?: unknown }>;
+
+  try {
+    rows = JSON.parse(rawProducts) as typeof rows;
+  } catch {
+    throw new Error("Duello urunleri okunamadi.");
+  }
+
+  if (!Array.isArray(rows)) {
+    throw new Error("Duello urunleri gecersiz.");
+  }
+
+  return rows
+    .map((row, index) => ({
+      id: uuidPattern.test(String(row.id ?? "")) ? String(row.id) : null,
+      name: String(row.name ?? "").trim(),
+      base_points: Number(row.points ?? 1),
+      unit_label: String(row.unit ?? "adet").trim() || "adet",
+      sort_order: index
+    }))
+    .filter((row) => row.name && Number.isFinite(row.base_points));
+}
+
+async function parseDuelParticipants(rawParticipants: string) {
+  let rows: Array<{
+    id?: unknown;
+    kind?: unknown;
+    matchupNo?: unknown;
+    profileId?: unknown;
+    label?: unknown;
+    memberIds?: unknown;
+    winnerDescription?: unknown;
+    loserDescription?: unknown;
+  }>;
+
+  try {
+    rows = JSON.parse(rawParticipants) as typeof rows;
+  } catch {
+    throw new Error("Duello katilimcilari okunamadi.");
+  }
+
+  if (!Array.isArray(rows) || rows.length < 2) {
     throw new Error(
       "Duello icin en az bir eslesme tanimlamalisiniz. Ornek: Ahmet vs Mehmet veya Hasan vs Cem."
     );
@@ -208,44 +259,49 @@ async function parseDuelParticipants(rawParticipants: string) {
   const approvedProfileRows = (profiles ?? []).filter((profile) => !profile.is_on_leave);
   const profileMap = new Map(approvedProfileRows.map((profile) => [profile.id, profile]));
 
-  const parsedRows = rows.map(({ line, index }) => {
-    const parts = line.split("|").map((part) => part.trim());
-    const [kind, matchupValue, firstValue, secondValue] = parts;
-    const matchupNo = Number(matchupValue || "1");
+  const parsedRows = rows.map((row, index) => {
+    const kind = String(row.kind ?? "");
+    const matchupNo = Number(row.matchupNo ?? 1);
+    const profileId = String(row.profileId ?? "").trim();
+    const label = String(row.label ?? "").trim();
+    const winnerDescription = String(row.winnerDescription ?? "").trim() || null;
+    const loserDescription = String(row.loserDescription ?? "").trim() || null;
 
     if (!Number.isInteger(matchupNo) || matchupNo <= 0) {
-      throw new Error(`Duello eslesme numarasi gecersiz: ${line}`);
+      throw new Error("Duello eslesme numarasi gecersiz.");
     }
 
     if (kind === "PROFILE") {
-      const matchedProfile = profileMap.get(firstValue);
+      const matchedProfile = profileMap.get(profileId);
 
       if (!matchedProfile) {
-        throw new Error(`Duello kisisi bulunamadi: ${firstValue}`);
+        throw new Error(`Duello kisisi bulunamadi: ${profileId}`);
       }
 
       return {
+        id: uuidPattern.test(String(row.id ?? "")) ? String(row.id) : null,
         participant_mode: "profile" as const,
         matchup_no: matchupNo,
-        label: secondValue || matchedProfile.full_name,
+        label: label || matchedProfile.full_name,
         profile_id: matchedProfile.id,
         sort_order: index,
-        member_profile_ids: [matchedProfile.id]
+        member_profile_ids: [matchedProfile.id],
+        winner_description: winnerDescription,
+        loser_description: loserDescription
       };
     }
 
     if (kind === "GROUP") {
-      const memberProfileIds = (secondValue ?? "")
-        .split(",")
-        .map((value) => value.trim())
-        .filter(Boolean);
+      const memberProfileIds = Array.isArray(row.memberIds)
+        ? row.memberIds.map((value) => String(value).trim()).filter(Boolean)
+        : [];
 
-      if (!firstValue) {
+      if (!label) {
         throw new Error("Duello grup adini bos birakamazsiniz.");
       }
 
       if (memberProfileIds.length === 0) {
-        throw new Error(`Duello grubu icin uye secilmedi: ${firstValue}`);
+        throw new Error(`Duello grubu icin uye secilmedi: ${label}`);
       }
 
       memberProfileIds.forEach((profileId) => {
@@ -255,16 +311,19 @@ async function parseDuelParticipants(rawParticipants: string) {
       });
 
       return {
+        id: uuidPattern.test(String(row.id ?? "")) ? String(row.id) : null,
         participant_mode: "group" as const,
         matchup_no: matchupNo,
-        label: firstValue,
+        label,
         profile_id: null,
         sort_order: index,
-        member_profile_ids: memberProfileIds
+        member_profile_ids: memberProfileIds,
+        winner_description: winnerDescription,
+        loser_description: loserDescription
       };
     }
 
-    throw new Error(`Duello katilimci tipi anlasilamadi: ${line}`);
+    throw new Error("Duello katilimci tipi anlasilamadi.");
   });
 
   const matchupCounts = new Map<number, number>();
@@ -2065,7 +2124,7 @@ export async function createDuelAction(formData: FormData) {
   const duelStoreMultipliersText = String(formData.get("duelStoreMultipliers") ?? "").trim();
   const duelParticipantsText = String(formData.get("duelParticipants") ?? "").trim();
   const allowedEntryProfileIds = parseAllowedEntryProfileIds(formData);
-  const products = parseProducts(duelProductsText);
+  let products: ParsedDuelProduct[] = [];
   const startAt = localDateTimeToIso(startAtInput);
   const endAt = localDateTimeToIso(endAtInput);
   let participants: ParsedDuelParticipant[] = [];
@@ -2075,12 +2134,18 @@ export async function createDuelAction(formData: FormData) {
     redirectWithMessage("Duello icin ad, baslangic ve bitis zamani zorunlu.", "error", redirectTo);
   }
 
-  if (products.length === 0) {
-    redirectWithMessage("Duello icin en az bir urun tanimlamalisiniz.", "error", redirectTo);
-  }
-
   if (new Date(startAt).getTime() >= new Date(endAt).getTime()) {
     redirectWithMessage("Duello bitis zamani baslangic zamanindan sonra olmali.", "error", redirectTo);
+  }
+
+  try {
+    products = parseDuelProducts(duelProductsText);
+  } catch (error) {
+    redirectWithMessage(error instanceof Error ? error.message : "Duello urunleri okunamadi.", "error", redirectTo);
+  }
+
+  if (products.length === 0) {
+    redirectWithMessage("Duello icin en az bir urun tanimlamalisiniz.", "error", redirectTo);
   }
 
   try {
@@ -2121,7 +2186,10 @@ export async function createDuelAction(formData: FormData) {
   const { error: productError } = await supabase.from("duel_products").insert(
     products.map((product) => ({
       duel_id: duelId,
-      ...product
+      name: product.name,
+      base_points: product.base_points,
+      unit_label: product.unit_label,
+      sort_order: product.sort_order
     }))
   );
 
@@ -2138,7 +2206,9 @@ export async function createDuelAction(formData: FormData) {
         label: participant.label,
         participant_mode: participant.participant_mode,
         profile_id: participant.profile_id,
-        sort_order: participant.sort_order
+        sort_order: participant.sort_order,
+        winner_description: participant.winner_description,
+        loser_description: participant.loser_description
       }))
     )
     .select("id, sort_order");
@@ -2218,6 +2288,219 @@ export async function createDuelAction(formData: FormData) {
   refreshCampaignPages();
   revalidatePath(`/kampanyalar/duello/${duelId}`);
   redirectWithMessage("Duello basariyla olusturuldu.", "success", redirectTo);
+}
+
+export async function updateDuelAction(formData: FormData) {
+  await requireAdminAccess();
+  const redirectTo = getRedirectTo(formData);
+  const supabase = createAdminClient();
+  const duelId = String(formData.get("duelId") ?? "").trim();
+  const name = String(formData.get("name") ?? "").trim();
+  const description = String(formData.get("description") ?? "").trim();
+  const scoring = String(formData.get("scoring") ?? "points");
+  const startAtInput = String(formData.get("startAt") ?? "").trim();
+  const endAtInput = String(formData.get("endAt") ?? "").trim();
+  const startAt = localDateTimeToIso(startAtInput);
+  const endAt = localDateTimeToIso(endAtInput);
+  const allowedEntryProfileIds = parseAllowedEntryProfileIds(formData);
+  let products: ParsedDuelProduct[] = [];
+  let participants: ParsedDuelParticipant[] = [];
+  let storeMultipliers: Array<{ store_id: string; multiplier: number }> = [];
+
+  if (!duelId || !name || !startAt || !endAt) {
+    redirectWithMessage("Duello icin ad, baslangic ve bitis zamani zorunlu.", "error", redirectTo);
+  }
+
+  if (new Date(startAt).getTime() >= new Date(endAt).getTime()) {
+    redirectWithMessage("Duello bitis zamani baslangic zamanindan sonra olmali.", "error", redirectTo);
+  }
+
+  try {
+    products = parseDuelProducts(String(formData.get("duelProducts") ?? ""));
+    participants = await parseDuelParticipants(String(formData.get("duelParticipants") ?? ""));
+    storeMultipliers = await parseStoreMultipliers(
+      String(formData.get("duelStoreMultipliers") ?? "")
+    );
+  } catch (error) {
+    redirectWithMessage(error instanceof Error ? error.message : "Duello bilgileri okunamadi.", "error", redirectTo);
+  }
+
+  if (products.length === 0) {
+    redirectWithMessage("Duello icin en az bir urun tanimlamalisiniz.", "error", redirectTo);
+  }
+
+  const [{ data: existingProducts }, { data: existingParticipants }] = await Promise.all([
+    supabase.from("duel_products").select("id").eq("duel_id", duelId),
+    supabase.from("duel_participants").select("id").eq("duel_id", duelId)
+  ]);
+  const existingProductIds = new Set((existingProducts ?? []).map((row) => row.id));
+  const existingParticipantIds = new Set((existingParticipants ?? []).map((row) => row.id));
+
+  if (
+    products.some((product) => product.id && !existingProductIds.has(product.id)) ||
+    participants.some((participant) => participant.id && !existingParticipantIds.has(participant.id))
+  ) {
+    redirectWithMessage("Duello kayitlari eslesmedi. Sayfayi yenileyip tekrar deneyin.", "error", redirectTo);
+  }
+
+  const { error: duelError } = await supabase
+    .from("duels")
+    .update({ name, description: description || null, scoring, start_at: startAt, end_at: endAt })
+    .eq("id", duelId);
+
+  if (duelError) {
+    redirectWithMessage(`Duello guncellenemedi: ${duelError.message}`, "error", redirectTo);
+  }
+
+  for (const product of products.filter((row) => row.id)) {
+    const { error } = await supabase
+      .from("duel_products")
+      .update({
+        name: product.name,
+        base_points: product.base_points,
+        unit_label: product.unit_label,
+        sort_order: product.sort_order
+      })
+      .eq("id", product.id!)
+      .eq("duel_id", duelId);
+    if (error) {
+      redirectWithMessage(`Duello urunu guncellenemedi: ${error.message}`, "error", redirectTo);
+    }
+  }
+
+  const newProducts = products.filter((row) => !row.id);
+  if (newProducts.length) {
+    const { error } = await supabase.from("duel_products").insert(
+      newProducts.map((product) => ({
+        duel_id: duelId,
+        name: product.name,
+        base_points: product.base_points,
+        unit_label: product.unit_label,
+        sort_order: product.sort_order
+      }))
+    );
+    if (error) {
+      redirectWithMessage(`Yeni duello urunleri eklenemedi: ${error.message}`, "error", redirectTo);
+    }
+  }
+
+  const keptProductIds = products.flatMap((row) => (row.id ? [row.id] : []));
+  const removedProductIds = [...existingProductIds].filter((id) => !keptProductIds.includes(id));
+  if (removedProductIds.length) {
+    await supabase.from("duel_products").delete().in("id", removedProductIds).eq("duel_id", duelId);
+  }
+
+  for (const participant of participants.filter((row) => row.id)) {
+    const { error } = await supabase
+      .from("duel_participants")
+      .update({
+        matchup_no: participant.matchup_no,
+        label: participant.label,
+        participant_mode: participant.participant_mode,
+        profile_id: participant.profile_id,
+        sort_order: participant.sort_order,
+        winner_description: participant.winner_description,
+        loser_description: participant.loser_description
+      })
+      .eq("id", participant.id!)
+      .eq("duel_id", duelId);
+    if (error) {
+      redirectWithMessage(`Duello tarafi guncellenemedi: ${error.message}`, "error", redirectTo);
+    }
+  }
+
+  const newParticipants = participants.filter((row) => !row.id);
+  let insertedParticipants: Array<{ id: string; sort_order: number }> = [];
+  if (newParticipants.length) {
+    const { data, error } = await supabase
+      .from("duel_participants")
+      .insert(
+        newParticipants.map((participant) => ({
+          duel_id: duelId,
+          matchup_no: participant.matchup_no,
+          label: participant.label,
+          participant_mode: participant.participant_mode,
+          profile_id: participant.profile_id,
+          sort_order: participant.sort_order,
+          winner_description: participant.winner_description,
+          loser_description: participant.loser_description
+        }))
+      )
+      .select("id, sort_order");
+    if (error) {
+      redirectWithMessage(`Yeni duello taraflari eklenemedi: ${error.message}`, "error", redirectTo);
+    }
+    insertedParticipants = data ?? [];
+  }
+
+  const participantIdByOrder = new Map<number, string>();
+  participants.forEach((participant) => {
+    if (participant.id) participantIdByOrder.set(participant.sort_order, participant.id);
+  });
+  insertedParticipants.forEach((participant) =>
+    participantIdByOrder.set(participant.sort_order, participant.id)
+  );
+
+  const keptParticipantIds = [...participantIdByOrder.values()];
+  const removedParticipantIds = [...existingParticipantIds].filter(
+    (id) => !keptParticipantIds.includes(id)
+  );
+  if (removedParticipantIds.length) {
+    await supabase.from("duel_participants").delete().in("id", removedParticipantIds).eq("duel_id", duelId);
+  }
+
+  if (keptParticipantIds.length) {
+    const { error } = await supabase
+      .from("duel_participant_members")
+      .delete()
+      .in("duel_participant_id", keptParticipantIds);
+    if (error) {
+      redirectWithMessage(`Eski grup uyeleri temizlenemedi: ${error.message}`, "error", redirectTo);
+    }
+  }
+
+  const memberInserts = participants.flatMap((participant) => {
+    const participantId = participantIdByOrder.get(participant.sort_order);
+    return participantId && participant.participant_mode === "group"
+      ? participant.member_profile_ids.map((profileId) => ({
+          duel_participant_id: participantId,
+          profile_id: profileId
+        }))
+      : [];
+  });
+  if (memberInserts.length) {
+    const { error } = await supabase.from("duel_participant_members").insert(memberInserts);
+    if (error) {
+      redirectWithMessage(`Duello grup uyeleri kaydedilemedi: ${error.message}`, "error", redirectTo);
+    }
+  }
+
+  await Promise.all([
+    supabase.from("duel_store_multipliers").delete().eq("duel_id", duelId),
+    supabase.from("duel_entry_permissions").delete().eq("duel_id", duelId)
+  ]);
+
+  if (storeMultipliers.length) {
+    const { error } = await supabase.from("duel_store_multipliers").insert(
+      storeMultipliers.map((item) => ({ duel_id: duelId, ...item }))
+    );
+    if (error) {
+      redirectWithMessage(`Duello magaza carpanlari kaydedilemedi: ${error.message}`, "error", redirectTo);
+    }
+  }
+
+  if (allowedEntryProfileIds.length) {
+    const { error } = await supabase.from("duel_entry_permissions").insert(
+      allowedEntryProfileIds.map((profileId) => ({ duel_id: duelId, profile_id: profileId }))
+    );
+    if (error) {
+      redirectWithMessage(`Duello giris yetkileri kaydedilemedi: ${error.message}`, "error", redirectTo);
+    }
+  }
+
+  refreshCampaignPages();
+  revalidatePath(`/kampanyalar/duello/${duelId}`);
+  redirectWithMessage("Duello kurgusu guncellendi.", "success", redirectTo);
 }
 
 export async function endDuelAction(formData: FormData) {

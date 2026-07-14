@@ -262,6 +262,12 @@ create table if not exists public.duel_participants (
 alter table public.duel_participants
 add column if not exists matchup_no integer not null default 1;
 
+alter table public.duel_participants
+add column if not exists winner_description text;
+
+alter table public.duel_participants
+add column if not exists loser_description text;
+
 create index if not exists duel_participants_duel_id_matchup_no_idx
 on public.duel_participants (duel_id, matchup_no, sort_order);
 

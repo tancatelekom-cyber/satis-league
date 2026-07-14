@@ -7,7 +7,8 @@ import {
   endCampaignAction,
   endDuelAction,
   updateCampaignSaleAction,
-  updateCampaignAction
+  updateCampaignAction,
+  updateDuelAction
 } from "@/app/admin/actions";
 import { AdminCampaignSaleForm } from "@/components/admin/admin-campaign-sale-form";
 import { AdminSectionNav } from "@/components/admin/admin-section-nav";
@@ -649,6 +650,112 @@ export default async function CampaignAdminPage({ searchParams }: CampaignAdminP
                         <span>Durum</span>
                         <strong>{duel.is_active ? "Aktif" : "Pasif"}</strong>
                       </div>
+
+                      <details className="campaign-edit-details">
+                        <summary className="tiny-button approve">Duzenle</summary>
+                        <form action={updateDuelAction} className="admin-form campaign-edit-form">
+                          <input name="redirectTo" type="hidden" value="/admin/kampanyalar" />
+                          <input name="duelId" type="hidden" value={duel.id} />
+
+                          <div className="auth-grid">
+                            <label className="field">
+                              <span>Duello Adi</span>
+                              <input defaultValue={duel.name} name="name" required />
+                            </label>
+                            <label className="field">
+                              <span>Olcum Tipi</span>
+                              <select defaultValue={duel.scoring} name="scoring">
+                                <option value="points">Puan</option>
+                                <option value="quantity">Adet</option>
+                              </select>
+                            </label>
+                            <label className="field">
+                              <span>Baslangic Tarih ve Saat</span>
+                              <input
+                                defaultValue={isoToLocalDateTimeInput(duel.start_at)}
+                                name="startAt"
+                                required
+                                type="datetime-local"
+                              />
+                            </label>
+                            <label className="field">
+                              <span>Bitis Tarih ve Saat</span>
+                              <input
+                                defaultValue={isoToLocalDateTimeInput(duel.end_at)}
+                                name="endAt"
+                                required
+                                type="datetime-local"
+                              />
+                            </label>
+                          </div>
+
+                          <label className="field">
+                            <span>Aciklama</span>
+                            <textarea
+                              className="text-area"
+                              defaultValue={duel.description ?? ""}
+                              name="description"
+                              rows={3}
+                            />
+                          </label>
+
+                          <div className="field">
+                            <span>Duello Giris Yetkisi Olan Profiller</span>
+                            <div className="checkbox-grid permission-checkbox-grid">
+                              {data.approvedCampaignPermissionProfiles.map((profile) => (
+                                <label key={`edit-duel-${duel.id}-${profile.id}`} className="checkbox-card">
+                                  <input
+                                    defaultChecked={duelPermissions.some(
+                                      (permission) => permission.profile_id === profile.id
+                                    )}
+                                    name="allowedEntryProfileIds"
+                                    type="checkbox"
+                                    value={profile.id}
+                                  />
+                                  <span>{profile.full_name}</span>
+                                </label>
+                              ))}
+                            </div>
+                            <small className="subtle">Bos birakirsan tum onayli kullanicilar giris yapabilir.</small>
+                          </div>
+
+                          <DuelBuilder
+                            initialValues={{
+                              products: duelProducts.map((product) => ({
+                                id: product.id,
+                                name: product.name,
+                                base_points: Number(product.base_points),
+                                unit_label: product.unit_label
+                              })),
+                              storeMultipliers: duelMultipliers.map((item) => ({
+                                storeName: item.store?.name ?? "",
+                                multiplier: Number(item.multiplier)
+                              })),
+                              participants: duelParticipants
+                                .slice()
+                                .sort((a, b) => a.matchup_no - b.matchup_no || a.sort_order - b.sort_order)
+                                .map((participant) => ({
+                                  id: participant.id,
+                                  type: participant.participant_mode,
+                                  profileId: participant.profile_id ?? "",
+                                  label: participant.label,
+                                  memberIds: data.duelParticipantMemberRows
+                                    .filter((member) => member.duel_participant_id === participant.id)
+                                    .map((member) => member.profile_id),
+                                  matchupNo: participant.matchup_no,
+                                  winnerDescription: participant.winner_description ?? "",
+                                  loserDescription: participant.loser_description ?? ""
+                                }))
+                            }}
+                            profiles={duelSelectableProfiles}
+                            stores={data.storeRows.filter((store) => store.is_active)}
+                          />
+
+                          <button className="button-primary" type="submit">
+                            Degisiklikleri Kaydet
+                          </button>
+                        </form>
+                      </details>
 
                       <form action={endDuelAction}>
                         <input name="redirectTo" type="hidden" value="/admin/kampanyalar" />

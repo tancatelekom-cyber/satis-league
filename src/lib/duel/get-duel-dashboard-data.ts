@@ -45,6 +45,8 @@ type DuelParticipantRecord = {
   participant_mode: DuelParticipantMode;
   profile_id: string | null;
   sort_order: number;
+  winner_description: string | null;
+  loser_description: string | null;
   profile: {
     full_name: string;
   } | null;
@@ -81,6 +83,10 @@ type DuelParticipantView = {
   score: number;
   memberLabels: string[];
   isViewerParticipant: boolean;
+  winnerDescription: string | null;
+  loserDescription: string | null;
+  currentResult: "winning" | "losing" | "draw";
+  currentDescription: string | null;
 };
 
 type DuelMatchupView = {
@@ -144,7 +150,7 @@ function buildDuelCard(input: {
     productTotalsByParticipant.set(entry.participant_id, productMap);
   });
 
-  const participantViews = input.participants.map((participant) => {
+  const participantViews: DuelParticipantView[] = input.participants.map((participant) => {
     const memberLabels = input.participantMembers
       .filter((member) => member.duel_participant_id === participant.id)
       .map((member) => member.profile?.full_name ?? "Uye");
@@ -162,8 +168,30 @@ function buildDuelCard(input: {
       participantMode: participant.participant_mode,
       score: Number(scoreMap.get(participant.id) ?? 0),
       memberLabels,
-      isViewerParticipant
+      isViewerParticipant,
+      winnerDescription: participant.winner_description,
+      loserDescription: participant.loser_description,
+      currentResult: "draw",
+      currentDescription: null
     };
+  });
+
+  participantViews.forEach((participant) => {
+    const opponentScores = participantViews
+      .filter(
+        (candidate) =>
+          candidate.matchupNo === participant.matchupNo && candidate.id !== participant.id
+      )
+      .map((candidate) => candidate.score);
+    const opponentScore = opponentScores.length ? Math.max(...opponentScores) : participant.score;
+
+    if (participant.score > opponentScore) {
+      participant.currentResult = "winning";
+      participant.currentDescription = participant.winnerDescription;
+    } else if (participant.score < opponentScore) {
+      participant.currentResult = "losing";
+      participant.currentDescription = participant.loserDescription;
+    }
   });
 
   const canSubmit =
@@ -304,6 +332,8 @@ export async function getDuelDashboardData(userId: string): Promise<DuelDashboar
               participant_mode,
               profile_id,
               sort_order,
+              winner_description,
+              loser_description,
               profile:profiles(full_name)
             `
           )

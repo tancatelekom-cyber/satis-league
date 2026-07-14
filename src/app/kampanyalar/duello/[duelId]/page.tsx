@@ -219,6 +219,12 @@ export default async function DuelDetailPage({ params, searchParams }: DuelDetai
                       >
                         <strong className="duel-matchup-compact-name">{leftParticipant?.label ?? "Taraf 1"}</strong>
                         <small>{scoreLabel(leftScore, duel.scoring)}</small>
+                        <small className="duel-current-outcome">
+                          {leftParticipant?.currentResult === "draw"
+                            ? "Su an berabere"
+                            : leftParticipant?.currentDescription ??
+                              (leftParticipant?.currentResult === "winning" ? "Su an onde" : "Su an geride")}
+                        </small>
                       </span>
                       <span
                         className={[
@@ -231,6 +237,12 @@ export default async function DuelDetailPage({ params, searchParams }: DuelDetai
                       >
                         <strong className="duel-matchup-compact-name">{rightParticipant?.label ?? "Taraf 2"}</strong>
                         <small>{scoreLabel(rightScore, duel.scoring)}</small>
+                        <small className="duel-current-outcome">
+                          {rightParticipant?.currentResult === "draw"
+                            ? "Su an berabere"
+                            : rightParticipant?.currentDescription ??
+                              (rightParticipant?.currentResult === "winning" ? "Su an onde" : "Su an geride")}
+                        </small>
                       </span>
                     </div>
                   );
@@ -251,6 +263,13 @@ export default async function DuelDetailPage({ params, searchParams }: DuelDetai
                     {participant.participantMode === "group"
                       ? participant.memberLabels.join(", ")
                       : "Kisi bazli toplam skor"}
+                  </p>
+                  <p className="duel-leaderboard-outcome">
+                    {participant.currentResult === "draw"
+                      ? "Mevcut durum: Berabere"
+                      : `${participant.currentResult === "winning" ? "Mevcut durum: Kazaniyor" : "Mevcut durum: Kaybediyor"}${
+                          participant.currentDescription ? ` - ${participant.currentDescription}` : ""
+                        }`}
                   </p>
                 </div>
                 <div className="score">

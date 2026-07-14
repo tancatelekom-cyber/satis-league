@@ -247,6 +247,8 @@ export type DuelParticipantRecord = {
   participant_mode: DuelParticipantMode;
   profile_id: string | null;
   sort_order: number;
+  winner_description: string | null;
+  loser_description: string | null;
   profile: {
     full_name: string;
   } | null;

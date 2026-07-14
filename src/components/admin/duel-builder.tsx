@@ -31,11 +31,32 @@ type ParticipantRow = {
   memberIds: string[];
   matchupNo: number;
   side: 1 | 2;
+  winnerDescription: string;
+  loserDescription: string;
 };
 
 type DuelBuilderProps = {
   stores: AdminStore[];
   profiles: SelectableProfile[];
+  initialValues?: {
+    products: Array<{
+      id: string;
+      name: string;
+      base_points: number;
+      unit_label: string;
+    }>;
+    storeMultipliers: Array<{ storeName: string; multiplier: number }>;
+    participants: Array<{
+      id: string;
+      type: "profile" | "group";
+      profileId: string;
+      label: string;
+      memberIds: string[];
+      matchupNo: number;
+      winnerDescription: string;
+      loserDescription: string;
+    }>;
+  };
 };
 
 function createId(prefix: string) {
@@ -50,21 +71,44 @@ function createParticipantRow(matchupNo: number, side: 1 | 2): ParticipantRow {
     label: "",
     memberIds: [],
     matchupNo,
-    side
+    side,
+    winnerDescription: "",
+    loserDescription: ""
   };
 }
 
-export function DuelBuilder({ stores, profiles }: DuelBuilderProps) {
-  const [products, setProducts] = useState<ProductRow[]>([
-    { id: createId("product"), name: "", points: "1", unit: "adet" }
-  ]);
-  const [storeMultipliers, setStoreMultipliers] = useState<StoreMultiplierRow[]>([
-    { id: createId("store"), storeName: "", multiplier: "1" }
-  ]);
-  const [participants, setParticipants] = useState<ParticipantRow[]>([
-    createParticipantRow(1, 1),
-    createParticipantRow(1, 2)
-  ]);
+export function DuelBuilder({ stores, profiles, initialValues }: DuelBuilderProps) {
+  const [products, setProducts] = useState<ProductRow[]>(() =>
+    initialValues?.products.length
+      ? initialValues.products.map((product) => ({
+          id: product.id,
+          name: product.name,
+          points: String(product.base_points),
+          unit: product.unit_label
+        }))
+      : [{ id: createId("product"), name: "", points: "1", unit: "adet" }]
+  );
+  const [storeMultipliers, setStoreMultipliers] = useState<StoreMultiplierRow[]>(() =>
+    initialValues?.storeMultipliers.length
+      ? initialValues.storeMultipliers.map((item) => ({
+          id: createId("store"),
+          storeName: item.storeName,
+          multiplier: String(item.multiplier)
+        }))
+      : [{ id: createId("store"), storeName: "", multiplier: "1" }]
+  );
+  const [participants, setParticipants] = useState<ParticipantRow[]>(() => {
+    if (!initialValues?.participants.length) {
+      return [createParticipantRow(1, 1), createParticipantRow(1, 2)];
+    }
+
+    const sideCounts = new Map<number, number>();
+    return initialValues.participants.map((participant) => {
+      const side = (sideCounts.get(participant.matchupNo) ?? 0) + 1;
+      sideCounts.set(participant.matchupNo, side);
+      return { ...participant, side: side === 1 ? 1 : 2 };
+    });
+  });
   const [feedback, setFeedback] = useState("");
 
   function updateProduct(id: string, field: keyof ProductRow, value: string) {
@@ -168,13 +212,16 @@ export function DuelBuilder({ stores, profiles }: DuelBuilderProps) {
 
   const productsPayload = useMemo(
     () =>
-      products
-        .map(
-          (product) =>
-            `${product.name.trim()}|${product.points.trim() || "1"}|${product.unit.trim() || "adet"}`
-        )
-        .filter((line) => !line.startsWith("|"))
-        .join("\n"),
+      JSON.stringify(
+        products
+          .filter((product) => product.name.trim())
+          .map((product) => ({
+            id: product.id,
+            name: product.name.trim(),
+            points: product.points.trim() || "1",
+            unit: product.unit.trim() || "adet"
+          }))
+      ),
     [products]
   );
 
@@ -189,7 +236,7 @@ export function DuelBuilder({ stores, profiles }: DuelBuilderProps) {
 
   const participantsPayload = useMemo(
     () =>
-      participants
+      JSON.stringify(participants
         .slice()
         .sort((a, b) => a.matchupNo - b.matchupNo || a.side - b.side)
         .map((participant) => {
@@ -201,7 +248,16 @@ export function DuelBuilder({ stores, profiles }: DuelBuilderProps) {
             }
 
             const visibleLabel = participant.label.trim() || selectedProfile.full_name;
-            return `PROFILE|${participant.matchupNo}|${selectedProfile.id}|${visibleLabel}`;
+            return {
+              id: participant.id,
+              kind: "PROFILE",
+              matchupNo: participant.matchupNo,
+              profileId: selectedProfile.id,
+              label: visibleLabel,
+              memberIds: [selectedProfile.id],
+              winnerDescription: participant.winnerDescription.trim(),
+              loserDescription: participant.loserDescription.trim()
+            };
           }
 
           const groupName = participant.label.trim();
@@ -209,10 +265,19 @@ export function DuelBuilder({ stores, profiles }: DuelBuilderProps) {
             return "";
           }
 
-          return `GROUP|${participant.matchupNo}|${groupName}|${participant.memberIds.join(",")}`;
+          return {
+            id: participant.id,
+            kind: "GROUP",
+            matchupNo: participant.matchupNo,
+            profileId: null,
+            label: groupName,
+            memberIds: participant.memberIds,
+            winnerDescription: participant.winnerDescription.trim(),
+            loserDescription: participant.loserDescription.trim()
+          };
         })
         .filter(Boolean)
-        .join("\n"),
+      ),
     [participants, profiles]
   );
 
@@ -356,6 +421,40 @@ export function DuelBuilder({ stores, profiles }: DuelBuilderProps) {
                           </div>
                         </>
                       )}
+
+                      <label className="field compact">
+                        <span>{sideLabel} Kazanirsa Ne Olur?</span>
+                        <textarea
+                          className="text-area"
+                          onChange={(event) =>
+                            updateParticipant(
+                              participant.id,
+                              "winnerDescription",
+                              event.target.value
+                            )
+                          }
+                          placeholder="Ornek: 1.000 TL prim kazanir"
+                          rows={2}
+                          value={participant.winnerDescription}
+                        />
+                      </label>
+
+                      <label className="field compact">
+                        <span>{sideLabel} Kaybederse Ne Olur?</span>
+                        <textarea
+                          className="text-area"
+                          onChange={(event) =>
+                            updateParticipant(
+                              participant.id,
+                              "loserDescription",
+                              event.target.value
+                            )
+                          }
+                          placeholder="Ornek: Ek gorevi tamamlar"
+                          rows={2}
+                          value={participant.loserDescription}
+                        />
+                      </label>
 
                       <div className="repeater-actions">
                         <span>{sideLabel}</span>

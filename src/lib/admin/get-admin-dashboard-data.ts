@@ -343,6 +343,8 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
               participant_mode,
               profile_id,
               sort_order,
+              winner_description,
+              loser_description,
               profile:profiles(full_name)
             `
           )

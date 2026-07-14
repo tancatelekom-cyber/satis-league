@@ -225,9 +225,11 @@ export default async function DuelDetailPage({ params, searchParams }: DuelDetai
                         <small className="duel-matchup-score">{scoreLabel(leftScore, duel.scoring)}</small>
                         <small className="duel-current-outcome">
                           {leftParticipant?.currentResult === "draw"
-                            ? "Su an berabere"
-                            : leftParticipant?.currentDescription ??
-                              (leftParticipant?.currentResult === "winning" ? "Su an onde" : "Su an geride")}
+                            ? "Sonuc: Su an berabere"
+                            : `${leftParticipant?.currentResult === "winning" ? "Odul" : "Sonuc"}: ${
+                                leftParticipant?.currentDescription ??
+                                (leftParticipant?.currentResult === "winning" ? "Su an onde" : "Su an geride")
+                              }`}
                         </small>
                       </span>
                       <span className="duel-clash-mark" aria-label="karsilasma">
@@ -253,9 +255,11 @@ export default async function DuelDetailPage({ params, searchParams }: DuelDetai
                         <small className="duel-matchup-score">{scoreLabel(rightScore, duel.scoring)}</small>
                         <small className="duel-current-outcome">
                           {rightParticipant?.currentResult === "draw"
-                            ? "Su an berabere"
-                            : rightParticipant?.currentDescription ??
-                              (rightParticipant?.currentResult === "winning" ? "Su an onde" : "Su an geride")}
+                            ? "Sonuc: Su an berabere"
+                            : `${rightParticipant?.currentResult === "winning" ? "Odul" : "Sonuc"}: ${
+                                rightParticipant?.currentDescription ??
+                                (rightParticipant?.currentResult === "winning" ? "Su an onde" : "Su an geride")
+                              }`}
                         </small>
                       </span>
                     </div>

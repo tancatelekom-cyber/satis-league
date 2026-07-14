@@ -6555,7 +6555,17 @@ textarea::placeholder {
   }
 
   .duel-matchup-compact-person .duel-current-outcome {
-    display: none;
+    display: -webkit-box;
+    max-width: 100%;
+    overflow: hidden;
+    color: #dce9f7;
+    font-size: 0.48rem;
+    font-weight: 700;
+    line-height: 1.2;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
   }
 
   .duel-player-status {

@@ -191,8 +191,9 @@ export default async function DuelDetailPage({ params, searchParams }: DuelDetai
 
               <div className="duel-matchup-compact">
                 <div className="duel-matchup-compact-head">
-                  <span>A</span>
-                  <span>B</span>
+                  <span>RAKIP A</span>
+                  <span aria-hidden="true"></span>
+                  <span>RAKIP B</span>
                 </div>
 
                 {duel.matchups.map((matchup) => {
@@ -209,12 +210,16 @@ export default async function DuelDetailPage({ params, searchParams }: DuelDetai
                       <span
                         className={[
                           "duel-matchup-compact-person",
+                          "duel-matchup-side-left",
                           leftWins ? "duel-matchup-compact-winner" : "",
                           isDraw ? "duel-matchup-compact-draw" : ""
                         ]
                           .filter(Boolean)
                           .join(" ")}
                       >
+                        <span className="duel-player-status">
+                          {isDraw ? "BERABERE" : leftWins ? "ONDE" : "MUCADELEDE"}
+                        </span>
                         <strong className="duel-matchup-compact-name">{leftParticipant?.label ?? "Taraf 1"}</strong>
                         <small className="duel-matchup-score">{scoreLabel(leftScore, duel.scoring)}</small>
                         <small className="duel-current-outcome">
@@ -224,15 +229,24 @@ export default async function DuelDetailPage({ params, searchParams }: DuelDetai
                               (leftParticipant?.currentResult === "winning" ? "Su an onde" : "Su an geride")}
                         </small>
                       </span>
+                      <span className="duel-clash-mark" aria-label="karsilasma">
+                        <span className="duel-clash-bolt" aria-hidden="true">⚡</span>
+                        <strong>VS</strong>
+                        <small>KAPISMA</small>
+                      </span>
                       <span
                         className={[
                           "duel-matchup-compact-person",
+                          "duel-matchup-side-right",
                           rightWins ? "duel-matchup-compact-winner" : "",
                           isDraw ? "duel-matchup-compact-draw" : ""
                         ]
                           .filter(Boolean)
                           .join(" ")}
                       >
+                        <span className="duel-player-status">
+                          {isDraw ? "BERABERE" : rightWins ? "ONDE" : "MUCADELEDE"}
+                        </span>
                         <strong className="duel-matchup-compact-name">{rightParticipant?.label ?? "Taraf 2"}</strong>
                         <small className="duel-matchup-score">{scoreLabel(rightScore, duel.scoring)}</small>
                         <small className="duel-current-outcome">

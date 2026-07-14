@@ -6361,6 +6361,18 @@ textarea::placeholder {
   font-weight: 900;
   letter-spacing: 0.1em;
   box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.1);
+  animation: homeDuelLiveBlink 1.15s ease-in-out infinite;
+}
+
+@keyframes homeDuelLiveBlink {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.1), 0 0 5px rgba(220, 38, 38, 0.22);
+  }
+  50% {
+    opacity: 0.48;
+    box-shadow: 0 0 0 8px rgba(220, 38, 38, 0.04), 0 0 18px rgba(220, 38, 38, 0.52);
+  }
 }
 
 .duel-image-actions,
@@ -6788,7 +6800,8 @@ textarea::placeholder {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .duel-clash-bolt { animation: none; }
+  .duel-clash-bolt,
+  .home-duel-live-badge { animation: none; }
 }
 
 .campaign-product-summary {

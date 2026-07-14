@@ -212,13 +212,14 @@ export default async function DuelDetailPage({ params, searchParams }: DuelDetai
                           "duel-matchup-compact-person",
                           "duel-matchup-side-left",
                           leftWins ? "duel-matchup-compact-winner" : "",
+                          rightWins ? "duel-matchup-compact-loser" : "",
                           isDraw ? "duel-matchup-compact-draw" : ""
                         ]
                           .filter(Boolean)
                           .join(" ")}
                       >
                         <span className="duel-player-status">
-                          {isDraw ? "BERABERE" : leftWins ? "ONDE" : "MUCADELEDE"}
+                          {isDraw ? "BERABERE" : leftWins ? "KAZANIYOR" : "KAYBEDIYOR"}
                         </span>
                         <strong className="duel-matchup-compact-name">{leftParticipant?.label ?? "Taraf 1"}</strong>
                         <small className="duel-matchup-score">{scoreLabel(leftScore, duel.scoring)}</small>
@@ -239,13 +240,14 @@ export default async function DuelDetailPage({ params, searchParams }: DuelDetai
                           "duel-matchup-compact-person",
                           "duel-matchup-side-right",
                           rightWins ? "duel-matchup-compact-winner" : "",
+                          leftWins ? "duel-matchup-compact-loser" : "",
                           isDraw ? "duel-matchup-compact-draw" : ""
                         ]
                           .filter(Boolean)
                           .join(" ")}
                       >
                         <span className="duel-player-status">
-                          {isDraw ? "BERABERE" : rightWins ? "ONDE" : "MUCADELEDE"}
+                          {isDraw ? "BERABERE" : rightWins ? "KAZANIYOR" : "KAYBEDIYOR"}
                         </span>
                         <strong className="duel-matchup-compact-name">{rightParticipant?.label ?? "Taraf 2"}</strong>
                         <small className="duel-matchup-score">{scoreLabel(rightScore, duel.scoring)}</small>

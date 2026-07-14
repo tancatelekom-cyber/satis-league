@@ -6537,6 +6537,59 @@ textarea::placeholder {
   50% { opacity: 1; transform: translateX(-50%) rotate(6deg) scale(1.12); }
 }
 
+@media (min-width: 721px) {
+  .home-duel-arena-card .duel-matchup-compact {
+    width: min(100%, 900px);
+    margin-inline: auto;
+    border-radius: 20px;
+  }
+
+  .home-duel-arena-card .duel-matchup-compact-head {
+    padding: 8px 16px;
+  }
+
+  .home-duel-arena-card .duel-matchup-compact-row {
+    grid-template-columns: minmax(0, 1fr) 64px minmax(0, 1fr);
+    min-height: 124px;
+    gap: 10px;
+    padding: 12px 14px;
+  }
+
+  .home-duel-arena-card .duel-matchup-compact-person {
+    min-height: 98px;
+    gap: 4px;
+    padding: 10px 14px;
+    border-radius: 16px;
+  }
+
+  .home-duel-arena-card .duel-matchup-compact-person .duel-matchup-compact-name {
+    font-size: 1rem;
+  }
+
+  .home-duel-arena-card .duel-matchup-compact-person .duel-matchup-score {
+    font-size: 2rem;
+  }
+
+  .home-duel-arena-card .duel-current-outcome {
+    font-size: 0.68rem;
+  }
+
+  .home-duel-arena-card .duel-clash-mark {
+    width: 60px;
+    height: 60px;
+    box-shadow: 0 0 0 5px rgba(255, 184, 48, 0.08), 0 0 22px rgba(255, 170, 31, 0.3);
+  }
+
+  .home-duel-arena-card .duel-clash-mark strong {
+    font-size: 1.1rem;
+  }
+
+  .home-duel-arena-card .duel-clash-bolt {
+    top: -16px;
+    font-size: 1.25rem;
+  }
+}
+
 @media (max-width: 720px) {
   .home-active-duels {
     margin-bottom: 14px;

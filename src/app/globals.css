@@ -6349,6 +6349,16 @@ textarea::placeholder {
   text-decoration: none;
 }
 
+.home-duel-bottom-entry {
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
+}
+
+.home-duel-bottom-entry .home-duel-entry-button {
+  min-width: min(100%, 280px);
+}
+
 .home-duel-live-badge {
   display: inline-flex;
   width: fit-content;
@@ -6688,8 +6698,7 @@ textarea::placeholder {
 
   .home-duel-arena-actions {
     width: 100%;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: flex;
   }
 
   .home-duel-arena-actions .button-secondary,
@@ -6698,6 +6707,16 @@ textarea::placeholder {
     min-height: 34px;
     padding: 7px 9px;
     font-size: 0.7rem;
+  }
+
+  .home-duel-bottom-entry {
+    margin-top: 9px;
+  }
+
+  .home-duel-bottom-entry .home-duel-entry-button {
+    width: 100%;
+    min-height: 40px;
+    font-size: 0.76rem;
   }
 
   .duel-image-actions {

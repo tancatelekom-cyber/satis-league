@@ -494,14 +494,6 @@ export default async function HomePage() {
                   <p>Anlik skorlar, kazanan ve kaybeden sonuclari</p>
                 </div>
                 <div className="home-duel-arena-actions">
-                  {duel.has_entry_permissions && duel.can_submit ? (
-                    <Link
-                      className="button-primary home-duel-entry-button"
-                      href={`/kampanyalar/duello/${duel.id}?view=sales`}
-                    >
-                      Giris Yap
-                    </Link>
-                  ) : null}
                   <Link
                     className="button-secondary"
                     href={`/kampanyalar/duello/${duel.id}?view=leaderboard`}
@@ -512,6 +504,17 @@ export default async function HomePage() {
               </div>
 
               <DuelScoreArena matchups={duel.matchups} scoring={duel.scoring} title={duel.name} />
+
+              {duel.has_entry_permissions && duel.can_submit ? (
+                <div className="home-duel-bottom-entry">
+                  <Link
+                    className="button-primary home-duel-entry-button"
+                    href={`/kampanyalar/duello/${duel.id}?view=sales`}
+                  >
+                    Duello Girisi Yap
+                  </Link>
+                </div>
+              ) : null}
             </article>
           ))}
         </section>

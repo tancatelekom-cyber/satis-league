@@ -6569,6 +6569,18 @@ textarea::placeholder {
   border-color: rgba(137, 255, 191, 0.58);
   background: rgba(5, 60, 39, 0.66);
   color: #c5ffdd;
+  animation: duelWinnerStatusBlink 1.05s ease-in-out infinite;
+}
+
+@keyframes duelWinnerStatusBlink {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 0 2px rgba(72, 232, 144, 0.08), 0 0 5px rgba(72, 232, 144, 0.2);
+  }
+  50% {
+    opacity: 0.46;
+    box-shadow: 0 0 0 5px rgba(72, 232, 144, 0.04), 0 0 14px rgba(72, 232, 144, 0.58);
+  }
 }
 
 .duel-matchup-compact-person.duel-matchup-compact-loser {
@@ -6801,7 +6813,8 @@ textarea::placeholder {
 
 @media (prefers-reduced-motion: reduce) {
   .duel-clash-bolt,
-  .home-duel-live-badge { animation: none; }
+  .home-duel-live-badge,
+  .duel-matchup-compact-person.duel-matchup-compact-winner .duel-player-status { animation: none; }
 }
 
 .campaign-product-summary {

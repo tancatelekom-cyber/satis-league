@@ -103,6 +103,7 @@ type DuelCard = {
   end_at: string;
   is_active: boolean;
   can_submit: boolean;
+  has_entry_permissions: boolean;
   default_participant_id: string | null;
   products: DuelProductRecord[];
   participants: DuelParticipantView[];
@@ -243,6 +244,7 @@ function buildDuelCard(input: {
   return {
     ...input.duel,
     can_submit: canSubmit,
+    has_entry_permissions: input.permissionProfileIds.length > 0,
     default_participant_id: defaultParticipantId,
     products: input.products,
     participants: participantViews,

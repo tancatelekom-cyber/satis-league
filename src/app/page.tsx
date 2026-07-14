@@ -493,12 +493,22 @@ export default async function HomePage() {
                   <h2>{duel.name}</h2>
                   <p>Anlik skorlar, kazanan ve kaybeden sonuclari</p>
                 </div>
-                <Link
-                  className="button-secondary"
-                  href={`/kampanyalar/duello/${duel.id}?view=leaderboard`}
-                >
-                  Duelloyu Ac
-                </Link>
+                <div className="home-duel-arena-actions">
+                  {duel.has_entry_permissions && duel.can_submit ? (
+                    <Link
+                      className="button-primary home-duel-entry-button"
+                      href={`/kampanyalar/duello/${duel.id}?view=sales`}
+                    >
+                      Giris Yap
+                    </Link>
+                  ) : null}
+                  <Link
+                    className="button-secondary"
+                    href={`/kampanyalar/duello/${duel.id}?view=leaderboard`}
+                  >
+                    Duelloyu Ac
+                  </Link>
+                </div>
               </div>
 
               <DuelScoreArena matchups={duel.matchups} scoring={duel.scoring} title={duel.name} />

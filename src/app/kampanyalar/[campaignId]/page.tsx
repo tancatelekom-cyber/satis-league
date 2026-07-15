@@ -104,14 +104,12 @@ export default async function CampaignDetailPage({
   const canSubmitToCampaign = campaign.can_submit !== false;
   const admin = createAdminClient();
   const defaultProfileId =
-    dashboard.profile.role === "manager" && dashboard.teamProfiles.length > 0
-      ? dashboard.teamProfiles[0].id
-      : dashboard.profile.id;
+    dashboard.teamProfiles.some((person) => person.id === dashboard.profile.id)
+      ? dashboard.profile.id
+      : dashboard.teamProfiles[0]?.id ?? dashboard.profile.id;
   const targetProfileIds =
     campaign.mode === "employee"
-      ? dashboard.profile.role === "manager"
-        ? dashboard.teamProfiles.map((person) => person.id)
-        : [dashboard.profile.id]
+      ? dashboard.teamProfiles.map((person) => person.id)
       : [];
   const targetStoreIds = campaign.mode === "store" && dashboard.profile.store_id ? [dashboard.profile.store_id] : [];
   const initialQuantityMap: Record<string, number> = {};
@@ -415,7 +413,6 @@ export default async function CampaignDetailPage({
               defaultProfileId={defaultProfileId}
               defaultStoreId={dashboard.profile.store_id ?? null}
               initialQuantities={initialQuantityMap}
-              isManager={dashboard.profile.role === "manager"}
               products={campaign.products}
               scoring={campaign.scoring}
               teamProfiles={dashboard.teamProfiles}

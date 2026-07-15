@@ -81,34 +81,30 @@ export async function POST(request: Request) {
   let finalTargetStoreId: string | null = null;
 
   if (campaign.mode === "employee") {
-    if (actor.role === "manager") {
-      if (!targetProfileId) {
-        return NextResponse.json({ message: "Hedef personel secilmedi." }, { status: 400 });
-      }
-
-      const { data: targetProfile } = await admin
-        .from("profiles")
-        .select("id, store_id, approval, role, is_on_leave")
-        .eq("id", targetProfileId)
-        .single();
-
-      if (
-        !targetProfile ||
-        targetProfile.approval !== "approved" ||
-        targetProfile.store_id !== actor.store_id ||
-        targetProfile.role !== "employee" ||
-        targetProfile.is_on_leave
-      ) {
-        return NextResponse.json(
-          { message: "Magaza muduru sadece kendi magazasindaki aktif calisana giris yapabilir." },
-          { status: 403 }
-        );
-      }
-
-      finalTargetProfileId = targetProfile.id;
-    } else {
-      finalTargetProfileId = actor.id;
+    if (!targetProfileId) {
+      return NextResponse.json({ message: "Hedef personel secilmedi." }, { status: 400 });
     }
+
+    const { data: targetProfile } = await admin
+      .from("profiles")
+      .select("id, store_id, approval, role, is_on_leave")
+      .eq("id", targetProfileId)
+      .single();
+
+    if (
+      !targetProfile ||
+      targetProfile.approval !== "approved" ||
+      targetProfile.store_id !== actor.store_id ||
+      targetProfile.role !== "employee" ||
+      targetProfile.is_on_leave
+    ) {
+      return NextResponse.json(
+        { message: "Sadece kendi magazanizdaki aktif calisana giris yapabilirsiniz." },
+        { status: 403 }
+      );
+    }
+
+    finalTargetProfileId = targetProfile.id;
   } else {
     finalTargetStoreId = targetStoreId || actor.store_id;
 

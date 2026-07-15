@@ -20,7 +20,6 @@ type SaleEntryCardProps = {
   }>;
   defaultProfileId: string;
   defaultStoreId: string | null;
-  isManager: boolean;
   teamProfiles: TeamProfileOption[];
   initialQuantities: Record<string, number>;
 };
@@ -42,7 +41,6 @@ export function SaleEntryCard({
   products,
   defaultProfileId,
   defaultStoreId,
-  isManager,
   teamProfiles,
   initialQuantities
 }: SaleEntryCardProps) {
@@ -182,13 +180,13 @@ export function SaleEntryCard({
 
   return (
     <section className="live-sale-entry-shell">
-      {campaignMode === "employee" && isManager && teamProfiles.length > 0 ? (
+      {campaignMode === "employee" && teamProfiles.length > 0 ? (
         <label className="field compact live-sale-target-select">
           <span>Hedef Personel</span>
           <select
-            defaultValue={defaultProfileId}
             name="targetProfileId"
             onChange={(event) => setSelectedProfileId(event.target.value)}
+            value={selectedProfileId}
           >
             {teamProfiles.map((person) => (
               <option key={person.id} value={person.id}>

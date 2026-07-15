@@ -7295,11 +7295,13 @@ textarea::placeholder {
   position: sticky;
   left: 0;
   z-index: 6;
-  width: 9ch;
-  min-width: 9ch;
-  max-width: 9ch;
+  width: 16ch;
+  min-width: 16ch;
+  max-width: 16ch;
   white-space: normal;
-  word-break: break-word;
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
   line-height: 1.15;
   box-shadow: 8px 0 16px rgba(8, 34, 66, 0.08);
 }
@@ -7333,9 +7335,9 @@ textarea::placeholder {
 }
 
 .campaign-matrix-table tbody th {
-  width: 9ch;
-  min-width: 9ch;
-  max-width: 9ch;
+  width: 16ch;
+  min-width: 16ch;
+  max-width: 16ch;
   background: rgba(255, 239, 197, 0.92);
   color: #082242;
   font-weight: 800;
@@ -7345,7 +7347,9 @@ textarea::placeholder {
   z-index: 2;
   box-shadow: 8px 0 16px rgba(8, 34, 66, 0.08);
   white-space: normal;
-  word-break: break-word;
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
   line-height: 1.15;
 }
 

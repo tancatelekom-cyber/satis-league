@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { LiveCampaignCountdown } from "@/components/campaign/live-campaign-countdown";
 import {
   formatCampaignDateTime,
   isPlannedCampaign,
@@ -214,36 +215,68 @@ export default async function CampaignPage({ searchParams }: CampaignPageProps) 
           </div>
         </div>
 
-        {dashboard.activeLeaderboards.length > 0 ? (
-          <div className="campaign-directory">
-            {dashboard.activeLeaderboards.map(({ campaign, personal, leaderboard }) => (
-              <Link
-                key={campaign.id}
-                className="campaign-directory-card"
-                href={`/kampanyalar/${campaign.id}`}
-              >
-                <div className="campaign-directory-head">
+        {strictActiveLeaderboards.length > 0 ? (
+          <div className="live-campaign-home-list">
+            {strictActiveLeaderboards.map(({ campaign, personal, leaderboard }) => (
+              <article className="live-campaign-home-card" key={campaign.id}>
+                <div className="live-campaign-home-topline">
+                  <span className="live-campaign-blink-badge">
+                    <span aria-hidden="true" /> CANLI KAMPANYA
+                  </span>
+                  <span className="live-campaign-end-date">
+                    Bitis: {formatCampaignDateTime(campaign.end_at)}
+                  </span>
+                </div>
+
+                <LiveCampaignCountdown endAt={campaign.end_at} />
+
+                <div className="live-campaign-home-heading">
                   <div>
-                    <strong>{campaign.name}</strong>
-                    <span>
+                    <h3>{campaign.name}</h3>
+                    <p>
                       {campaign.mode === "employee" ? "Calisan Bazli" : "Magaza Bazli"} |{" "}
                       {campaign.scoring === "points" ? "Puan" : "Adet"}
-                    </span>
+                    </p>
                   </div>
-                  <div className="store-status">
-                    <span>Siraniz</span>
-                    <strong>{personal.rank ? `#${personal.rank}` : "Liste disi"}</strong>
+                  <div className="live-campaign-personal-rank">
+                    <span>SIRANIZ</span>
+                    <strong>{personal.rank ? `#${personal.rank}` : "-"}</strong>
                   </div>
                 </div>
 
-                <div className="campaign-directory-meta">
-                  <span>
-                    Lider: {leaderboard[0]?.label ?? "Henuz veri yok"} | Fark:{" "}
-                    {personal.gap.toFixed(0)}
-                  </span>
-                  <span>Bitis: {formatCampaignDateTime(campaign.end_at)}</span>
+                <div className="live-campaign-top-fifteen">
+                  <div className="live-campaign-ranking-head">
+                    <strong>ILK 15</strong>
+                    <span>{campaign.mode === "employee" ? "Calisan" : "Magaza"}</span>
+                    <span>SKOR</span>
+                  </div>
+                  <ol>
+                    {leaderboard.slice(0, 15).map((row, index) => (
+                      <li
+                        className={
+                          row.id ===
+                          (campaign.mode === "employee"
+                            ? dashboard.profile.id
+                            : dashboard.profile.store_id)
+                            ? "is-current-user"
+                            : ""
+                        }
+                        key={row.id}
+                      >
+                        <span className="live-campaign-rank-number">{index + 1}</span>
+                        <strong>{row.label}</strong>
+                        <span className="live-campaign-rank-score">
+                          {row.score.toFixed(0)} {campaign.scoring === "points" ? "puan" : "adet"}
+                        </span>
+                      </li>
+                    ))}
+                  </ol>
                 </div>
-              </Link>
+
+                <Link className="live-campaign-detail-link" href={`/kampanyalar/${campaign.id}`}>
+                  Kampanyayi Ac
+                </Link>
+              </article>
             ))}
           </div>
         ) : (

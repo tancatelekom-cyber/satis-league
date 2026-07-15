@@ -12,13 +12,20 @@ type CampaignSummaryMatrixProps = {
     participantCells: number[];
     total: number;
   }>;
+  summaryRows?: Array<{
+    id: string;
+    label: string;
+    participantCells: number[];
+    total: number;
+  }>;
   exportHref?: string;
 };
 
 function MatrixTable({
   columns,
-  rows
-}: Pick<CampaignSummaryMatrixProps, "columns" | "rows">) {
+  rows,
+  summaryRows
+}: Pick<CampaignSummaryMatrixProps, "columns" | "rows" | "summaryRows">) {
   return (
     <table className="campaign-matrix-table">
       <thead>
@@ -41,6 +48,23 @@ function MatrixTable({
           </tr>
         ))}
       </tbody>
+      {summaryRows?.length ? (
+        <tfoot>
+          {summaryRows.map((summary) => (
+            <tr key={`matrix-summary-${summary.id}`}>
+              <th>{summary.label}</th>
+              {summary.participantCells.map((value, index) => (
+                <td key={`matrix-summary-cell-${summary.id}-${columns[index]?.id ?? index}`}>
+                  {value.toLocaleString("tr-TR", { maximumFractionDigits: 2 })}
+                </td>
+              ))}
+              <td className="campaign-matrix-total">
+                {summary.total.toLocaleString("tr-TR", { maximumFractionDigits: 2 })}
+              </td>
+            </tr>
+          ))}
+        </tfoot>
+      ) : null}
     </table>
   );
 }
@@ -50,6 +74,7 @@ export function CampaignSummaryMatrix({
   subtitle,
   columns,
   rows,
+  summaryRows,
   exportHref
 }: CampaignSummaryMatrixProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -79,7 +104,7 @@ export function CampaignSummaryMatrix({
       </div>
 
       <div className="campaign-matrix-wrap">
-        <MatrixTable columns={columns} rows={rows} />
+        <MatrixTable columns={columns} rows={rows} summaryRows={summaryRows} />
       </div>
 
       {isOpen ? (
@@ -96,7 +121,7 @@ export function CampaignSummaryMatrix({
               </button>
             </div>
             <div className="campaign-matrix-wrap campaign-matrix-wrap-modal">
-              <MatrixTable columns={columns} rows={rows} />
+              <MatrixTable columns={columns} rows={rows} summaryRows={summaryRows} />
             </div>
           </div>
         </div>

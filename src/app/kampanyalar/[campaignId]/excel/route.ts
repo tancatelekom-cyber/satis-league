@@ -71,7 +71,7 @@ export async function GET(
     const admin = createAdminClient();
     const { data: salesEntries, error } = await admin
       .from("sales_entries")
-      .select("product_id, target_profile_id, target_store_id, quantity")
+      .select("product_id, target_profile_id, target_store_id, quantity, weighted_score")
       .eq("campaign_id", item.campaign.id);
 
     if (error) {
@@ -79,12 +79,14 @@ export async function GET(
     }
 
     const participantProductTotals = new Map<string, Map<string, number>>();
+    const participantPointTotals = new Map<string, number>();
 
     ((salesEntries as Array<{
       product_id: string;
       target_profile_id: string | null;
       target_store_id: string | null;
       quantity: number;
+      weighted_score: number;
     }> | null) ?? []).forEach((entry) => {
       const participantId =
         item.campaign.mode === "employee" ? entry.target_profile_id : entry.target_store_id;
@@ -99,13 +101,18 @@ export async function GET(
         Number(productTotals.get(entry.product_id) ?? 0) + Number(entry.quantity ?? 0)
       );
       participantProductTotals.set(participantId, productTotals);
+      participantPointTotals.set(
+        participantId,
+        Number(participantPointTotals.get(participantId) ?? 0) + Number(entry.weighted_score ?? 0)
+      );
     });
 
     const productRows = [
       [
         item.campaign.mode === "employee" ? "Calisan" : "Magaza",
         ...item.campaign.products.map((product) => product.name),
-        "Toplam"
+        "Toplam Adet",
+        "Toplam Puan"
       ],
       ...item.leaderboard.map((participant) => {
         const values = item.campaign.products.map((product) =>
@@ -115,7 +122,8 @@ export async function GET(
         return [
           participant.label,
           ...values,
-          values.reduce((sum, value) => sum + value, 0)
+          values.reduce((sum, value) => sum + value, 0),
+          Number(participantPointTotals.get(participant.id) ?? 0)
         ];
       })
     ];

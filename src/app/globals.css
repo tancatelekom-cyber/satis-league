@@ -7312,13 +7312,16 @@ textarea::placeholder {
 }
 
 .campaign-matrix-table tbody th,
-.campaign-matrix-table tbody td {
+.campaign-matrix-table tbody td,
+.campaign-matrix-table tfoot th,
+.campaign-matrix-table tfoot td {
   padding: 7px 8px;
   border: 1px solid rgba(88, 240, 196, 0.18);
   font-size: 0.56rem;
 }
 
-.campaign-matrix-table tbody th {
+.campaign-matrix-table tbody th,
+.campaign-matrix-table tfoot th {
   width: 9ch;
   min-width: 9ch;
   max-width: 9ch;
@@ -7335,7 +7338,8 @@ textarea::placeholder {
   line-height: 1.15;
 }
 
-.campaign-matrix-table tbody td {
+.campaign-matrix-table tbody td,
+.campaign-matrix-table tfoot td {
   width: 6ch;
   min-width: 6ch;
   background: rgba(255, 255, 255, 0.82);
@@ -7351,6 +7355,22 @@ textarea::placeholder {
   background: rgba(255, 244, 213, 0.98);
   color: #0b6b6e;
   font-weight: 900;
+  z-index: 3;
+  box-shadow: -8px 0 16px rgba(8, 34, 66, 0.08);
+}
+
+.campaign-matrix-table tfoot th,
+.campaign-matrix-table tfoot td {
+  background: rgba(218, 244, 232, 0.98);
+  color: #082242;
+  font-weight: 900;
+}
+
+.campaign-matrix-table tfoot td.campaign-matrix-total {
+  position: sticky;
+  right: 0;
+  background: rgba(255, 228, 157, 0.98);
+  color: #0b6b6e;
   z-index: 3;
   box-shadow: -8px 0 16px rgba(8, 34, 66, 0.08);
 }

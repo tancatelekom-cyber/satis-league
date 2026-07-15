@@ -114,10 +114,11 @@ export default async function CampaignDetailPage({
   const targetStoreIds = campaign.mode === "store" && dashboard.profile.store_id ? [dashboard.profile.store_id] : [];
   const initialQuantityMap: Record<string, number> = {};
   const participantProductTotals = new Map<string, Map<string, number>>();
+  const participantPointTotals = new Map<string, number>();
 
   const { data: allCampaignEntries } = await admin
     .from("sales_entries")
-    .select("product_id, target_profile_id, target_store_id, quantity")
+    .select("product_id, target_profile_id, target_store_id, quantity, weighted_score")
     .eq("campaign_id", campaign.id);
 
   ((allCampaignEntries as Array<{
@@ -125,6 +126,7 @@ export default async function CampaignDetailPage({
     target_profile_id: string | null;
     target_store_id: string | null;
     quantity: number;
+    weighted_score: number;
   }> | null) ?? []).forEach((entry) => {
     const participantId = campaign.mode === "employee" ? entry.target_profile_id : entry.target_store_id;
     if (participantId) {
@@ -134,6 +136,10 @@ export default async function CampaignDetailPage({
         Number(productTotals.get(entry.product_id) ?? 0) + Number(entry.quantity ?? 0)
       );
       participantProductTotals.set(participantId, productTotals);
+      participantPointTotals.set(
+        participantId,
+        Number(participantPointTotals.get(participantId) ?? 0) + Number(entry.weighted_score ?? 0)
+      );
     }
 
     if (
@@ -168,6 +174,29 @@ export default async function CampaignDetailPage({
       total: participantCells.reduce((sum, value) => sum + value, 0)
     };
   });
+  const participantQuantityTotals = participantSummaryColumns.map((participant) =>
+    campaign.products.reduce(
+      (sum, product) => sum + Number(participantProductTotals.get(participant.id)?.get(product.id) ?? 0),
+      0
+    )
+  );
+  const participantScoreTotals = participantSummaryColumns.map((participant) =>
+    Number(participantPointTotals.get(participant.id) ?? 0)
+  );
+  const productSummaryRows = [
+    {
+      id: "total-quantity",
+      label: "Toplam Adet",
+      participantCells: participantQuantityTotals,
+      total: participantQuantityTotals.reduce((sum, value) => sum + value, 0)
+    },
+    {
+      id: "total-points",
+      label: "Toplam Puan",
+      participantCells: participantScoreTotals,
+      total: participantScoreTotals.reduce((sum, value) => sum + value, 0)
+    }
+  ];
   const menuItems = [
     {
       href: `/kampanyalar/${campaign.id}?view=leaderboard`,
@@ -391,10 +420,11 @@ export default async function CampaignDetailPage({
             columns={participantSummaryColumns}
             exportHref={`/kampanyalar/${campaign.id}/excel?view=products`}
             rows={productSummaryMatrix}
+            summaryRows={productSummaryRows}
             subtitle={
               campaign.mode === "employee"
-                ? "Her calisan icin urun adetlerinin ozet gorunumu"
-                : "Her magaza icin urun adetlerinin ozet gorunumu"
+                ? "Her calisan icin urun adetleri, toplam adet ve toplam puan"
+                : "Her magaza icin urun adetleri, toplam adet ve toplam puan"
             }
             title={campaign.mode === "employee" ? "Calisan Bazli Urun Ozetleri" : "Magaza Bazli Urun Ozetleri"}
           />

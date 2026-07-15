@@ -228,20 +228,23 @@ export async function getCampaignDashboardData(userId: string): Promise<UserCamp
     existing.add(row.profile_id);
     permissionMap.set(row.campaign_id, existing);
   });
+  const canTargetAllEmployees = profile.role === "admin";
   const teamProfiles = approvedPeople
     .filter(
       (person) =>
-        Boolean(profile.store_id) &&
-        person.store_id === profile.store_id &&
         !person.is_on_leave &&
-        person.role === "employee"
+        person.role === "employee" &&
+        (canTargetAllEmployees ||
+          (Boolean(profile.store_id) && person.store_id === profile.store_id))
     )
-    .map((person) => ({ id: person.id, full_name: person.full_name }));
+    .map((person) => ({ id: person.id, full_name: person.full_name }))
+    .sort((a, b) => a.full_name.localeCompare(b.full_name, "tr"));
 
   const campaignCards = allCampaignRows.map((campaign) => ({
     ...campaign,
     products: productRows.filter((product) => product.campaign_id === campaign.id),
     can_submit:
+      profile.role === "admin" ||
       (permissionMap.get(campaign.id)?.size ?? 0) === 0 ||
       permissionMap.get(campaign.id)?.has(profile.id) === true
   }));

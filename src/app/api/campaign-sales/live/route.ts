@@ -73,12 +73,17 @@ export async function POST(request: Request) {
     (row) => row.profile_id
   );
 
-  if (allowedProfileIds.length > 0 && !allowedProfileIds.includes(actor.id)) {
+  if (
+    actor.role !== "admin" &&
+    allowedProfileIds.length > 0 &&
+    !allowedProfileIds.includes(actor.id)
+  ) {
     return NextResponse.json({ message: "Bu kampanyaya satis girme yetkiniz yok." }, { status: 403 });
   }
 
   let finalTargetProfileId: string | null = null;
   let finalTargetStoreId: string | null = null;
+  let multiplierStoreId: string | null = actor.store_id;
 
   if (campaign.mode === "employee") {
     if (!targetProfileId) {
@@ -94,17 +99,23 @@ export async function POST(request: Request) {
     if (
       !targetProfile ||
       targetProfile.approval !== "approved" ||
-      targetProfile.store_id !== actor.store_id ||
       targetProfile.role !== "employee" ||
-      targetProfile.is_on_leave
+      targetProfile.is_on_leave ||
+      (actor.role !== "admin" && targetProfile.store_id !== actor.store_id)
     ) {
       return NextResponse.json(
-        { message: "Sadece kendi magazanizdaki aktif calisana giris yapabilirsiniz." },
+        {
+          message:
+            actor.role === "admin"
+              ? "Secilen personel aktif ve onayli bir calisan olmali."
+              : "Sadece kendi magazanizdaki aktif calisana giris yapabilirsiniz."
+        },
         { status: 403 }
       );
     }
 
     finalTargetProfileId = targetProfile.id;
+    multiplierStoreId = targetProfile.store_id ?? actor.store_id;
   } else {
     finalTargetStoreId = targetStoreId || actor.store_id;
 
@@ -113,7 +124,7 @@ export async function POST(request: Request) {
     }
   }
 
-  const multiplierStoreId = actor.store_id ?? finalTargetStoreId;
+  multiplierStoreId = multiplierStoreId ?? finalTargetStoreId;
   const profileMultiplierTarget = finalTargetProfileId ?? actor.id;
   const [{ data: storeMultiplierRow }, { data: profileMultiplierRow }] = await Promise.all([
     admin

@@ -197,11 +197,14 @@ export function SaleEntryCard({
         </label>
       ) : null}
 
-      <section className="live-sale-summary" aria-label={summaryTitle}>
-        <div className="live-sale-summary-head">
-          <strong>{summaryTitle}</strong>
-          <span>{summaryHint}</span>
-        </div>
+      <details className="live-sale-summary live-sale-summary-collapsible">
+        <summary className="live-sale-summary-head">
+          <div>
+            <strong>{summaryTitle}</strong>
+            <span>{summaryHint}</span>
+          </div>
+          <span className="live-sale-summary-chevron" aria-hidden="true">⌄</span>
+        </summary>
         <div className="live-sale-summary-table" role="table" aria-label={summaryTitle}>
           <div className="live-sale-summary-row live-sale-summary-header" role="row">
             <span role="columnheader">Urun</span>
@@ -214,7 +217,7 @@ export function SaleEntryCard({
             </div>
           ))}
         </div>
-      </section>
+      </details>
 
       <div className="live-sale-list">
         {currentEntries.map(({ product, value, state, error }) => (

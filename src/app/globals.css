@@ -6461,8 +6461,21 @@ textarea::placeholder {
 .live-sale-summary-head {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
   gap: 12px;
+}
+
+.live-sale-summary-collapsible > summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.live-sale-summary-collapsible > summary::-webkit-details-marker {
+  display: none;
+}
+
+.live-sale-summary-head > div {
+  min-width: 0;
 }
 
 .live-sale-summary-head strong {
@@ -6473,6 +6486,19 @@ textarea::placeholder {
 .live-sale-summary-head span {
   color: #56708c;
   font-size: 0.82rem;
+}
+
+.live-sale-summary-chevron {
+  flex: 0 0 auto;
+  color: #0f6670 !important;
+  font-size: 1.7rem !important;
+  font-weight: 900;
+  line-height: 1;
+  transition: transform 180ms ease;
+}
+
+.live-sale-summary-collapsible[open] .live-sale-summary-chevron {
+  transform: rotate(180deg);
 }
 
 .live-sale-summary-table {

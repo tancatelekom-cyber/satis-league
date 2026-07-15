@@ -587,18 +587,28 @@ export default async function HomePage() {
               </ol>
             </div>
 
-            <CampaignLeaderboardShareButton
-              campaignName={liveCampaignLeaderboard.campaign.name}
-              endAt={liveCampaignLeaderboard.campaign.end_at}
-              participantLabel={
-                liveCampaignLeaderboard.campaign.mode === "employee" ? "Calisan" : "Magaza"
-              }
-              rows={liveCampaignLeaderboard.leaderboard.map((row) => ({
-                label: row.label,
-                score: row.score
-              }))}
-              scoring={liveCampaignLeaderboard.campaign.scoring}
-            />
+            {campaignDashboard?.profile.role === "admin" ? (
+              <div className="home-admin-campaign-actions">
+                <CampaignLeaderboardShareButton
+                  campaignName={liveCampaignLeaderboard.campaign.name}
+                  endAt={liveCampaignLeaderboard.campaign.end_at}
+                  participantLabel={
+                    liveCampaignLeaderboard.campaign.mode === "employee" ? "Calisan" : "Magaza"
+                  }
+                  rows={liveCampaignLeaderboard.leaderboard.map((row) => ({
+                    label: row.label,
+                    score: row.score
+                  }))}
+                  scoring={liveCampaignLeaderboard.campaign.scoring}
+                />
+                <Link
+                  className="home-admin-campaign-entry-link"
+                  href={`/kampanyalar/${liveCampaignLeaderboard.campaign.id}?view=sales`}
+                >
+                  Kampanya Girisi Yap
+                </Link>
+              </div>
+            ) : null}
 
             <Link
               className="live-campaign-detail-link"
@@ -608,8 +618,7 @@ export default async function HomePage() {
             </Link>
           </article>
         </section>
-      ) : (
-        <>
+      ) : null}
           <section className="hero home-leaders-hero">
             <div className="hero-copy">
               <h1 className="home-leaders-title">Ayın Yıldızları</h1>
@@ -652,8 +661,6 @@ export default async function HomePage() {
               ))
             )}
           </section>
-        </>
-      )}
     </main>
   );
 }

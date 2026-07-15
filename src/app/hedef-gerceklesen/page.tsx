@@ -98,6 +98,7 @@ type GoalNeedRow = {
 type ProductionRewardPlanRow = {
   points: number;
   reward: string;
+  isBelowTarget: boolean;
   isCurrentProjectedTier: boolean;
   isReached: boolean;
   remainingFromActual: number;
@@ -105,6 +106,7 @@ type ProductionRewardPlanRow = {
 };
 
 type ProductionRewardPlan = {
+  targetPoints: number;
   projectedPoints: number;
   actualPoints: number;
   projectedReward: string | null;
@@ -115,6 +117,7 @@ type ProductionRewardPlan = {
 
 type StoreEmployeeProductionPlan = {
   employeeName: string;
+  targetPoints: number;
   actualPoints: number;
   projectedPoints: number;
   projectedReward: string | null;
@@ -951,11 +954,14 @@ function buildProductionRewardPlan(
 
   const actualPoints = summary.actual;
   const projectedPoints = summary.projectedActual ?? summary.actual;
-  const actualRewardRow = [...rewardRows].reverse().find((row) => actualPoints >= row.points) ?? null;
-  const projectedRewardRow = [...rewardRows].reverse().find((row) => projectedPoints >= row.points) ?? null;
-  const nextRewardRow = rewardRows.find((row) => row.points > projectedPoints) ?? null;
+  const targetPoints = summary.target ?? 0;
+  const eligibleRewardRows = rewardRows.filter((row) => row.points >= targetPoints);
+  const actualRewardRow = [...eligibleRewardRows].reverse().find((row) => actualPoints >= row.points) ?? null;
+  const projectedRewardRow = [...eligibleRewardRows].reverse().find((row) => projectedPoints >= row.points) ?? null;
+  const nextRewardRow = eligibleRewardRows.find((row) => row.points > projectedPoints) ?? null;
 
   return {
+    targetPoints,
     actualPoints,
     projectedPoints,
     actualReward: actualRewardRow?.reward ?? null,
@@ -967,6 +973,7 @@ function buildProductionRewardPlan(
       return {
         points: row.points,
         reward: row.reward,
+        isBelowTarget: row.points < targetPoints,
         isCurrentProjectedTier: Boolean(projectedRewardRow && projectedRewardRow.points === row.points),
         isReached: actualPoints >= row.points,
         remainingFromActual,
@@ -1021,6 +1028,7 @@ function buildStoreEmployeeProductionPlans(
 
       return {
         employeeName,
+        targetPoints: rewardPlan.targetPoints,
         actualPoints: rewardPlan.actualPoints,
         projectedPoints: rewardPlan.projectedPoints,
         projectedReward: rewardPlan.projectedReward,
@@ -1833,9 +1841,17 @@ function buildEmployeeDailyNeedReference(
     };
   }
 
-  const firstScaleRow = rewardPlan.rows[0];
-  const projectedScaleRow = rewardPlan.rows.find((row) => row.isCurrentProjectedTier) ?? null;
-  const nextScaleRow = rewardPlan.rows.find((row) => row.points > rewardPlan.projectedPoints) ?? null;
+  const eligibleScaleRows = rewardPlan.rows.filter((row) => !row.isBelowTarget);
+  const firstScaleRow = eligibleScaleRows[0];
+  if (!firstScaleRow) {
+    return {
+      referenceLabel: "Hedef Skalasi",
+      dailyRequired: 0
+    };
+  }
+
+  const projectedScaleRow = eligibleScaleRows.find((row) => row.isCurrentProjectedTier) ?? null;
+  const nextScaleRow = eligibleScaleRows.find((row) => row.points > rewardPlan.projectedPoints) ?? null;
   const targetRow = projectedScaleRow ? nextScaleRow ?? projectedScaleRow : firstScaleRow;
 
   return {
@@ -2187,7 +2203,7 @@ function GoalCategoryCards({
                       </tr>
                     </thead>
                     <tbody>
-                      {productionRewardPlan.rows.map((row) => (
+                      {productionRewardPlan.rows.filter((row) => !row.isBelowTarget).map((row) => (
                         <tr
                           key={`${category.title}-reward-${row.points}`}
                           className={row.isCurrentProjectedTier ? "goal-production-reward-row-active" : ""}
@@ -2434,7 +2450,7 @@ function EmployeeGoalCategoryTable({
                           </tr>
                         </thead>
                         <tbody>
-                          {productionRewardPlan.rows.map((row) => (
+                          {productionRewardPlan.rows.filter((row) => !row.isBelowTarget).map((row) => (
                             <tr
                               key={`${category.title}-reward-${row.points}`}
                               className={row.isCurrentProjectedTier ? "goal-production-reward-row-active" : ""}
@@ -3876,7 +3892,16 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                             <th>Su Anki Puan</th>
                             <th>Ay Sonu Ongoru</th>
                             {productionRewardRows.map((rewardRow) => (
-                              <th key={`company-production-head-${rewardRow.points}`}>
+                              <th
+                                className={
+                                  companyEmployeeProductionPlans.every(
+                                    (plan) => rewardRow.points < plan.targetPoints
+                                  )
+                                    ? "goal-store-production-head-below-target"
+                                    : ""
+                                }
+                                key={`company-production-head-${rewardRow.points}`}
+                              >
                                 <span className="goal-store-production-head-points">{formatNumber(rewardRow.points)} Puan</span>
                                 <span className="goal-store-production-head-reward">{rewardRow.reward}</span>
                               </th>
@@ -3893,7 +3918,9 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                                 <td
                                   key={`company-production-cell-${plan.employeeName}-${row.points}`}
                                   className={
-                                    row.isCurrentProjectedTier
+                                    row.isBelowTarget
+                                      ? "goal-store-production-cell-below-target"
+                                      : row.isCurrentProjectedTier
                                       ? "goal-store-production-cell-active"
                                       : row.isReached
                                         ? "goal-store-production-cell-complete"
@@ -4060,7 +4087,16 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                             <th>Su Anki Puan</th>
                             <th>Ay Sonu Ongoru</th>
                             {productionRewardRows.map((rewardRow) => (
-                              <th key={`store-production-head-${rewardRow.points}`}>
+                              <th
+                                className={
+                                  storeEmployeeProductionPlans.every(
+                                    (plan) => rewardRow.points < plan.targetPoints
+                                  )
+                                    ? "goal-store-production-head-below-target"
+                                    : ""
+                                }
+                                key={`store-production-head-${rewardRow.points}`}
+                              >
                                 <span className="goal-store-production-head-points">{formatNumber(rewardRow.points)} Puan</span>
                                 <span className="goal-store-production-head-reward">{rewardRow.reward}</span>
                               </th>
@@ -4077,7 +4113,9 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                                 <td
                                   key={`store-production-cell-${plan.employeeName}-${row.points}`}
                                   className={
-                                    row.isCurrentProjectedTier
+                                    row.isBelowTarget
+                                      ? "goal-store-production-cell-below-target"
+                                      : row.isCurrentProjectedTier
                                       ? "goal-store-production-cell-active"
                                       : row.isReached
                                         ? "goal-store-production-cell-complete"

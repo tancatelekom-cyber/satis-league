@@ -11883,6 +11883,15 @@ textarea::placeholder {
   font-weight: 800;
 }
 
+.goal-store-production-head-below-target {
+  background: #2d3d52 !important;
+  color: #f8fbff !important;
+}
+
+.goal-store-production-head-below-target .goal-store-production-head-reward {
+  color: #cbd7e5;
+}
+
 .goal-store-production-table td {
   background: #ffffff;
 }
@@ -11908,6 +11917,18 @@ textarea::placeholder {
 
 .goal-store-production-cell-complete {
   background: rgba(255, 241, 199, 0.92) !important;
+}
+
+.goal-store-production-cell-below-target {
+  background: #34475e !important;
+}
+
+.goal-store-production-cell-below-target strong {
+  color: #ffffff !important;
+}
+
+.goal-store-production-cell-below-target span {
+  color: #d6e1ed !important;
 }
 
 .goal-store-production-cell-active strong,

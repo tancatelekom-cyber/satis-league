@@ -237,9 +237,11 @@ function buildProductionRewardPlan(
 
   const actualPoints = summary.actual;
   const projectedPoints = summary.projectedActual ?? summary.actual;
-  const actualRewardRow = [...rewardRows].reverse().find((row) => actualPoints >= row.points) ?? null;
-  const projectedRewardRow = [...rewardRows].reverse().find((row) => projectedPoints >= row.points) ?? null;
-  const nextRewardRow = rewardRows.find((row) => row.points > projectedPoints) ?? null;
+  const targetPoints = summary.target ?? 0;
+  const eligibleRewardRows = rewardRows.filter((row) => row.points >= targetPoints);
+  const actualRewardRow = [...eligibleRewardRows].reverse().find((row) => actualPoints >= row.points) ?? null;
+  const projectedRewardRow = [...eligibleRewardRows].reverse().find((row) => projectedPoints >= row.points) ?? null;
+  const nextRewardRow = eligibleRewardRows.find((row) => row.points > projectedPoints) ?? null;
 
   return {
     actualPoints,

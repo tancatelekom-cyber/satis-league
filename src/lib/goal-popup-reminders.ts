@@ -353,11 +353,13 @@ function buildProductionRewardPlan(
   }
 
   const projectedPoints = summary.projectedActual ?? summary.actual;
-  const projectedRewardRow = [...rewardRows].reverse().find((row) => projectedPoints >= row.points) ?? null;
+  const targetPoints = summary.target ?? 0;
+  const eligibleRewardRows = rewardRows.filter((row) => row.points >= targetPoints);
+  const projectedRewardRow = [...eligibleRewardRows].reverse().find((row) => projectedPoints >= row.points) ?? null;
 
   return {
     projectedPoints,
-    rows: rewardRows.map((row) => {
+    rows: eligibleRewardRows.map((row) => {
       const remainingFromActual = Math.max(row.points - summary.actual, 0);
 
       return {

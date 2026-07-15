@@ -524,7 +524,7 @@ export default async function HomePage() {
 
       {liveCampaignLeaderboard ? (
         <section className="live-campaign-home-list">
-          <article className="live-campaign-home-card">
+          <article className="live-campaign-home-card home-page-live-campaign">
             <div className="live-campaign-home-topline">
               <span className="live-campaign-blink-badge">
                 <span aria-hidden="true" /> CANLI KAMPANYA

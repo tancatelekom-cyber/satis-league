@@ -292,13 +292,14 @@ export default async function CampaignDetailPage({
           </div>
 
           {campaign.products.length > 0 ? (
-            <div className="campaign-product-points-panel">
-              <div className="section-title compact-title">
+            <details className="campaign-product-points-panel">
+              <summary className="campaign-product-points-toggle">
                 <div>
-                  <h2>Urun Listesi ve Puanlari</h2>
-                  <p>Kampanyada kullanilan urunlerin puan ve birim bilgileri.</p>
+                  <strong>Urun Puanlarini Goster</strong>
+                  <span>Kampanyadaki urunlerin puan ve birim bilgilerini ac.</span>
                 </div>
-              </div>
+                <span className="campaign-product-points-chevron" aria-hidden="true">⌄</span>
+              </summary>
 
               <div className="campaign-product-points-wrap">
                 <table className="campaign-product-points-table">
@@ -320,7 +321,7 @@ export default async function CampaignDetailPage({
                   </tbody>
                 </table>
               </div>
-            </div>
+            </details>
           ) : null}
         </section>
       ) : !isActiveCampaign || view === "leaderboard" || !canSubmitToCampaign ? (

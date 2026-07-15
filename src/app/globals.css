@@ -7619,6 +7619,59 @@ textarea::placeholder {
   margin-top: 18px;
 }
 
+.campaign-product-points-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 15px 18px;
+  border: 1px solid rgba(4, 92, 96, 0.16);
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(216, 230, 245, 0.98), rgba(232, 244, 250, 0.98));
+  box-shadow: 0 10px 22px rgba(8, 22, 40, 0.07);
+  cursor: pointer;
+  list-style: none;
+}
+
+.campaign-product-points-toggle::-webkit-details-marker {
+  display: none;
+}
+
+.campaign-product-points-toggle div,
+.campaign-product-points-toggle strong,
+.campaign-product-points-toggle span {
+  min-width: 0;
+}
+
+.campaign-product-points-toggle strong,
+.campaign-product-points-toggle span {
+  display: block;
+}
+
+.campaign-product-points-toggle strong {
+  color: #10203b;
+  font-size: 1rem;
+}
+
+.campaign-product-points-toggle div > span {
+  margin-top: 4px;
+  color: #526b87;
+  font-size: 0.82rem;
+}
+
+.campaign-product-points-chevron {
+  flex: 0 0 auto;
+  color: #0f6670 !important;
+  font-size: 1.7rem !important;
+  font-weight: 900;
+  line-height: 1;
+  transition: transform 180ms ease;
+}
+
+.campaign-product-points-panel[open] .campaign-product-points-chevron {
+  transform: rotate(180deg);
+}
+
 .campaign-product-points-wrap {
   overflow-x: auto;
   border-radius: 20px;

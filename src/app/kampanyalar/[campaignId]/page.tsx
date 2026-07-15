@@ -389,6 +389,7 @@ export default async function CampaignDetailPage({
 
           <CampaignSummaryMatrix
             columns={participantSummaryColumns}
+            exportHref={`/kampanyalar/${campaign.id}/excel?view=products`}
             rows={productSummaryMatrix}
             subtitle={
               campaign.mode === "employee"

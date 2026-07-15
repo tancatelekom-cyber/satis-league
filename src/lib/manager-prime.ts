@@ -83,8 +83,8 @@ export type ManagerPrimeSummary = {
   projectedPrimeTotal: number;
   currentNonAccessoryBaseTotal: number;
   projectedNonAccessoryBaseTotal: number;
-  currentRecontractMultiplier: number;
-  projectedRecontractMultiplier: number;
+  currentRecontractReward: number;
+  projectedRecontractReward: number;
   currentAccessoryReward: number;
   projectedAccessoryReward: number;
   rows: ManagerPrimeBreakdownRow[];
@@ -421,29 +421,39 @@ export async function buildManagerPrimeSummary(managerName: string, storeName: s
     accessory: buildMetric("accessory", managerRows, dayStats, settings.accessoryCategory)
   } satisfies Record<ManagerPrimeMetricKey, ManagerPrimeMetric>;
 
-  const currentRecontractMultiplier = Math.min(1, Math.max(0, metrics.recontract.actualTempo / 100));
-  const projectedRecontractMultiplier = Math.min(1, Math.max(0, metrics.recontract.projectedTempo / 100));
+  const recontractUnitReward = 10;
+  const currentRecontractQualified = metrics.recontract.actualTempo >= 100;
+  const projectedRecontractQualified = metrics.recontract.projectedTempo >= 100;
+  const currentRecontractReward = currentRecontractQualified ? metrics.recontract.actual * recontractUnitReward : 0;
+  const projectedRecontractReward = projectedRecontractQualified
+    ? metrics.recontract.projected * recontractUnitReward
+    : 0;
 
-  const recontractCurrentScale = findScaleRow(sheetRows, metrics.recontract.actualTempo);
-  const recontractProjectedScale = findScaleRow(sheetRows, metrics.recontract.projectedTempo);
-  const currentRecontractBaseValue = recontractCurrentScale?.recontractReward ?? 0;
-  const projectedRecontractBaseValue = recontractProjectedScale?.recontractReward ?? 0;
-
-  const nonAccessoryKeys: ManagerPrimeMetricKey[] = ["recontract", "production", "activation", "terminal", "sol"];
-  const rows: ManagerPrimeBreakdownRow[] = [];
+  const coreKeys: ManagerPrimeMetricKey[] = ["production", "activation", "terminal", "sol"];
+  const rows: ManagerPrimeBreakdownRow[] = [
+    {
+      key: "recontract",
+      label: metrics.recontract.label,
+      actualTempo: metrics.recontract.actualTempo,
+      projectedTempo: metrics.recontract.projectedTempo,
+      currentScaleLabel: currentRecontractQualified ? "%100 ve uzeri" : "%100 alti",
+      projectedScaleLabel: projectedRecontractQualified ? "%100 ve uzeri" : "%100 alti",
+      currentBaseValue: currentRecontractQualified ? recontractUnitReward : 0,
+      projectedBaseValue: projectedRecontractQualified ? recontractUnitReward : 0,
+      currentReward: currentRecontractReward,
+      projectedReward: projectedRecontractReward
+    }
+  ];
   let currentNonAccessoryBaseTotal = 0;
   let projectedNonAccessoryBaseTotal = 0;
 
-  for (const key of nonAccessoryKeys) {
+  for (const key of coreKeys) {
     const metric = metrics[key];
-    const currentScale = key === "recontract" ? recontractCurrentScale : findScaleRow(sheetRows, metric.actualTempo);
-    const projectedScale =
-      key === "recontract" ? recontractProjectedScale : findScaleRow(sheetRows, metric.projectedTempo);
+    const currentScale = findScaleRow(sheetRows, metric.actualTempo);
+    const projectedScale = findScaleRow(sheetRows, metric.projectedTempo);
 
     const currentBaseValue =
-      key === "recontract"
-        ? currentRecontractBaseValue
-        : key === "production"
+      key === "production"
         ? (currentScale?.productionReward ?? 0)
         : key === "activation"
           ? (currentScale?.activationReward ?? 0)
@@ -452,9 +462,7 @@ export async function buildManagerPrimeSummary(managerName: string, storeName: s
             : (currentScale?.solReward ?? 0);
 
     const projectedBaseValue =
-      key === "recontract"
-        ? projectedRecontractBaseValue
-        : key === "production"
+      key === "production"
         ? (projectedScale?.productionReward ?? 0)
         : key === "activation"
           ? (projectedScale?.activationReward ?? 0)
@@ -474,8 +482,8 @@ export async function buildManagerPrimeSummary(managerName: string, storeName: s
       projectedScaleLabel: buildScaleLabel(projectedScale?.thresholdPercent ?? 0),
       currentBaseValue,
       projectedBaseValue,
-      currentReward: currentBaseValue * currentRecontractMultiplier,
-      projectedReward: projectedBaseValue * projectedRecontractMultiplier
+      currentReward: currentBaseValue,
+      projectedReward: projectedBaseValue
     });
   }
 
@@ -497,14 +505,32 @@ export async function buildManagerPrimeSummary(managerName: string, storeName: s
     projectedReward: projectedAccessoryReward
   });
 
-  const currentPrimeTotal = currentNonAccessoryBaseTotal * currentRecontractMultiplier + currentAccessoryReward;
-  const projectedPrimeTotal = projectedNonAccessoryBaseTotal * projectedRecontractMultiplier + projectedAccessoryReward;
+  const currentPrimeTotal = currentNonAccessoryBaseTotal + currentRecontractReward + currentAccessoryReward;
+  const projectedPrimeTotal = projectedNonAccessoryBaseTotal + projectedRecontractReward + projectedAccessoryReward;
 
   const opportunities: ManagerPrimeOpportunity[] = [];
   const remainingDays = Math.max(0, dayStats.remainingDays);
 
   if (remainingDays > 0) {
-    for (const key of nonAccessoryKeys) {
+    if (
+      metrics.recontract.target &&
+      metrics.recontract.target > 0 &&
+      metrics.recontract.projectedTempo < 100
+    ) {
+      const additionalRequiredTotal = Math.max(0, metrics.recontract.target - metrics.recontract.actual);
+      if (additionalRequiredTotal > 0) {
+        opportunities.push({
+          key: "recontract",
+          label: metrics.recontract.label,
+          nextScaleLabel: "%100",
+          estimatedIncrease: metrics.recontract.target * recontractUnitReward,
+          dailyRequired: additionalRequiredTotal / remainingDays,
+          additionalRequiredTotal
+        });
+      }
+    }
+
+    for (const key of coreKeys) {
       const metric = metrics[key];
       if (!metric.target || metric.target <= 0) {
         continue;
@@ -524,39 +550,32 @@ export async function buildManagerPrimeSummary(managerName: string, storeName: s
       const dailyRequired = additionalRequiredTotal / remainingDays;
       let estimatedIncrease = 0;
 
-      if (key === "recontract") {
-        const nextMultiplier = Math.min(1, nextScale.thresholdPercent / 100);
-        const nextRecontractBaseValue = nextScale.recontractReward;
-        const nextNonAccessoryBaseTotal =
-          projectedNonAccessoryBaseTotal - projectedRecontractBaseValue + nextRecontractBaseValue;
-        const nextPrimeTotal = nextNonAccessoryBaseTotal * nextMultiplier + projectedAccessoryReward;
-        estimatedIncrease = Math.max(0, nextPrimeTotal - projectedPrimeTotal);
-      } else {
-        const projectedScale = findScaleRow(sheetRows, metric.projectedTempo);
-        const currentProjectedBaseValue =
-          key === "production"
-            ? projectedScale?.productionReward ?? 0
-            : key === "activation"
-              ? projectedScale?.activationReward ?? 0
-              : key === "terminal"
-                ? projectedScale?.terminalReward ?? 0
-                : projectedScale?.solReward ?? 0;
+      const projectedScale = findScaleRow(sheetRows, metric.projectedTempo);
+      const currentProjectedBaseValue =
+        key === "production"
+          ? projectedScale?.productionReward ?? 0
+          : key === "activation"
+            ? projectedScale?.activationReward ?? 0
+            : key === "terminal"
+              ? projectedScale?.terminalReward ?? 0
+              : projectedScale?.solReward ?? 0;
 
-        const nextProjectedBaseValue =
-          key === "production"
-            ? nextScale.productionReward
-            : key === "activation"
-              ? nextScale.activationReward
-              : key === "terminal"
-                ? nextScale.terminalReward
-                : nextScale.solReward;
+      const nextProjectedBaseValue =
+        key === "production"
+          ? nextScale.productionReward
+          : key === "activation"
+            ? nextScale.activationReward
+            : key === "terminal"
+              ? nextScale.terminalReward
+              : nextScale.solReward;
 
-        const nextPrimeTotal =
-          (projectedNonAccessoryBaseTotal - currentProjectedBaseValue + nextProjectedBaseValue) *
-            projectedRecontractMultiplier +
-          projectedAccessoryReward;
-        estimatedIncrease = Math.max(0, nextPrimeTotal - projectedPrimeTotal);
-      }
+      const nextPrimeTotal =
+        projectedNonAccessoryBaseTotal -
+        currentProjectedBaseValue +
+        nextProjectedBaseValue +
+        projectedRecontractReward +
+        projectedAccessoryReward;
+      estimatedIncrease = Math.max(0, nextPrimeTotal - projectedPrimeTotal);
 
       opportunities.push({
         key,
@@ -599,8 +618,8 @@ export async function buildManagerPrimeSummary(managerName: string, storeName: s
     projectedPrimeTotal,
     currentNonAccessoryBaseTotal,
     projectedNonAccessoryBaseTotal,
-    currentRecontractMultiplier,
-    projectedRecontractMultiplier,
+    currentRecontractReward,
+    projectedRecontractReward,
     currentAccessoryReward,
     projectedAccessoryReward,
     rows,

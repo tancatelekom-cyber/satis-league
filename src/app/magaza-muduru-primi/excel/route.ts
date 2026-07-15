@@ -191,6 +191,8 @@ export async function GET(request: Request) {
     ["Ay Sonu Prim Ongorusu", formatCurrency(summary.projectedPrimeTotal)],
     ["Rekontratlama Tempo", formatPercent(summary.metrics.recontract.actualTempo)],
     ["Ay Sonu Rekontratlama", formatPercent(summary.metrics.recontract.projectedTempo)],
+    ["Rekontratlama Primi (%100 ve uzeri, adet basi 10 TL)", formatCurrency(summary.currentRecontractReward)],
+    ["Ay Sonu Rekontratlama Primi", formatCurrency(summary.projectedRecontractReward)],
     ["Aksesuar Primi", formatCurrency(summary.currentAccessoryReward)],
     ["Ay Sonu Aksesuar", formatCurrency(summary.projectedAccessoryReward)],
     [],
@@ -220,12 +222,12 @@ export async function GET(request: Request) {
       accessoryRow
         ? formatPercent(row.currentBaseValue, 0)
         : recontractRow
-          ? `${row.currentBaseValue.toLocaleString("tr-TR", { maximumFractionDigits: 2 })}x`
+          ? `${formatCurrency(row.currentBaseValue)}/adet`
           : formatCurrency(row.currentBaseValue),
       accessoryRow
         ? formatPercent(row.projectedBaseValue, 0)
         : recontractRow
-          ? `${row.projectedBaseValue.toLocaleString("tr-TR", { maximumFractionDigits: 2 })}x`
+          ? `${formatCurrency(row.projectedBaseValue)}/adet`
           : formatCurrency(row.projectedBaseValue),
       formatCurrency(row.currentReward),
       formatCurrency(row.projectedReward)

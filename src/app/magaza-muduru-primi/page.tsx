@@ -325,12 +325,12 @@ export default async function ManagerPrimePage({ searchParams }: PageProps) {
           <article className="campaign-summary-card">
             <span>Rekontratlama Tempo</span>
             <strong>{formatPercent(summary.metrics.recontract.actualTempo)}</strong>
-            <p>Cekirdek prim toplamini su an etkileyen oran.</p>
+            <p>%100 ve uzerinde adet basi 10 TL. Mevcut prim: {formatCurrency(summary.currentRecontractReward)}</p>
           </article>
           <article className="campaign-summary-card">
             <span>Ay Sonu Rekontratlama</span>
             <strong>{formatPercent(summary.metrics.recontract.projectedTempo)}</strong>
-            <p>Ay sonu cekirdek prim carpan ongorusu.</p>
+            <p>Bagimsiz ay sonu prim ongorusu: {formatCurrency(summary.projectedRecontractReward)}</p>
           </article>
           <article className="campaign-summary-card">
             <span>Aksesuar Primi</span>
@@ -350,7 +350,7 @@ export default async function ManagerPrimePage({ searchParams }: PageProps) {
           <div>
             <h2 className="goal-panel-title">Prim Dagilim Detayi</h2>
             <p className="goal-panel-subtitle">
-              Uretim puani, aktivasyon puan, terminal ve SOL kazanimi toplanir; toplam rekontratlama temposu ile carpilir. Aksesuar karlilik bagimsiz hesaplanir.
+              Rekontratlama carpani kullanilmaz. Rekontratlama %100 ve uzerindeyse adet basi 10 TL, diger prim kalemleri kendi skalalariyla bagimsiz hesaplanir.
             </p>
           </div>
         </div>
@@ -386,14 +386,14 @@ export default async function ManagerPrimePage({ searchParams }: PageProps) {
                       {accessoryRow
                         ? formatPercent(row.currentBaseValue, 0)
                         : recontractRow
-                          ? `${row.currentBaseValue.toLocaleString("tr-TR", { maximumFractionDigits: 2 })}x`
+                          ? `${formatCurrency(row.currentBaseValue)}/adet`
                           : formatCurrency(row.currentBaseValue)}
                     </td>
                     <td>
                       {accessoryRow
                         ? formatPercent(row.projectedBaseValue, 0)
                         : recontractRow
-                          ? `${row.projectedBaseValue.toLocaleString("tr-TR", { maximumFractionDigits: 2 })}x`
+                          ? `${formatCurrency(row.projectedBaseValue)}/adet`
                           : formatCurrency(row.projectedBaseValue)}
                     </td>
                     <td>{formatCurrency(row.currentReward)}</td>

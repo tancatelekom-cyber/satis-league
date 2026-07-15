@@ -13,6 +13,8 @@ import { HomePopupAnnouncement } from "@/components/home-popup-announcement";
 import { APP_SESSION_COOKIE } from "@/lib/auth/app-session";
 import { DuelScoreArena } from "@/components/duel/duel-score-arena";
 import { getDuelDashboardData } from "@/lib/duel/get-duel-dashboard-data";
+import { LiveCampaignCountdown } from "@/components/campaign/live-campaign-countdown";
+import { formatCampaignDateTime } from "@/lib/campaign-utils";
 
 export const dynamic = "force-dynamic";
 
@@ -521,62 +523,77 @@ export default async function HomePage() {
       ) : null}
 
       {liveCampaignLeaderboard ? (
-        <>
-          <section className="hero home-leaders-hero">
-            <div className="hero-copy">
-              <h1 className="home-leaders-title">{liveCampaignLeaderboard.campaign.name}</h1>
-              <p>
-                Su anda canli olan kampanyanin anlik siralamasi asagida. Tum detay icin kampanyayi
-                acabilirsiniz.
-              </p>
+        <section className="live-campaign-home-list">
+          <article className="live-campaign-home-card">
+            <div className="live-campaign-home-topline">
+              <span className="live-campaign-blink-badge">
+                <span aria-hidden="true" /> CANLI KAMPANYA
+              </span>
+              <span className="live-campaign-end-date">
+                Bitis: {formatCampaignDateTime(liveCampaignLeaderboard.campaign.end_at)}
+              </span>
             </div>
-          </section>
 
-          <section className="guide-card home-live-campaign-card">
-            <div className="section-title compact-title">
+            <LiveCampaignCountdown endAt={liveCampaignLeaderboard.campaign.end_at} />
+
+            <div className="live-campaign-home-heading">
               <div>
-                <h2>Canli Kampanya Siralamasi</h2>
+                <h1>{liveCampaignLeaderboard.campaign.name}</h1>
                 <p>
                   {liveCampaignLeaderboard.campaign.mode === "employee" ? "Calisan bazli" : "Magaza bazli"}{" "}
                   | {liveCampaignLeaderboard.campaign.scoring === "points" ? "Puan" : "Adet"}
                 </p>
               </div>
-              <Link
-                className="button-secondary"
-                href={`/kampanyalar/${liveCampaignLeaderboard.campaign.id}?view=leaderboard`}
-              >
-                Kampanyayi Ac
-              </Link>
+              <div className="live-campaign-personal-rank">
+                <span>SIRANIZ</span>
+                <strong>
+                  {liveCampaignLeaderboard.personal.rank
+                    ? `#${liveCampaignLeaderboard.personal.rank}`
+                    : "-"}
+                </strong>
+              </div>
             </div>
 
-            <div className="leaderboard-list">
-              {liveCampaignLeaderboard.leaderboard.slice(0, 5).map((row, index) => (
-                <div key={row.id} className="leaderboard-row">
-                  <div className={`leaderboard-rank ${row.score <= 0 ? "leaderboard-rank-empty" : ""}`}>
-                    {index + 1}
-                  </div>
-
-                  <div>
-                    <h4>
-                      {row.label}
-                      {index === 0 ? (
-                        <span aria-label="Lider kupasi" className="leaderboard-cup" title="Lider kupasi">
-                          Kupa
-                        </span>
-                      ) : null}
-                    </h4>
-                    <p>{row.badge ?? "Siralamada"}</p>
-                  </div>
-
-                  <strong>
-                    {row.score.toLocaleString("tr-TR")}{" "}
-                    {liveCampaignLeaderboard.campaign.scoring === "points" ? "puan" : "adet"}
-                  </strong>
-                </div>
-              ))}
+            <div className="live-campaign-top-fifteen">
+              <div className="live-campaign-ranking-head">
+                <strong>ILK 15</strong>
+                <span>
+                  {liveCampaignLeaderboard.campaign.mode === "employee" ? "Calisan" : "Magaza"}
+                </span>
+                <span>SKOR</span>
+              </div>
+              <ol>
+                {liveCampaignLeaderboard.leaderboard.slice(0, 15).map((row, index) => (
+                  <li
+                    className={
+                      row.id ===
+                      (liveCampaignLeaderboard.campaign.mode === "employee"
+                        ? campaignDashboard?.profile.id
+                        : campaignDashboard?.profile.store_id)
+                        ? "is-current-user"
+                        : ""
+                    }
+                    key={row.id}
+                  >
+                    <span className="live-campaign-rank-number">{index + 1}</span>
+                    <strong>{row.label}</strong>
+                    <span className="live-campaign-rank-score">
+                      {row.score.toLocaleString("tr-TR")}{" "}
+                      {liveCampaignLeaderboard.campaign.scoring === "points" ? "puan" : "adet"}
+                    </span>
+                  </li>
+                ))}
+              </ol>
             </div>
-          </section>
-        </>
+
+            <Link
+              className="live-campaign-detail-link"
+              href={`/kampanyalar/${liveCampaignLeaderboard.campaign.id}?view=leaderboard`}
+            >
+              Kampanyayi Ac
+            </Link>
+          </article>
+        </section>
       ) : (
         <>
           <section className="hero home-leaders-hero">

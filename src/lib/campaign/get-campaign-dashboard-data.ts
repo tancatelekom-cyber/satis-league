@@ -245,7 +245,6 @@ export async function getCampaignDashboardData(userId: string): Promise<UserCamp
     products: productRows.filter((product) => product.campaign_id === campaign.id),
     can_submit:
       profile.role === "admin" ||
-      (permissionMap.get(campaign.id)?.size ?? 0) === 0 ||
       permissionMap.get(campaign.id)?.has(profile.id) === true
   }));
 

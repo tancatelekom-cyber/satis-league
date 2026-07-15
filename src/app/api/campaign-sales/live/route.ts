@@ -75,7 +75,6 @@ export async function POST(request: Request) {
 
   if (
     actor.role !== "admin" &&
-    allowedProfileIds.length > 0 &&
     !allowedProfileIds.includes(actor.id)
   ) {
     return NextResponse.json({ message: "Bu kampanyaya satis girme yetkiniz yok." }, { status: 403 });

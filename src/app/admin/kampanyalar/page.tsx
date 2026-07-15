@@ -122,7 +122,9 @@ export default async function CampaignAdminPage({ searchParams }: CampaignAdminP
                   ))
                 )}
               </div>
-              <small className="subtle">Bos birakirsan onayli tum kullanicilar kampanya girisi yapabilir.</small>
+              <small className="subtle">
+                Yalnizca sectiginiz profiller satis girebilir. Bos birakilirsa sadece admin satis girisi yapabilir.
+              </small>
             </label>
 
             <div className="auth-grid">
@@ -516,7 +518,9 @@ export default async function CampaignAdminPage({ searchParams }: CampaignAdminP
                             );
                           })}
                         </div>
-                        <small className="subtle">Bos ise tum onayli kullanicilar kampanya girisi yapabilir.</small>
+                        <small className="subtle">
+                          Yalnizca secili profiller satis girebilir. Hicbiri secilmezse sadece admin giris yapabilir.
+                        </small>
                       </label>
 
                       <div className="campaign-manage-actions">

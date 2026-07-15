@@ -93,7 +93,7 @@ export async function submitSaleEntryAction(formData: FormData) {
     (row) => row.profile_id
   );
 
-  if (allowedProfileIds.length > 0 && !allowedProfileIds.includes(actorRow.id)) {
+  if (actorRow.role !== "admin" && !allowedProfileIds.includes(actorRow.id)) {
     redirectWithMessage(
       "Bu kampanyaya satis girme yetkiniz yok.",
       "error",
@@ -119,41 +119,37 @@ export async function submitSaleEntryAction(formData: FormData) {
 
   let finalTargetProfileId: string | null = null;
   let finalTargetStoreId: string | null = null;
+  let multiplierStoreId: string | null = actorRow.store_id;
 
   if (campaignRow.mode === "employee") {
-    if (actorRow.role === "manager") {
-      if (!targetProfileId) {
-        redirectWithMessage(
-          "Magaza muduru satis girerken bir calisan secmelidir.",
-          "error",
-          errorRedirectTo
-        );
-      }
-
-      const { data: targetProfile } = await admin
-        .from("profiles")
-        .select("id, store_id, approval, role, is_on_leave")
-        .eq("id", targetProfileId)
-        .single();
-
-      if (
-        !targetProfile ||
-        targetProfile.approval !== "approved" ||
-        targetProfile.store_id !== actorRow.store_id ||
-        targetProfile.role !== "employee" ||
-        targetProfile.is_on_leave
-      ) {
-        redirectWithMessage(
-          "Magaza muduru sadece kendi magazasindaki aktif calisana giris yapabilir.",
-          "error",
-          errorRedirectTo
-        );
-      }
-
-      finalTargetProfileId = targetProfile!.id;
-    } else {
-      finalTargetProfileId = actorRow.id;
+    if (!targetProfileId) {
+      redirectWithMessage("Hedef personel secilmedi.", "error", errorRedirectTo);
     }
+
+    const { data: targetProfile } = await admin
+      .from("profiles")
+      .select("id, store_id, approval, role, is_on_leave")
+      .eq("id", targetProfileId)
+      .single();
+
+    if (
+      !targetProfile ||
+      targetProfile.approval !== "approved" ||
+      targetProfile.role !== "employee" ||
+      targetProfile.is_on_leave ||
+      (actorRow.role !== "admin" && targetProfile.store_id !== actorRow.store_id)
+    ) {
+      redirectWithMessage(
+        actorRow.role === "admin"
+          ? "Secilen personel aktif ve onayli bir calisan olmali."
+          : "Sadece kendi magazanizdaki aktif calisana giris yapabilirsiniz.",
+        "error",
+        errorRedirectTo
+      );
+    }
+
+    finalTargetProfileId = targetProfile!.id;
+    multiplierStoreId = targetProfile!.store_id ?? actorRow.store_id;
   } else {
     finalTargetStoreId = targetStoreId || actorRow.store_id;
 
@@ -166,11 +162,12 @@ export async function submitSaleEntryAction(formData: FormData) {
     }
   }
 
+  multiplierStoreId = multiplierStoreId ?? finalTargetStoreId;
   const { data: storeMultiplierRow } = await admin
     .from("campaign_store_multipliers")
     .select("multiplier")
     .eq("campaign_id", campaignId)
-    .eq("store_id", actorRow.store_id ?? finalTargetStoreId)
+    .eq("store_id", multiplierStoreId)
     .maybeSingle();
 
   const profileMultiplierTarget = finalTargetProfileId ?? actorRow.id;

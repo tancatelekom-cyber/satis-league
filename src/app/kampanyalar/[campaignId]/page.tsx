@@ -328,7 +328,7 @@ export default async function CampaignDetailPage({
         <section className="guide-card">
           {isActiveCampaign && !canSubmitToCampaign ? (
             <div className="message-box error-box">
-              Bu kampanyada satis girisi sadece adminin yetki verdigi profiller tarafindan yapilabilir.
+              Bu kampanyada satis girisi yetkiniz yok. Siralamayi ve kampanya bilgilerini goruntulemeye devam edebilirsiniz.
             </div>
           ) : null}
           <div className="leaderboard-list">

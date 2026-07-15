@@ -32,12 +32,27 @@ function MatrixTable({
         <tr>
           <th>Urun</th>
           {columns.map((participant) => (
-            <th key={`matrix-head-${participant.id}`}>{participant.label}</th>
+            <th className="campaign-matrix-participant-head" key={`matrix-head-${participant.id}`}>
+              {participant.label}
+            </th>
           ))}
           <th>Toplam</th>
         </tr>
       </thead>
       <tbody>
+        {summaryRows?.map((summary) => (
+          <tr className="campaign-matrix-summary-row" key={`matrix-summary-${summary.id}`}>
+            <th>{summary.label}</th>
+            {summary.participantCells.map((value, index) => (
+              <td key={`matrix-summary-cell-${summary.id}-${columns[index]?.id ?? index}`}>
+                {value.toLocaleString("tr-TR", { maximumFractionDigits: 2 })}
+              </td>
+            ))}
+            <td className="campaign-matrix-total">
+              {summary.total.toLocaleString("tr-TR", { maximumFractionDigits: 2 })}
+            </td>
+          </tr>
+        ))}
         {rows.map((product) => (
           <tr key={`matrix-row-${product.id}`}>
             <th>{product.name}</th>
@@ -48,23 +63,6 @@ function MatrixTable({
           </tr>
         ))}
       </tbody>
-      {summaryRows?.length ? (
-        <tfoot>
-          {summaryRows.map((summary) => (
-            <tr key={`matrix-summary-${summary.id}`}>
-              <th>{summary.label}</th>
-              {summary.participantCells.map((value, index) => (
-                <td key={`matrix-summary-cell-${summary.id}-${columns[index]?.id ?? index}`}>
-                  {value.toLocaleString("tr-TR", { maximumFractionDigits: 2 })}
-                </td>
-              ))}
-              <td className="campaign-matrix-total">
-                {summary.total.toLocaleString("tr-TR", { maximumFractionDigits: 2 })}
-              </td>
-            </tr>
-          ))}
-        </tfoot>
-      ) : null}
     </table>
   );
 }

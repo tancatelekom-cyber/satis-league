@@ -7311,17 +7311,28 @@ textarea::placeholder {
   box-shadow: -8px 0 16px rgba(8, 34, 66, 0.08);
 }
 
+.campaign-matrix-table thead th.campaign-matrix-participant-head {
+  width: 34px;
+  min-width: 34px;
+  max-width: 34px;
+  height: 142px;
+  padding: 8px 5px;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  text-align: left;
+  vertical-align: middle;
+  line-height: 1;
+  white-space: nowrap;
+}
+
 .campaign-matrix-table tbody th,
-.campaign-matrix-table tbody td,
-.campaign-matrix-table tfoot th,
-.campaign-matrix-table tfoot td {
+.campaign-matrix-table tbody td {
   padding: 7px 8px;
   border: 1px solid rgba(88, 240, 196, 0.18);
   font-size: 0.56rem;
 }
 
-.campaign-matrix-table tbody th,
-.campaign-matrix-table tfoot th {
+.campaign-matrix-table tbody th {
   width: 9ch;
   min-width: 9ch;
   max-width: 9ch;
@@ -7338,10 +7349,10 @@ textarea::placeholder {
   line-height: 1.15;
 }
 
-.campaign-matrix-table tbody td,
-.campaign-matrix-table tfoot td {
-  width: 6ch;
-  min-width: 6ch;
+.campaign-matrix-table tbody td {
+  width: 34px;
+  min-width: 34px;
+  max-width: 34px;
   background: rgba(255, 255, 255, 0.82);
   color: #0f2744;
   font-weight: 700;
@@ -7359,14 +7370,15 @@ textarea::placeholder {
   box-shadow: -8px 0 16px rgba(8, 34, 66, 0.08);
 }
 
-.campaign-matrix-table tfoot th,
-.campaign-matrix-table tfoot td {
+.campaign-matrix-table tbody tr.campaign-matrix-summary-row th,
+.campaign-matrix-table tbody tr.campaign-matrix-summary-row td {
   background: rgba(218, 244, 232, 0.98);
   color: #082242;
   font-weight: 900;
+  border-top-color: rgba(8, 34, 66, 0.28);
 }
 
-.campaign-matrix-table tfoot td.campaign-matrix-total {
+.campaign-matrix-table tbody tr.campaign-matrix-summary-row td.campaign-matrix-total {
   position: sticky;
   right: 0;
   background: rgba(255, 228, 157, 0.98);

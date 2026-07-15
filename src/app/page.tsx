@@ -14,6 +14,7 @@ import { APP_SESSION_COOKIE } from "@/lib/auth/app-session";
 import { DuelScoreArena } from "@/components/duel/duel-score-arena";
 import { getDuelDashboardData } from "@/lib/duel/get-duel-dashboard-data";
 import { LiveCampaignCountdown } from "@/components/campaign/live-campaign-countdown";
+import { CampaignLeaderboardShareButton } from "@/components/campaign/campaign-leaderboard-share-button";
 import { formatCampaignDateTime } from "@/lib/campaign-utils";
 
 export const dynamic = "force-dynamic";
@@ -556,14 +557,14 @@ export default async function HomePage() {
 
             <div className="live-campaign-top-fifteen">
               <div className="live-campaign-ranking-head">
-                <strong>ILK 15</strong>
+                <strong>TUMU</strong>
                 <span>
                   {liveCampaignLeaderboard.campaign.mode === "employee" ? "Calisan" : "Magaza"}
                 </span>
                 <span>SKOR</span>
               </div>
               <ol>
-                {liveCampaignLeaderboard.leaderboard.slice(0, 15).map((row, index) => (
+                {liveCampaignLeaderboard.leaderboard.map((row, index) => (
                   <li
                     className={
                       row.id ===
@@ -585,6 +586,19 @@ export default async function HomePage() {
                 ))}
               </ol>
             </div>
+
+            <CampaignLeaderboardShareButton
+              campaignName={liveCampaignLeaderboard.campaign.name}
+              endAt={liveCampaignLeaderboard.campaign.end_at}
+              participantLabel={
+                liveCampaignLeaderboard.campaign.mode === "employee" ? "Calisan" : "Magaza"
+              }
+              rows={liveCampaignLeaderboard.leaderboard.map((row) => ({
+                label: row.label,
+                score: row.score
+              }))}
+              scoring={liveCampaignLeaderboard.campaign.scoring}
+            />
 
             <Link
               className="live-campaign-detail-link"

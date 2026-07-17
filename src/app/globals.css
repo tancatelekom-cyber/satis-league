@@ -11374,6 +11374,17 @@ textarea::placeholder {
 
 .goal-employee-table-details .goal-employee-table-row .goal-employee-table-cell {
   border-bottom: 0;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.goal-employee-table-details[open] > .goal-employee-table-summary .goal-employee-table-cell {
+  background: #c8eadf;
+  color: #073f46;
+}
+
+.goal-employee-table-details[open] > .goal-employee-table-summary .goal-employee-table-cell-title {
+  background: #9fd7c8;
+  color: #052f35;
 }
 
 .goal-employee-table-details-body {

@@ -1753,12 +1753,7 @@ function buildCompanyCategorySummaries(rows: GoalStoreRow[], workedDays: number,
           title: storeCode,
           ...buildStoreMetricSummary(storeRows, workedDays, totalDays)
         }))
-        .sort((a, b) => {
-          if (a.hasTarget && b.hasTarget && a.actualPercent !== null && b.actualPercent !== null) {
-            return b.actualPercent - a.actualPercent || b.actual - a.actual;
-          }
-          return b.actual - a.actual;
-        });
+        .sort((a, b) => a.title.localeCompare(b.title, "tr", { sensitivity: "base" }));
 
       return {
         title: mainCategory,
@@ -2409,7 +2404,12 @@ function EmployeeGoalCategoryTable({
           }
 
           return (
-            <details key={category.title} className="goal-employee-table-details" open={index === 0}>
+            <details
+              key={category.title}
+              className="goal-employee-table-details"
+              name="goal-category-accordion"
+              open={index === 0}
+            >
               <summary className="goal-employee-table-summary">
                 {renderMetricRow(category, { expandable: true })}
               </summary>

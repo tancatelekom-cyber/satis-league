@@ -1715,6 +1715,60 @@ function SeparateInfoTable({
   );
 }
 
+function CompanyInformationCurrentTable({ rows }: { rows: GoalSeparateInfoRow[] }) {
+  if (!rows.length) {
+    return null;
+  }
+
+  return (
+    <div className="goal-company-information-current-panel">
+      <div className="goal-live-prime-head">
+        <div>
+          <h3>Bilgilendirme Kalemleri - Mevcut Durum</h3>
+          <p>Ay sonu projeksiyonu kullanilmaz; mevcut hedef ve gerceklesen degerleri gosterilir.</p>
+        </div>
+      </div>
+
+      <div className="goal-company-trend-table-wrap">
+        <table className="goal-company-trend-table goal-company-information-current-table">
+          <thead>
+            <tr>
+              <th>Kategori</th>
+              <th>Hedef</th>
+              <th>Gerceklesen</th>
+              <th>Hedef Gerceklesen %</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => {
+              const realizationPercent = row.hasTarget && row.target ? (row.actual / row.target) * 100 : null;
+
+              return (
+                <tr key={`company-information-current-${row.title}`}>
+                  <th>{row.title}</th>
+                  <td>{row.hasTarget ? formatGoalValue(row.target, row.targetIsPercent) : "-"}</td>
+                  <td>{formatGoalValue(row.actual, row.actualIsPercent)}</td>
+                  <td
+                    className={
+                      realizationPercent === null
+                        ? ""
+                        : realizationPercent >= 100
+                          ? "goal-company-trend-good"
+                          : "goal-company-trend-bad"
+                    }
+                  >
+                    {realizationPercent === null ? "-" : formatPercent(realizationPercent)}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 function buildCompanyCategorySummaries(rows: GoalStoreRow[], workedDays: number, totalDays: number): GoalCategorySummary[] {
   const companyRows = buildCompanyRows(rows);
   const groupedRawRows = new Map<string, GoalStoreRow[]>();
@@ -3689,10 +3743,13 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
 
                 {effectiveView === "company" ? (
                   companyCategorySummaries.length ? (
-                    <EmployeeGoalCategoryTable
-                      categories={companyCategorySummaries}
-                      remainingDays={dayStats.remainingDays}
-                    />
+                    <>
+                      <EmployeeGoalCategoryTable
+                        categories={companyCategorySummaries}
+                        remainingDays={dayStats.remainingDays}
+                      />
+                      <CompanyInformationCurrentTable rows={companySeparateInfoRows} />
+                    </>
                   ) : (
                     <p className="subtle">Firma verisi bulunamadi.</p>
                   )

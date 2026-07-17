@@ -1731,37 +1731,71 @@ function CompanyInformationCurrentTable({ rows }: { rows: GoalSeparateInfoRow[] 
 
       <div className="goal-company-trend-table-wrap">
         <table className="goal-company-trend-table goal-company-information-current-table">
+          <colgroup>
+            <col className="goal-company-information-category-column" />
+            <col />
+            <col />
+          </colgroup>
           <thead>
             <tr>
               <th>Kategori</th>
               <th>Hedef</th>
               <th>Gerceklesen</th>
-              <th>Hedef Gerceklesen %</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => {
-              const realizationPercent = row.hasTarget && row.target ? (row.actual / row.target) * 100 : null;
+            {rows.map((row) => (
+              <tr key={`company-information-current-${row.title}`}>
+                <td colSpan={3} className="goal-company-information-current-row-cell">
+                  <details className="goal-company-information-current-details" name="company-information-current-accordion">
+                    <summary className="goal-company-information-current-summary">
+                      <strong>
+                        <span className="goal-company-trend-arrow">v</span>
+                        <span>{row.title}</span>
+                      </strong>
+                      <span>{row.hasTarget ? formatGoalValue(row.target, row.targetIsPercent) : "-"}</span>
+                      <span>{formatGoalValue(row.actual, row.actualIsPercent)}</span>
+                    </summary>
 
-              return (
-                <tr key={`company-information-current-${row.title}`}>
-                  <th>{row.title}</th>
-                  <td>{row.hasTarget ? formatGoalValue(row.target, row.targetIsPercent) : "-"}</td>
-                  <td>{formatGoalValue(row.actual, row.actualIsPercent)}</td>
-                  <td
-                    className={
-                      realizationPercent === null
-                        ? ""
-                        : realizationPercent >= 100
-                          ? "goal-company-trend-good"
-                          : "goal-company-trend-bad"
-                    }
-                  >
-                    {realizationPercent === null ? "-" : formatPercent(realizationPercent)}
-                  </td>
-                </tr>
-              );
-            })}
+                    <div className="goal-company-information-store-wrap">
+                      <table className="goal-company-trend-table goal-company-information-store-table">
+                        <colgroup>
+                          <col className="goal-company-information-category-column" />
+                          <col />
+                          <col />
+                        </colgroup>
+                        <thead>
+                          <tr>
+                            <th>Sube</th>
+                            <th>Hedef</th>
+                            <th>Gerceklesen</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {row.storeDetails.map((store) => (
+                            <tr key={`company-information-current-${row.title}-${store.storeCode}`}>
+                              <th>{store.storeCode}</th>
+                              <td>{store.hasTarget ? formatGoalValue(store.target, store.targetIsPercent) : "-"}</td>
+                              <td
+                                className={
+                                  store.hasTarget
+                                    ? store.isAtOrAboveTarget
+                                      ? "goal-company-trend-good"
+                                      : "goal-company-trend-bad"
+                                    : ""
+                                }
+                              >
+                                {formatGoalValue(store.actual, store.actualIsPercent)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </details>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>

@@ -11308,10 +11308,85 @@ textarea::placeholder {
   text-align: left;
 }
 
-.goal-company-information-current-table td {
+.goal-company-information-current-table td:not(.goal-company-information-current-row-cell) {
   min-width: 130px;
   text-align: center;
   font-weight: 800;
+}
+
+.goal-company-information-category-column {
+  width: 55%;
+}
+
+.goal-company-information-current-row-cell {
+  padding: 0 !important;
+  border: 0 !important;
+}
+
+.goal-company-information-current-details {
+  border-bottom: 1px solid rgba(16, 32, 59, 0.12);
+}
+
+.goal-company-information-current-summary {
+  display: grid;
+  grid-template-columns: 55% 22.5% 22.5%;
+  align-items: stretch;
+  list-style: none;
+  cursor: pointer;
+}
+
+.goal-company-information-current-summary::-webkit-details-marker {
+  display: none;
+}
+
+.goal-company-information-current-summary > * {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  padding: 8px 10px;
+  border-right: 1px solid rgba(16, 32, 59, 0.12);
+  color: #10203b;
+  font-weight: 800;
+}
+
+.goal-company-information-current-summary > strong {
+  justify-content: flex-start;
+  gap: 8px;
+  background: #d8e6f5;
+  text-align: left;
+}
+
+.goal-company-information-current-summary > *:last-child {
+  border-right: 0;
+}
+
+.goal-company-information-current-details[open] > .goal-company-information-current-summary > * {
+  background: #c8eadf;
+  color: #073f46;
+}
+
+.goal-company-information-current-details[open] > .goal-company-information-current-summary > strong {
+  background: #9fd7c8;
+}
+
+.goal-company-information-current-details[open] > .goal-company-information-current-summary .goal-company-trend-arrow {
+  transform: rotate(180deg);
+}
+
+.goal-company-information-store-wrap {
+  padding: 10px;
+  border-top: 1px solid rgba(16, 32, 59, 0.12);
+  background: rgba(241, 247, 252, 0.96);
+}
+
+.goal-company-information-store-table {
+  overflow: hidden;
+  border-radius: 14px;
+}
+
+.goal-company-information-store-table th:first-child {
+  text-align: left;
 }
 
 .goal-employee-table-shell {

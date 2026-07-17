@@ -11337,6 +11337,15 @@ textarea::placeholder {
   font-size: 0.94rem;
 }
 
+.goal-employee-table-row-grandchild .goal-employee-table-cell-title {
+  padding-left: 44px;
+  background: #f0f5fa;
+}
+
+.goal-employee-table-row-grandchild .goal-employee-table-title-label {
+  font-size: 0.9rem;
+}
+
 .goal-employee-table-value-good {
   color: #0f8a39;
   font-weight: 900;
@@ -11368,7 +11377,8 @@ textarea::placeholder {
   display: none;
 }
 
-.goal-employee-table-details[open] .goal-company-trend-arrow {
+.goal-employee-table-details[open] > .goal-employee-table-summary .goal-company-trend-arrow,
+.goal-company-store-detail[open] > .goal-company-store-detail-summary .goal-company-trend-arrow {
   transform: rotate(180deg);
 }
 
@@ -11416,6 +11426,26 @@ textarea::placeholder {
   font-weight: 900;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+}
+
+.goal-company-store-detail + .goal-company-store-detail,
+.goal-company-store-detail + div,
+.goal-company-category-store-details .goal-employee-table-children > div + .goal-company-store-detail {
+  border-top: 1px solid rgba(16, 32, 59, 0.1);
+}
+
+.goal-company-store-detail-summary {
+  list-style: none;
+}
+
+.goal-company-store-detail[open] > .goal-company-store-detail-summary .goal-employee-table-cell {
+  background: #dcecf8;
+  color: #0b3553;
+}
+
+.goal-company-store-subcategory-list {
+  border-top: 1px solid rgba(16, 32, 59, 0.12);
+  background: rgba(248, 251, 254, 0.98);
 }
 
 .goal-employee-production-reward-panel {

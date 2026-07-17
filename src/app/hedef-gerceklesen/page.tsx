@@ -80,6 +80,11 @@ type GoalCategorySummary = GoalMetricSummary & {
   storeDetails?: Array<
     GoalMetricSummary & {
       title: string;
+      children: Array<
+        GoalMetricSummary & {
+          title: string;
+        }
+      >;
     }
   >;
 };
@@ -1749,10 +1754,29 @@ function buildCompanyCategorySummaries(rows: GoalStoreRow[], workedDays: number,
       });
 
       const storeDetails = Array.from(storeMap.entries())
-        .map(([storeCode, storeRows]) => ({
-          title: storeCode,
-          ...buildStoreMetricSummary(storeRows, workedDays, totalDays)
-        }))
+        .map(([storeCode, storeRows]) => {
+          const storeChildMap = new Map<string, GoalStoreRow[]>();
+          storeRows
+            .filter((row) => Boolean(row.subCategory))
+            .forEach((row) => {
+              const current = storeChildMap.get(row.subCategory) ?? [];
+              current.push(row);
+              storeChildMap.set(row.subCategory, current);
+            });
+
+          const storeChildren = Array.from(storeChildMap.entries())
+            .map(([subCategory, subCategoryRows]) => ({
+              title: subCategory,
+              ...buildStoreMetricSummary(subCategoryRows, workedDays, totalDays)
+            }))
+            .sort((a, b) => a.title.localeCompare(b.title, "tr", { sensitivity: "base" }));
+
+          return {
+            title: storeCode,
+            children: storeChildren,
+            ...buildStoreMetricSummary(storeRows, workedDays, totalDays)
+          };
+        })
         .sort((a, b) => a.title.localeCompare(b.title, "tr", { sensitivity: "base" }));
 
       return {
@@ -2338,6 +2362,7 @@ function EmployeeGoalCategoryTable({
     summary: EmployeeGoalTableMetric,
     options?: {
       child?: boolean;
+      grandchild?: boolean;
       expandable?: boolean;
       open?: boolean;
       productionRewardPlan?: ReturnType<typeof buildProductionRewardPlan>;
@@ -2363,7 +2388,11 @@ function EmployeeGoalCategoryTable({
     );
 
     return (
-      <div className={`goal-employee-table-row${options?.child ? " goal-employee-table-row-child" : ""}`}>
+      <div
+        className={`goal-employee-table-row${options?.child ? " goal-employee-table-row-child" : ""}${
+          options?.grandchild ? " goal-employee-table-row-grandchild" : ""
+        }`}
+      >
         <div className="goal-employee-table-cell goal-employee-table-cell-title">{titleNode}</div>
         <div className="goal-employee-table-cell">{summary.hasTarget ? formatNumber(summary.target) : "-"}</div>
         <div className="goal-employee-table-cell">{formatNumber(summary.actual)}</div>
@@ -2524,9 +2553,28 @@ function EmployeeGoalCategoryTable({
                     <div className="goal-company-category-store-title">Sube Gerceklesenleri</div>
                     <div className="goal-employee-table-children">
                       {category.storeDetails?.map((store) => (
-                        <div key={`${category.title}-store-${store.title}`}>
-                          {renderMetricRow(store, { child: true })}
-                        </div>
+                        store.children.length ? (
+                          <details
+                            key={`${category.title}-store-${store.title}`}
+                            className="goal-company-store-detail"
+                            name={`goal-store-accordion-${category.title}`}
+                          >
+                            <summary className="goal-employee-table-summary goal-company-store-detail-summary">
+                              {renderMetricRow(store, { child: true, expandable: true })}
+                            </summary>
+                            <div className="goal-company-store-subcategory-list">
+                              {store.children.map((child) => (
+                                <div key={`${category.title}-${store.title}-${child.title}`}>
+                                  {renderMetricRow(child, { child: true, grandchild: true })}
+                                </div>
+                              ))}
+                            </div>
+                          </details>
+                        ) : (
+                          <div key={`${category.title}-store-${store.title}`}>
+                            {renderMetricRow(store, { child: true })}
+                          </div>
+                        )
                       ))}
                     </div>
                   </div>

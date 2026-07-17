@@ -222,12 +222,9 @@ type CompanyCurrentSummaryRow = {
   title: string;
   valueType: "percent" | "number";
   companyActual: number | null;
-  companyState?: "good" | "bad" | null;
-  isInformation?: boolean;
   stores: Array<{
     storeCode: string;
     actual: number | null;
-    state?: "good" | "bad" | null;
   }>;
 };
 
@@ -1217,25 +1214,6 @@ function buildCompanyCurrentSummaryRows(rows: GoalStoreRow[]) {
       } satisfies CompanyCurrentSummaryRow;
     })
     .filter((row): row is CompanyCurrentSummaryRow => Boolean(row));
-}
-
-function buildCompanySeparateInfoSummaryRows(rows: GoalSeparateInfoRow[]): CompanyCurrentSummaryRow[] {
-  return rows
-    .map((row) => ({
-      title: row.title,
-      valueType: row.actualIsPercent ? "percent" as const : "number" as const,
-      companyActual: row.actual,
-      companyState: row.hasTarget ? (row.isAtOrAboveTarget ? "good" as const : "bad" as const) : null,
-      isInformation: true,
-      stores: row.storeDetails
-        .map((store) => ({
-          storeCode: store.storeCode,
-          actual: store.actual,
-          state: store.hasTarget ? (store.isAtOrAboveTarget ? "good" as const : "bad" as const) : null
-        }))
-        .sort((a, b) => a.storeCode.localeCompare(b.storeCode, "tr", { sensitivity: "base" }))
-    }))
-    .sort((a, b) => a.title.localeCompare(b.title, "tr", { sensitivity: "base" }));
 }
 
 function buildCompanyDailyNeedSummaryRows(
@@ -3182,10 +3160,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
       : [];
   const companyCurrentSummaryRows =
     effectiveView !== "employee" || Boolean(activeEmployeeStoreCode)
-      ? [
-          ...buildCompanyCurrentSummaryRows(filteredStoreRows),
-          ...(effectiveView === "company" ? buildCompanySeparateInfoSummaryRows(companySeparateInfoRows) : [])
-        ]
+      ? buildCompanyCurrentSummaryRows(filteredStoreRows)
       : [];
   const companyDailyNeedSummaryRows =
     effectiveView === "company"
@@ -3202,7 +3177,10 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
       ? Array.from(
           new Set([
             ...companyTrendSummaryRows.flatMap((row) => row.stores.map((store) => store.storeCode)),
-            ...companyCurrentSummaryRows.flatMap((row) => row.stores.map((store) => store.storeCode))
+            ...companyCurrentSummaryRows.flatMap((row) => row.stores.map((store) => store.storeCode)),
+            ...(effectiveView === "company"
+              ? companySeparateInfoRows.flatMap((row) => row.storeDetails.map((store) => store.storeCode))
+              : [])
           ])
         ).sort((a, b) => a.localeCompare(b, "tr"))
       : [];
@@ -3609,38 +3587,23 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                           ))}
 
                           {companyCurrentSummaryRows.map((row) => (
-                            <tr key={`current-row-${row.isInformation ? "info" : "standard"}-${row.title}`}>
-                              <th>
-                                <span className="goal-company-trend-category-label">
-                                  <span>{row.title}</span>
-                                  {row.isInformation ? <small>Mevcut</small> : null}
-                                </span>
-                              </th>
+                            <tr key={`current-row-${row.title}`}>
+                              <th>{row.title}</th>
                               {visibleTrendStoreCodes.map((storeCode) => {
                                 const store = row.stores.find((item) => item.storeCode === storeCode);
                                 const isGood =
-                                  store?.state === "good"
-                                    ? true
-                                    : store?.state === "bad"
-                                      ? false
-                                  : row.title === "Memnuniyet"
+                                  row.title === "Memnuniyet"
                                     ? (store?.actual ?? 0) >= 4.4
                                     : row.title === "Pin Orani"
                                       ? (store?.actual ?? 0) >= 70
-                                      : row.isInformation
-                                        ? null
-                                        : true;
+                                      : true;
                                 const comparisonState =
                                   storeCode === highlightedTrendStoreCode && row.title !== "Giris Sayilari"
                                     ? getTrendComparisonState(store?.actual, row.companyActual)
                                     : null;
                                 const cellClasses = [
                                   storeCode === highlightedTrendStoreCode ? "goal-company-trend-selected" : "",
-                                  isGood === true
-                                    ? "goal-company-trend-good"
-                                    : isGood === false
-                                      ? "goal-company-trend-bad"
-                                      : ""
+                                  isGood ? "goal-company-trend-good" : "goal-company-trend-bad"
                                 ]
                                   .filter(Boolean)
                                   .join(" ");
@@ -3661,11 +3624,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                               })}
                               <td
                                 className={`goal-company-trend-company ${
-                                  row.companyState === "good"
-                                    ? "goal-company-trend-good"
-                                    : row.companyState === "bad"
-                                      ? "goal-company-trend-bad"
-                                    : row.title === "Memnuniyet"
+                                  row.title === "Memnuniyet"
                                     ? (row.companyActual ?? 0) >= 4.4
                                       ? "goal-company-trend-good"
                                       : "goal-company-trend-bad"
@@ -3673,12 +3632,52 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                                       ? (row.companyActual ?? 0) >= 70
                                         ? "goal-company-trend-good"
                                         : "goal-company-trend-bad"
-                                      : row.isInformation
-                                        ? ""
-                                        : "goal-company-trend-good"
+                                      : "goal-company-trend-good"
                                 }`}
                               >
                                 {row.valueType === "percent" ? formatPercent(row.companyActual) : formatNumber(row.companyActual)}
+                              </td>
+                            </tr>
+                          ))}
+
+                          {companySeparateInfoRows.map((row) => (
+                            <tr key={`information-row-${row.title}`}>
+                              <th>
+                                <span className="goal-company-trend-category-label">
+                                  <span>{row.title}</span>
+                                  <small>Mevcut</small>
+                                </span>
+                              </th>
+                              {visibleTrendStoreCodes.map((storeCode) => {
+                                const store = row.storeDetails.find((item) => item.storeCode === storeCode);
+                                const stateClass = store?.hasTarget
+                                  ? store.isAtOrAboveTarget
+                                    ? "goal-company-trend-good"
+                                    : "goal-company-trend-bad"
+                                  : "";
+
+                                return (
+                                  <td
+                                    key={`information-${row.title}-${storeCode}`}
+                                    className={[
+                                      storeCode === highlightedTrendStoreCode ? "goal-company-trend-selected" : "",
+                                      stateClass
+                                    ].filter(Boolean).join(" ")}
+                                  >
+                                    {store ? formatGoalValue(store.actual, store.actualIsPercent) : "-"}
+                                  </td>
+                                );
+                              })}
+                              <td
+                                className={`goal-company-trend-company ${
+                                  row.hasTarget
+                                    ? row.isAtOrAboveTarget
+                                      ? "goal-company-trend-good"
+                                      : "goal-company-trend-bad"
+                                    : ""
+                                }`}
+                              >
+                                {formatGoalValue(row.actual, row.actualIsPercent)}
                               </td>
                             </tr>
                           ))}

@@ -2401,7 +2401,8 @@ function EmployeeGoalCategoryTable({
       <div className="goal-employee-table-body">
         {categories.map((category, index) => {
           const productionRewardPlan = buildProductionRewardPlan(category, productionRewardRows, remainingDays);
-          const hasExpandableBody = category.childCount > 0 || Boolean(productionRewardPlan);
+          const hasStoreDetails = Boolean(category.storeDetails?.length);
+          const hasExpandableBody = category.childCount > 0 || hasStoreDetails || Boolean(productionRewardPlan);
 
           if (!hasExpandableBody) {
             return <div key={category.title}>{renderMetricRow(category)}</div>;
@@ -2515,6 +2516,19 @@ function EmployeeGoalCategoryTable({
                     {category.children.map((child) => (
                       <div key={`${category.title}-${child.title}`}>{renderMetricRow(child, { child: true })}</div>
                     ))}
+                  </div>
+                ) : null}
+
+                {hasStoreDetails ? (
+                  <div className="goal-company-category-store-details">
+                    <div className="goal-company-category-store-title">Sube Gerceklesenleri</div>
+                    <div className="goal-employee-table-children">
+                      {category.storeDetails?.map((store) => (
+                        <div key={`${category.title}-store-${store.title}`}>
+                          {renderMetricRow(store, { child: true })}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 ) : null}
               </div>

@@ -11393,6 +11393,20 @@ textarea::placeholder {
   border-bottom: 0;
 }
 
+.goal-company-category-store-details {
+  border-top: 1px solid rgba(8, 34, 66, 0.16);
+  background: rgba(225, 240, 252, 0.58);
+}
+
+.goal-company-category-store-title {
+  padding: 9px 12px;
+  color: #082242;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .goal-employee-production-reward-panel {
   margin-bottom: 14px;
 }

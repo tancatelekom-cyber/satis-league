@@ -3851,10 +3851,6 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                   </div>
                 ) : null}
 
-                {effectiveView === "company" ? (
-                  <SeparateInfoTable title="Bilgilendirme Kalemleri" rows={companySeparateInfoRows} />
-                ) : null}
-
                 {effectiveView === "company" && shouldShowDocumentIssueAlert ? (
                   <a href="/eksik-evrak" className="evaluation-zero-alert goal-document-issue-alert goal-document-issue-link">
                     <strong>Firma Geneli Evrak Uyarisi Var</strong>

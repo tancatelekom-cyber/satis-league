@@ -4,6 +4,8 @@ import {
   deleteCampaignSaleAction,
   deleteCampaignAction,
   deleteDuelAction,
+  duplicateCampaignAction,
+  duplicateDuelAction,
   endCampaignAction,
   endDuelAction,
   updateCampaignSaleAction,
@@ -26,6 +28,12 @@ type CampaignAdminPageProps = {
     type?: "success" | "error";
   }>;
 };
+
+function nextDayDateTimeInput(value: string) {
+  const date = new Date(value);
+  date.setTime(date.getTime() + 24 * 60 * 60 * 1000);
+  return isoToLocalDateTimeInput(date.toISOString());
+}
 
 export default async function CampaignAdminPage({ searchParams }: CampaignAdminPageProps) {
   const params = searchParams ? await searchParams : undefined;
@@ -536,6 +544,28 @@ export default async function CampaignAdminPage({ searchParams }: CampaignAdminP
                         <strong>{campaign.is_active ? "Aktif" : "Pasif"}</strong>
                       </div>
 
+                      <details className="campaign-edit-details campaign-copy-details">
+                        <summary className="tiny-button approve">Kopyala</summary>
+                        <form action={duplicateCampaignAction} className="admin-form campaign-copy-form">
+                          <input name="redirectTo" type="hidden" value="/admin/kampanyalar" />
+                          <input name="campaignId" type="hidden" value={campaign.id} />
+                          <label className="field compact">
+                            <span>Yeni Kampanya Adi</span>
+                            <input defaultValue={campaign.name} name="name" required />
+                          </label>
+                          <label className="field compact">
+                            <span>Yeni Baslangic</span>
+                            <input defaultValue={nextDayDateTimeInput(campaign.start_at)} name="startAt" required type="datetime-local" />
+                          </label>
+                          <label className="field compact">
+                            <span>Yeni Bitis</span>
+                            <input defaultValue={nextDayDateTimeInput(campaign.end_at)} name="endAt" required type="datetime-local" />
+                          </label>
+                          <small className="subtle">Urunler, puanlar, carpanlar, oduller ve giris yetkileri kopyalanir.</small>
+                          <button className="tiny-button approve" type="submit">Kopyayi Olustur</button>
+                        </form>
+                      </details>
+
                       <form action={endCampaignAction}>
                         <input name="redirectTo" type="hidden" value="/admin/kampanyalar" />
                         <input name="campaignId" type="hidden" value={campaign.id} />
@@ -654,6 +684,28 @@ export default async function CampaignAdminPage({ searchParams }: CampaignAdminP
                         <span>Durum</span>
                         <strong>{duel.is_active ? "Aktif" : "Pasif"}</strong>
                       </div>
+
+                      <details className="campaign-edit-details campaign-copy-details">
+                        <summary className="tiny-button approve">Kopyala</summary>
+                        <form action={duplicateDuelAction} className="admin-form campaign-copy-form">
+                          <input name="redirectTo" type="hidden" value="/admin/kampanyalar" />
+                          <input name="duelId" type="hidden" value={duel.id} />
+                          <label className="field compact">
+                            <span>Yeni Duello Adi</span>
+                            <input defaultValue={duel.name} name="name" required />
+                          </label>
+                          <label className="field compact">
+                            <span>Yeni Baslangic</span>
+                            <input defaultValue={nextDayDateTimeInput(duel.start_at)} name="startAt" required type="datetime-local" />
+                          </label>
+                          <label className="field compact">
+                            <span>Yeni Bitis</span>
+                            <input defaultValue={nextDayDateTimeInput(duel.end_at)} name="endAt" required type="datetime-local" />
+                          </label>
+                          <small className="subtle">Urunler, puanlar, eslesmeler, gruplar, carpanlar ve giris yetkileri kopyalanir.</small>
+                          <button className="tiny-button approve" type="submit">Kopyayi Olustur</button>
+                        </form>
+                      </details>
 
                       <details className="campaign-edit-details">
                         <summary className="tiny-button approve">Duzenle</summary>

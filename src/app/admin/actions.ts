@@ -1978,6 +1978,141 @@ export async function createCampaignAction(formData: FormData) {
   redirectWithMessage("Kampanya ve urunleri basariyla olusturuldu.", "success", redirectTo);
 }
 
+export async function duplicateCampaignAction(formData: FormData) {
+  await requireAdminAccess();
+  const redirectTo = getRedirectTo(formData);
+  const supabase = createAdminClient();
+  const sourceCampaignId = String(formData.get("campaignId") ?? "").trim();
+  const name = String(formData.get("name") ?? "").trim();
+  const startAtInput = String(formData.get("startAt") ?? "").trim();
+  const endAtInput = String(formData.get("endAt") ?? "").trim();
+  const startAt = localDateTimeToIso(startAtInput);
+  const endAt = localDateTimeToIso(endAtInput);
+
+  if (!sourceCampaignId || !name || !startAt || !endAt) {
+    redirectWithMessage("Kampanya kopyasi icin ad, baslangic ve bitis zamani zorunlu.", "error", redirectTo);
+  }
+
+  if (new Date(startAt).getTime() >= new Date(endAt).getTime()) {
+    redirectWithMessage("Kopyanin bitis zamani baslangic zamanindan sonra olmali.", "error", redirectTo);
+  }
+
+  const [campaignResult, productsResult, storeMultipliersResult, profileMultipliersResult, permissionsResult] =
+    await Promise.all([
+      supabase
+        .from("campaigns")
+        .select(
+          "description, mode, scoring, reward_title, reward_details, reward_threshold_value, reward_first, reward_second, reward_third"
+        )
+        .eq("id", sourceCampaignId)
+        .single(),
+      supabase
+        .from("campaign_products")
+        .select("name, sku, unit_label, base_points, sort_order")
+        .eq("campaign_id", sourceCampaignId)
+        .order("sort_order"),
+      supabase
+        .from("campaign_store_multipliers")
+        .select("store_id, multiplier")
+        .eq("campaign_id", sourceCampaignId),
+      supabase
+        .from("campaign_profile_multipliers")
+        .select("profile_id, multiplier")
+        .eq("campaign_id", sourceCampaignId),
+      supabase
+        .from("campaign_entry_permissions")
+        .select("profile_id")
+        .eq("campaign_id", sourceCampaignId)
+    ]);
+
+  const campaignReadError = [
+    campaignResult.error,
+    productsResult.error,
+    storeMultipliersResult.error,
+    profileMultipliersResult.error,
+    permissionsResult.error
+  ].find(Boolean);
+
+  if (campaignReadError) {
+    redirectWithMessage(`Kampanya kurgusu okunamadi: ${campaignReadError.message}`, "error", redirectTo);
+    return;
+  }
+
+  if (campaignResult.error || !campaignResult.data) {
+    redirectWithMessage("Kopyalanacak kampanya bulunamadi.", "error", redirectTo);
+    return;
+  }
+
+  const source = campaignResult.data;
+  const { data: copiedCampaign, error: copyError } = await supabase
+    .from("campaigns")
+    .insert({
+      name,
+      description: source.description,
+      mode: source.mode,
+      scoring: source.scoring,
+      start_date: startAtInput.slice(0, 10),
+      end_date: endAtInput.slice(0, 10),
+      start_at: startAt,
+      end_at: endAt,
+      reward_title: source.reward_title,
+      reward_details: source.reward_details,
+      reward_threshold_value: source.reward_threshold_value,
+      reward_first: source.reward_first,
+      reward_second: source.reward_second,
+      reward_third: source.reward_third,
+      is_active: true
+    })
+    .select("id")
+    .single();
+
+  if (copyError || !copiedCampaign?.id) {
+    redirectWithMessage(`Kampanya kopyalanamadi: ${copyError?.message ?? "Bilinmeyen hata"}`, "error", redirectTo);
+    return;
+  }
+
+  const copiedCampaignId = copiedCampaign.id;
+  const copyResults = await Promise.all([
+    productsResult.data?.length
+      ? supabase.from("campaign_products").insert(
+          productsResult.data.map((product) => ({ ...product, campaign_id: copiedCampaignId }))
+        )
+      : Promise.resolve({ error: null }),
+    storeMultipliersResult.data?.length
+      ? supabase.from("campaign_store_multipliers").insert(
+          storeMultipliersResult.data.map((item) => ({ ...item, campaign_id: copiedCampaignId }))
+        )
+      : Promise.resolve({ error: null }),
+    profileMultipliersResult.data?.length
+      ? supabase.from("campaign_profile_multipliers").insert(
+          profileMultipliersResult.data.map((item) => ({ ...item, campaign_id: copiedCampaignId }))
+        )
+      : Promise.resolve({ error: null }),
+    permissionsResult.data?.length
+      ? supabase.from("campaign_entry_permissions").insert(
+          permissionsResult.data.map((item) => ({ ...item, campaign_id: copiedCampaignId }))
+        )
+      : Promise.resolve({ error: null })
+  ]);
+  const failedCopy = copyResults.find((result) => result.error);
+
+  if (failedCopy?.error) {
+    await supabase.from("campaigns").delete().eq("id", copiedCampaignId);
+    redirectWithMessage(`Kampanya kurgusu kopyalanamadi: ${failedCopy.error.message}`, "error", redirectTo);
+    return;
+  }
+
+  await broadcastNotification({
+    title: `Yeni kampanya acildi: ${name}`,
+    body: `${startAtInput} - ${endAtInput} arasinda kopyalanan kampanya yayinda.`,
+    linkPath: "/kampanyalar",
+    level: "success"
+  });
+
+  refreshCampaignPages();
+  redirectWithMessage("Kampanya kurgusu yeni tarihlerle kopyalandi.", "success", redirectTo);
+}
+
 export async function updateCampaignAction(formData: FormData) {
   await requireAdminAccess();
   const redirectTo = getRedirectTo(formData);
@@ -2288,6 +2423,167 @@ export async function createDuelAction(formData: FormData) {
   refreshCampaignPages();
   revalidatePath(`/kampanyalar/duello/${duelId}`);
   redirectWithMessage("Duello basariyla olusturuldu.", "success", redirectTo);
+}
+
+export async function duplicateDuelAction(formData: FormData) {
+  await requireAdminAccess();
+  const redirectTo = getRedirectTo(formData);
+  const supabase = createAdminClient();
+  const sourceDuelId = String(formData.get("duelId") ?? "").trim();
+  const name = String(formData.get("name") ?? "").trim();
+  const startAtInput = String(formData.get("startAt") ?? "").trim();
+  const endAtInput = String(formData.get("endAt") ?? "").trim();
+  const startAt = localDateTimeToIso(startAtInput);
+  const endAt = localDateTimeToIso(endAtInput);
+
+  if (!sourceDuelId || !name || !startAt || !endAt) {
+    redirectWithMessage("Duello kopyasi icin ad, baslangic ve bitis zamani zorunlu.", "error", redirectTo);
+  }
+
+  if (new Date(startAt).getTime() >= new Date(endAt).getTime()) {
+    redirectWithMessage("Kopyanin bitis zamani baslangic zamanindan sonra olmali.", "error", redirectTo);
+  }
+
+  const [duelResult, productsResult, participantsResult, multipliersResult, permissionsResult] = await Promise.all([
+    supabase.from("duels").select("description, scoring").eq("id", sourceDuelId).single(),
+    supabase
+      .from("duel_products")
+      .select("name, unit_label, base_points, sort_order")
+      .eq("duel_id", sourceDuelId)
+      .order("sort_order"),
+    supabase
+      .from("duel_participants")
+      .select(
+        "id, matchup_no, label, participant_mode, profile_id, sort_order, winner_description, loser_description"
+      )
+      .eq("duel_id", sourceDuelId)
+      .order("sort_order"),
+    supabase.from("duel_store_multipliers").select("store_id, multiplier").eq("duel_id", sourceDuelId),
+    supabase.from("duel_entry_permissions").select("profile_id").eq("duel_id", sourceDuelId)
+  ]);
+
+  const duelReadError = [
+    duelResult.error,
+    productsResult.error,
+    participantsResult.error,
+    multipliersResult.error,
+    permissionsResult.error
+  ].find(Boolean);
+
+  if (duelReadError) {
+    redirectWithMessage(`Duello kurgusu okunamadi: ${duelReadError.message}`, "error", redirectTo);
+    return;
+  }
+
+  if (duelResult.error || !duelResult.data) {
+    redirectWithMessage("Kopyalanacak duello bulunamadi.", "error", redirectTo);
+    return;
+  }
+
+  const sourceParticipants = participantsResult.data ?? [];
+  const { data: memberRows, error: memberReadError } = sourceParticipants.length
+    ? await supabase
+        .from("duel_participant_members")
+        .select("duel_participant_id, profile_id")
+        .in("duel_participant_id", sourceParticipants.map((participant) => participant.id))
+    : { data: [] as Array<{ duel_participant_id: string; profile_id: string }>, error: null };
+
+  if (memberReadError) {
+    redirectWithMessage(`Duello grup uyeleri okunamadi: ${memberReadError.message}`, "error", redirectTo);
+    return;
+  }
+
+  const { data: copiedDuel, error: copyError } = await supabase
+    .from("duels")
+    .insert({
+      name,
+      description: duelResult.data.description,
+      scoring: duelResult.data.scoring,
+      start_at: startAt,
+      end_at: endAt,
+      is_active: true
+    })
+    .select("id")
+    .single();
+
+  if (copyError || !copiedDuel?.id) {
+    redirectWithMessage(`Duello kopyalanamadi: ${copyError?.message ?? "Bilinmeyen hata"}`, "error", redirectTo);
+    return;
+  }
+
+  const copiedDuelId = copiedDuel.id;
+  const baseCopyResults = await Promise.all([
+    productsResult.data?.length
+      ? supabase.from("duel_products").insert(
+          productsResult.data.map((product) => ({ ...product, duel_id: copiedDuelId }))
+        )
+      : Promise.resolve({ error: null }),
+    multipliersResult.data?.length
+      ? supabase.from("duel_store_multipliers").insert(
+          multipliersResult.data.map((item) => ({ ...item, duel_id: copiedDuelId }))
+        )
+      : Promise.resolve({ error: null }),
+    permissionsResult.data?.length
+      ? supabase.from("duel_entry_permissions").insert(
+          permissionsResult.data.map((item) => ({ ...item, duel_id: copiedDuelId }))
+        )
+      : Promise.resolve({ error: null })
+  ]);
+  const failedBaseCopy = baseCopyResults.find((result) => result.error);
+
+  if (failedBaseCopy?.error) {
+    await supabase.from("duels").delete().eq("id", copiedDuelId);
+    redirectWithMessage(`Duello kurgusu kopyalanamadi: ${failedBaseCopy.error.message}`, "error", redirectTo);
+    return;
+  }
+
+  const { data: copiedParticipants, error: participantCopyError } = sourceParticipants.length
+    ? await supabase
+        .from("duel_participants")
+        .insert(
+          sourceParticipants.map(({ id: _id, ...participant }) => ({ ...participant, duel_id: copiedDuelId }))
+        )
+        .select("id, sort_order")
+    : { data: [] as Array<{ id: string; sort_order: number }>, error: null };
+
+  if (participantCopyError) {
+    await supabase.from("duels").delete().eq("id", copiedDuelId);
+    redirectWithMessage(`Duello katilimcilari kopyalanamadi: ${participantCopyError.message}`, "error", redirectTo);
+    return;
+  }
+
+  const copiedParticipantBySortOrder = new Map(
+    (copiedParticipants ?? []).map((participant) => [participant.sort_order, participant.id])
+  );
+  const sourceParticipantById = new Map(sourceParticipants.map((participant) => [participant.id, participant]));
+  const copiedMembers = (memberRows ?? []).flatMap((member) => {
+    const sourceParticipant = sourceParticipantById.get(member.duel_participant_id);
+    const copiedParticipantId = sourceParticipant
+      ? copiedParticipantBySortOrder.get(sourceParticipant.sort_order)
+      : null;
+    return copiedParticipantId
+      ? [{ duel_participant_id: copiedParticipantId, profile_id: member.profile_id }]
+      : [];
+  });
+
+  if (copiedMembers.length) {
+    const { error: memberCopyError } = await supabase.from("duel_participant_members").insert(copiedMembers);
+    if (memberCopyError) {
+      await supabase.from("duels").delete().eq("id", copiedDuelId);
+      redirectWithMessage(`Duello grup uyeleri kopyalanamadi: ${memberCopyError.message}`, "error", redirectTo);
+      return;
+    }
+  }
+
+  await broadcastNotification({
+    title: `Yeni duello basladi: ${name}`,
+    body: `${startAtInput} - ${endAtInput} arasinda kopyalanan duello acildi.`,
+    linkPath: "/kampanyalar"
+  });
+
+  refreshCampaignPages();
+  revalidatePath(`/kampanyalar/duello/${copiedDuelId}`);
+  redirectWithMessage("Duello kurgusu yeni tarihlerle kopyalandi.", "success", redirectTo);
 }
 
 export async function updateDuelAction(formData: FormData) {

@@ -6400,6 +6400,16 @@ textarea::placeholder {
   background: rgba(255, 255, 255, 0.78);
 }
 
+.campaign-copy-form {
+  width: min(420px, 100%);
+  margin-top: 12px;
+  padding: 14px;
+  border: 1px solid rgba(8, 87, 91, 0.18);
+  border-radius: 16px;
+  background: rgba(244, 252, 249, 0.98);
+  box-shadow: 0 14px 28px rgba(8, 34, 66, 0.1);
+}
+
 .sale-form {
   display: grid;
   gap: 14px;

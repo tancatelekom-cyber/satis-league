@@ -11270,6 +11270,23 @@ textarea::placeholder {
   background: rgba(255, 255, 255, 0.95);
 }
 
+.goal-company-trend-category-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.goal-company-trend-category-label small {
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(7, 76, 86, 0.1);
+  color: #35526a;
+  font-size: 0.58rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
 .goal-employee-table-shell {
   border: 1px solid rgba(7, 76, 86, 0.18);
   border-radius: 24px;

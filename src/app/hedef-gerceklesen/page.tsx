@@ -222,9 +222,12 @@ type CompanyCurrentSummaryRow = {
   title: string;
   valueType: "percent" | "number";
   companyActual: number | null;
+  companyState?: "good" | "bad" | null;
+  isInformation?: boolean;
   stores: Array<{
     storeCode: string;
     actual: number | null;
+    state?: "good" | "bad" | null;
   }>;
 };
 
@@ -1214,6 +1217,25 @@ function buildCompanyCurrentSummaryRows(rows: GoalStoreRow[]) {
       } satisfies CompanyCurrentSummaryRow;
     })
     .filter((row): row is CompanyCurrentSummaryRow => Boolean(row));
+}
+
+function buildCompanySeparateInfoSummaryRows(rows: GoalSeparateInfoRow[]): CompanyCurrentSummaryRow[] {
+  return rows
+    .map((row) => ({
+      title: row.title,
+      valueType: row.actualIsPercent ? "percent" as const : "number" as const,
+      companyActual: row.actual,
+      companyState: row.hasTarget ? (row.isAtOrAboveTarget ? "good" as const : "bad" as const) : null,
+      isInformation: true,
+      stores: row.storeDetails
+        .map((store) => ({
+          storeCode: store.storeCode,
+          actual: store.actual,
+          state: store.hasTarget ? (store.isAtOrAboveTarget ? "good" as const : "bad" as const) : null
+        }))
+        .sort((a, b) => a.storeCode.localeCompare(b.storeCode, "tr", { sensitivity: "base" }))
+    }))
+    .sort((a, b) => a.title.localeCompare(b.title, "tr", { sensitivity: "base" }));
 }
 
 function buildCompanyDailyNeedSummaryRows(
@@ -3159,7 +3181,12 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
         )
       : [];
   const companyCurrentSummaryRows =
-    effectiveView !== "employee" || Boolean(activeEmployeeStoreCode) ? buildCompanyCurrentSummaryRows(filteredStoreRows) : [];
+    effectiveView !== "employee" || Boolean(activeEmployeeStoreCode)
+      ? [
+          ...buildCompanyCurrentSummaryRows(filteredStoreRows),
+          ...(effectiveView === "company" ? buildCompanySeparateInfoSummaryRows(companySeparateInfoRows) : [])
+        ]
+      : [];
   const companyDailyNeedSummaryRows =
     effectiveView === "company"
       ? buildCompanyDailyNeedSummaryRows(
@@ -3582,23 +3609,38 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                           ))}
 
                           {companyCurrentSummaryRows.map((row) => (
-                            <tr key={`current-row-${row.title}`}>
-                              <th>{row.title}</th>
+                            <tr key={`current-row-${row.isInformation ? "info" : "standard"}-${row.title}`}>
+                              <th>
+                                <span className="goal-company-trend-category-label">
+                                  <span>{row.title}</span>
+                                  {row.isInformation ? <small>Mevcut</small> : null}
+                                </span>
+                              </th>
                               {visibleTrendStoreCodes.map((storeCode) => {
                                 const store = row.stores.find((item) => item.storeCode === storeCode);
                                 const isGood =
-                                  row.title === "Memnuniyet"
+                                  store?.state === "good"
+                                    ? true
+                                    : store?.state === "bad"
+                                      ? false
+                                  : row.title === "Memnuniyet"
                                     ? (store?.actual ?? 0) >= 4.4
                                     : row.title === "Pin Orani"
                                       ? (store?.actual ?? 0) >= 70
-                                      : true;
+                                      : row.isInformation
+                                        ? null
+                                        : true;
                                 const comparisonState =
                                   storeCode === highlightedTrendStoreCode && row.title !== "Giris Sayilari"
                                     ? getTrendComparisonState(store?.actual, row.companyActual)
                                     : null;
                                 const cellClasses = [
                                   storeCode === highlightedTrendStoreCode ? "goal-company-trend-selected" : "",
-                                  isGood ? "goal-company-trend-good" : "goal-company-trend-bad"
+                                  isGood === true
+                                    ? "goal-company-trend-good"
+                                    : isGood === false
+                                      ? "goal-company-trend-bad"
+                                      : ""
                                 ]
                                   .filter(Boolean)
                                   .join(" ");
@@ -3619,7 +3661,11 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                               })}
                               <td
                                 className={`goal-company-trend-company ${
-                                  row.title === "Memnuniyet"
+                                  row.companyState === "good"
+                                    ? "goal-company-trend-good"
+                                    : row.companyState === "bad"
+                                      ? "goal-company-trend-bad"
+                                    : row.title === "Memnuniyet"
                                     ? (row.companyActual ?? 0) >= 4.4
                                       ? "goal-company-trend-good"
                                       : "goal-company-trend-bad"
@@ -3627,7 +3673,9 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                                       ? (row.companyActual ?? 0) >= 70
                                         ? "goal-company-trend-good"
                                         : "goal-company-trend-bad"
-                                      : "goal-company-trend-good"
+                                      : row.isInformation
+                                        ? ""
+                                        : "goal-company-trend-good"
                                 }`}
                               >
                                 {row.valueType === "percent" ? formatPercent(row.companyActual) : formatNumber(row.companyActual)}

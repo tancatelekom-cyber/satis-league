@@ -291,7 +291,7 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
   }
 
   const requestedStore = String(params?.store ?? "").trim();
-  const isCompanySelected = canViewAllStores && requestedStore === COMPANY_STORE_VALUE;
+  const isCompanySelected = canViewAllStores && (!requestedStore || requestedStore === COMPANY_STORE_VALUE);
   const dayLabels = webKontorData.dailyRows.map((row) => row.dayLabel);
   const requestedStartDay = dayLabels.includes(String(params?.startDay ?? "")) ? String(params?.startDay) : "";
   const requestedEndDay = dayLabels.includes(String(params?.endDay ?? "")) ? String(params?.endDay) : "";

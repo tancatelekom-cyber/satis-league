@@ -4311,6 +4311,31 @@ textarea::placeholder {
   }
 }
 
+.goal-dashboard-share-area {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+}
+
+.goal-dashboard-share-area .campaign-whatsapp-share-button {
+  width: fit-content;
+}
+
+.goal-dashboard-share-area .campaign-share-status {
+  margin: 0;
+  color: #d8f6f2;
+}
+
+@media (max-width: 560px) {
+  .goal-dashboard-share-area {
+    justify-items: stretch;
+  }
+
+  .goal-dashboard-share-area .campaign-whatsapp-share-button {
+    width: 100%;
+  }
+}
+
 @media (max-width: 860px) and (orientation: landscape) {
   .presentation-shell {
     padding: 8px 8px 12px;

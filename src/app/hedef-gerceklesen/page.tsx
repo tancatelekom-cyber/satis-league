@@ -2,6 +2,7 @@ import { Fragment, type CSSProperties } from "react";
 import { redirect } from "next/navigation";
 import { CopyCoachingButton } from "@/components/evaluation/copy-coaching-button";
 import { CompanyDailyNeedsTable } from "@/components/evaluation/company-daily-needs-table";
+import { DashboardShareButton } from "@/components/evaluation/dashboard-share-button";
 import { FormattedCoachingText } from "@/components/evaluation/formatted-coaching-text";
 import { SpeakCoachingButton } from "@/components/evaluation/speak-coaching-button";
 import { StoreDailyNeedsTable } from "@/components/evaluation/store-daily-needs-table";
@@ -2754,11 +2755,13 @@ function GoalActualOnlyCategoryCards({ categories }: { categories: GoalCategoryS
 function StoreGoalDashboard({
   storeName,
   categories,
-  dayStats
+  dayStats,
+  canShare
 }: {
   storeName: string;
   categories: GoalCategorySummary[];
   dayStats: GoalDayStats;
+  canShare: boolean;
 }) {
   const dashboardSourceCategories = categories.filter(
     (category) =>
@@ -2792,6 +2795,27 @@ function StoreGoalDashboard({
           <strong>{formatNumber(dayStats.workedDays)} / {formatNumber(dayStats.totalDays)}</strong>
         </div>
       </div>
+
+      {canShare ? (
+        <DashboardShareButton
+          title={`${storeName || "Mağaza"} Şube Dashboardu`}
+          subtitle="Ay sonu hedef gidişatı ve kategori başarı oranları"
+          items={[
+            {
+              label: "Başarı Oranı",
+              percent: successPercent,
+              detail: `${achievedCount}/${targetedCategories.length} hedefe giden kalem`
+            },
+            ...dashboardCategories.map((category) => ({
+              label: category.title,
+              percent: category.hasTarget ? category.projectedPercent ?? category.actualPercent ?? 0 : 0,
+              detail: category.hasTarget
+                ? `Şu an ${formatPercent(category.actualPercent ?? 0)}`
+                : `Mevcut ${formatNumber(category.actual)}`
+            }))
+          ]}
+        />
+      ) : null}
 
       <div className="goal-dashboard-visual-grid">
         <article className="goal-dashboard-chart-card goal-dashboard-gauge-card">
@@ -2882,7 +2906,15 @@ function StoreGoalDashboard({
   );
 }
 
-function CompanyStoreSuccessDashboard({ rows, dayStats }: { rows: GoalStoreRow[]; dayStats: GoalDayStats }) {
+function CompanyStoreSuccessDashboard({
+  rows,
+  dayStats,
+  canShare
+}: {
+  rows: GoalStoreRow[];
+  dayStats: GoalDayStats;
+  canShare: boolean;
+}) {
   const storeMap = new Map<string, GoalStoreRow[]>();
   rows.forEach((row) => {
     const current = storeMap.get(row.storeCode) ?? [];
@@ -2925,6 +2957,9 @@ function CompanyStoreSuccessDashboard({ rows, dayStats }: { rows: GoalStoreRow[]
     return percent >= 80 && percent < 100;
   }).length;
   const companyRiskCount = Math.max(0, companyCategories.length - companyAchievedCount - companyCloseCount);
+  const companySuccessPercent = companyCategories.length > 0
+    ? (companyAchievedCount / companyCategories.length) * 100
+    : 0;
   const companyStatusTotal = Math.max(1, companyCategories.length);
   const companyAchievedEnd = (companyAchievedCount / companyStatusTotal) * 100;
   const companyCloseEnd = companyAchievedEnd + (companyCloseCount / companyStatusTotal) * 100;
@@ -2942,6 +2977,25 @@ function CompanyStoreSuccessDashboard({ rows, dayStats }: { rows: GoalStoreRow[]
           <strong>{formatNumber(stores.length)}</strong>
         </div>
       </div>
+
+      {canShare ? (
+        <DashboardShareButton
+          title="Firma Başarı Dashboardu"
+          subtitle="Şubelerin ay sonu başarı oranları"
+          items={[
+            {
+              label: "Firma Başarı Oranı",
+              percent: companySuccessPercent,
+              detail: `${companyAchievedCount}/${companyCategories.length} hedefe giden kalem`
+            },
+            ...stores.map((store) => ({
+              label: store.storeName,
+              percent: store.successPercent,
+              detail: `${store.successfulCount}/${store.totalCount} hedefe giden kalem`
+            }))
+          ]}
+        />
+      ) : null}
 
       <article className="goal-dashboard-chart-card goal-company-status-card">
         <div className="goal-dashboard-card-head">
@@ -3030,6 +3084,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
 
   const canViewAll = canViewAllGoalActual(profile.role);
   const isAdminViewer = profile.role === "admin";
+  const canShareDashboard = profile.role === "admin" || profile.role === "management";
   const currentUserFullName = String((profile as { full_name?: string | null }).full_name ?? "").trim();
   const currentUserStore = (profile as { store?: Array<{ name: string }> | { name: string } | null }).store;
   const currentUserStoreName = Array.isArray(currentUserStore)
@@ -3731,9 +3786,18 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
           ) : null}
 
           {effectivePanel === "dashboard" && effectiveView === "store" ? (
-            <StoreGoalDashboard storeName={activeStoreName} categories={storeCategorySummaries} dayStats={dayStats} />
+            <StoreGoalDashboard
+              storeName={activeStoreName}
+              categories={storeCategorySummaries}
+              dayStats={dayStats}
+              canShare={canShareDashboard}
+            />
           ) : effectivePanel === "dashboard" && effectiveView === "company" ? (
-            <CompanyStoreSuccessDashboard rows={filteredStoreRows} dayStats={dayStats} />
+            <CompanyStoreSuccessDashboard
+              rows={filteredStoreRows}
+              dayStats={dayStats}
+              canShare={canShareDashboard}
+            />
           ) : effectivePanel === "ranking" && effectiveView !== "company" ? (
             <section className="goal-panel-single">
               <div className="goal-ranking-stack">

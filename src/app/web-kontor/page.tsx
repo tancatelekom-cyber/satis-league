@@ -549,7 +549,6 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
                 <th>2. Barem</th>
                 <th>1. Barem Gun</th>
                 <th>2. Barem Gun</th>
-                <th>Ulasilan</th>
                 <th>Prim Kazanimi</th>
               </tr>
             </thead>
@@ -576,23 +575,6 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
                     <td>{formatCurrency(row.scaleTwoTarget)}</td>
                     <td>{formatNumber(row.firstScaleDayCount)}</td>
                     <td>{formatNumber(row.secondScaleDayCount)}</td>
-                    <td>
-                      <span
-                        className="web-kontor-scale-badge"
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          minWidth: 92,
-                          padding: "8px 12px",
-                          borderRadius: 999,
-                          fontWeight: 900,
-                          ...getScaleBadgeStyle(row.highestReachedScale)
-                        }}
-                      >
-                        {row.highestReachedScale}
-                      </span>
-                    </td>
                     <td>{formatCurrency(row.bonusAmount)}</td>
                   </tr>
                 );

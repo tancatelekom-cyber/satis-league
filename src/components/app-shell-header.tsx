@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type NavItem = {
   href: string;
@@ -44,6 +44,14 @@ type AppShellHeaderProps = {
   initialCanOpenRevenueExpense?: boolean;
   initialCanOpenWebKontor?: boolean;
   initialCanOpenMissingDocs?: boolean;
+  initialDashboardRole?: "manager" | "management" | "admin" | null;
+};
+
+type HeaderSuccessData = {
+  visible: boolean;
+  label: string;
+  percent: number;
+  href: string;
 };
 
 export function AppShellHeader({
@@ -54,10 +62,29 @@ export function AppShellHeader({
   initialCanOpenManagerPrime = false,
   initialCanOpenRevenueExpense = false,
   initialCanOpenWebKontor = false,
-  initialCanOpenMissingDocs = false
+  initialCanOpenMissingDocs = false,
+  initialDashboardRole = null
 }: AppShellHeaderProps) {
   const pathname = usePathname() ?? "/";
   const [menuOpen, setMenuOpen] = useState(false);
+  const [successData, setSuccessData] = useState<HeaderSuccessData | null>(null);
+
+  useEffect(() => {
+    if (pathname !== "/" || !initialDashboardRole) {
+      setSuccessData(null);
+      return;
+    }
+
+    const controller = new AbortController();
+    fetch("/api/dashboard-success", { cache: "no-store", signal: controller.signal })
+      .then((response) => (response.ok ? response.json() as Promise<HeaderSuccessData> : null))
+      .then((data) => setSuccessData(data?.visible ? data : null))
+      .catch((error: unknown) => {
+        if (!(error instanceof DOMException && error.name === "AbortError")) setSuccessData(null);
+      });
+
+    return () => controller.abort();
+  }, [initialDashboardRole, pathname]);
 
   const navItems = useMemo(() => {
     const items = false && initialCanEvaluate
@@ -101,6 +128,29 @@ export function AppShellHeader({
         </span>
         <span>TANCA+</span>
       </Link>
+
+      {pathname === "/" && initialDashboardRole ? (
+        successData ? (
+          <Link
+            className="header-success-link"
+            href={successData.href}
+            onClick={() => setMenuOpen(false)}
+            aria-label={`${successData.label} yüzde ${successData.percent.toLocaleString("tr-TR", { maximumFractionDigits: 1 })}. Dashboardu aç.`}
+          >
+            <span
+              className="header-success-ring"
+              style={{
+                background: `conic-gradient(${successData.percent >= 80 ? "#22c55e" : successData.percent >= 60 ? "#f59e0b" : "#ef4444"} 0% ${Math.max(0, Math.min(100, successData.percent))}%, rgba(219, 231, 239, 0.28) ${Math.max(0, Math.min(100, successData.percent))}% 100%)`
+              }}
+            >
+              <span>%{successData.percent.toLocaleString("tr-TR", { maximumFractionDigits: 0 })}</span>
+            </span>
+            <span className="header-success-label">{successData.label}</span>
+          </Link>
+        ) : (
+          <span className="header-success-placeholder" aria-hidden="true" />
+        )
+      ) : null}
 
       <div className={`nav-cluster ${menuOpen ? "nav-cluster-open" : ""}`}>
         <button className="menu-toggle" type="button" onClick={() => setMenuOpen((value) => !value)}>

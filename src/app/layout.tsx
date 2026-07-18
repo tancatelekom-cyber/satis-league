@@ -4,6 +4,7 @@ import { AppShellHeader } from "@/components/app-shell-header";
 import { PwaRegister } from "@/components/pwa-register";
 import { getResolvedFeatureAccessForProfile } from "@/lib/feature-menu-permissions";
 import { createClient } from "@/lib/supabase/server";
+import type { UserRole } from "@/lib/types";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -48,6 +49,7 @@ export default async function RootLayout({
   let canOpenRevenueExpense = false;
   let canOpenWebKontor = false;
   let canOpenMissingDocs = false;
+  let dashboardRole: "manager" | "management" | "admin" | null = null;
 
   try {
     const supabase = await createClient();
@@ -70,6 +72,10 @@ export default async function RootLayout({
         profile?.approval === "approved" &&
         (profile.role === "admin" || profile.role === "management" || profile.role === "manager");
       canOpenWorkSchedule = profile?.approval === "approved";
+      dashboardRole =
+        profile?.approval === "approved" && (profile.role === "manager" || profile.role === "management" || profile.role === "admin")
+          ? profile.role as UserRole & ("manager" | "management" | "admin")
+          : null;
 
       if (profile?.approval === "approved") {
         const resolvedManagerPrimeAccess = await getResolvedFeatureAccessForProfile("mudur-primi", user.id, profile.role);
@@ -91,6 +97,7 @@ export default async function RootLayout({
     canOpenRevenueExpense = false;
     canOpenWebKontor = false;
     canOpenMissingDocs = false;
+    dashboardRole = null;
   }
 
   return (
@@ -119,6 +126,7 @@ export default async function RootLayout({
             initialCanOpenRevenueExpense={canOpenRevenueExpense}
             initialCanOpenWebKontor={canOpenWebKontor}
             initialCanOpenMissingDocs={canOpenMissingDocs}
+            initialDashboardRole={dashboardRole}
           />
 
           <AuthGate>{children}</AuthGate>

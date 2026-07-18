@@ -190,6 +190,67 @@ button {
   align-items: center;
 }
 
+.header-success-link,
+.header-success-placeholder {
+  width: 82px;
+  flex: 0 0 82px;
+}
+
+.header-success-link {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  color: #f7faff;
+  text-decoration: none;
+  transition: transform 160ms ease, filter 160ms ease;
+}
+
+.header-success-link:hover,
+.header-success-link:focus-visible {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+}
+
+.header-success-ring {
+  width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  padding: 5px;
+  border-radius: 50%;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.24), 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+
+.header-success-ring::before {
+  content: "";
+  grid-area: 1 / 1;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #10283c;
+}
+
+.header-success-ring span {
+  grid-area: 1 / 1;
+  position: relative;
+  z-index: 1;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.header-success-label {
+  max-width: 82px;
+  overflow: hidden;
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1.05;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #dce9f8;
+}
+
 .topbar-auth .subtle {
   font-size: 0.82rem;
 }
@@ -9030,6 +9091,32 @@ textarea::placeholder {
     width: 48px;
     height: 48px;
     border-radius: 0;
+  }
+
+  .header-success-link,
+  .header-success-placeholder {
+    width: 64px;
+    flex-basis: 64px;
+  }
+
+  .header-success-ring {
+    width: 46px;
+    height: 46px;
+    padding: 4px;
+  }
+
+  .header-success-ring::before {
+    width: 36px;
+    height: 36px;
+  }
+
+  .header-success-ring span {
+    font-size: 0.64rem;
+  }
+
+  .header-success-label {
+    max-width: 64px;
+    font-size: 0.53rem;
   }
 
   main {

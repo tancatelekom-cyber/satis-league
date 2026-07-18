@@ -3057,11 +3057,11 @@ function CompanyStoreSuccessDashboard({
 
 export default async function GoalActualPage({ searchParams }: GoalActualPageProps) {
   const params = searchParams ? await searchParams : undefined;
-  const selectedView = String(params?.view ?? "employee").trim();
+  const selectedView = String(params?.view ?? "").trim();
   const selectedEmployee = String(params?.employee ?? "").trim();
   const selectedStore = String(params?.store ?? "").trim();
   const selectedCategory = String(params?.category ?? "").trim();
-  const selectedPanel = String(params?.panel ?? "detail").trim();
+  const selectedPanel = String(params?.panel ?? "").trim();
 
   const supabase = await createClient();
   const {
@@ -3090,23 +3090,32 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
   const currentUserStoreName = Array.isArray(currentUserStore)
     ? (currentUserStore[0]?.name ?? "")
     : (currentUserStore?.name ?? "");
+  const defaultView: GoalView =
+    profile.role === "admin" || profile.role === "management"
+      ? "company"
+      : profile.role === "manager"
+        ? "store"
+        : "employee";
+  const requestedView = selectedView || defaultView;
+  const requestedPanel =
+    selectedPanel || (profile.role === "admin" || profile.role === "management" || profile.role === "manager" ? "dashboard" : "detail");
   const effectiveView: GoalView = canViewAll
-    ? selectedView === "store"
+    ? requestedView === "store"
       ? "store"
-      : selectedView === "company"
+      : requestedView === "company"
         ? "company"
         : "employee"
     : "employee";
   const effectivePanel: GoalPanel =
-    effectiveView === "store" && selectedPanel === "dashboard"
+    effectiveView === "store" && requestedPanel === "dashboard"
       ? "dashboard"
-      : effectiveView === "company" && selectedPanel === "dashboard"
+      : effectiveView === "company" && requestedPanel === "dashboard"
         ? "dashboard"
-      : effectiveView === "employee" && selectedPanel === "ranking"
+      : effectiveView === "employee" && requestedPanel === "ranking"
         ? "ranking"
         : "detail";
 
-  if (!canViewAll && selectedView !== "employee") {
+  if (!canViewAll && requestedView !== "employee") {
     redirect(buildHref("employee", { employee: selectedEmployee, panel: effectivePanel }));
   }
 
@@ -3161,7 +3170,14 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
   );
 
   const effectiveEmployee = employeeNames.includes(selectedEmployee) ? selectedEmployee : "";
-  const effectiveStore = storeNames.includes(selectedStore) ? selectedStore : "";
+  const managerDefaultStore = storeNames.find(
+    (storeName) => normalizeStoreKey(storeName) === normalizeStoreKey(currentUserStoreName)
+  );
+  const effectiveStore = storeNames.includes(selectedStore)
+    ? selectedStore
+    : profile.role === "manager"
+      ? managerDefaultStore ?? ""
+      : "";
   const rankingCategoryPool = effectiveView === "store" ? storeCategoryOptions : employeeCategoryOptions;
   const defaultRankingCategory = rankingCategoryPool[0] ?? "";
   const effectiveCategory =

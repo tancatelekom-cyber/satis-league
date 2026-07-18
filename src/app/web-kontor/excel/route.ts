@@ -544,6 +544,23 @@ export async function GET(request: Request) {
             [
               "SUBE TOPLAMI",
               ...companySummaries.flatMap(({ summary, scale }) => [summary.totalAmount, Math.round(scale.bonusAmount)])
+            ],
+            [
+              "GUNLUK BASARI %",
+              ...companySummaries.flatMap(({ summary, scale }) => {
+                const successfulDayCount = webKontorData.dailyRows.filter((dailyRow) => {
+                  const amount = dailyRow.storeAmounts.find((item) => sameWebKontorStore(item.storeName, summary.storeName))?.amount ?? 0;
+                  return (
+                    (scale.scaleTwoTarget !== null && amount >= scale.scaleTwoTarget) ||
+                    (scale.scaleOneTarget !== null && amount >= scale.scaleOneTarget)
+                  );
+                }).length;
+                const successRate = webKontorData.dailyRows.length > 0
+                  ? (successfulDayCount / webKontorData.dailyRows.length) * 100
+                  : 0;
+
+                return [`%${successRate.toLocaleString("tr-TR", { maximumFractionDigits: 1 })}`, ""];
+              })
             ]
           ]
         }

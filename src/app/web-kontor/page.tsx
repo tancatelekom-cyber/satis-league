@@ -335,6 +335,18 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
         }))
       }))
     : [];
+  const companySuccessRateByStore = new Map(
+    bonusRows.map((bonusRow) => {
+      const successfulDayCount = selectedDailyRows.filter(
+        (row) => sameWebKontorStore(row.storeName ?? "", bonusRow.storeName) && row.bonusAmount > 0
+      ).length;
+      const successRate = webKontorData.dailyRows.length > 0
+        ? (successfulDayCount / webKontorData.dailyRows.length) * 100
+        : 0;
+
+      return [bonusRow.storeName, successRate];
+    })
+  );
 
   const summaryCardStyle: CSSProperties = {
     padding: "18px 20px",
@@ -566,6 +578,29 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
                     <td key={`company-profit-total-${row.storeName}`} style={{ fontWeight: 600, padding: "11px 12px" }}>{formatCurrency(row.totalAmount)}</td>,
                     <td key={`company-bonus-total-${row.storeName}`} style={{ fontWeight: 600, padding: "11px 12px" }}>{formatCurrency(row.bonusAmount)}</td>
                   ])}
+                </tr>
+                <tr>
+                  <th style={{ fontWeight: 600, padding: "11px 14px" }}>Günlük Başarı %</th>
+                  {bonusRows.map((row) => {
+                    const successRate = companySuccessRateByStore.get(row.storeName) ?? 0;
+                    const isSuccessful = successRate >= 70;
+
+                    return (
+                      <td
+                        key={`company-success-rate-${row.storeName}`}
+                        colSpan={2}
+                        style={{
+                          fontWeight: 600,
+                          padding: "11px 12px",
+                          textAlign: "center",
+                          color: isSuccessful ? "#15803d" : "#dc2626",
+                          background: isSuccessful ? "rgba(34, 197, 94, 0.08)" : "rgba(239, 68, 68, 0.07)"
+                        }}
+                      >
+                        {formatPercent(successRate)}
+                      </td>
+                    );
+                  })}
                 </tr>
               </tfoot>
             </table>

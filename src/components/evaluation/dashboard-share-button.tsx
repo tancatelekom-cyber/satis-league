@@ -42,7 +42,7 @@ function roundedRect(context: CanvasRenderingContext2D, x: number, y: number, wi
 function drawDonut(context: CanvasRenderingContext2D, centerX: number, centerY: number, radius: number, percent: number) {
   const normalizedPercent = Math.max(0, Math.min(100, percent));
   const color = normalizedPercent >= 70 ? "#22c55e" : normalizedPercent >= 40 ? "#f59e0b" : "#ef4444";
-  context.lineWidth = 24;
+  context.lineWidth = 36;
   context.lineCap = "butt";
   context.strokeStyle = "#dce7ef";
   context.beginPath();
@@ -53,9 +53,9 @@ function drawDonut(context: CanvasRenderingContext2D, centerX: number, centerY: 
   context.arc(centerX, centerY, radius, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (normalizedPercent / 100));
   context.stroke();
   context.fillStyle = "#ffffff";
-  context.font = "800 29px Arial";
+  context.font = "800 42px Arial";
   context.textAlign = "center";
-  context.fillText(`%${normalizedPercent.toLocaleString("tr-TR", { maximumFractionDigits: 1 })}`, centerX, centerY + 9);
+  context.fillText(`%${normalizedPercent.toLocaleString("tr-TR", { maximumFractionDigits: 1 })}`, centerX, centerY + 14);
 }
 
 function canvasToBlob(canvas: HTMLCanvasElement) {
@@ -65,15 +65,15 @@ function canvasToBlob(canvas: HTMLCanvasElement) {
 }
 
 async function buildDashboardImage({ title, subtitle, items }: DashboardShareButtonProps) {
-  const width = 1080;
+  const width = 1600;
   const columns = 3;
-  const gap = 18;
-  const side = 50;
+  const gap = 28;
+  const side = 90;
   const cardWidth = (width - side * 2 - gap * (columns - 1)) / columns;
-  const cardHeight = 270;
+  const cardHeight = 390;
   const rows = Math.max(1, Math.ceil(items.length / columns));
-  const headerHeight = 190;
-  const footerHeight = 76;
+  const headerHeight = 280;
+  const footerHeight = 120;
   const height = headerHeight + rows * cardHeight + Math.max(0, rows - 1) * gap + footerHeight;
   const canvas = document.createElement("canvas");
   canvas.width = width;
@@ -88,44 +88,44 @@ async function buildDashboardImage({ title, subtitle, items }: DashboardShareBut
   context.fillRect(0, 0, width, height);
 
   context.fillStyle = "#65dce7";
-  context.font = "800 22px Arial";
+  context.font = "800 30px Arial";
   context.textAlign = "left";
-  context.fillText("TANCA+ PERFORMANS DASHBOARDU", side, 48);
+  context.fillText("TANCA+ PERFORMANS DASHBOARDU", side, 72);
   context.fillStyle = "#ffffff";
-  context.font = "900 42px Arial";
-  context.fillText(fitText(context, title, width - side * 2), side, 102);
+  context.font = "900 62px Arial";
+  context.fillText(fitText(context, title, width - side * 2), side, 150);
   context.fillStyle = "#c8d5ef";
-  context.font = "600 22px Arial";
-  context.fillText(fitText(context, subtitle, width - side * 2), side, 142);
+  context.font = "600 31px Arial";
+  context.fillText(fitText(context, subtitle, width - side * 2), side, 205);
 
   items.forEach((item, index) => {
     const column = index % columns;
     const row = Math.floor(index / columns);
     const x = side + column * (cardWidth + gap);
     const y = headerHeight + row * (cardHeight + gap);
-    roundedRect(context, x, y, cardWidth, cardHeight, 18);
+    roundedRect(context, x, y, cardWidth, cardHeight, 28);
     context.fillStyle = "#292a55";
     context.fill();
-    context.lineWidth = 2;
+    context.lineWidth = 3;
     context.strokeStyle = "rgba(101, 220, 231, 0.25)";
     context.stroke();
 
-    drawDonut(context, x + cardWidth / 2, y + 105, 70, item.percent);
+    drawDonut(context, x + cardWidth / 2, y + 150, 105, item.percent);
     context.fillStyle = "#ffffff";
-    context.font = "800 23px Arial";
+    context.font = "800 34px Arial";
     context.textAlign = "center";
-    context.fillText(fitText(context, item.label, cardWidth - 34), x + cardWidth / 2, y + 215);
+    context.fillText(fitText(context, item.label, cardWidth - 52), x + cardWidth / 2, y + 310);
     context.fillStyle = "#b9c9e8";
-    context.font = "600 18px Arial";
-    context.fillText(fitText(context, item.detail, cardWidth - 34), x + cardWidth / 2, y + 246);
+    context.font = "600 26px Arial";
+    context.fillText(fitText(context, item.detail, cardWidth - 52), x + cardWidth / 2, y + 352);
   });
 
   context.fillStyle = "#8ea4c7";
-  context.font = "600 17px Arial";
+  context.font = "600 24px Arial";
   context.textAlign = "left";
-  context.fillText("Ay sonu hedef gidişatı", side, height - 30);
+  context.fillText("Ay sonu hedef gidişatı", side, height - 48);
   context.textAlign = "right";
-  context.fillText(new Date().toLocaleString("tr-TR"), width - side, height - 30);
+  context.fillText(new Date().toLocaleString("tr-TR"), width - side, height - 48);
   return canvasToBlob(canvas);
 }
 

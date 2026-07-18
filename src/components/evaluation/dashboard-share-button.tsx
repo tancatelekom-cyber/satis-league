@@ -12,6 +12,7 @@ type DashboardShareButtonProps = {
   title: string;
   subtitle: string;
   items: DashboardShareItem[];
+  detailColumns?: 2 | 3;
 };
 
 function safeFileName(value: string) {
@@ -76,14 +77,14 @@ function canvasToBlob(canvas: HTMLCanvasElement) {
   });
 }
 
-async function buildDashboardImage({ title, subtitle, items }: DashboardShareButtonProps) {
+async function buildDashboardImage({ title, subtitle, items, detailColumns = 3 }: DashboardShareButtonProps) {
   const width = 1600;
-  const columns = 3;
+  const columns = detailColumns;
   const gap = 28;
   const side = 90;
   const cardWidth = (width - side * 2 - gap * (columns - 1)) / columns;
   const featuredHeight = 560;
-  const cardHeight = 290;
+  const cardHeight = columns === 2 ? 330 : 290;
   const detailItems = items.slice(1);
   const detailRows = Math.ceil(detailItems.length / columns);
   const headerHeight = 280;
@@ -146,14 +147,16 @@ async function buildDashboardImage({ title, subtitle, items }: DashboardShareBut
     context.strokeStyle = "rgba(101, 220, 231, 0.25)";
     context.stroke();
 
-    drawDonut(context, x + cardWidth / 2, y + 105, 70, item.percent);
+    const donutRadius = columns === 2 ? 86 : 70;
+    const donutCenterY = columns === 2 ? y + 125 : y + 105;
+    drawDonut(context, x + cardWidth / 2, donutCenterY, donutRadius, item.percent, columns === 2 ? 28 : 24, columns === 2 ? 34 : 29);
     context.fillStyle = "#ffffff";
-    context.font = "800 25px Arial";
+    context.font = `800 ${columns === 2 ? 30 : 25}px Arial`;
     context.textAlign = "center";
-    context.fillText(fitText(context, item.label, cardWidth - 42), x + cardWidth / 2, y + 225);
+    context.fillText(fitText(context, item.label, cardWidth - 42), x + cardWidth / 2, y + (columns === 2 ? 265 : 225));
     context.fillStyle = "#b9c9e8";
-    context.font = "600 19px Arial";
-    context.fillText(fitText(context, item.detail, cardWidth - 42), x + cardWidth / 2, y + 258);
+    context.font = `600 ${columns === 2 ? 22 : 19}px Arial`;
+    context.fillText(fitText(context, item.detail, cardWidth - 42), x + cardWidth / 2, y + (columns === 2 ? 302 : 258));
   });
 
   context.fillStyle = "#8ea4c7";

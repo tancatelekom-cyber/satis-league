@@ -2982,6 +2982,7 @@ function CompanyStoreSuccessDashboard({
         <DashboardShareButton
           title="Firma Başarı Dashboardu"
           subtitle="Şubelerin ay sonu başarı oranları"
+          detailColumns={2}
           items={[
             {
               label: "Firma Başarı Oranı",

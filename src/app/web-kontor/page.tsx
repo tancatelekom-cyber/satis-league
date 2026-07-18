@@ -504,11 +504,12 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
               Prim toplamı {formatCurrency(selectedBonusAmount)}
             </span>
           </div>
-          {!isCompanySelected ? (
-            <a className="button-secondary export-link-button" href={buildExcelHref(selectedStore)}>
-              Excel'e İndir
-            </a>
-          ) : null}
+          <a
+            className="button-secondary export-link-button"
+            href={buildExcelHref(isCompanySelected ? COMPANY_STORE_VALUE : selectedStore)}
+          >
+            Excel'e İndir
+          </a>
         </div>
 
         <div style={{ overflowX: "auto" }}>

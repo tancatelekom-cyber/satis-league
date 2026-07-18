@@ -26,6 +26,7 @@ type WorksheetDefinition = {
 };
 
 const INVALID_SHEET_CHARS = /[:\\/?*\[\]]/g;
+const COMPANY_STORE_VALUE = "__company__";
 
 function normalizeSheetName(name: string, usedNames: Set<string>) {
   const baseName = name.replace(INVALID_SHEET_CHARS, " ").replace(/\s+/g, " ").trim() || "Sayfa";
@@ -478,6 +479,87 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const requestedStore = searchParams.get("store")?.trim() ?? "";
+    const isCompanySelected = canViewAllStores && requestedStore === COMPANY_STORE_VALUE;
+
+    if (isCompanySelected) {
+      const companySummaries = webKontorData.storeSummaries
+        .filter((summary) => accessibleStoreNames.some((storeName) => sameWebKontorStore(storeName, summary.storeName)))
+        .sort((left, right) => left.storeName.localeCompare(right.storeName, "tr"))
+        .map((summary) => ({
+          summary,
+          scale: buildSelectedStoreSummaryRow(
+            summary,
+            webKontorData.dailyRows,
+            webKontorData.scaleRules,
+            webKontorData.scaleOneRate,
+            webKontorData.scaleTwoRate
+          )
+        }));
+
+      const companyDetailRows = webKontorData.dailyRows.map((dailyRow) => {
+        const values = companySummaries.flatMap(({ summary, scale }) => {
+          const amount = dailyRow.storeAmounts.find((item) => sameWebKontorStore(item.storeName, summary.storeName))?.amount ?? 0;
+          let rateValue = 0;
+
+          if (scale.scaleTwoTarget !== null && amount >= scale.scaleTwoTarget) {
+            rateValue = webKontorData.scaleTwoRate;
+          } else if (scale.scaleOneTarget !== null && amount >= scale.scaleOneTarget) {
+            rateValue = webKontorData.scaleOneRate;
+          }
+
+          return [amount, Math.round(amount * getWebKontorRateMultiplier(rateValue))];
+        });
+
+        return [dailyRow.dayLabel, ...values] as Array<string | number>;
+      });
+
+      const totalAmount = companySummaries.reduce((sum, row) => sum + row.summary.totalAmount, 0);
+      const totalBonus = companySummaries.reduce((sum, row) => sum + row.scale.bonusAmount, 0);
+      const workbookBuffer = buildXlsxBuffer([
+        {
+          name: "Firma Ozet",
+          rows: [
+            ["Sube", "Gerceklesen", "1. Barem", "2. Barem", "1. Barem Gun", "2. Barem Gun", "Ulasilan", "Prim Kazanimi"],
+            ...companySummaries.map(({ summary, scale }) => [
+              summary.storeName,
+              summary.totalAmount,
+              scale.scaleOneTarget ?? "-",
+              scale.scaleTwoTarget ?? "-",
+              scale.firstScaleDayCount,
+              scale.secondScaleDayCount,
+              scale.highestReachedScale,
+              Math.round(scale.bonusAmount)
+            ] as Array<string | number>),
+            ["FIRMA TOPLAMI", totalAmount, "-", "-", "-", "-", "-", Math.round(totalBonus)]
+          ]
+        },
+        {
+          name: "Firma Gunluk Akis",
+          rows: [
+            [
+              "Gun",
+              ...companySummaries.flatMap(({ summary }) => [`${summary.storeName} Karlilik`, `${summary.storeName} Prim`])
+            ],
+            ...companyDetailRows,
+            [
+              "SUBE TOPLAMI",
+              ...companySummaries.flatMap(({ summary, scale }) => [summary.totalAmount, Math.round(scale.bonusAmount)])
+            ]
+          ]
+        }
+      ]);
+      const fileName = `web-kontor-firma-${new Date().toISOString().slice(0, 10)}.xlsx`;
+
+      return new NextResponse(workbookBuffer, {
+        status: 200,
+        headers: {
+          "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          "Content-Disposition": `attachment; filename="${fileName}"`,
+          "Cache-Control": "no-store"
+        }
+      });
+    }
+
     const selectedStore =
       accessibleStoreNames.find((storeName) => sameWebKontorStore(storeName, requestedStore)) ?? accessibleStoreNames[0];
 

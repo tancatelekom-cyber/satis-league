@@ -2775,7 +2775,7 @@ function StoreGoalDashboard({
   const averagePercent = targetedCategories.length
     ? targetedCategories.reduce((sum, category) => sum + (category.projectedPercent ?? category.actualPercent ?? 0), 0) / targetedCategories.length
     : 0;
-  const dashboardCategories = targetedCategories.slice(0, 6);
+  const dashboardCategories = categories;
   const statusTotal = Math.max(1, targetedCategories.length);
   const achievedEnd = (achievedCount / statusTotal) * 100;
   const closeEnd = achievedEnd + (closeCount / statusTotal) * 100;
@@ -2865,26 +2865,37 @@ function StoreGoalDashboard({
       <article className="goal-dashboard-chart-card goal-dashboard-category-card">
         <div className="goal-dashboard-card-head">
           <h3>Kategori Ay Sonu Pasta Özeti</h3>
-          <span>İlk {dashboardCategories.length} kategorinin ay sonu hedef gidişatı</span>
+          <span>Tüm kategorilerin ay sonu hedef gidişatı</span>
         </div>
         <div className="goal-dashboard-category-pies">
           {dashboardCategories.map((category) => {
             const actualPercent = category.actualPercent ?? 0;
             const projectedPercent = category.projectedPercent ?? actualPercent;
-            const piePercent = Math.max(0, Math.min(100, projectedPercent));
-            const color = projectedPercent >= 100 ? "#22c55e" : projectedPercent >= 80 ? "#f59e0b" : "#ef4444";
+            const piePercent = category.hasTarget ? Math.max(0, Math.min(100, projectedPercent)) : 100;
+            const color = !category.hasTarget
+              ? "#38bdf8"
+              : projectedPercent >= 100
+                ? "#22c55e"
+                : projectedPercent >= 80
+                  ? "#f59e0b"
+                  : "#ef4444";
+            const displayValue = category.hasTarget ? formatPercent(projectedPercent) : formatNumber(category.actual);
             return (
               <div className="goal-dashboard-category-pie-card" key={`dashboard-category-${category.title}`}>
                 <div
                   className="goal-dashboard-category-pie"
                   style={{ background: `conic-gradient(${color} 0% ${piePercent}%, #e2e8f0 ${piePercent}% 100%)` }}
                   role="img"
-                  aria-label={`${category.title} ay sonu hedef gidişatı ${formatPercent(projectedPercent)}`}
+                  aria-label={
+                    category.hasTarget
+                      ? `${category.title} ay sonu hedef gidişatı ${formatPercent(projectedPercent)}`
+                      : `${category.title} mevcut değeri ${formatNumber(category.actual)}`
+                  }
                 >
-                  <div>{formatPercent(projectedPercent)}</div>
+                  <div>{displayValue}</div>
                 </div>
                 <strong>{category.title}</strong>
-                <span>Şu an {formatPercent(actualPercent)}</span>
+                <span>{category.hasTarget ? `Şu an ${formatPercent(actualPercent)}` : "Hedef tanımlı değil"}</span>
               </div>
             );
           })}

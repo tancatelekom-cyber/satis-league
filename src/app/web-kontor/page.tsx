@@ -42,6 +42,7 @@ type WebKontorBonusRow = {
 };
 
 type WebKontorDayBonusRow = {
+  storeName?: string;
   dayLabel: string;
   amount: number;
   reachedScale: WebKontorReachedScale;
@@ -49,6 +50,9 @@ type WebKontorDayBonusRow = {
   bonusAmount: number;
   companyTotal: number;
 };
+
+const COMPANY_STORE_VALUE = "__company__";
+const COMPANY_STORE_LABEL = "FİRMA";
 
 function buildStoreHref(store: string) {
   const params = new URLSearchParams();
@@ -267,7 +271,10 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
   }
 
   const requestedStore = String(params?.store ?? "").trim();
-  const selectedStore = accessibleStoreNames.find((storeName) => sameWebKontorStore(storeName, requestedStore)) ?? accessibleStoreNames[0];
+  const isCompanySelected = canViewAllStores && requestedStore === COMPANY_STORE_VALUE;
+  const selectedStore = isCompanySelected
+    ? COMPANY_STORE_LABEL
+    : accessibleStoreNames.find((storeName) => sameWebKontorStore(storeName, requestedStore)) ?? accessibleStoreNames[0];
 
   const visibleStoreSummaries = webKontorData.storeSummaries
     .filter((summary) => accessibleStoreNames.some((storeName) => sameWebKontorStore(storeName, summary.storeName)))
@@ -283,15 +290,40 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
     )
   );
 
-  const selectedBonusRow = bonusRows.find((row) => sameWebKontorStore(row.storeName, selectedStore)) ?? bonusRows[0];
-  const selectedDailyRows = buildSelectedDayRows(
-    selectedStore,
-    webKontorData.dailyRows,
-    selectedBonusRow?.scaleOneTarget ?? null,
-    selectedBonusRow?.scaleTwoTarget ?? null,
-    webKontorData.scaleOneRate,
-    webKontorData.scaleTwoRate
-  );
+  const selectedBonusRow = isCompanySelected
+    ? null
+    : bonusRows.find((row) => sameWebKontorStore(row.storeName, selectedStore)) ?? bonusRows[0];
+  const selectedDailyRows = isCompanySelected
+    ? bonusRows.flatMap((bonusRow) =>
+        buildSelectedDayRows(
+          bonusRow.storeName,
+          webKontorData.dailyRows,
+          bonusRow.scaleOneTarget,
+          bonusRow.scaleTwoTarget,
+          webKontorData.scaleOneRate,
+          webKontorData.scaleTwoRate
+        ).map((row) => ({ ...row, storeName: bonusRow.storeName }))
+      )
+    : buildSelectedDayRows(
+        selectedStore,
+        webKontorData.dailyRows,
+        selectedBonusRow?.scaleOneTarget ?? null,
+        selectedBonusRow?.scaleTwoTarget ?? null,
+        webKontorData.scaleOneRate,
+        webKontorData.scaleTwoRate
+      );
+  const selectedTotalAmount = isCompanySelected
+    ? bonusRows.reduce((sum, row) => sum + row.totalAmount, 0)
+    : selectedBonusRow?.totalAmount ?? 0;
+  const selectedBonusAmount = isCompanySelected
+    ? bonusRows.reduce((sum, row) => sum + row.bonusAmount, 0)
+    : selectedBonusRow?.bonusAmount ?? 0;
+  const selectedFirstScaleDayCount = isCompanySelected
+    ? bonusRows.reduce((sum, row) => sum + row.firstScaleDayCount, 0)
+    : selectedBonusRow?.firstScaleDayCount ?? 0;
+  const selectedSecondScaleDayCount = isCompanySelected
+    ? bonusRows.reduce((sum, row) => sum + row.secondScaleDayCount, 0)
+    : selectedBonusRow?.secondScaleDayCount ?? 0;
 
   const summaryCardStyle: CSSProperties = {
     padding: "18px 20px",
@@ -335,25 +367,29 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
       <section className="guide-card game-brief-card" style={{ display: "grid", gap: 18 }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>
           <article style={summaryCardStyle}>
-            <span style={{ color: "#56708c", fontWeight: 700 }}>Secili Sube</span>
+            <span style={{ color: "#56708c", fontWeight: 700 }}>{isCompanySelected ? "Seçili Kapsam" : "Seçili Şube"}</span>
             <strong style={{ color: "#0b2143", fontSize: "2rem", lineHeight: 1 }}>{selectedStore}</strong>
-            <span style={{ color: "#37516f" }}>Prim hesabi bu sube icin detaylandirildi.</span>
+            <span style={{ color: "#37516f" }}>
+              {isCompanySelected ? "Tüm şubelerin prim sonuçları birlikte gösteriliyor." : "Prim hesabı bu şube için detaylandırıldı."}
+            </span>
           </article>
           <article style={summaryCardStyle}>
             <span style={{ color: "#56708c", fontWeight: 700 }}>Gerceklesen Tutar</span>
-            <strong style={{ color: "#0b2143", fontSize: "2rem", lineHeight: 1 }}>{formatCurrency(selectedBonusRow?.totalAmount ?? 0)}</strong>
+            <strong style={{ color: "#0b2143", fontSize: "2rem", lineHeight: 1 }}>{formatCurrency(selectedTotalAmount)}</strong>
             <span style={{ color: "#37516f" }}>Ayin su ana kadarki Web Kontor karlilik tutari.</span>
           </article>
           <article style={summaryCardStyle}>
             <span style={{ color: "#56708c", fontWeight: 700 }}>Ulasilan Skala</span>
-            <strong style={{ color: "#0b2143", fontSize: "2rem", lineHeight: 1 }}>{selectedBonusRow?.highestReachedScale ?? "-"}</strong>
+            <strong style={{ color: "#0b2143", fontSize: "2rem", lineHeight: 1 }}>
+              {isCompanySelected ? "Şube Bazlı" : selectedBonusRow?.highestReachedScale ?? "-"}
+            </strong>
             <span style={{ color: "#37516f" }}>
-              1. barem gunu {formatNumber(selectedBonusRow?.firstScaleDayCount ?? 0)} | 2. barem gunu {formatNumber(selectedBonusRow?.secondScaleDayCount ?? 0)}.
+              1. barem günü {formatNumber(selectedFirstScaleDayCount)} | 2. barem günü {formatNumber(selectedSecondScaleDayCount)}.
             </span>
           </article>
           <article style={summaryCardStyle}>
             <span style={{ color: "#56708c", fontWeight: 700 }}>Prim Kazanimi</span>
-            <strong style={{ color: "#0b2143", fontSize: "2rem", lineHeight: 1 }}>{formatCurrency(selectedBonusRow?.bonusAmount ?? 0)}</strong>
+            <strong style={{ color: "#0b2143", fontSize: "2rem", lineHeight: 1 }}>{formatCurrency(selectedBonusAmount)}</strong>
             <span style={{ color: "#37516f" }}>Gunluk gerceklesenler barem oranlariyla carpilarak toplanir.</span>
           </article>
         </div>
@@ -361,14 +397,17 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
         {canViewAllStores ? (
           <div className="admin-form">
             <label className="field">
-              <span>Detay Alinacak Sube</span>
+              <span>Detay Alınacak Şube / Firma</span>
               <FilterSelectNav
                 ariaLabel="Web Kontor sube secimi"
-                value={buildStoreHref(selectedStore)}
-                options={accessibleStoreNames.map((storeName) => ({
-                  label: storeName,
-                  value: buildStoreHref(storeName)
-                }))}
+                value={buildStoreHref(isCompanySelected ? COMPANY_STORE_VALUE : selectedStore)}
+                options={[
+                  { label: COMPANY_STORE_LABEL, value: buildStoreHref(COMPANY_STORE_VALUE) },
+                  ...accessibleStoreNames.map((storeName) => ({
+                    label: storeName,
+                    value: buildStoreHref(storeName)
+                  }))
+                ]}
               />
             </label>
           </div>
@@ -399,7 +438,7 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
             </thead>
             <tbody>
               {bonusRows.map((row) => {
-                const isSelected = sameWebKontorStore(row.storeName, selectedStore);
+                const isSelected = !isCompanySelected && sameWebKontorStore(row.storeName, selectedStore);
 
                 return (
                   <tr key={row.storeName}>
@@ -449,30 +488,34 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
       <section className="campaign-section-card" style={{ display: "grid", gap: 16 }}>
         <div className="goal-section-head web-kontor-section-head" style={sectionHeadStyle}>
           <div style={{ display: "grid", gap: 8 }}>
-            <h2 style={sectionTitleStyle}>{selectedStore} Gunluk Web Kontor Akisi</h2>
+            <h2 style={sectionTitleStyle}>{selectedStore} Günlük Web Kontör Akışı</h2>
             <span style={sectionMetaStyle}>
-              Prim toplami {formatCurrency(selectedBonusRow?.bonusAmount ?? 0)}
+              Prim toplamı {formatCurrency(selectedBonusAmount)}
             </span>
           </div>
-          <a className="button-secondary export-link-button" href={buildExcelHref(selectedStore)}>
-            Excel'e Indir
-          </a>
+          {!isCompanySelected ? (
+            <a className="button-secondary export-link-button" href={buildExcelHref(selectedStore)}>
+              Excel'e İndir
+            </a>
+          ) : null}
         </div>
 
         <div style={{ overflowX: "auto" }}>
           <table className="goal-company-trend-table web-kontor-trend-table">
             <thead>
               <tr>
-                <th>Gun</th>
-                <th>{selectedStore}</th>
+                {isCompanySelected ? <th>Şube</th> : null}
+                <th>Gün</th>
+                <th>Gerçekleşen</th>
                 <th>Barem</th>
-                <th>Prim Orani</th>
-                <th>Gunluk Prim</th>
+                <th>Prim Oranı</th>
+                <th>Günlük Prim</th>
               </tr>
             </thead>
             <tbody>
               {selectedDailyRows.map((row) => (
-                <tr key={`web-kontor-day-${row.dayLabel}`}>
+                <tr key={`web-kontor-day-${row.storeName ?? selectedStore}-${row.dayLabel}`}>
+                  {isCompanySelected ? <th>{row.storeName}</th> : null}
                   <th>{row.dayLabel}</th>
                   <td style={getDailyRowTextStyle(row.reachedScale)}>{formatCurrency(row.amount)}</td>
                   <td>
@@ -500,10 +543,11 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
             <tfoot>
               <tr>
                 <th>Genel Toplam</th>
+                {isCompanySelected ? <td>-</td> : null}
+                <td>{formatCurrency(selectedTotalAmount)}</td>
                 <td>-</td>
                 <td>-</td>
-                <td>-</td>
-                <td>{formatCurrency(selectedBonusRow?.bonusAmount ?? 0)}</td>
+                <td>{formatCurrency(selectedBonusAmount)}</td>
               </tr>
             </tfoot>
           </table>

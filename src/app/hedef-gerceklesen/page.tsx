@@ -2777,6 +2777,7 @@ function StoreGoalDashboard({
     return percent >= 80 && percent < 100;
   }).length;
   const riskCount = Math.max(0, targetedCategories.length - achievedCount - closeCount);
+  const successPercent = targetedCategories.length > 0 ? (achievedCount / targetedCategories.length) * 100 : 0;
   const averagePercent = targetedCategories.length
     ? targetedCategories.reduce((sum, category) => sum + (category.projectedPercent ?? category.actualPercent ?? 0), 0) / targetedCategories.length
     : 0;
@@ -2784,7 +2785,7 @@ function StoreGoalDashboard({
   const statusTotal = Math.max(1, targetedCategories.length);
   const achievedEnd = (achievedCount / statusTotal) * 100;
   const closeEnd = achievedEnd + (closeCount / statusTotal) * 100;
-  const gaugePercent = Math.max(0, Math.min(100, overallProjectedPercent));
+  const gaugePercent = Math.max(0, Math.min(100, successPercent));
 
   return (
     <section className="goal-store-dashboard">
@@ -2826,19 +2827,19 @@ function StoreGoalDashboard({
       <div className="goal-dashboard-visual-grid">
         <article className="goal-dashboard-chart-card goal-dashboard-gauge-card">
           <div className="goal-dashboard-card-head">
-            <h3>Genel Hedef Göstergesi</h3>
-            <span>Ay sonu gidişatı</span>
+            <h3>Başarı Oranı</h3>
+            <span>Hedefe giden kalemlerin toplam kalemlere oranı</span>
           </div>
           <div className="goal-dashboard-gauge-wrap">
             <div
               className="goal-dashboard-gauge"
               style={{ background: `conic-gradient(#14b8a6 0% ${gaugePercent}%, #dbe7ef ${gaugePercent}% 100%)` }}
               role="img"
-              aria-label={`Genel ay sonu hedef gidişatı ${formatPercent(overallProjectedPercent)}`}
+              aria-label={`Hedefe giden kalemlerin başarı oranı ${formatPercent(successPercent)}`}
             >
               <div>
-                <strong>{formatPercent(overallProjectedPercent)}</strong>
-                <span>ay sonu</span>
+                <strong>{formatPercent(successPercent)}</strong>
+                <span>başarı</span>
               </div>
             </div>
           </div>

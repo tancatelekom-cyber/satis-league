@@ -13,6 +13,7 @@ type DashboardShareButtonProps = {
   subtitle: string;
   items: DashboardShareItem[];
   detailColumns?: 2 | 3;
+  detailColorMode?: "success" | "category";
 };
 
 function safeFileName(value: string) {
@@ -47,10 +48,21 @@ function drawDonut(
   radius: number,
   percent: number,
   lineWidth = 24,
-  fontSize = 29
+  fontSize = 29,
+  colorMode: "success" | "category" = "category"
 ) {
   const normalizedPercent = Math.max(0, Math.min(100, percent));
-  const color = normalizedPercent >= 100 ? "#22c55e" : normalizedPercent >= 80 ? "#f59e0b" : "#ef4444";
+  const color = colorMode === "success"
+    ? normalizedPercent >= 80
+      ? "#22c55e"
+      : normalizedPercent >= 60
+        ? "#f59e0b"
+        : "#ef4444"
+    : normalizedPercent >= 100
+      ? "#22c55e"
+      : normalizedPercent >= 80
+        ? "#f59e0b"
+        : "#ef4444";
   context.lineWidth = lineWidth;
   context.lineCap = "butt";
   context.strokeStyle = "#dce7ef";
@@ -77,7 +89,13 @@ function canvasToBlob(canvas: HTMLCanvasElement) {
   });
 }
 
-async function buildDashboardImage({ title, subtitle, items, detailColumns = 3 }: DashboardShareButtonProps) {
+async function buildDashboardImage({
+  title,
+  subtitle,
+  items,
+  detailColumns = 3,
+  detailColorMode = "category"
+}: DashboardShareButtonProps) {
   const width = 1600;
   const columns = detailColumns;
   const gap = 28;
@@ -125,7 +143,7 @@ async function buildDashboardImage({ title, subtitle, items, detailColumns = 3 }
     context.strokeStyle = "rgba(101, 220, 231, 0.42)";
     context.stroke();
 
-    drawDonut(context, width / 2, featuredY + 225, 165, featuredItem.percent, 52, 64);
+    drawDonut(context, width / 2, featuredY + 225, 165, featuredItem.percent, 52, 64, "success");
     context.fillStyle = "#ffffff";
     context.font = "900 50px Arial";
     context.textAlign = "center";
@@ -149,7 +167,16 @@ async function buildDashboardImage({ title, subtitle, items, detailColumns = 3 }
 
     const donutRadius = columns === 2 ? 86 : 70;
     const donutCenterY = columns === 2 ? y + 125 : y + 105;
-    drawDonut(context, x + cardWidth / 2, donutCenterY, donutRadius, item.percent, columns === 2 ? 28 : 24, columns === 2 ? 34 : 29);
+    drawDonut(
+      context,
+      x + cardWidth / 2,
+      donutCenterY,
+      donutRadius,
+      item.percent,
+      columns === 2 ? 28 : 24,
+      columns === 2 ? 34 : 29,
+      detailColorMode
+    );
     context.fillStyle = "#ffffff";
     context.font = `800 ${columns === 2 ? 30 : 25}px Arial`;
     context.textAlign = "center";

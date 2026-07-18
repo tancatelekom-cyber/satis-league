@@ -2781,7 +2781,7 @@ function StoreGoalDashboard({
   const achievedEnd = (achievedCount / statusTotal) * 100;
   const closeEnd = achievedEnd + (closeCount / statusTotal) * 100;
   const gaugePercent = Math.max(0, Math.min(100, successPercent));
-  const gaugeColor = successPercent >= 100 ? "#22c55e" : successPercent >= 80 ? "#f59e0b" : "#ef4444";
+  const gaugeColor = successPercent >= 80 ? "#22c55e" : successPercent >= 60 ? "#f59e0b" : "#ef4444";
 
   return (
     <section className="goal-store-dashboard">
@@ -2961,7 +2961,7 @@ function CompanyStoreSuccessDashboard({
   const companySuccessPercent = companyCategories.length > 0
     ? (companyAchievedCount / companyCategories.length) * 100
     : 0;
-  const companyGaugeColor = companySuccessPercent >= 100 ? "#22c55e" : companySuccessPercent >= 80 ? "#f59e0b" : "#ef4444";
+  const companyGaugeColor = companySuccessPercent >= 80 ? "#22c55e" : companySuccessPercent >= 60 ? "#f59e0b" : "#ef4444";
   const companyStatusTotal = Math.max(1, companyCategories.length);
   const companyAchievedEnd = (companyAchievedCount / companyStatusTotal) * 100;
   const companyCloseEnd = companyAchievedEnd + (companyCloseCount / companyStatusTotal) * 100;
@@ -3029,7 +3029,7 @@ function CompanyStoreSuccessDashboard({
       <div className="goal-company-success-grid">
         {stores.map((store) => {
           const piePercent = Math.max(0, Math.min(100, store.successPercent));
-          const color = store.successPercent >= 100 ? "#22c55e" : store.successPercent >= 80 ? "#f59e0b" : "#ef4444";
+          const color = store.successPercent >= 80 ? "#22c55e" : store.successPercent >= 60 ? "#f59e0b" : "#ef4444";
           return (
             <a
               className="goal-company-success-card"
@@ -3062,6 +3062,7 @@ function CompanyStoreSuccessDashboard({
           title="Firma Başarı Dashboardu"
           subtitle="Şubelerin ay sonu başarı oranları"
           detailColumns={2}
+          detailColorMode="success"
           items={[
             {
               label: "Firma Başarı Oranı",

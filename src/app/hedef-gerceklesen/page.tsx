@@ -2760,7 +2760,10 @@ function StoreGoalDashboard({
   categories: GoalCategorySummary[];
   dayStats: GoalDayStats;
 }) {
-  const targetedCategories = categories.filter((category) => category.hasTarget && (category.target ?? 0) > 0);
+  const dashboardSourceCategories = categories.filter(
+    (category) => normalizeCategoryKey(category.title) !== normalizeCategoryKey("AKSESUAR CIRO")
+  );
+  const targetedCategories = dashboardSourceCategories.filter((category) => category.hasTarget && (category.target ?? 0) > 0);
   const totalTarget = targetedCategories.reduce((sum, category) => sum + (category.target ?? 0), 0);
   const totalActual = targetedCategories.reduce((sum, category) => sum + category.actual, 0);
   const overallPercent = totalTarget > 0 ? (totalActual / totalTarget) * 100 : 0;
@@ -2775,7 +2778,7 @@ function StoreGoalDashboard({
   const averagePercent = targetedCategories.length
     ? targetedCategories.reduce((sum, category) => sum + (category.projectedPercent ?? category.actualPercent ?? 0), 0) / targetedCategories.length
     : 0;
-  const dashboardCategories = categories;
+  const dashboardCategories = dashboardSourceCategories;
   const statusTotal = Math.max(1, targetedCategories.length);
   const achievedEnd = (achievedCount / statusTotal) * 100;
   const closeEnd = achievedEnd + (closeCount / statusTotal) * 100;

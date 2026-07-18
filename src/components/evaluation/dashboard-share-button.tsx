@@ -185,14 +185,14 @@ export function DashboardShareButton(props: DashboardShareButtonProps) {
       const blob = await buildDashboardImage(props);
       const fileName = `${safeFileName(props.title)}-dashboard.png`;
       const file = new File([blob], fileName, { type: "image/png" });
-      const shareData = { files: [file], title: props.title, text: `${props.title} görsel performans dashboardu` };
+      const shareData = { files: [file], title: props.title, text: props.title };
 
       if (navigator.share && (!navigator.canShare || navigator.canShare(shareData))) {
         await navigator.share(shareData);
         setStatus("Paylaşım menüsü açıldı.");
       } else {
         downloadImage(blob, fileName);
-        window.open(`https://wa.me/?text=${encodeURIComponent(`${props.title} dashboard görseli indirildi.`)}`, "_blank", "noopener,noreferrer");
+        window.open(`https://wa.me/?text=${encodeURIComponent(`${props.title} görseli indirildi.`)}`, "_blank", "noopener,noreferrer");
         setStatus("Görsel indirildi; WhatsApp açıldı.");
       }
     } catch (error) {

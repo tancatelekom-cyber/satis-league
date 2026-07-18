@@ -519,16 +519,26 @@ export async function GET(request: Request) {
       const companySummaries = webKontorData.storeSummaries
         .filter((summary) => accessibleStoreNames.some((storeName) => sameWebKontorStore(storeName, summary.storeName)))
         .sort((left, right) => left.storeName.localeCompare(right.storeName, "tr"))
-        .map((summary) => ({
-          summary,
-          scale: buildSelectedStoreSummaryRow(
-            summary,
-            webKontorData.dailyRows,
+        .map((summary) => {
+          const scopedSummary = {
+            ...summary,
+            totalAmount: companyDailySourceRows.reduce((sum, dailyRow) => {
+              const storeAmount = dailyRow.storeAmounts.find((item) => sameWebKontorStore(item.storeName, summary.storeName));
+              return sum + (storeAmount?.amount ?? 0);
+            }, 0)
+          };
+
+          return {
+            summary: scopedSummary,
+            scale: buildSelectedStoreSummaryRow(
+            scopedSummary,
+            companyDailySourceRows,
             webKontorData.scaleRules,
             webKontorData.scaleOneRate,
             webKontorData.scaleTwoRate
           )
-        }));
+          };
+        });
 
       const companyDetailRows = companyDailySourceRows.map((dailyRow) => {
         const values = companySummaries.flatMap(({ summary, scale }) => {

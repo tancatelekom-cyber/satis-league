@@ -309,15 +309,25 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
     .filter((summary) => accessibleStoreNames.some((storeName) => sameWebKontorStore(storeName, summary.storeName)))
     .sort((left, right) => left.storeName.localeCompare(right.storeName, "tr"));
 
-  const bonusRows = visibleStoreSummaries.map((summary) =>
-    buildBonusRow(
-      summary,
-      webKontorData.dailyRows,
+  const bonusRows = visibleStoreSummaries.map((summary) => {
+    const scopedSummary = isCompanySelected
+      ? {
+          ...summary,
+          totalAmount: visibleCompanyDailySourceRows.reduce((sum, dailyRow) => {
+            const storeAmount = dailyRow.storeAmounts.find((item) => sameWebKontorStore(item.storeName, summary.storeName));
+            return sum + (storeAmount?.amount ?? 0);
+          }, 0)
+        }
+      : summary;
+
+    return buildBonusRow(
+      scopedSummary,
+      isCompanySelected ? visibleCompanyDailySourceRows : webKontorData.dailyRows,
       webKontorData.scaleRules,
       webKontorData.scaleOneRate,
       webKontorData.scaleTwoRate
-    )
-  );
+    );
+  });
 
   const selectedBonusRow = isCompanySelected
     ? null

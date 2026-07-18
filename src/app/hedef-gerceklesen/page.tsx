@@ -2761,7 +2761,9 @@ function StoreGoalDashboard({
   dayStats: GoalDayStats;
 }) {
   const dashboardSourceCategories = categories.filter(
-    (category) => normalizeCategoryKey(category.title) !== normalizeCategoryKey("AKSESUAR CIRO")
+    (category) =>
+      normalizeCategoryKey(category.title) !== normalizeCategoryKey("AKSESUAR CIRO") &&
+      !isEntryCount(category.title)
   );
   const targetedCategories = dashboardSourceCategories.filter((category) => category.hasTarget && (category.target ?? 0) > 0);
   const totalTarget = targetedCategories.reduce((sum, category) => sum + (category.target ?? 0), 0);

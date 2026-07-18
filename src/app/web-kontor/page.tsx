@@ -513,32 +513,45 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
 
         <div style={{ overflowX: "auto" }}>
           {isCompanySelected ? (
-            <table className="goal-company-trend-table web-kontor-trend-table" style={{ minWidth: Math.max(900, bonusRows.length * 260 + 120) }}>
+            <table
+              className="goal-company-trend-table web-kontor-trend-table"
+              style={{ minWidth: Math.max(900, bonusRows.length * 260 + 120), fontSize: "0.94rem" }}
+            >
               <thead>
                 <tr>
-                  <th rowSpan={2}>Gün</th>
+                  <th rowSpan={2} style={{ fontWeight: 600, padding: "12px 14px" }}>Gün</th>
                   {bonusRows.map((row) => (
-                    <th key={`company-store-head-${row.storeName}`} colSpan={2} style={{ textAlign: "center" }}>
+                    <th
+                      key={`company-store-head-${row.storeName}`}
+                      colSpan={2}
+                      style={{ textAlign: "center", fontWeight: 600, padding: "12px 14px", letterSpacing: "0.01em" }}
+                    >
                       {row.storeName}
                     </th>
                   ))}
                 </tr>
                 <tr>
                   {bonusRows.flatMap((row) => [
-                    <th key={`company-profit-head-${row.storeName}`}>Kârlılık</th>,
-                    <th key={`company-bonus-head-${row.storeName}`}>Prim</th>
+                    <th key={`company-profit-head-${row.storeName}`} style={{ fontWeight: 500, padding: "10px 12px" }}>Kârlılık</th>,
+                    <th key={`company-bonus-head-${row.storeName}`} style={{ fontWeight: 500, padding: "10px 12px" }}>Prim</th>
                   ])}
                 </tr>
               </thead>
               <tbody>
                 {companyDailyRows.map((row) => (
                   <tr key={`company-web-kontor-day-${row.dayLabel}`}>
-                    <th>{row.dayLabel}</th>
+                    <th style={{ fontWeight: 500, padding: "10px 14px" }}>{row.dayLabel}</th>
                     {row.stores.flatMap((store) => [
-                      <td key={`company-profit-${store.storeName}-${row.dayLabel}`} style={getDailyRowTextStyle(store.detail?.reachedScale ?? "Bareme Ulasmadi")}>
+                      <td
+                        key={`company-profit-${store.storeName}-${row.dayLabel}`}
+                        style={{ ...getDailyRowTextStyle(store.detail?.reachedScale ?? "Bareme Ulasmadi"), fontWeight: 500, padding: "10px 12px" }}
+                      >
                         {formatCurrency(store.detail?.amount ?? 0)}
                       </td>,
-                      <td key={`company-bonus-${store.storeName}-${row.dayLabel}`} style={getDailyRowTextStyle(store.detail?.reachedScale ?? "Bareme Ulasmadi")}>
+                      <td
+                        key={`company-bonus-${store.storeName}-${row.dayLabel}`}
+                        style={{ ...getDailyRowTextStyle(store.detail?.reachedScale ?? "Bareme Ulasmadi"), fontWeight: 500, padding: "10px 12px" }}
+                      >
                         {formatCurrency(store.detail?.bonusAmount ?? 0)}
                       </td>
                     ])}
@@ -547,10 +560,10 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
               </tbody>
               <tfoot>
                 <tr>
-                  <th>Şube Toplamı</th>
+                  <th style={{ fontWeight: 600, padding: "11px 14px" }}>Şube Toplamı</th>
                   {bonusRows.flatMap((row) => [
-                    <td key={`company-profit-total-${row.storeName}`}>{formatCurrency(row.totalAmount)}</td>,
-                    <td key={`company-bonus-total-${row.storeName}`}>{formatCurrency(row.bonusAmount)}</td>
+                    <td key={`company-profit-total-${row.storeName}`} style={{ fontWeight: 600, padding: "11px 12px" }}>{formatCurrency(row.totalAmount)}</td>,
+                    <td key={`company-bonus-total-${row.storeName}`} style={{ fontWeight: 600, padding: "11px 12px" }}>{formatCurrency(row.bonusAmount)}</td>
                   ])}
                 </tr>
               </tfoot>

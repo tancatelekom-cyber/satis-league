@@ -55,6 +55,7 @@ type WebKontorDayBonusRow = {
 
 const COMPANY_STORE_VALUE = "__company__";
 const COMPANY_STORE_LABEL = "FİRMA";
+const COMPANY_PROFIT_COLORS = ["#14b8a6", "#3b82f6", "#f59e0b", "#8b5cf6", "#ec4899", "#22c55e", "#f97316", "#06b6d4"];
 
 function buildStoreHref(store: string) {
   const params = new URLSearchParams();
@@ -401,6 +402,27 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
       ];
     })
   );
+  const companyProfitTotal = bonusRows.reduce(
+    (sum, row) => sum + Math.max(0, companyRangeTotalsByStore.get(row.storeName)?.amount ?? 0),
+    0
+  );
+  const companyProfitShareRows = bonusRows.map((row, index) => {
+    const amount = Math.max(0, companyRangeTotalsByStore.get(row.storeName)?.amount ?? 0);
+    return {
+      storeName: row.storeName,
+      amount,
+      share: companyProfitTotal > 0 ? (amount / companyProfitTotal) * 100 : 0,
+      color: COMPANY_PROFIT_COLORS[index % COMPANY_PROFIT_COLORS.length]
+    };
+  });
+  let companyProfitPieCursor = 0;
+  const companyProfitPieGradient = companyProfitShareRows
+    .map((row) => {
+      const start = companyProfitPieCursor;
+      companyProfitPieCursor += row.share;
+      return `${row.color} ${start}% ${companyProfitPieCursor}%`;
+    })
+    .join(", ");
 
   const summaryCardStyle: CSSProperties = {
     padding: "18px 20px",
@@ -765,6 +787,42 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
           )}
         </div>
       </section>
+
+      {isCompanySelected ? (
+        <section className="campaign-section-card web-kontor-profit-share-card">
+          <div className="goal-section-head web-kontor-section-head" style={sectionHeadStyle}>
+            <div style={{ display: "grid", gap: 7 }}>
+              <h2 style={sectionTitleStyle}>Şubelerin Kârlılık Payları</h2>
+              <span style={sectionMetaStyle}>Seçilen gün aralığındaki firma kârlılık toplamı: {formatCurrency(companyProfitTotal)}</span>
+            </div>
+          </div>
+
+          {companyProfitTotal > 0 ? (
+            <div className="web-kontor-profit-share-layout">
+              <div className="web-kontor-pie-stage">
+                <div
+                  className="web-kontor-pie-3d"
+                  style={{ background: `conic-gradient(${companyProfitPieGradient})` }}
+                  role="img"
+                  aria-label="Şubelerin firma kârlılığı içindeki paylarını gösteren pasta grafik"
+                />
+              </div>
+              <div className="web-kontor-profit-legend">
+                {companyProfitShareRows.map((row) => (
+                  <div className="web-kontor-profit-legend-row" key={`profit-share-${row.storeName}`}>
+                    <span className="web-kontor-profit-swatch" style={{ background: row.color }} aria-hidden="true" />
+                    <span className="web-kontor-profit-store">{row.storeName}</span>
+                    <span>{formatCurrency(row.amount)}</span>
+                    <strong>{formatPercent(row.share)}</strong>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <p className="empty-state">Seçilen gün aralığında pasta grafikte gösterilecek kârlılık bulunamadı.</p>
+          )}
+        </section>
+      ) : null}
     </main>
   );
 }

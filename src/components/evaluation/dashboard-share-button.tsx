@@ -50,7 +50,7 @@ function drawDonut(
   fontSize = 29
 ) {
   const normalizedPercent = Math.max(0, Math.min(100, percent));
-  const color = normalizedPercent >= 70 ? "#22c55e" : normalizedPercent >= 40 ? "#f59e0b" : "#ef4444";
+  const color = normalizedPercent >= 100 ? "#22c55e" : normalizedPercent >= 80 ? "#f59e0b" : "#ef4444";
   context.lineWidth = lineWidth;
   context.lineCap = "butt";
   context.strokeStyle = "#dce7ef";

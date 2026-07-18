@@ -2781,6 +2781,7 @@ function StoreGoalDashboard({
   const achievedEnd = (achievedCount / statusTotal) * 100;
   const closeEnd = achievedEnd + (closeCount / statusTotal) * 100;
   const gaugePercent = Math.max(0, Math.min(100, successPercent));
+  const gaugeColor = successPercent >= 100 ? "#22c55e" : successPercent >= 80 ? "#f59e0b" : "#ef4444";
 
   return (
     <section className="goal-store-dashboard">
@@ -2826,7 +2827,7 @@ function StoreGoalDashboard({
           <div className="goal-dashboard-gauge-wrap">
             <div
               className="goal-dashboard-gauge"
-              style={{ background: `conic-gradient(#14b8a6 0% ${gaugePercent}%, #dbe7ef ${gaugePercent}% 100%)` }}
+              style={{ background: `conic-gradient(${gaugeColor} 0% ${gaugePercent}%, #dbe7ef ${gaugePercent}% 100%)` }}
               role="img"
               aria-label={`Hedefe giden kalemlerin başarı oranı ${formatPercent(successPercent)}`}
             >
@@ -2960,6 +2961,7 @@ function CompanyStoreSuccessDashboard({
   const companySuccessPercent = companyCategories.length > 0
     ? (companyAchievedCount / companyCategories.length) * 100
     : 0;
+  const companyGaugeColor = companySuccessPercent >= 100 ? "#22c55e" : companySuccessPercent >= 80 ? "#f59e0b" : "#ef4444";
   const companyStatusTotal = Math.max(1, companyCategories.length);
   const companyAchievedEnd = (companyAchievedCount / companyStatusTotal) * 100;
   const companyCloseEnd = companyAchievedEnd + (companyCloseCount / companyStatusTotal) * 100;
@@ -3007,7 +3009,7 @@ function CompanyStoreSuccessDashboard({
           <div className="goal-dashboard-gauge-wrap">
             <div
               className="goal-dashboard-gauge"
-              style={{ background: `conic-gradient(#14b8a6 0% ${companySuccessPercent}%, #dbe7ef ${companySuccessPercent}% 100%)` }}
+              style={{ background: `conic-gradient(${companyGaugeColor} 0% ${companySuccessPercent}%, #dbe7ef ${companySuccessPercent}% 100%)` }}
               role="img"
               aria-label={`Firma başarı oranı ${formatPercent(companySuccessPercent)}`}
             >
@@ -3047,7 +3049,7 @@ function CompanyStoreSuccessDashboard({
       <div className="goal-company-success-grid">
         {stores.map((store) => {
           const piePercent = Math.max(0, Math.min(100, store.successPercent));
-          const color = store.successPercent >= 70 ? "#22c55e" : store.successPercent >= 40 ? "#f59e0b" : "#ef4444";
+          const color = store.successPercent >= 100 ? "#22c55e" : store.successPercent >= 80 ? "#f59e0b" : "#ef4444";
           return (
             <a
               className="goal-company-success-card"

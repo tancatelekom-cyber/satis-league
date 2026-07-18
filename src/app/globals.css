@@ -11303,6 +11303,11 @@ textarea::placeholder {
   font-size: 0.78rem;
 }
 
+.goal-company-information-current-panel .goal-live-prime-head h3 {
+  color: #082242;
+  text-shadow: none;
+}
+
 .goal-company-information-current-table th:first-child {
   min-width: 240px;
   text-align: left;

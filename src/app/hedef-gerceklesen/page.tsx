@@ -2851,14 +2851,16 @@ function StoreGoalDashboard({
             <span>{targetedCategories.length} kategori</span>
           </div>
           <div className="goal-dashboard-status-layout">
-            <div
-              className="goal-dashboard-status-pie"
-              style={{
-                background: `conic-gradient(#22c55e 0% ${achievedEnd}%, #f59e0b ${achievedEnd}% ${closeEnd}%, #ef4444 ${closeEnd}% 100%)`
-              }}
-              role="img"
-              aria-label={`Hedefte ${achievedCount}, hedefe yakın ${closeCount}, riskli ${riskCount} kategori`}
-            />
+            <div className="goal-dashboard-pie-stage-3d">
+              <div
+                className="goal-dashboard-status-pie"
+                style={{
+                  background: `conic-gradient(#22c55e 0% ${achievedEnd}%, #f59e0b ${achievedEnd}% ${closeEnd}%, #ef4444 ${closeEnd}% 100%)`
+                }}
+                role="img"
+                aria-label={`Hedefte ${achievedCount}, hedefe yakın ${closeCount}, riskli ${riskCount} kategori`}
+              />
+            </div>
             <div className="goal-dashboard-status-legend">
               <div><i style={{ background: "#22c55e" }} /><span>Hedefte</span><strong>{achievedCount}</strong></div>
               <div><i style={{ background: "#f59e0b" }} /><span>Hedefe Yakın</span><strong>{closeCount}</strong></div>
@@ -2911,6 +2913,125 @@ function StoreGoalDashboard({
   );
 }
 
+function CompanyStoreSuccessDashboard({ rows, dayStats }: { rows: GoalStoreRow[]; dayStats: GoalDayStats }) {
+  const storeMap = new Map<string, GoalStoreRow[]>();
+  rows.forEach((row) => {
+    const current = storeMap.get(row.storeCode) ?? [];
+    current.push(row);
+    storeMap.set(row.storeCode, current);
+  });
+
+  const stores = Array.from(storeMap.entries())
+    .map(([storeName, storeRows]) => {
+      const categories = buildStoreCategorySummaries(storeRows, dayStats.workedDays, dayStats.totalDays).filter(
+        (category) =>
+          normalizeCategoryKey(category.title) !== normalizeCategoryKey("AKSESUAR CIRO") &&
+          !isEntryCount(category.title) &&
+          category.hasTarget &&
+          (category.target ?? 0) > 0
+      );
+      const successfulCount = categories.filter(
+        (category) => (category.projectedPercent ?? category.actualPercent ?? 0) >= 100
+      ).length;
+      return {
+        storeName,
+        successfulCount,
+        totalCount: categories.length,
+        successPercent: categories.length > 0 ? (successfulCount / categories.length) * 100 : 0
+      };
+    })
+    .sort((left, right) => left.storeName.localeCompare(right.storeName, "tr"));
+  const companyCategories = buildCompanyCategorySummaries(rows, dayStats.workedDays, dayStats.totalDays).filter(
+    (category) =>
+      normalizeCategoryKey(category.title) !== normalizeCategoryKey("AKSESUAR CIRO") &&
+      !isEntryCount(category.title) &&
+      category.hasTarget &&
+      (category.target ?? 0) > 0
+  );
+  const companyAchievedCount = companyCategories.filter(
+    (category) => (category.projectedPercent ?? category.actualPercent ?? 0) >= 100
+  ).length;
+  const companyCloseCount = companyCategories.filter((category) => {
+    const percent = category.projectedPercent ?? category.actualPercent ?? 0;
+    return percent >= 80 && percent < 100;
+  }).length;
+  const companyRiskCount = Math.max(0, companyCategories.length - companyAchievedCount - companyCloseCount);
+  const companyStatusTotal = Math.max(1, companyCategories.length);
+  const companyAchievedEnd = (companyAchievedCount / companyStatusTotal) * 100;
+  const companyCloseEnd = companyAchievedEnd + (companyCloseCount / companyStatusTotal) * 100;
+
+  return (
+    <section className="goal-store-dashboard goal-company-success-dashboard">
+      <div className="goal-dashboard-hero">
+        <div>
+          <span className="goal-dashboard-eyebrow">FİRMA BAŞARI DASHBOARDU</span>
+          <h2>Şubelerin Başarı Oranları</h2>
+          <p>Grafiğe tıklayarak ilgili şubenin detaylı dashboardunu açabilirsiniz.</p>
+        </div>
+        <div className="goal-dashboard-period">
+          <span>Şube Sayısı</span>
+          <strong>{formatNumber(stores.length)}</strong>
+        </div>
+      </div>
+
+      <article className="goal-dashboard-chart-card goal-company-status-card">
+        <div className="goal-dashboard-card-head">
+          <h3>Firma Hedef Durumu Dağılımı</h3>
+          <span>Ay sonu gidişatına göre {companyCategories.length} kategori</span>
+        </div>
+        <div className="goal-dashboard-status-layout">
+          <div className="goal-dashboard-pie-stage-3d">
+            <div
+              className="goal-dashboard-status-pie"
+              style={{
+                background: `conic-gradient(#22c55e 0% ${companyAchievedEnd}%, #f59e0b ${companyAchievedEnd}% ${companyCloseEnd}%, #ef4444 ${companyCloseEnd}% 100%)`
+              }}
+              role="img"
+              aria-label={`Firma hedefte ${companyAchievedCount}, hedefe yakın ${companyCloseCount}, riskli ${companyRiskCount} kategori`}
+            />
+          </div>
+          <div className="goal-dashboard-status-legend">
+            <div><i style={{ background: "#22c55e" }} /><span>Hedefte</span><strong>{companyAchievedCount}</strong></div>
+            <div><i style={{ background: "#f59e0b" }} /><span>Hedefe Yakın</span><strong>{companyCloseCount}</strong></div>
+            <div><i style={{ background: "#ef4444" }} /><span>Riskli</span><strong>{companyRiskCount}</strong></div>
+          </div>
+        </div>
+      </article>
+
+      <div className="goal-company-success-grid">
+        {stores.map((store) => {
+          const piePercent = Math.max(0, Math.min(100, store.successPercent));
+          const color = store.successPercent >= 70 ? "#22c55e" : store.successPercent >= 40 ? "#f59e0b" : "#ef4444";
+          return (
+            <a
+              className="goal-company-success-card"
+              href={buildHref("store", { store: store.storeName, panel: "dashboard" })}
+              key={`company-dashboard-${store.storeName}`}
+            >
+              <div className="goal-dashboard-card-head">
+                <h3>{store.storeName}</h3>
+                <span>{store.successfulCount}/{store.totalCount} kalem</span>
+              </div>
+              <div
+                className="goal-company-success-pie"
+                style={{ background: `conic-gradient(${color} 0% ${piePercent}%, #dce7ef ${piePercent}% 100%)` }}
+                role="img"
+                aria-label={`${store.storeName} başarı oranı ${formatPercent(store.successPercent)}`}
+              >
+                <div>
+                  <strong>{formatPercent(store.successPercent)}</strong>
+                  <span>başarı</span>
+                </div>
+              </div>
+              <span className="goal-company-success-open">Şube dashboardunu aç →</span>
+            </a>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 export default async function GoalActualPage({ searchParams }: GoalActualPageProps) {
   const params = searchParams ? await searchParams : undefined;
   const selectedView = String(params?.view ?? "employee").trim();
@@ -2955,6 +3076,8 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
   const effectivePanel: GoalPanel =
     effectiveView === "store" && selectedPanel === "dashboard"
       ? "dashboard"
+      : effectiveView === "company" && selectedPanel === "dashboard"
+        ? "dashboard"
       : effectiveView === "employee" && selectedPanel === "ranking"
         ? "ranking"
         : "detail";
@@ -3557,6 +3680,25 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
             </article>
           </section>
 
+          {effectiveView === "company" ? (
+            <section className="guide-card game-brief-card goal-filter-card">
+              <div className="goal-mode-row">
+                <a
+                  className={`goal-mode-button ${effectivePanel === "detail" ? "goal-mode-button-active" : ""}`}
+                  href={buildHref("company", { panel: "detail" })}
+                >
+                  Firma Hedef Gerçekleşen
+                </a>
+                <a
+                  className={`goal-mode-button ${effectivePanel === "dashboard" ? "goal-mode-button-active" : ""}`}
+                  href={buildHref("company", { panel: "dashboard" })}
+                >
+                  Dashboard
+                </a>
+              </div>
+            </section>
+          ) : null}
+
           {effectiveView !== "company" ? (
             <section className="guide-card game-brief-card goal-filter-card">
               <div className="league-filter-grid goal-filter-grid">
@@ -3621,6 +3763,8 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
 
           {effectivePanel === "dashboard" && effectiveView === "store" ? (
             <StoreGoalDashboard storeName={activeStoreName} categories={storeCategorySummaries} dayStats={dayStats} />
+          ) : effectivePanel === "dashboard" && effectiveView === "company" ? (
+            <CompanyStoreSuccessDashboard rows={filteredStoreRows} dayStats={dayStats} />
           ) : effectivePanel === "ranking" && effectiveView !== "company" ? (
             <section className="goal-panel-single">
               <div className="goal-ranking-stack">

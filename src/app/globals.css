@@ -12581,11 +12581,42 @@ textarea::placeholder {
   gap: 24px;
 }
 
+.goal-dashboard-pie-stage-3d {
+  min-height: 210px;
+  display: grid;
+  place-items: center;
+  perspective: 760px;
+  isolation: isolate;
+}
+
 .goal-dashboard-status-pie {
+  position: relative;
   width: 180px;
   aspect-ratio: 1;
-  transform: rotateX(48deg) rotateZ(-8deg);
-  box-shadow: 0 24px 24px rgba(8, 31, 54, 0.22), 0 8px 0 rgba(8, 31, 54, 0.25);
+  transform: rotateX(54deg) rotateZ(-8deg);
+  transform-style: preserve-3d;
+  box-shadow: 0 30px 30px rgba(3, 5, 25, 0.4), 0 9px 0 rgba(4, 6, 28, 0.48);
+  border: 2px solid rgba(255, 255, 255, 0.34);
+}
+
+.goal-dashboard-status-pie::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: 50%;
+  background: inherit;
+  filter: brightness(0.48) saturate(1.2);
+  transform: translateZ(-20px) translateY(20px);
+}
+
+.goal-dashboard-status-pie::before {
+  content: "";
+  position: absolute;
+  inset: 3%;
+  border-radius: 50%;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.3), transparent 45%);
+  pointer-events: none;
 }
 
 .goal-dashboard-status-legend {
@@ -12654,6 +12685,74 @@ textarea::placeholder {
 .goal-dashboard-category-pie-card > span {
   color: #b9c9e8;
   font-size: 0.75rem;
+}
+
+.goal-company-success-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.goal-company-success-card {
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid rgba(123, 213, 255, 0.15);
+  border-radius: 8px;
+  background: #292a55;
+  color: #ffffff;
+  text-decoration: none;
+  box-shadow: 0 14px 28px rgba(5, 7, 31, 0.2);
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.goal-company-success-card:hover,
+.goal-company-success-card:focus-visible {
+  transform: translateY(-3px);
+  border-color: rgba(85, 220, 235, 0.72);
+  box-shadow: 0 20px 34px rgba(5, 7, 31, 0.3);
+  outline: none;
+}
+
+.goal-company-success-card .goal-dashboard-card-head {
+  width: 100%;
+}
+
+.goal-company-success-pie {
+  width: min(205px, 58vw);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  box-shadow: 0 18px 30px rgba(4, 6, 28, 0.32), inset 0 0 0 1px rgba(255, 255, 255, 0.52);
+}
+
+.goal-company-success-pie > div {
+  width: 68%;
+  aspect-ratio: 1;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  border-radius: 50%;
+  background: #17143e;
+  box-shadow: inset 0 5px 15px rgba(4, 6, 28, 0.35);
+}
+
+.goal-company-success-pie strong {
+  color: #ffffff;
+  font-size: 1.7rem;
+}
+
+.goal-company-success-pie span,
+.goal-company-success-open {
+  color: #b9c9e8;
+  font-size: 0.82rem;
+}
+
+.goal-company-success-open {
+  color: #63d9e8;
+  font-weight: 700;
 }
 
 @media (max-width: 900px) {

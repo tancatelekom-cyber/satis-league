@@ -2797,27 +2797,6 @@ function StoreGoalDashboard({
         </div>
       </div>
 
-      {canShare ? (
-        <DashboardShareButton
-          title={`${storeName || "Mağaza"} Şube Dashboardu`}
-          subtitle="Ay sonu hedef gidişatı ve kategori başarı oranları"
-          items={[
-            {
-              label: "Başarı Oranı",
-              percent: successPercent,
-              detail: `${achievedCount}/${targetedCategories.length} hedefe giden kalem`
-            },
-            ...dashboardCategories.map((category) => ({
-              label: category.title,
-              percent: category.hasTarget ? category.projectedPercent ?? category.actualPercent ?? 0 : 0,
-              detail: category.hasTarget
-                ? `Şu an ${formatPercent(category.actualPercent ?? 0)}`
-                : `Mevcut ${formatNumber(category.actual)}`
-            }))
-          ]}
-        />
-      ) : null}
-
       <div className="goal-dashboard-visual-grid">
         <article className="goal-dashboard-chart-card goal-dashboard-gauge-card">
           <div className="goal-dashboard-card-head">
@@ -2903,6 +2882,27 @@ function StoreGoalDashboard({
           })}
         </div>
       </article>
+
+      {canShare ? (
+        <DashboardShareButton
+          title={`${storeName || "Mağaza"} Şube Dashboardu`}
+          subtitle="Ay sonu hedef gidişatı ve kategori başarı oranları"
+          items={[
+            {
+              label: "Başarı Oranı",
+              percent: successPercent,
+              detail: `${achievedCount}/${targetedCategories.length} hedefe giden kalem`
+            },
+            ...dashboardCategories.map((category) => ({
+              label: category.title,
+              percent: category.hasTarget ? category.projectedPercent ?? category.actualPercent ?? 0 : 0,
+              detail: category.hasTarget
+                ? `Şu an ${formatPercent(category.actualPercent ?? 0)}`
+                : `Mevcut ${formatNumber(category.actual)}`
+            }))
+          ]}
+        />
+      ) : null}
     </section>
   );
 }
@@ -2980,26 +2980,6 @@ function CompanyStoreSuccessDashboard({
         </div>
       </div>
 
-      {canShare ? (
-        <DashboardShareButton
-          title="Firma Başarı Dashboardu"
-          subtitle="Şubelerin ay sonu başarı oranları"
-          detailColumns={2}
-          items={[
-            {
-              label: "Firma Başarı Oranı",
-              percent: companySuccessPercent,
-              detail: `${companyAchievedCount}/${companyCategories.length} hedefe giden kalem`
-            },
-            ...stores.map((store) => ({
-              label: store.storeName,
-              percent: store.successPercent,
-              detail: `${store.successfulCount}/${store.totalCount} hedefe giden kalem`
-            }))
-          ]}
-        />
-      ) : null}
-
       <div className="goal-dashboard-visual-grid">
         <article className="goal-dashboard-chart-card goal-dashboard-gauge-card">
           <div className="goal-dashboard-card-head">
@@ -3076,6 +3056,26 @@ function CompanyStoreSuccessDashboard({
           );
         })}
       </div>
+
+      {canShare ? (
+        <DashboardShareButton
+          title="Firma Başarı Dashboardu"
+          subtitle="Şubelerin ay sonu başarı oranları"
+          detailColumns={2}
+          items={[
+            {
+              label: "Firma Başarı Oranı",
+              percent: companySuccessPercent,
+              detail: `${companyAchievedCount}/${companyCategories.length} hedefe giden kalem`
+            },
+            ...stores.map((store) => ({
+              label: store.storeName,
+              percent: store.successPercent,
+              detail: `${store.successfulCount}/${store.totalCount} hedefe giden kalem`
+            }))
+          ]}
+        />
+      ) : null}
     </section>
   );
 }

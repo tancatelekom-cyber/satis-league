@@ -423,6 +423,15 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
       return `${row.color} ${start}% ${companyProfitPieCursor}%`;
     })
     .join(", ");
+  const companyDistributedBonusTotal = bonusRows.reduce(
+    (sum, row) => sum + Math.max(0, companyRangeTotalsByStore.get(row.storeName)?.bonus ?? 0),
+    0
+  );
+  const companyBonusShare = companyProfitTotal > 0
+    ? Math.min(100, (companyDistributedBonusTotal / companyProfitTotal) * 100)
+    : 0;
+  const companyRemainingProfit = Math.max(0, companyProfitTotal - companyDistributedBonusTotal);
+  const companyRemainingProfitShare = Math.max(0, 100 - companyBonusShare);
 
   const summaryCardStyle: CSSProperties = {
     padding: "18px 20px",
@@ -821,6 +830,56 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
             </div>
           ) : (
             <p className="empty-state">Seçilen gün aralığında pasta grafikte gösterilecek kârlılık bulunamadı.</p>
+          )}
+        </section>
+      ) : null}
+
+      {isCompanySelected ? (
+        <section className="campaign-section-card web-kontor-profit-share-card">
+          <div className="goal-section-head web-kontor-section-head" style={sectionHeadStyle}>
+            <div style={{ display: "grid", gap: 7 }}>
+              <h2 style={sectionTitleStyle}>Firma Toplam Kârlılık ve Dağıtılan Prim</h2>
+              <span style={sectionMetaStyle}>
+                Seçilen gün aralığında toplam kârlılığın prim olarak dağıtılan payı gösterilir.
+              </span>
+            </div>
+          </div>
+
+          {companyProfitTotal > 0 ? (
+            <div className="web-kontor-profit-share-layout">
+              <div className="web-kontor-pie-stage">
+                <div
+                  className="web-kontor-pie-3d"
+                  style={{
+                    background: `conic-gradient(#ef4444 0% ${companyBonusShare}%, #14b8a6 ${companyBonusShare}% 100%)`
+                  }}
+                  role="img"
+                  aria-label="Firma toplam kârlılığı içinde dağıtılan prim ve kalan kârlılık paylarını gösteren pasta grafik"
+                />
+              </div>
+              <div className="web-kontor-profit-legend">
+                <div className="web-kontor-profit-legend-row">
+                  <span className="web-kontor-profit-swatch" style={{ background: "#0b2143" }} aria-hidden="true" />
+                  <span className="web-kontor-profit-store">Firma Toplam Kârlılık</span>
+                  <span>{formatCurrency(companyProfitTotal)}</span>
+                  <strong>%100</strong>
+                </div>
+                <div className="web-kontor-profit-legend-row">
+                  <span className="web-kontor-profit-swatch" style={{ background: "#ef4444" }} aria-hidden="true" />
+                  <span className="web-kontor-profit-store">Dağıtılan Prim</span>
+                  <span>{formatCurrency(companyDistributedBonusTotal)}</span>
+                  <strong>{formatPercent(companyBonusShare)}</strong>
+                </div>
+                <div className="web-kontor-profit-legend-row">
+                  <span className="web-kontor-profit-swatch" style={{ background: "#14b8a6" }} aria-hidden="true" />
+                  <span className="web-kontor-profit-store">Prim Sonrası Kalan Kârlılık</span>
+                  <span>{formatCurrency(companyRemainingProfit)}</span>
+                  <strong>{formatPercent(companyRemainingProfitShare)}</strong>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p className="empty-state">Seçilen gün aralığında pasta grafikte gösterilecek firma kârlılığı bulunamadı.</p>
           )}
         </section>
       ) : null}

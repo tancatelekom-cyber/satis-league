@@ -2997,29 +2997,51 @@ function CompanyStoreSuccessDashboard({
         />
       ) : null}
 
-      <article className="goal-dashboard-chart-card goal-company-status-card">
-        <div className="goal-dashboard-card-head">
-          <h3>Firma Hedef Durumu Dağılımı</h3>
-          <span>Ay sonu gidişatına göre {companyCategories.length} kategori</span>
-        </div>
-        <div className="goal-dashboard-status-layout">
-          <div className="goal-dashboard-pie-stage-3d">
+      <div className="goal-dashboard-visual-grid">
+        <article className="goal-dashboard-chart-card goal-dashboard-gauge-card">
+          <div className="goal-dashboard-card-head">
+            <h3>Firma Başarı Oranı</h3>
+            <span>Hedefe giden kalemlerin toplam hedefli kalemlere oranı</span>
+          </div>
+          <div className="goal-dashboard-gauge-wrap">
             <div
-              className="goal-dashboard-status-pie"
-              style={{
-                background: `conic-gradient(#22c55e 0% ${companyAchievedEnd}%, #f59e0b ${companyAchievedEnd}% ${companyCloseEnd}%, #ef4444 ${companyCloseEnd}% 100%)`
-              }}
+              className="goal-dashboard-gauge"
+              style={{ background: `conic-gradient(#14b8a6 0% ${companySuccessPercent}%, #dbe7ef ${companySuccessPercent}% 100%)` }}
               role="img"
-              aria-label={`Firma hedefte ${companyAchievedCount}, hedefe yakın ${companyCloseCount}, riskli ${companyRiskCount} kategori`}
-            />
+              aria-label={`Firma başarı oranı ${formatPercent(companySuccessPercent)}`}
+            >
+              <div>
+                <strong>{formatPercent(companySuccessPercent)}</strong>
+                <span>başarı</span>
+              </div>
+            </div>
           </div>
-          <div className="goal-dashboard-status-legend">
-            <div><i style={{ background: "#22c55e" }} /><span>Hedefte</span><strong>{companyAchievedCount}</strong></div>
-            <div><i style={{ background: "#f59e0b" }} /><span>Hedefe Yakın</span><strong>{companyCloseCount}</strong></div>
-            <div><i style={{ background: "#ef4444" }} /><span>Riskli</span><strong>{companyRiskCount}</strong></div>
+        </article>
+
+        <article className="goal-dashboard-chart-card goal-company-status-card">
+          <div className="goal-dashboard-card-head">
+            <h3>Firma Hedef Durumu Dağılımı</h3>
+            <span>Ay sonu gidişatına göre {companyCategories.length} kategori</span>
           </div>
-        </div>
-      </article>
+          <div className="goal-dashboard-status-layout">
+            <div className="goal-dashboard-pie-stage-3d">
+              <div
+                className="goal-dashboard-status-pie"
+                style={{
+                  background: `conic-gradient(#22c55e 0% ${companyAchievedEnd}%, #f59e0b ${companyAchievedEnd}% ${companyCloseEnd}%, #ef4444 ${companyCloseEnd}% 100%)`
+                }}
+                role="img"
+                aria-label={`Firma hedefte ${companyAchievedCount}, hedefe yakın ${companyCloseCount}, riskli ${companyRiskCount} kategori`}
+              />
+            </div>
+            <div className="goal-dashboard-status-legend">
+              <div><i style={{ background: "#22c55e" }} /><span>Hedefte</span><strong>{companyAchievedCount}</strong></div>
+              <div><i style={{ background: "#f59e0b" }} /><span>Hedefe Yakın</span><strong>{companyCloseCount}</strong></div>
+              <div><i style={{ background: "#ef4444" }} /><span>Riskli</span><strong>{companyRiskCount}</strong></div>
+            </div>
+          </div>
+        </article>
+      </div>
 
       <div className="goal-company-success-grid">
         {stores.map((store) => {

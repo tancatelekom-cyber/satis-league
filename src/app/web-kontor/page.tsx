@@ -324,6 +324,17 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
   const selectedSecondScaleDayCount = isCompanySelected
     ? bonusRows.reduce((sum, row) => sum + row.secondScaleDayCount, 0)
     : selectedBonusRow?.secondScaleDayCount ?? 0;
+  const companyDailyRows = isCompanySelected
+    ? webKontorData.dailyRows.map((dailyRow) => ({
+        dayLabel: dailyRow.dayLabel,
+        stores: bonusRows.map((bonusRow) => ({
+          storeName: bonusRow.storeName,
+          detail: selectedDailyRows.find(
+            (row) => row.dayLabel === dailyRow.dayLabel && sameWebKontorStore(row.storeName ?? "", bonusRow.storeName)
+          )
+        }))
+      }))
+    : [];
 
   const summaryCardStyle: CSSProperties = {
     padding: "18px 20px",
@@ -501,56 +512,98 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
         </div>
 
         <div style={{ overflowX: "auto" }}>
-          <table className="goal-company-trend-table web-kontor-trend-table">
-            <thead>
-              <tr>
-                {isCompanySelected ? <th>Şube</th> : null}
-                <th>Gün</th>
-                <th>Gerçekleşen</th>
-                <th>Barem</th>
-                <th>Prim Oranı</th>
-                <th>Günlük Prim</th>
-              </tr>
-            </thead>
-            <tbody>
-              {selectedDailyRows.map((row) => (
-                <tr key={`web-kontor-day-${row.storeName ?? selectedStore}-${row.dayLabel}`}>
-                  {isCompanySelected ? <th>{row.storeName}</th> : null}
-                  <th>{row.dayLabel}</th>
-                  <td style={getDailyRowTextStyle(row.reachedScale)}>{formatCurrency(row.amount)}</td>
-                  <td>
-                    <span
-                      className="web-kontor-scale-badge"
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        minWidth: 110,
-                        padding: "8px 12px",
-                        borderRadius: 999,
-                        fontWeight: 900,
-                        ...getScaleBadgeStyle(row.reachedScale)
-                      }}
-                    >
-                      {row.reachedScale}
-                    </span>
-                  </td>
-                  <td style={getDailyRowTextStyle(row.reachedScale)}>{formatWebKontorRate(row.rateValue)}</td>
-                  <td style={getDailyRowTextStyle(row.reachedScale)}>{formatCurrency(row.bonusAmount)}</td>
+          {isCompanySelected ? (
+            <table className="goal-company-trend-table web-kontor-trend-table" style={{ minWidth: Math.max(900, bonusRows.length * 260 + 120) }}>
+              <thead>
+                <tr>
+                  <th rowSpan={2}>Gün</th>
+                  {bonusRows.map((row) => (
+                    <th key={`company-store-head-${row.storeName}`} colSpan={2} style={{ textAlign: "center" }}>
+                      {row.storeName}
+                    </th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-            <tfoot>
-              <tr>
-                <th>Genel Toplam</th>
-                {isCompanySelected ? <td>-</td> : null}
-                <td>{formatCurrency(selectedTotalAmount)}</td>
-                <td>-</td>
-                <td>-</td>
-                <td>{formatCurrency(selectedBonusAmount)}</td>
-              </tr>
-            </tfoot>
-          </table>
+                <tr>
+                  {bonusRows.flatMap((row) => [
+                    <th key={`company-profit-head-${row.storeName}`}>Kârlılık</th>,
+                    <th key={`company-bonus-head-${row.storeName}`}>Prim</th>
+                  ])}
+                </tr>
+              </thead>
+              <tbody>
+                {companyDailyRows.map((row) => (
+                  <tr key={`company-web-kontor-day-${row.dayLabel}`}>
+                    <th>{row.dayLabel}</th>
+                    {row.stores.flatMap((store) => [
+                      <td key={`company-profit-${store.storeName}-${row.dayLabel}`} style={getDailyRowTextStyle(store.detail?.reachedScale ?? "Bareme Ulasmadi")}>
+                        {formatCurrency(store.detail?.amount ?? 0)}
+                      </td>,
+                      <td key={`company-bonus-${store.storeName}-${row.dayLabel}`} style={getDailyRowTextStyle(store.detail?.reachedScale ?? "Bareme Ulasmadi")}>
+                        {formatCurrency(store.detail?.bonusAmount ?? 0)}
+                      </td>
+                    ])}
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <th>Şube Toplamı</th>
+                  {bonusRows.flatMap((row) => [
+                    <td key={`company-profit-total-${row.storeName}`}>{formatCurrency(row.totalAmount)}</td>,
+                    <td key={`company-bonus-total-${row.storeName}`}>{formatCurrency(row.bonusAmount)}</td>
+                  ])}
+                </tr>
+              </tfoot>
+            </table>
+          ) : (
+            <table className="goal-company-trend-table web-kontor-trend-table">
+              <thead>
+                <tr>
+                  <th>Gün</th>
+                  <th>Gerçekleşen</th>
+                  <th>Barem</th>
+                  <th>Prim Oranı</th>
+                  <th>Günlük Prim</th>
+                </tr>
+              </thead>
+              <tbody>
+                {selectedDailyRows.map((row) => (
+                  <tr key={`web-kontor-day-${selectedStore}-${row.dayLabel}`}>
+                    <th>{row.dayLabel}</th>
+                    <td style={getDailyRowTextStyle(row.reachedScale)}>{formatCurrency(row.amount)}</td>
+                    <td>
+                      <span
+                        className="web-kontor-scale-badge"
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          minWidth: 110,
+                          padding: "8px 12px",
+                          borderRadius: 999,
+                          fontWeight: 900,
+                          ...getScaleBadgeStyle(row.reachedScale)
+                        }}
+                      >
+                        {row.reachedScale}
+                      </span>
+                    </td>
+                    <td style={getDailyRowTextStyle(row.reachedScale)}>{formatWebKontorRate(row.rateValue)}</td>
+                    <td style={getDailyRowTextStyle(row.reachedScale)}>{formatCurrency(row.bonusAmount)}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <th>Genel Toplam</th>
+                  <td>{formatCurrency(selectedTotalAmount)}</td>
+                  <td>-</td>
+                  <td>-</td>
+                  <td>{formatCurrency(selectedBonusAmount)}</td>
+                </tr>
+              </tfoot>
+            </table>
+          )}
         </div>
       </section>
     </main>

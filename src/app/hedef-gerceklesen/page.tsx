@@ -2766,11 +2766,6 @@ function StoreGoalDashboard({
       !isEntryCount(category.title)
   );
   const targetedCategories = dashboardSourceCategories.filter((category) => category.hasTarget && (category.target ?? 0) > 0);
-  const totalTarget = targetedCategories.reduce((sum, category) => sum + (category.target ?? 0), 0);
-  const totalActual = targetedCategories.reduce((sum, category) => sum + category.actual, 0);
-  const overallPercent = totalTarget > 0 ? (totalActual / totalTarget) * 100 : 0;
-  const projectedTarget = targetedCategories.reduce((sum, category) => sum + (category.projectedActual ?? category.actual), 0);
-  const overallProjectedPercent = totalTarget > 0 ? (projectedTarget / totalTarget) * 100 : 0;
   const achievedCount = targetedCategories.filter((category) => (category.projectedPercent ?? category.actualPercent ?? 0) >= 100).length;
   const closeCount = targetedCategories.filter((category) => {
     const percent = category.projectedPercent ?? category.actualPercent ?? 0;
@@ -2778,9 +2773,6 @@ function StoreGoalDashboard({
   }).length;
   const riskCount = Math.max(0, targetedCategories.length - achievedCount - closeCount);
   const successPercent = targetedCategories.length > 0 ? (achievedCount / targetedCategories.length) * 100 : 0;
-  const averagePercent = targetedCategories.length
-    ? targetedCategories.reduce((sum, category) => sum + (category.projectedPercent ?? category.actualPercent ?? 0), 0) / targetedCategories.length
-    : 0;
   const dashboardCategories = dashboardSourceCategories;
   const statusTotal = Math.max(1, targetedCategories.length);
   const achievedEnd = (achievedCount / statusTotal) * 100;
@@ -2799,29 +2791,6 @@ function StoreGoalDashboard({
           <span>Çalışılan Gün</span>
           <strong>{formatNumber(dayStats.workedDays)} / {formatNumber(dayStats.totalDays)}</strong>
         </div>
-      </div>
-
-      <div className="goal-dashboard-kpi-grid">
-        <article>
-          <span>Genel Gerçekleşme</span>
-          <strong>{formatPercent(overallPercent)}</strong>
-          <small>{formatNumber(totalActual)} / {formatNumber(totalTarget)}</small>
-        </article>
-        <article>
-          <span>Ay Sonu Gidişat</span>
-          <strong>{formatPercent(overallProjectedPercent)}</strong>
-          <small>{formatNumber(projectedTarget)} öngörülen</small>
-        </article>
-        <article>
-          <span>Hedefe Ulaşan</span>
-          <strong>{formatNumber(achievedCount)}</strong>
-          <small>{formatNumber(targetedCategories.length)} kategoriden</small>
-        </article>
-        <article>
-          <span>Ortalama Ay Sonu</span>
-          <strong>{formatPercent(averagePercent)}</strong>
-          <small>Kategori ortalaması</small>
-        </article>
       </div>
 
       <div className="goal-dashboard-visual-grid">

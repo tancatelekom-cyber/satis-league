@@ -502,6 +502,20 @@ export async function GET(request: Request) {
     const isCompanySelected = canViewAllStores && requestedStore === COMPANY_STORE_VALUE;
 
     if (isCompanySelected) {
+      const dayLabels = webKontorData.dailyRows.map((row) => row.dayLabel);
+      const requestedStartDay = dayLabels.includes(searchParams.get("startDay")?.trim() ?? "")
+        ? searchParams.get("startDay")?.trim() ?? ""
+        : "";
+      const requestedEndDay = dayLabels.includes(searchParams.get("endDay")?.trim() ?? "")
+        ? searchParams.get("endDay")?.trim() ?? ""
+        : "";
+      const requestedStartIndex = requestedStartDay ? dayLabels.indexOf(requestedStartDay) : 0;
+      const requestedEndIndex = requestedEndDay ? dayLabels.indexOf(requestedEndDay) : Math.max(0, dayLabels.length - 1);
+      const rangeStartIndex = Math.min(requestedStartIndex, requestedEndIndex);
+      const rangeEndIndex = Math.max(requestedStartIndex, requestedEndIndex);
+      const companyDailySourceRows = webKontorData.dailyRows.filter(
+        (_, index) => index >= rangeStartIndex && index <= rangeEndIndex
+      );
       const companySummaries = webKontorData.storeSummaries
         .filter((summary) => accessibleStoreNames.some((storeName) => sameWebKontorStore(storeName, summary.storeName)))
         .sort((left, right) => left.storeName.localeCompare(right.storeName, "tr"))
@@ -516,7 +530,7 @@ export async function GET(request: Request) {
           )
         }));
 
-      const companyDetailRows = webKontorData.dailyRows.map((dailyRow) => {
+      const companyDetailRows = companyDailySourceRows.map((dailyRow) => {
         const values = companySummaries.flatMap(({ summary, scale }) => {
           const amount = dailyRow.storeAmounts.find((item) => sameWebKontorStore(item.storeName, summary.storeName))?.amount ?? 0;
           let rateValue = 0;
@@ -536,6 +550,26 @@ export async function GET(request: Request) {
 
         return [dailyRow.dayLabel, ...values] as WorksheetCell[];
       });
+      const companyRangeTotals = new Map(
+        companySummaries.map(({ summary, scale }) => {
+          let amountTotal = 0;
+          let bonusTotal = 0;
+
+          companyDailySourceRows.forEach((dailyRow) => {
+            const amount = dailyRow.storeAmounts.find((item) => sameWebKontorStore(item.storeName, summary.storeName))?.amount ?? 0;
+            let rateValue = 0;
+            if (scale.scaleTwoTarget !== null && amount >= scale.scaleTwoTarget) {
+              rateValue = webKontorData.scaleTwoRate;
+            } else if (scale.scaleOneTarget !== null && amount >= scale.scaleOneTarget) {
+              rateValue = webKontorData.scaleOneRate;
+            }
+            amountTotal += amount;
+            bonusTotal += amount * getWebKontorRateMultiplier(rateValue);
+          });
+
+          return [summary.storeName, { amount: amountTotal, bonus: bonusTotal }];
+        })
+      );
 
       const totalAmount = companySummaries.reduce((sum, row) => sum + row.summary.totalAmount, 0);
       const totalBonus = companySummaries.reduce((sum, row) => sum + row.scale.bonusAmount, 0);
@@ -570,20 +604,23 @@ export async function GET(request: Request) {
             ...companyDetailRows,
             [
               "SUBE TOPLAMI",
-              ...companySummaries.flatMap(({ summary, scale }) => [summary.totalAmount, Math.round(scale.bonusAmount)])
+              ...companySummaries.flatMap(({ summary }) => {
+                const totals = companyRangeTotals.get(summary.storeName);
+                return [totals?.amount ?? 0, Math.round(totals?.bonus ?? 0)];
+              })
             ],
             [
               "GUNLUK BASARI %",
               ...companySummaries.flatMap(({ summary, scale }) => {
-                const successfulDayCount = webKontorData.dailyRows.filter((dailyRow) => {
+                const successfulDayCount = companyDailySourceRows.filter((dailyRow) => {
                   const amount = dailyRow.storeAmounts.find((item) => sameWebKontorStore(item.storeName, summary.storeName))?.amount ?? 0;
                   return (
                     (scale.scaleTwoTarget !== null && amount >= scale.scaleTwoTarget) ||
                     (scale.scaleOneTarget !== null && amount >= scale.scaleOneTarget)
                   );
                 }).length;
-                const successRate = webKontorData.dailyRows.length > 0
-                  ? (successfulDayCount / webKontorData.dailyRows.length) * 100
+                const successRate = companyDailySourceRows.length > 0
+                  ? (successfulDayCount / companyDailySourceRows.length) * 100
                   : 0;
 
                 return [

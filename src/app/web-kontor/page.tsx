@@ -17,6 +17,8 @@ import {
 type PageProps = {
   searchParams?: Promise<{
     store?: string;
+    startDay?: string;
+    endDay?: string;
   }>;
 };
 
@@ -62,12 +64,29 @@ function buildStoreHref(store: string) {
   return `/web-kontor?${params.toString()}`;
 }
 
-function buildExcelHref(store: string) {
+function buildExcelHref(store: string, startDay = "", endDay = "") {
   const params = new URLSearchParams();
   if (store) {
     params.set("store", store);
   }
+  if (startDay) {
+    params.set("startDay", startDay);
+  }
+  if (endDay) {
+    params.set("endDay", endDay);
+  }
   return `/web-kontor/excel?${params.toString()}`;
+}
+
+function buildCompanyRangeHref(startDay = "", endDay = "") {
+  const params = new URLSearchParams({ store: COMPANY_STORE_VALUE });
+  if (startDay) {
+    params.set("startDay", startDay);
+  }
+  if (endDay) {
+    params.set("endDay", endDay);
+  }
+  return `/web-kontor?${params.toString()}`;
 }
 
 function formatNumber(value: number | null | undefined, digits = 0) {
@@ -272,6 +291,16 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
 
   const requestedStore = String(params?.store ?? "").trim();
   const isCompanySelected = canViewAllStores && requestedStore === COMPANY_STORE_VALUE;
+  const dayLabels = webKontorData.dailyRows.map((row) => row.dayLabel);
+  const requestedStartDay = dayLabels.includes(String(params?.startDay ?? "")) ? String(params?.startDay) : "";
+  const requestedEndDay = dayLabels.includes(String(params?.endDay ?? "")) ? String(params?.endDay) : "";
+  const requestedStartIndex = requestedStartDay ? dayLabels.indexOf(requestedStartDay) : 0;
+  const requestedEndIndex = requestedEndDay ? dayLabels.indexOf(requestedEndDay) : Math.max(0, dayLabels.length - 1);
+  const rangeStartIndex = Math.min(requestedStartIndex, requestedEndIndex);
+  const rangeEndIndex = Math.max(requestedStartIndex, requestedEndIndex);
+  const visibleCompanyDailySourceRows = isCompanySelected
+    ? webKontorData.dailyRows.filter((_, index) => index >= rangeStartIndex && index <= rangeEndIndex)
+    : webKontorData.dailyRows;
   const selectedStore = isCompanySelected
     ? COMPANY_STORE_LABEL
     : accessibleStoreNames.find((storeName) => sameWebKontorStore(storeName, requestedStore)) ?? accessibleStoreNames[0];
@@ -297,7 +326,7 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
     ? bonusRows.flatMap((bonusRow) =>
         buildSelectedDayRows(
           bonusRow.storeName,
-          webKontorData.dailyRows,
+          visibleCompanyDailySourceRows,
           bonusRow.scaleOneTarget,
           bonusRow.scaleTwoTarget,
           webKontorData.scaleOneRate,
@@ -325,7 +354,7 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
     ? bonusRows.reduce((sum, row) => sum + row.secondScaleDayCount, 0)
     : selectedBonusRow?.secondScaleDayCount ?? 0;
   const companyDailyRows = isCompanySelected
-    ? webKontorData.dailyRows.map((dailyRow) => ({
+    ? visibleCompanyDailySourceRows.map((dailyRow) => ({
         dayLabel: dailyRow.dayLabel,
         stores: bonusRows.map((bonusRow) => ({
           storeName: bonusRow.storeName,
@@ -340,8 +369,8 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
       const successfulDayCount = selectedDailyRows.filter(
         (row) => sameWebKontorStore(row.storeName ?? "", bonusRow.storeName) && row.bonusAmount > 0
       ).length;
-      const successRate = webKontorData.dailyRows.length > 0
-        ? (successfulDayCount / webKontorData.dailyRows.length) * 100
+      const successRate = visibleCompanyDailySourceRows.length > 0
+        ? (successfulDayCount / visibleCompanyDailySourceRows.length) * 100
         : 0;
 
       return [bonusRow.storeName, successRate];
@@ -350,6 +379,18 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
   const selectedStoreSuccessRate = !isCompanySelected && webKontorData.dailyRows.length > 0
     ? (selectedDailyRows.filter((row) => row.bonusAmount > 0).length / webKontorData.dailyRows.length) * 100
     : 0;
+  const companyRangeTotalsByStore = new Map(
+    bonusRows.map((bonusRow) => {
+      const rows = selectedDailyRows.filter((row) => sameWebKontorStore(row.storeName ?? "", bonusRow.storeName));
+      return [
+        bonusRow.storeName,
+        {
+          amount: rows.reduce((sum, row) => sum + row.amount, 0),
+          bonus: rows.reduce((sum, row) => sum + row.bonusAmount, 0)
+        }
+      ];
+    })
+  );
 
   const summaryCardStyle: CSSProperties = {
     padding: "18px 20px",
@@ -436,6 +477,46 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
                 ]}
               />
             </label>
+            {isCompanySelected ? (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(2, minmax(145px, 210px))",
+                  gap: 10,
+                  alignItems: "end",
+                  marginTop: 10
+                }}
+              >
+                <label className="field" style={{ gap: 5 }}>
+                  <span style={{ fontSize: "0.82rem", fontWeight: 600 }}>Başlangıç Günü</span>
+                  <FilterSelectNav
+                    ariaLabel="Firma başlangıç günü"
+                    value={buildCompanyRangeHref(requestedStartDay, requestedEndDay)}
+                    options={[
+                      { label: "İlk Gün (Tümü)", value: buildCompanyRangeHref("", requestedEndDay) },
+                      ...dayLabels.map((dayLabel) => ({
+                        label: dayLabel,
+                        value: buildCompanyRangeHref(dayLabel, requestedEndDay)
+                      }))
+                    ]}
+                  />
+                </label>
+                <label className="field" style={{ gap: 5 }}>
+                  <span style={{ fontSize: "0.82rem", fontWeight: 600 }}>Bitiş Günü</span>
+                  <FilterSelectNav
+                    ariaLabel="Firma bitiş günü"
+                    value={buildCompanyRangeHref(requestedStartDay, requestedEndDay)}
+                    options={[
+                      { label: "Son Gün (Tümü)", value: buildCompanyRangeHref(requestedStartDay, "") },
+                      ...dayLabels.map((dayLabel) => ({
+                        label: dayLabel,
+                        value: buildCompanyRangeHref(requestedStartDay, dayLabel)
+                      }))
+                    ]}
+                  />
+                </label>
+              </div>
+            ) : null}
           </div>
         ) : null}
       </section>
@@ -521,7 +602,11 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
           </div>
           <a
             className="button-secondary export-link-button"
-            href={buildExcelHref(isCompanySelected ? COMPANY_STORE_VALUE : selectedStore)}
+            href={buildExcelHref(
+              isCompanySelected ? COMPANY_STORE_VALUE : selectedStore,
+              isCompanySelected ? requestedStartDay : "",
+              isCompanySelected ? requestedEndDay : ""
+            )}
           >
             Excel'e İndir
           </a>
@@ -577,10 +662,13 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
               <tfoot>
                 <tr>
                   <th style={{ fontWeight: 600, padding: "11px 14px" }}>Şube Toplamı</th>
-                  {bonusRows.flatMap((row) => [
-                    <td key={`company-profit-total-${row.storeName}`} style={{ fontWeight: 600, padding: "11px 12px" }}>{formatCurrency(row.totalAmount)}</td>,
-                    <td key={`company-bonus-total-${row.storeName}`} style={{ fontWeight: 600, padding: "11px 12px" }}>{formatCurrency(row.bonusAmount)}</td>
-                  ])}
+                  {bonusRows.flatMap((row) => {
+                    const totals = companyRangeTotalsByStore.get(row.storeName);
+                    return [
+                      <td key={`company-profit-total-${row.storeName}`} style={{ fontWeight: 600, padding: "11px 12px" }}>{formatCurrency(totals?.amount ?? 0)}</td>,
+                      <td key={`company-bonus-total-${row.storeName}`} style={{ fontWeight: 600, padding: "11px 12px" }}>{formatCurrency(totals?.bonus ?? 0)}</td>
+                    ];
+                  })}
                 </tr>
                 <tr>
                   <th

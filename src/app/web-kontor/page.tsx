@@ -626,15 +626,15 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
           </a>
         </div>
 
-        <div style={{ overflowX: "auto" }}>
+        <div className={isCompanySelected ? "web-kontor-company-table-scroll" : undefined} style={{ overflowX: "auto" }}>
           {isCompanySelected ? (
             <table
-              className="goal-company-trend-table web-kontor-trend-table"
+              className="goal-company-trend-table web-kontor-trend-table web-kontor-company-daily-table"
               style={{ minWidth: Math.max(900, bonusRows.length * 260 + 120), fontSize: "0.94rem" }}
             >
               <thead>
                 <tr>
-                  <th rowSpan={2} style={{ fontWeight: 600, padding: "12px 14px" }}>Gün</th>
+                  <th className="web-kontor-sticky-day-column" rowSpan={2} style={{ fontWeight: 600, padding: "12px 14px" }}>Gün</th>
                   {bonusRows.map((row) => (
                     <th
                       key={`company-store-head-${row.storeName}`}
@@ -655,7 +655,7 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
               <tbody>
                 {companyDailyRows.map((row) => (
                   <tr key={`company-web-kontor-day-${row.dayLabel}`}>
-                    <th style={{ fontWeight: 500, padding: "10px 14px" }}>{row.dayLabel}</th>
+                    <th className="web-kontor-sticky-day-column" style={{ fontWeight: 500, padding: "10px 14px" }}>{row.dayLabel}</th>
                     {row.stores.flatMap((store) => [
                       <td
                         key={`company-profit-${store.storeName}-${row.dayLabel}`}
@@ -675,7 +675,7 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
               </tbody>
               <tfoot>
                 <tr>
-                  <th style={{ fontWeight: 600, padding: "11px 14px" }}>Şube Toplamı</th>
+                  <th className="web-kontor-sticky-day-column" style={{ fontWeight: 600, padding: "11px 14px" }}>Şube Toplamı</th>
                   {bonusRows.flatMap((row) => {
                     const totals = companyRangeTotalsByStore.get(row.storeName);
                     return [
@@ -686,6 +686,7 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
                 </tr>
                 <tr>
                   <th
+                    className="web-kontor-sticky-day-column"
                     title="Çalışılan toplam gün içinde prim aldığınız günlerin oranını göstermektedir."
                     style={{ fontWeight: 600, padding: "11px 14px", cursor: "help" }}
                   >

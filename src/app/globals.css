@@ -12063,6 +12063,22 @@ textarea::placeholder {
   }
 }
 
+@media (max-width: 760px) {
+  .web-kontor-page .campaign-section-card .goal-section-head.web-kontor-section-head h2 {
+    color: #0b2143 !important;
+    text-shadow: none !important;
+    font-size: clamp(1.35rem, 6vw, 1.65rem) !important;
+    line-height: 1.15 !important;
+  }
+
+  .web-kontor-page .campaign-section-card .goal-section-head.web-kontor-section-head span {
+    color: #37516f !important;
+    text-shadow: none !important;
+    font-size: 0.92rem !important;
+    line-height: 1.4 !important;
+  }
+}
+
 .company-daily-needs-table .goal-company-trend-toggle,
 .company-daily-needs-table .goal-company-trend-label {
   width: 100%;

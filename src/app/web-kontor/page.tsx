@@ -432,6 +432,23 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
     : 0;
   const companyRemainingProfit = Math.max(0, companyProfitTotal - companyDistributedBonusTotal);
   const companyRemainingProfitShare = Math.max(0, 100 - companyBonusShare);
+  const companyBonusShareRows = bonusRows.map((row, index) => {
+    const amount = Math.max(0, companyRangeTotalsByStore.get(row.storeName)?.bonus ?? 0);
+    return {
+      storeName: row.storeName,
+      amount,
+      share: companyDistributedBonusTotal > 0 ? (amount / companyDistributedBonusTotal) * 100 : 0,
+      color: COMPANY_PROFIT_COLORS[index % COMPANY_PROFIT_COLORS.length]
+    };
+  });
+  let companyBonusPieCursor = 0;
+  const companyBonusPieGradient = companyBonusShareRows
+    .map((row) => {
+      const start = companyBonusPieCursor;
+      companyBonusPieCursor += row.share;
+      return `${row.color} ${start}% ${companyBonusPieCursor}%`;
+    })
+    .join(", ");
 
   const summaryCardStyle: CSSProperties = {
     padding: "18px 20px",
@@ -880,6 +897,44 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
             </div>
           ) : (
             <p className="empty-state">Seçilen gün aralığında pasta grafikte gösterilecek firma kârlılığı bulunamadı.</p>
+          )}
+        </section>
+      ) : null}
+
+      {isCompanySelected ? (
+        <section className="campaign-section-card web-kontor-profit-share-card">
+          <div className="goal-section-head web-kontor-section-head" style={sectionHeadStyle}>
+            <div style={{ display: "grid", gap: 7 }}>
+              <h2 style={sectionTitleStyle}>Şubelerin Prim Dağılımı</h2>
+              <span style={sectionMetaStyle}>
+                Seçilen gün aralığında dağıtılan toplam prim: {formatCurrency(companyDistributedBonusTotal)}
+              </span>
+            </div>
+          </div>
+
+          {companyDistributedBonusTotal > 0 ? (
+            <div className="web-kontor-profit-share-layout">
+              <div className="web-kontor-pie-stage">
+                <div
+                  className="web-kontor-pie-3d"
+                  style={{ background: `conic-gradient(${companyBonusPieGradient})` }}
+                  role="img"
+                  aria-label="Dağıtılan toplam primin şubelere göre paylarını gösteren pasta grafik"
+                />
+              </div>
+              <div className="web-kontor-profit-legend">
+                {companyBonusShareRows.map((row) => (
+                  <div className="web-kontor-profit-legend-row" key={`bonus-share-${row.storeName}`}>
+                    <span className="web-kontor-profit-swatch" style={{ background: row.color }} aria-hidden="true" />
+                    <span className="web-kontor-profit-store">{row.storeName}</span>
+                    <span>{formatCurrency(row.amount)}</span>
+                    <strong>{formatPercent(row.share)}</strong>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <p className="empty-state">Seçilen gün aralığında şubelere dağıtılmış prim bulunamadı.</p>
           )}
         </section>
       ) : null}

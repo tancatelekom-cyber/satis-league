@@ -289,7 +289,7 @@ type EmployeeDailyNeedSummaryRow = {
 };
 
 type GoalView = "employee" | "store" | "company";
-type GoalPanel = "detail" | "ranking" | "evaluation";
+type GoalPanel = "detail" | "ranking" | "evaluation" | "dashboard";
 
 function normalizeStoreKey(value: string | null | undefined) {
   return String(value ?? "")
@@ -2751,6 +2751,149 @@ function GoalActualOnlyCategoryCards({ categories }: { categories: GoalCategoryS
   );
 }
 
+function StoreGoalDashboard({
+  storeName,
+  categories,
+  dayStats
+}: {
+  storeName: string;
+  categories: GoalCategorySummary[];
+  dayStats: GoalDayStats;
+}) {
+  const targetedCategories = categories.filter((category) => category.hasTarget && (category.target ?? 0) > 0);
+  const totalTarget = targetedCategories.reduce((sum, category) => sum + (category.target ?? 0), 0);
+  const totalActual = targetedCategories.reduce((sum, category) => sum + category.actual, 0);
+  const overallPercent = totalTarget > 0 ? (totalActual / totalTarget) * 100 : 0;
+  const projectedTarget = targetedCategories.reduce((sum, category) => sum + (category.projectedActual ?? category.actual), 0);
+  const overallProjectedPercent = totalTarget > 0 ? (projectedTarget / totalTarget) * 100 : 0;
+  const achievedCount = targetedCategories.filter((category) => (category.projectedPercent ?? category.actualPercent ?? 0) >= 100).length;
+  const closeCount = targetedCategories.filter((category) => {
+    const percent = category.projectedPercent ?? category.actualPercent ?? 0;
+    return percent >= 80 && percent < 100;
+  }).length;
+  const riskCount = Math.max(0, targetedCategories.length - achievedCount - closeCount);
+  const averagePercent = targetedCategories.length
+    ? targetedCategories.reduce((sum, category) => sum + (category.projectedPercent ?? category.actualPercent ?? 0), 0) / targetedCategories.length
+    : 0;
+  const dashboardCategories = targetedCategories.slice(0, 6);
+  const statusTotal = Math.max(1, targetedCategories.length);
+  const achievedEnd = (achievedCount / statusTotal) * 100;
+  const closeEnd = achievedEnd + (closeCount / statusTotal) * 100;
+  const gaugePercent = Math.max(0, Math.min(100, overallProjectedPercent));
+
+  return (
+    <section className="goal-store-dashboard">
+      <div className="goal-dashboard-hero">
+        <div>
+          <span className="goal-dashboard-eyebrow">MAĞAZA PERFORMANS DASHBOARDU</span>
+          <h2>{storeName || "Mağaza"}</h2>
+          <p>Hedef, gerçekleşen ve ay sonu gidişatının tek sayfalık görsel analizi.</p>
+        </div>
+        <div className="goal-dashboard-period">
+          <span>Çalışılan Gün</span>
+          <strong>{formatNumber(dayStats.workedDays)} / {formatNumber(dayStats.totalDays)}</strong>
+        </div>
+      </div>
+
+      <div className="goal-dashboard-kpi-grid">
+        <article>
+          <span>Genel Gerçekleşme</span>
+          <strong>{formatPercent(overallPercent)}</strong>
+          <small>{formatNumber(totalActual)} / {formatNumber(totalTarget)}</small>
+        </article>
+        <article>
+          <span>Ay Sonu Gidişat</span>
+          <strong>{formatPercent(overallProjectedPercent)}</strong>
+          <small>{formatNumber(projectedTarget)} öngörülen</small>
+        </article>
+        <article>
+          <span>Hedefe Ulaşan</span>
+          <strong>{formatNumber(achievedCount)}</strong>
+          <small>{formatNumber(targetedCategories.length)} kategoriden</small>
+        </article>
+        <article>
+          <span>Ortalama Ay Sonu</span>
+          <strong>{formatPercent(averagePercent)}</strong>
+          <small>Kategori ortalaması</small>
+        </article>
+      </div>
+
+      <div className="goal-dashboard-visual-grid">
+        <article className="goal-dashboard-chart-card goal-dashboard-gauge-card">
+          <div className="goal-dashboard-card-head">
+            <h3>Genel Hedef Göstergesi</h3>
+            <span>Ay sonu gidişatı</span>
+          </div>
+          <div className="goal-dashboard-gauge-wrap">
+            <div
+              className="goal-dashboard-gauge"
+              style={{ background: `conic-gradient(#14b8a6 0% ${gaugePercent}%, #dbe7ef ${gaugePercent}% 100%)` }}
+              role="img"
+              aria-label={`Genel ay sonu hedef gidişatı ${formatPercent(overallProjectedPercent)}`}
+            >
+              <div>
+                <strong>{formatPercent(overallProjectedPercent)}</strong>
+                <span>ay sonu</span>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article className="goal-dashboard-chart-card">
+          <div className="goal-dashboard-card-head">
+            <h3>Hedef Durumu Dağılımı</h3>
+            <span>{targetedCategories.length} kategori</span>
+          </div>
+          <div className="goal-dashboard-status-layout">
+            <div
+              className="goal-dashboard-status-pie"
+              style={{
+                background: `conic-gradient(#22c55e 0% ${achievedEnd}%, #f59e0b ${achievedEnd}% ${closeEnd}%, #ef4444 ${closeEnd}% 100%)`
+              }}
+              role="img"
+              aria-label={`Hedefte ${achievedCount}, hedefe yakın ${closeCount}, riskli ${riskCount} kategori`}
+            />
+            <div className="goal-dashboard-status-legend">
+              <div><i style={{ background: "#22c55e" }} /><span>Hedefte</span><strong>{achievedCount}</strong></div>
+              <div><i style={{ background: "#f59e0b" }} /><span>Hedefe Yakın</span><strong>{closeCount}</strong></div>
+              <div><i style={{ background: "#ef4444" }} /><span>Riskli</span><strong>{riskCount}</strong></div>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <article className="goal-dashboard-chart-card goal-dashboard-category-card">
+        <div className="goal-dashboard-card-head">
+          <h3>Kategori Ay Sonu Pasta Özeti</h3>
+          <span>İlk {dashboardCategories.length} kategorinin ay sonu hedef gidişatı</span>
+        </div>
+        <div className="goal-dashboard-category-pies">
+          {dashboardCategories.map((category) => {
+            const actualPercent = category.actualPercent ?? 0;
+            const projectedPercent = category.projectedPercent ?? actualPercent;
+            const piePercent = Math.max(0, Math.min(100, projectedPercent));
+            const color = projectedPercent >= 100 ? "#22c55e" : projectedPercent >= 80 ? "#f59e0b" : "#ef4444";
+            return (
+              <div className="goal-dashboard-category-pie-card" key={`dashboard-category-${category.title}`}>
+                <div
+                  className="goal-dashboard-category-pie"
+                  style={{ background: `conic-gradient(${color} 0% ${piePercent}%, #e2e8f0 ${piePercent}% 100%)` }}
+                  role="img"
+                  aria-label={`${category.title} ay sonu hedef gidişatı ${formatPercent(projectedPercent)}`}
+                >
+                  <div>{formatPercent(projectedPercent)}</div>
+                </div>
+                <strong>{category.title}</strong>
+                <span>Şu an {formatPercent(actualPercent)}</span>
+              </div>
+            );
+          })}
+        </div>
+      </article>
+    </section>
+  );
+}
+
 export default async function GoalActualPage({ searchParams }: GoalActualPageProps) {
   const params = searchParams ? await searchParams : undefined;
   const selectedView = String(params?.view ?? "employee").trim();
@@ -2792,10 +2935,12 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
         ? "company"
         : "employee"
     : "employee";
-  const effectivePanel =
-    effectiveView === "employee" && selectedPanel === "ranking"
-      ? "ranking"
-      : "detail";
+  const effectivePanel: GoalPanel =
+    effectiveView === "store" && selectedPanel === "dashboard"
+      ? "dashboard"
+      : effectiveView === "employee" && selectedPanel === "ranking"
+        ? "ranking"
+        : "detail";
 
   if (!canViewAll && selectedView !== "employee") {
     redirect(buildHref("employee", { employee: selectedEmployee, panel: effectivePanel }));
@@ -3423,7 +3568,22 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                 )}
               </div>
 
-              {effectiveView !== "store" ? (
+              {effectiveView === "store" ? (
+                <div className="goal-mode-row">
+                  <a
+                    className={`goal-mode-button ${effectivePanel === "detail" ? "goal-mode-button-active" : ""}`}
+                    href={buildHref("store", { store: activeStoreName, panel: "detail" })}
+                  >
+                    Hedef Gerçekleşen
+                  </a>
+                  <a
+                    className={`goal-mode-button ${effectivePanel === "dashboard" ? "goal-mode-button-active" : ""}`}
+                    href={buildHref("store", { store: activeStoreName, panel: "dashboard" })}
+                  >
+                    Dashboard
+                  </a>
+                </div>
+              ) : (
                 <div className="goal-mode-row">
                   <a
                     className={`goal-mode-button ${effectivePanel === "detail" ? "goal-mode-button-active" : ""}`}
@@ -3438,11 +3598,13 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                     Siralama
                   </a>
                 </div>
-              ) : null}
+              )}
             </section>
           ) : null}
 
-          {effectivePanel === "ranking" && effectiveView !== "company" ? (
+          {effectivePanel === "dashboard" && effectiveView === "store" ? (
+            <StoreGoalDashboard storeName={activeStoreName} categories={storeCategorySummaries} dayStats={dayStats} />
+          ) : effectivePanel === "ranking" && effectiveView !== "company" ? (
             <section className="goal-panel-single">
               <div className="goal-ranking-stack">
                 <article className="campaign-section-card goal-ranking-card">

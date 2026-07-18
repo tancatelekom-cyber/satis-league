@@ -20,9 +20,12 @@ type WebKontorProfile = {
 
 type WebKontorReachedScale = "2. Barem" | "1. Barem" | "Bareme Ulasmadi";
 
+type WorksheetCellStyle = "success" | "danger";
+type WorksheetCell = string | number | { value: string | number; style: WorksheetCellStyle };
+
 type WorksheetDefinition = {
   name: string;
-  rows: Array<Array<string | number>>;
+  rows: WorksheetCell[][];
 };
 
 const INVALID_SHEET_CHARS = /[:\\/?*\[\]]/g;
@@ -77,9 +80,12 @@ function buildSheetXml(rows: WorksheetDefinition["rows"]) {
   const rowXml = rows
     .map((row, rowIndex) => {
       const cells = row
-        .map((value, cellIndex) => {
+        .map((cell, cellIndex) => {
           const cellRef = `${getColumnName(cellIndex)}${rowIndex + 1}`;
-          const styleAttr = rowIndex === 0 ? ' s="1"' : "";
+          const isStyledCell = typeof cell === "object";
+          const value = isStyledCell ? cell.value : cell;
+          const styleIndex = isStyledCell ? (cell.style === "success" ? 2 : 3) : rowIndex === 0 ? 1 : 0;
+          const styleAttr = styleIndex > 0 ? ` s="${styleIndex}"` : "";
 
           if (typeof value === "number") {
             return `<c r="${cellRef}"${styleAttr}><v>${value}</v></c>`;
@@ -134,7 +140,7 @@ function buildWorkbookRelsXml(sheetCount: number) {
 function buildStylesXml() {
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-  <fonts count="2">
+  <fonts count="4">
     <font>
       <sz val="11"/>
       <color rgb="FF111827"/>
@@ -145,6 +151,18 @@ function buildStylesXml() {
       <b/>
       <sz val="11"/>
       <color rgb="FFFFFFFF"/>
+      <name val="Calibri"/>
+      <family val="2"/>
+    </font>
+    <font>
+      <sz val="11"/>
+      <color rgb="FF15803D"/>
+      <name val="Calibri"/>
+      <family val="2"/>
+    </font>
+    <font>
+      <sz val="11"/>
+      <color rgb="FFDC2626"/>
       <name val="Calibri"/>
       <family val="2"/>
     </font>
@@ -165,9 +183,11 @@ function buildStylesXml() {
   <cellStyleXfs count="1">
     <xf numFmtId="0" fontId="0" fillId="0" borderId="0"/>
   </cellStyleXfs>
-  <cellXfs count="2">
+  <cellXfs count="4">
     <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
     <xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/>
+    <xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/>
+    <xf numFmtId="0" fontId="3" fillId="0" borderId="0" xfId="0" applyFont="1"/>
   </cellXfs>
   <cellStyles count="1">
     <cellStyle name="Normal" xfId="0" builtinId="0"/>
@@ -507,10 +527,14 @@ export async function GET(request: Request) {
             rateValue = webKontorData.scaleOneRate;
           }
 
-          return [amount, Math.round(amount * getWebKontorRateMultiplier(rateValue))];
+          const style: WorksheetCellStyle = rateValue > 0 ? "success" : "danger";
+          return [
+            { value: amount, style },
+            { value: Math.round(amount * getWebKontorRateMultiplier(rateValue)), style }
+          ];
         });
 
-        return [dailyRow.dayLabel, ...values] as Array<string | number>;
+        return [dailyRow.dayLabel, ...values] as WorksheetCell[];
       });
 
       const totalAmount = companySummaries.reduce((sum, row) => sum + row.summary.totalAmount, 0);
@@ -527,9 +551,12 @@ export async function GET(request: Request) {
               scale.scaleTwoTarget ?? "-",
               scale.firstScaleDayCount,
               scale.secondScaleDayCount,
-              scale.highestReachedScale,
+              {
+                value: scale.highestReachedScale,
+                style: scale.highestReachedScale === "Bareme Ulasmadi" ? "danger" : "success"
+              },
               Math.round(scale.bonusAmount)
-            ] as Array<string | number>),
+            ] as WorksheetCell[]),
             ["FIRMA TOPLAMI", totalAmount, "-", "-", "-", "-", "-", Math.round(totalBonus)]
           ]
         },
@@ -559,7 +586,13 @@ export async function GET(request: Request) {
                   ? (successfulDayCount / webKontorData.dailyRows.length) * 100
                   : 0;
 
-                return [`%${successRate.toLocaleString("tr-TR", { maximumFractionDigits: 1 })}`, ""];
+                return [
+                  {
+                    value: `%${successRate.toLocaleString("tr-TR", { maximumFractionDigits: 1 })}`,
+                    style: successRate >= 70 ? "success" : "danger"
+                  },
+                  ""
+                ] as WorksheetCell[];
               })
             ]
           ]
@@ -609,15 +642,20 @@ export async function GET(request: Request) {
         rateValue = webKontorData.scaleOneRate;
       }
 
+      const style: WorksheetCellStyle = reachedScale === "Bareme Ulasmadi" ? "danger" : "success";
+
       return [
         row.dayLabel,
-        amount,
-        reachedScale,
-        formatWebKontorRate(rateValue),
-        Math.round(amount * getWebKontorRateMultiplier(rateValue)),
+        { value: amount, style },
+        { value: reachedScale, style },
+        { value: formatWebKontorRate(rateValue), style },
+        { value: Math.round(amount * getWebKontorRateMultiplier(rateValue)), style },
         row.companyTotal ?? 0
-      ] as Array<string | number>;
+      ] as WorksheetCell[];
     });
+    const selectedSuccessRate = webKontorData.dailyRows.length > 0
+      ? ((selectedScaleSummary.firstScaleDayCount + selectedScaleSummary.secondScaleDayCount) / webKontorData.dailyRows.length) * 100
+      : 0;
 
     const workbookBuffer = buildXlsxBuffer([
       {
@@ -631,7 +669,10 @@ export async function GET(request: Request) {
             selectedScaleSummary.scaleTwoTarget ?? "-",
             selectedScaleSummary.firstScaleDayCount,
             selectedScaleSummary.secondScaleDayCount,
-            selectedScaleSummary.highestReachedScale,
+            {
+              value: selectedScaleSummary.highestReachedScale,
+              style: selectedScaleSummary.highestReachedScale === "Bareme Ulasmadi" ? "danger" : "success"
+            },
             Math.round(selectedScaleSummary.bonusAmount)
           ]
         ]
@@ -640,7 +681,18 @@ export async function GET(request: Request) {
         name: `${selectedStore} Akis`,
         rows: [
           ["Gun", "Gerceklesen", "Barem", "Prim Orani", "Gunluk Prim", "Firma Toplami"],
-          ...detailRows
+          ...detailRows,
+          [
+            "GUNLUK BASARI %",
+            {
+              value: `%${selectedSuccessRate.toLocaleString("tr-TR", { maximumFractionDigits: 1 })}`,
+              style: selectedSuccessRate >= 70 ? "success" : "danger"
+            },
+            "",
+            "",
+            "",
+            ""
+          ]
         ]
       }
     ]);

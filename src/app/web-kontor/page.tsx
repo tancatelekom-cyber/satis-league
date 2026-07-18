@@ -347,6 +347,9 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
       return [bonusRow.storeName, successRate];
     })
   );
+  const selectedStoreSuccessRate = !isCompanySelected && webKontorData.dailyRows.length > 0
+    ? (selectedDailyRows.filter((row) => row.bonusAmount > 0).length / webKontorData.dailyRows.length) * 100
+    : 0;
 
   const summaryCardStyle: CSSProperties = {
     padding: "18px 20px",
@@ -580,7 +583,12 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
                   ])}
                 </tr>
                 <tr>
-                  <th style={{ fontWeight: 600, padding: "11px 14px" }}>Günlük Başarı %</th>
+                  <th
+                    title="Çalışılan toplam gün içinde prim aldığınız günlerin oranını göstermektedir."
+                    style={{ fontWeight: 600, padding: "11px 14px", cursor: "help" }}
+                  >
+                    Günlük Başarı %
+                  </th>
                   {bonusRows.map((row) => {
                     const successRate = companySuccessRateByStore.get(row.storeName) ?? 0;
                     const isSuccessful = successRate >= 70;
@@ -589,6 +597,7 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
                       <td
                         key={`company-success-rate-${row.storeName}`}
                         colSpan={2}
+                        className={successRate < 20 ? "web-kontor-success-critical" : undefined}
                         style={{
                           fontWeight: 600,
                           padding: "11px 12px",
@@ -605,21 +614,21 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
               </tfoot>
             </table>
           ) : (
-            <table className="goal-company-trend-table web-kontor-trend-table">
+            <table className="goal-company-trend-table web-kontor-trend-table" style={{ fontSize: "0.94rem" }}>
               <thead>
                 <tr>
-                  <th>Gün</th>
-                  <th>Gerçekleşen</th>
-                  <th>Barem</th>
-                  <th>Prim Oranı</th>
-                  <th>Günlük Prim</th>
+                  <th style={{ fontWeight: 600, padding: "11px 14px" }}>Gün</th>
+                  <th style={{ fontWeight: 500, padding: "11px 12px" }}>Gerçekleşen</th>
+                  <th style={{ fontWeight: 500, padding: "11px 12px" }}>Barem</th>
+                  <th style={{ fontWeight: 500, padding: "11px 12px" }}>Prim Oranı</th>
+                  <th style={{ fontWeight: 500, padding: "11px 12px" }}>Günlük Prim</th>
                 </tr>
               </thead>
               <tbody>
                 {selectedDailyRows.map((row) => (
                   <tr key={`web-kontor-day-${selectedStore}-${row.dayLabel}`}>
-                    <th>{row.dayLabel}</th>
-                    <td style={getDailyRowTextStyle(row.reachedScale)}>{formatCurrency(row.amount)}</td>
+                    <th style={{ fontWeight: 500, padding: "10px 14px" }}>{row.dayLabel}</th>
+                    <td style={{ ...getDailyRowTextStyle(row.reachedScale), fontWeight: 500, padding: "10px 12px" }}>{formatCurrency(row.amount)}</td>
                     <td>
                       <span
                         className="web-kontor-scale-badge"
@@ -637,18 +646,39 @@ export default async function WebKontorPage({ searchParams }: PageProps) {
                         {row.reachedScale}
                       </span>
                     </td>
-                    <td style={getDailyRowTextStyle(row.reachedScale)}>{formatWebKontorRate(row.rateValue)}</td>
-                    <td style={getDailyRowTextStyle(row.reachedScale)}>{formatCurrency(row.bonusAmount)}</td>
+                    <td style={{ ...getDailyRowTextStyle(row.reachedScale), fontWeight: 500, padding: "10px 12px" }}>{formatWebKontorRate(row.rateValue)}</td>
+                    <td style={{ ...getDailyRowTextStyle(row.reachedScale), fontWeight: 500, padding: "10px 12px" }}>{formatCurrency(row.bonusAmount)}</td>
                   </tr>
                 ))}
               </tbody>
               <tfoot>
                 <tr>
-                  <th>Genel Toplam</th>
-                  <td>{formatCurrency(selectedTotalAmount)}</td>
-                  <td>-</td>
-                  <td>-</td>
-                  <td>{formatCurrency(selectedBonusAmount)}</td>
+                  <th style={{ fontWeight: 600, padding: "11px 14px" }}>Genel Toplam</th>
+                  <td style={{ fontWeight: 500, padding: "11px 12px" }}>{formatCurrency(selectedTotalAmount)}</td>
+                  <td style={{ fontWeight: 500, padding: "11px 12px" }}>-</td>
+                  <td style={{ fontWeight: 500, padding: "11px 12px" }}>-</td>
+                  <td style={{ fontWeight: 500, padding: "11px 12px" }}>{formatCurrency(selectedBonusAmount)}</td>
+                </tr>
+                <tr>
+                  <th
+                    title="Çalışılan toplam gün içinde prim aldığınız günlerin oranını göstermektedir."
+                    style={{ cursor: "help", fontWeight: 600, padding: "11px 14px" }}
+                  >
+                    Günlük Başarı %
+                  </th>
+                  <td
+                    colSpan={4}
+                    className={selectedStoreSuccessRate < 20 ? "web-kontor-success-critical" : undefined}
+                    style={{
+                      textAlign: "center",
+                      fontWeight: 500,
+                      padding: "11px 12px",
+                      color: selectedStoreSuccessRate >= 70 ? "#15803d" : "#dc2626",
+                      background: selectedStoreSuccessRate >= 70 ? "rgba(34, 197, 94, 0.08)" : "rgba(239, 68, 68, 0.07)"
+                    }}
+                  >
+                    {formatPercent(selectedStoreSuccessRate)}
+                  </td>
                 </tr>
               </tfoot>
             </table>

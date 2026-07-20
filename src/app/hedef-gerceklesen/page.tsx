@@ -930,6 +930,10 @@ function isEntryCount(title: string) {
   return normalizeCategoryKey(title).includes("GIRIS SAY");
 }
 
+function isWebKontorCategory(title: string) {
+  return normalizeCategoryKey(title).includes("WEB KONTOR");
+}
+
 function isLivePrimeCategory(title: string | null | undefined) {
   const normalized = normalizeCategoryKey(String(title ?? ""));
   return normalized.includes("CANLI PRIM");
@@ -2766,7 +2770,8 @@ function StoreGoalDashboard({
   const dashboardSourceCategories = categories.filter(
     (category) =>
       normalizeCategoryKey(category.title) !== normalizeCategoryKey("AKSESUAR CIRO") &&
-      !isEntryCount(category.title)
+      !isEntryCount(category.title) &&
+      !isWebKontorCategory(category.title)
   );
   const targetedCategories = dashboardSourceCategories.filter((category) => category.hasTarget && (category.target ?? 0) > 0);
   const achievedCount = targetedCategories.filter((category) => (category.projectedPercent ?? category.actualPercent ?? 0) >= 100).length;
@@ -2929,6 +2934,7 @@ function CompanyStoreSuccessDashboard({
         (category) =>
           normalizeCategoryKey(category.title) !== normalizeCategoryKey("AKSESUAR CIRO") &&
           !isEntryCount(category.title) &&
+          !isWebKontorCategory(category.title) &&
           category.hasTarget &&
           (category.target ?? 0) > 0
       );
@@ -2947,6 +2953,7 @@ function CompanyStoreSuccessDashboard({
     (category) =>
       normalizeCategoryKey(category.title) !== normalizeCategoryKey("AKSESUAR CIRO") &&
       !isEntryCount(category.title) &&
+      !isWebKontorCategory(category.title) &&
       category.hasTarget &&
       (category.target ?? 0) > 0
   );

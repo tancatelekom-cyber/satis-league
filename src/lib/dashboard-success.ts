@@ -14,7 +14,12 @@ function normalizeKey(value: string) {
 
 function isDashboardCategory(title: string) {
   const normalized = normalizeKey(title);
-  return normalized !== "TUM KATEGORILER" && normalized !== "AKSESUAR CIRO" && !normalized.includes("GIRIS SAY");
+  return (
+    normalized !== "TUM KATEGORILER" &&
+    normalized !== "AKSESUAR CIRO" &&
+    !normalized.includes("GIRIS SAY") &&
+    !normalized.includes("WEB KONTOR")
+  );
 }
 
 function aggregateCompanyRows(rows: GoalStoreRow[]) {

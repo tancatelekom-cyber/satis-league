@@ -153,11 +153,17 @@ export function AppShellHeader({
       ) : null}
 
       <div className={`nav-cluster ${menuOpen ? "nav-cluster-open" : ""}`}>
-        <button className="menu-toggle" type="button" onClick={() => setMenuOpen((value) => !value)}>
-          Menu
+        <button
+          className="menu-toggle"
+          type="button"
+          aria-expanded={menuOpen}
+          aria-controls="app-navigation-menu"
+          onClick={() => setMenuOpen((value) => !value)}
+        >
+          {menuOpen ? "Kapat" : "Menu"}
         </button>
 
-        <nav className="nav-links" aria-label="Uygulama menusu">
+        <nav className="nav-links" id="app-navigation-menu" aria-label="Uygulama menusu">
           {navItems.map((item) => (
             <Link
               key={item.href}

@@ -8,9 +8,9 @@ const DEFAULT_DASHBOARD_PALETTE = {
 } as const;
 
 const COLOR_BLIND_DASHBOARD_PALETTE = {
-  success: "#dc2626",
+  success: "#2563eb",
   near: "#facc15",
-  risk: "#2563eb",
+  risk: "#dc2626",
   noTarget: "#94a3b8"
 } as const;
 

@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 
 type NavItem = {
   href: string;
@@ -152,7 +153,7 @@ export function AppShellHeader({
         )
       ) : null}
 
-      <div className={`nav-cluster ${menuOpen ? "nav-cluster-open" : ""}`}>
+      <div className="nav-cluster">
         <button
           className="menu-toggle"
           type="button"
@@ -163,7 +164,7 @@ export function AppShellHeader({
           {menuOpen ? "Kapat" : "Menu"}
         </button>
 
-        <nav className="nav-links" id="app-navigation-menu" aria-label="Uygulama menusu">
+        <nav className="nav-links" aria-label="Uygulama menusu">
           {navItems.map((item) => (
             <Link
               key={item.href}
@@ -176,6 +177,24 @@ export function AppShellHeader({
           ))}
         </nav>
       </div>
+
+      {menuOpen && typeof document !== "undefined"
+        ? createPortal(
+            <nav className="mobile-nav-overlay" id="app-navigation-menu" aria-label="Mobil uygulama menusu">
+              {navItems.map((item) => (
+                <Link
+                  key={`mobile-${item.href}`}
+                  className={`nav-link ${isActive(pathname, item.href) ? "nav-link-active" : ""}`}
+                  href={item.href}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>,
+            document.body
+          )
+        : null}
     </header>
   );
 }

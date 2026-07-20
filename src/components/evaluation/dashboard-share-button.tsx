@@ -77,7 +77,7 @@ function drawDonut(
   context.font = `800 ${fontSize}px Arial`;
   context.textAlign = "center";
   context.fillText(
-    `%${normalizedPercent.toLocaleString("tr-TR", { maximumFractionDigits: 1 })}`,
+    `%${percent.toLocaleString("tr-TR", { maximumFractionDigits: 1 })}`,
     centerX,
     centerY + fontSize * 0.34
   );

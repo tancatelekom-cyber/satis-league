@@ -2949,13 +2949,14 @@ function CompanyStoreSuccessDashboard({
       };
     })
     .sort((left, right) => left.storeName.localeCompare(right.storeName, "tr"));
-  const companyCategories = buildCompanyCategorySummaries(rows, dayStats.workedDays, dayStats.totalDays).filter(
+  const companyDashboardCategories = buildCompanyCategorySummaries(rows, dayStats.workedDays, dayStats.totalDays).filter(
     (category) =>
       normalizeCategoryKey(category.title) !== normalizeCategoryKey("AKSESUAR CIRO") &&
       !isEntryCount(category.title) &&
-      !isWebKontorCategory(category.title) &&
-      category.hasTarget &&
-      (category.target ?? 0) > 0
+      !isWebKontorCategory(category.title)
+  );
+  const companyCategories = companyDashboardCategories.filter(
+    (category) => category.hasTarget && (category.target ?? 0) > 0
   );
   const companyAchievedCount = companyCategories.filter(
     (category) => (category.projectedPercent ?? category.actualPercent ?? 0) >= 100
@@ -3032,6 +3033,47 @@ function CompanyStoreSuccessDashboard({
           </div>
         </article>
       </div>
+
+      <article className="goal-dashboard-chart-card goal-dashboard-category-card">
+        <div className="goal-dashboard-card-head">
+          <h3>Firma Kategori Ay Sonu Pasta Özeti</h3>
+          <span>Tüm kategorilerin firma ay sonu hedef gidişatı</span>
+        </div>
+        <div className="goal-dashboard-category-pies">
+          {companyDashboardCategories.map((category) => {
+            const actualPercent = category.actualPercent ?? 0;
+            const projectedPercent = category.projectedPercent ?? actualPercent;
+            const piePercent = category.hasTarget ? Math.max(0, Math.min(100, projectedPercent)) : 100;
+            const color = !category.hasTarget
+              ? "#38bdf8"
+              : projectedPercent >= 100
+                ? "#22c55e"
+                : projectedPercent >= 80
+                  ? "#f59e0b"
+                  : "#ef4444";
+            const displayValue = category.hasTarget ? formatPercent(projectedPercent) : formatNumber(category.actual);
+
+            return (
+              <div className="goal-dashboard-category-pie-card" key={`company-dashboard-category-${category.title}`}>
+                <div
+                  className="goal-dashboard-category-pie"
+                  style={{ background: `conic-gradient(${color} 0% ${piePercent}%, #e2e8f0 ${piePercent}% 100%)` }}
+                  role="img"
+                  aria-label={
+                    category.hasTarget
+                      ? `${category.title} firma ay sonu hedef gidişatı ${formatPercent(projectedPercent)}`
+                      : `${category.title} firma mevcut değeri ${formatNumber(category.actual)}`
+                  }
+                >
+                  <div>{displayValue}</div>
+                </div>
+                <strong>{category.title}</strong>
+                <span>{category.hasTarget ? `Şu an ${formatPercent(actualPercent)}` : "Hedef tanımlı değil"}</span>
+              </div>
+            );
+          })}
+        </div>
+      </article>
 
       <div className="goal-company-success-grid">
         {stores.map((store) => {

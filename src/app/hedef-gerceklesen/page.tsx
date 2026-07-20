@@ -7,6 +7,7 @@ import { FormattedCoachingText } from "@/components/evaluation/formatted-coachin
 import { SpeakCoachingButton } from "@/components/evaluation/speak-coaching-button";
 import { StoreDailyNeedsTable } from "@/components/evaluation/store-daily-needs-table";
 import { FilterSelectNav } from "@/components/ui/filter-select-nav";
+import { getDashboardPalette, isColorBlindDashboardUser } from "@/lib/dashboard-colors";
 import { fetchDocumentIssueRows } from "@/lib/document-issues";
 import {
   GoalActualRow,
@@ -2760,13 +2761,16 @@ function StoreGoalDashboard({
   storeName,
   categories,
   dayStats,
-  canShare
+  canShare,
+  colorBlindMode
 }: {
   storeName: string;
   categories: GoalCategorySummary[];
   dayStats: GoalDayStats;
   canShare: boolean;
+  colorBlindMode: boolean;
 }) {
+  const dashboardPalette = getDashboardPalette(colorBlindMode);
   const dashboardSourceCategories = categories.filter(
     (category) =>
       normalizeCategoryKey(category.title) !== normalizeCategoryKey("AKSESUAR CIRO") &&
@@ -2786,7 +2790,11 @@ function StoreGoalDashboard({
   const achievedEnd = (achievedCount / statusTotal) * 100;
   const closeEnd = achievedEnd + (closeCount / statusTotal) * 100;
   const gaugePercent = Math.max(0, Math.min(100, successPercent));
-  const gaugeColor = successPercent >= 80 ? "#22c55e" : successPercent >= 60 ? "#f59e0b" : "#ef4444";
+  const gaugeColor = successPercent >= 80
+    ? dashboardPalette.success
+    : successPercent >= 60
+      ? dashboardPalette.near
+      : dashboardPalette.risk;
 
   return (
     <section className="goal-store-dashboard">
@@ -2833,16 +2841,16 @@ function StoreGoalDashboard({
               <div
                 className="goal-dashboard-status-pie"
                 style={{
-                  background: `conic-gradient(#22c55e 0% ${achievedEnd}%, #f59e0b ${achievedEnd}% ${closeEnd}%, #ef4444 ${closeEnd}% 100%)`
+                  background: `conic-gradient(${dashboardPalette.success} 0% ${achievedEnd}%, ${dashboardPalette.near} ${achievedEnd}% ${closeEnd}%, ${dashboardPalette.risk} ${closeEnd}% 100%)`
                 }}
                 role="img"
                 aria-label={`Hedefte ${achievedCount}, hedefe yakın ${closeCount}, riskli ${riskCount} kategori`}
               />
             </div>
             <div className="goal-dashboard-status-legend">
-              <div><i style={{ background: "#22c55e" }} /><span>Hedefte</span><strong>{achievedCount}</strong></div>
-              <div><i style={{ background: "#f59e0b" }} /><span>Hedefe Yakın</span><strong>{closeCount}</strong></div>
-              <div><i style={{ background: "#ef4444" }} /><span>Riskli</span><strong>{riskCount}</strong></div>
+              <div><i style={{ background: dashboardPalette.success }} /><span>Hedefte</span><strong>{achievedCount}</strong></div>
+              <div><i style={{ background: dashboardPalette.near }} /><span>Hedefe Yakın</span><strong>{closeCount}</strong></div>
+              <div><i style={{ background: dashboardPalette.risk }} /><span>Riskli</span><strong>{riskCount}</strong></div>
             </div>
           </div>
         </article>
@@ -2859,12 +2867,12 @@ function StoreGoalDashboard({
             const projectedPercent = category.projectedPercent ?? actualPercent;
             const piePercent = category.hasTarget ? Math.max(0, Math.min(100, projectedPercent)) : 100;
             const color = !category.hasTarget
-              ? "#38bdf8"
+              ? dashboardPalette.noTarget
               : projectedPercent >= 100
-                ? "#22c55e"
+                ? dashboardPalette.success
                 : projectedPercent >= 80
-                  ? "#f59e0b"
-                  : "#ef4444";
+                  ? dashboardPalette.near
+                  : dashboardPalette.risk;
             const displayValue = category.hasTarget ? formatPercent(projectedPercent) : formatNumber(category.actual);
             return (
               <div className="goal-dashboard-category-pie-card" key={`dashboard-category-${category.title}`}>
@@ -2892,6 +2900,7 @@ function StoreGoalDashboard({
         <DashboardShareButton
           title={`${storeName || "Mağaza"} Şube Dashboardu`}
           subtitle="Ay sonu hedef gidişatı ve kategori başarı oranları"
+          colorBlindMode={colorBlindMode}
           items={[
             {
               label: "Başarı Oranı",
@@ -2915,12 +2924,15 @@ function StoreGoalDashboard({
 function CompanyStoreSuccessDashboard({
   rows,
   dayStats,
-  canShare
+  canShare,
+  colorBlindMode
 }: {
   rows: GoalStoreRow[];
   dayStats: GoalDayStats;
   canShare: boolean;
+  colorBlindMode: boolean;
 }) {
+  const dashboardPalette = getDashboardPalette(colorBlindMode);
   const storeMap = new Map<string, GoalStoreRow[]>();
   rows.forEach((row) => {
     const current = storeMap.get(row.storeCode) ?? [];
@@ -2969,7 +2981,11 @@ function CompanyStoreSuccessDashboard({
   const companySuccessPercent = companyCategories.length > 0
     ? (companyAchievedCount / companyCategories.length) * 100
     : 0;
-  const companyGaugeColor = companySuccessPercent >= 80 ? "#22c55e" : companySuccessPercent >= 60 ? "#f59e0b" : "#ef4444";
+  const companyGaugeColor = companySuccessPercent >= 80
+    ? dashboardPalette.success
+    : companySuccessPercent >= 60
+      ? dashboardPalette.near
+      : dashboardPalette.risk;
   const companyStatusTotal = Math.max(1, companyCategories.length);
   const companyAchievedEnd = (companyAchievedCount / companyStatusTotal) * 100;
   const companyCloseEnd = companyAchievedEnd + (companyCloseCount / companyStatusTotal) * 100;
@@ -3019,16 +3035,16 @@ function CompanyStoreSuccessDashboard({
               <div
                 className="goal-dashboard-status-pie"
                 style={{
-                  background: `conic-gradient(#22c55e 0% ${companyAchievedEnd}%, #f59e0b ${companyAchievedEnd}% ${companyCloseEnd}%, #ef4444 ${companyCloseEnd}% 100%)`
+                  background: `conic-gradient(${dashboardPalette.success} 0% ${companyAchievedEnd}%, ${dashboardPalette.near} ${companyAchievedEnd}% ${companyCloseEnd}%, ${dashboardPalette.risk} ${companyCloseEnd}% 100%)`
                 }}
                 role="img"
                 aria-label={`Firma hedefte ${companyAchievedCount}, hedefe yakın ${companyCloseCount}, riskli ${companyRiskCount} kategori`}
               />
             </div>
             <div className="goal-dashboard-status-legend">
-              <div><i style={{ background: "#22c55e" }} /><span>Hedefte</span><strong>{companyAchievedCount}</strong></div>
-              <div><i style={{ background: "#f59e0b" }} /><span>Hedefe Yakın</span><strong>{companyCloseCount}</strong></div>
-              <div><i style={{ background: "#ef4444" }} /><span>Riskli</span><strong>{companyRiskCount}</strong></div>
+              <div><i style={{ background: dashboardPalette.success }} /><span>Hedefte</span><strong>{companyAchievedCount}</strong></div>
+              <div><i style={{ background: dashboardPalette.near }} /><span>Hedefe Yakın</span><strong>{companyCloseCount}</strong></div>
+              <div><i style={{ background: dashboardPalette.risk }} /><span>Riskli</span><strong>{companyRiskCount}</strong></div>
             </div>
           </div>
         </article>
@@ -3045,12 +3061,12 @@ function CompanyStoreSuccessDashboard({
             const projectedPercent = category.projectedPercent ?? actualPercent;
             const piePercent = category.hasTarget ? Math.max(0, Math.min(100, projectedPercent)) : 100;
             const color = !category.hasTarget
-              ? "#38bdf8"
+              ? dashboardPalette.noTarget
               : projectedPercent >= 100
-                ? "#22c55e"
+                ? dashboardPalette.success
                 : projectedPercent >= 80
-                  ? "#f59e0b"
-                  : "#ef4444";
+                  ? dashboardPalette.near
+                  : dashboardPalette.risk;
             const displayValue = category.hasTarget ? formatPercent(projectedPercent) : formatNumber(category.actual);
 
             return (
@@ -3078,7 +3094,11 @@ function CompanyStoreSuccessDashboard({
       <div className="goal-company-success-grid">
         {stores.map((store) => {
           const piePercent = Math.max(0, Math.min(100, store.successPercent));
-          const color = store.successPercent >= 80 ? "#22c55e" : store.successPercent >= 60 ? "#f59e0b" : "#ef4444";
+          const color = store.successPercent >= 80
+            ? dashboardPalette.success
+            : store.successPercent >= 60
+              ? dashboardPalette.near
+              : dashboardPalette.risk;
           return (
             <a
               className="goal-company-success-card"
@@ -3112,6 +3132,7 @@ function CompanyStoreSuccessDashboard({
           subtitle="Şubelerin ay sonu başarı oranları"
           detailColumns={2}
           detailColorMode="success"
+          colorBlindMode={colorBlindMode}
           items={[
             {
               label: "Firma Başarı Oranı",
@@ -3160,6 +3181,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
   const canViewAll = canViewAllGoalActual(profile.role);
   const isAdminViewer = profile.role === "admin";
   const canShareDashboard = profile.role === "admin" || profile.role === "management";
+  const colorBlindDashboardMode = isColorBlindDashboardUser(user.id);
   const currentUserFullName = String((profile as { full_name?: string | null }).full_name ?? "").trim();
   const currentUserStore = (profile as { store?: Array<{ name: string }> | { name: string } | null }).store;
   const currentUserStoreName = Array.isArray(currentUserStore)
@@ -3882,12 +3904,14 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
               categories={storeCategorySummaries}
               dayStats={dayStats}
               canShare={canShareDashboard}
+              colorBlindMode={colorBlindDashboardMode}
             />
           ) : effectivePanel === "dashboard" && effectiveView === "company" ? (
             <CompanyStoreSuccessDashboard
               rows={filteredStoreRows}
               dayStats={dayStats}
               canShare={canShareDashboard}
+              colorBlindMode={colorBlindDashboardMode}
             />
           ) : effectivePanel === "ranking" && effectiveView !== "company" ? (
             <section className="goal-panel-single">

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import { getDashboardPalette } from "@/lib/dashboard-colors";
 
 type NavItem = {
   href: string;
@@ -53,6 +54,7 @@ type HeaderSuccessData = {
   label: string;
   percent: number;
   href: string;
+  colorBlindMode?: boolean;
 };
 
 export function AppShellHeader({
@@ -69,6 +71,7 @@ export function AppShellHeader({
   const pathname = usePathname() ?? "/";
   const [menuOpen, setMenuOpen] = useState(false);
   const [successData, setSuccessData] = useState<HeaderSuccessData | null>(null);
+  const headerDashboardPalette = getDashboardPalette(Boolean(successData?.colorBlindMode));
 
   useEffect(() => {
     if (pathname !== "/" || !initialDashboardRole) {
@@ -141,7 +144,7 @@ export function AppShellHeader({
             <span
               className="header-success-ring"
               style={{
-                background: `conic-gradient(${successData.percent >= 80 ? "#22c55e" : successData.percent >= 60 ? "#f59e0b" : "#ef4444"} 0% ${Math.max(0, Math.min(100, successData.percent))}%, rgba(219, 231, 239, 0.28) ${Math.max(0, Math.min(100, successData.percent))}% 100%)`
+                background: `conic-gradient(${successData.percent >= 80 ? headerDashboardPalette.success : successData.percent >= 60 ? headerDashboardPalette.near : headerDashboardPalette.risk} 0% ${Math.max(0, Math.min(100, successData.percent))}%, rgba(219, 231, 239, 0.28) ${Math.max(0, Math.min(100, successData.percent))}% 100%)`
               }}
             >
               <span>%{successData.percent.toLocaleString("tr-TR", { maximumFractionDigits: 0 })}</span>

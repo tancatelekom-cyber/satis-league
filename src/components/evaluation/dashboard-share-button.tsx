@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { getDashboardPalette } from "@/lib/dashboard-colors";
 
 type DashboardShareItem = {
   label: string;
@@ -14,6 +15,7 @@ type DashboardShareButtonProps = {
   items: DashboardShareItem[];
   detailColumns?: 2 | 3;
   detailColorMode?: "success" | "category";
+  colorBlindMode?: boolean;
 };
 
 function safeFileName(value: string) {
@@ -49,20 +51,22 @@ function drawDonut(
   percent: number,
   lineWidth = 24,
   fontSize = 29,
-  colorMode: "success" | "category" = "category"
+  colorMode: "success" | "category" = "category",
+  colorBlindMode = false
 ) {
   const normalizedPercent = Math.max(0, Math.min(100, percent));
+  const palette = getDashboardPalette(colorBlindMode);
   const color = colorMode === "success"
     ? normalizedPercent >= 80
-      ? "#22c55e"
+      ? palette.success
       : normalizedPercent >= 60
-        ? "#f59e0b"
-        : "#ef4444"
+        ? palette.near
+        : palette.risk
     : normalizedPercent >= 100
-      ? "#22c55e"
+      ? palette.success
       : normalizedPercent >= 80
-        ? "#f59e0b"
-        : "#ef4444";
+        ? palette.near
+        : palette.risk;
   context.lineWidth = lineWidth;
   context.lineCap = "butt";
   context.strokeStyle = "#dce7ef";
@@ -94,7 +98,8 @@ async function buildDashboardImage({
   subtitle,
   items,
   detailColumns = 3,
-  detailColorMode = "category"
+  detailColorMode = "category",
+  colorBlindMode = false
 }: DashboardShareButtonProps) {
   const width = 1600;
   const columns = detailColumns;
@@ -143,7 +148,7 @@ async function buildDashboardImage({
     context.strokeStyle = "rgba(101, 220, 231, 0.42)";
     context.stroke();
 
-    drawDonut(context, width / 2, featuredY + 225, 165, featuredItem.percent, 52, 64, "success");
+    drawDonut(context, width / 2, featuredY + 225, 165, featuredItem.percent, 52, 64, "success", colorBlindMode);
     context.fillStyle = "#ffffff";
     context.font = "900 50px Arial";
     context.textAlign = "center";
@@ -175,7 +180,8 @@ async function buildDashboardImage({
       item.percent,
       columns === 2 ? 28 : 24,
       columns === 2 ? 34 : 29,
-      detailColorMode
+      detailColorMode,
+      colorBlindMode
     );
     context.fillStyle = "#ffffff";
     context.font = `800 ${columns === 2 ? 30 : 25}px Arial`;

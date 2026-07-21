@@ -91,6 +91,7 @@ export type AdminPendingProfile = {
   is_on_leave?: boolean;
   created_at: string;
   last_sign_in_at: string | null;
+  today_login_count: number;
   store: {
     name: string;
   } | null;
@@ -106,6 +107,7 @@ export type AdminManagedProfile = {
   store_id: string | null;
   created_at: string;
   last_sign_in_at: string | null;
+  today_login_count: number;
   is_on_leave: boolean;
   store: {
     name: string;

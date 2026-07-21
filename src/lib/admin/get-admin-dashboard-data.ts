@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getTodayLoginCount } from "@/lib/auth/login-tracking";
 import {
   AdminDuel,
   AdminCampaign,
@@ -93,7 +94,11 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
   const supabase = createAdminClient();
 
   const loadAllAuthUsers = async () => {
-    const users: Array<{ id: string; last_sign_in_at?: string | null }> = [];
+    const users: Array<{
+      id: string;
+      last_sign_in_at?: string | null;
+      app_metadata?: Record<string, unknown>;
+    }> = [];
     let page = 1;
     const perPage = 1000;
 
@@ -191,13 +196,21 @@ export async function getAdminDashboardData(params: AdminDashboardParams = {}) {
   const authUserLastLoginMap = new Map(
     authUsers.map((user) => [user.id, user.last_sign_in_at ?? null] as const)
   );
+  const authUserTodayLoginMap = new Map(
+    authUsers.map((user) => [
+      user.id,
+      getTodayLoginCount(user.app_metadata, user.last_sign_in_at)
+    ] as const)
+  );
   const approvalRows = (((pendingProfiles as AdminPendingProfile[] | null) ?? []).map((profile) => ({
     ...profile,
-    last_sign_in_at: authUserLastLoginMap.get(profile.id) ?? null
+    last_sign_in_at: authUserLastLoginMap.get(profile.id) ?? null,
+    today_login_count: authUserTodayLoginMap.get(profile.id) ?? 0
   })));
   const managedProfileRows = (((managedProfiles as AdminManagedProfile[] | null) ?? []).map((profile) => ({
     ...profile,
-    last_sign_in_at: authUserLastLoginMap.get(profile.id) ?? null
+    last_sign_in_at: authUserLastLoginMap.get(profile.id) ?? null,
+    today_login_count: authUserTodayLoginMap.get(profile.id) ?? 0
   })));
   const campaignRows = (campaigns as AdminCampaign[] | null) ?? [];
   const duelRows = (duels as AdminDuel[] | null) ?? [];

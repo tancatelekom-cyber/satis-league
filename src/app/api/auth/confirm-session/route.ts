@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { APP_SESSION_COOKIE, APP_SESSION_DURATION_SECONDS, createAppSessionValue } from "@/lib/auth/app-session";
+import { buildNextLoginMetadata } from "@/lib/auth/login-tracking";
 import { getSupabasePublicEnv } from "@/lib/supabase/config";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function POST(request: Request) {
   let accessToken = "";
@@ -46,6 +48,23 @@ export async function POST(request: Request) {
 
   if (!user) {
     return NextResponse.json({ ok: false }, { status: 401 });
+  }
+
+  try {
+    const admin = createAdminClient();
+    const { data, error } = await admin.auth.admin.getUserById(user.id);
+
+    if (error) {
+      console.error("Login count user could not be loaded", error);
+    } else if (data.user) {
+      const { error: updateError } = await admin.auth.admin.updateUserById(user.id, {
+        app_metadata: buildNextLoginMetadata(data.user.app_metadata)
+      });
+
+      if (updateError) console.error("Login count could not be updated", updateError);
+    }
+  } catch (error) {
+    console.error("Login count tracking failed", error);
   }
 
   const response = NextResponse.json({ ok: true });

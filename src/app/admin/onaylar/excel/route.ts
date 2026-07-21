@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { buildCsv } from "@/lib/export/csv";
+import { getTodayLoginCount } from "@/lib/auth/login-tracking";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -89,7 +90,11 @@ export async function GET() {
   }
 
   const admin = createAdminClient();
-  const authUsers: Array<{ id: string; last_sign_in_at?: string | null }> = [];
+  const authUsers: Array<{
+    id: string;
+    last_sign_in_at?: string | null;
+    app_metadata?: Record<string, unknown>;
+  }> = [];
   let page = 1;
   const perPage = 1000;
 
@@ -122,11 +127,18 @@ export async function GET() {
   }
 
   const authUserLastLoginMap = new Map(authUsers.map((user) => [user.id, user.last_sign_in_at ?? null] as const));
+  const authUserTodayLoginMap = new Map(
+    authUsers.map((user) => [
+      user.id,
+      getTodayLoginCount(user.app_metadata, user.last_sign_in_at)
+    ] as const)
+  );
   const rows = ((profiles as ManagedProfileExportRow[] | null) ?? [])
     .map((profile) => ({
       ...profile,
       store: Array.isArray(profile.store) ? profile.store[0] ?? null : profile.store,
-      last_sign_in_at: authUserLastLoginMap.get(profile.id) ?? null
+      last_sign_in_at: authUserLastLoginMap.get(profile.id) ?? null,
+      today_login_count: authUserTodayLoginMap.get(profile.id) ?? 0
     }))
     .sort((left, right) => {
       const leftTime = left.last_sign_in_at ? new Date(left.last_sign_in_at).getTime() : 0;
@@ -135,13 +147,14 @@ export async function GET() {
     });
 
   const csv = buildCsv([
-    ["Ad Soyad", "Mail", "Rol", "Magaza", "Son Giris"],
+    ["Ad Soyad", "Mail", "Rol", "Magaza", "Son Giris", "Bugunku Giris"],
     ...rows.map((profile) => [
       profile.full_name,
       profile.email,
       profile.role,
       profile.store?.name ?? "Merkez",
-      formatLastLogin(profile.last_sign_in_at)
+      formatLastLogin(profile.last_sign_in_at),
+      profile.today_login_count
     ])
   ]);
 

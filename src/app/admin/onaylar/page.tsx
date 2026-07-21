@@ -295,6 +295,7 @@ export default async function ApprovalAdminPage({ searchParams }: ApprovalAdminP
                     <th>Rol</th>
                     <th>Magaza</th>
                     <th>Son Giris</th>
+                    <th>Bugunku Giris</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -304,6 +305,7 @@ export default async function ApprovalAdminPage({ searchParams }: ApprovalAdminP
                       <td>{roleLabels[profile.role]}</td>
                       <td>{profile.store?.name ?? "Merkez"}</td>
                       <td>{formatLastLogin(profile.last_sign_in_at)}</td>
+                      <td>{profile.today_login_count}</td>
                     </tr>
                   ))}
                 </tbody>

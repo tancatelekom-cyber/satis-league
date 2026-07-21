@@ -208,7 +208,7 @@ export function AppShellHeader({
               </Link>
             ))}
             <form action={logoutAction} className="nav-logout-form">
-              <button className="nav-link nav-logout-button" type="submit" onClick={() => setMenuOpen(false)}>
+              <button className="nav-link nav-logout-button" type="submit">
                 <span className="nav-link-icon" aria-hidden="true">🚪</span>
                 <span className="nav-link-label">Çıkış Yap</span>
               </button>
@@ -232,7 +232,7 @@ export function AppShellHeader({
                 </Link>
               ))}
               <form action={logoutAction} className="nav-logout-form">
-                <button className="nav-link nav-logout-button" type="submit" onClick={() => setMenuOpen(false)}>
+                <button className="nav-link nav-logout-button" type="submit">
                   <span className="nav-link-icon" aria-hidden="true">🚪</span>
                   <span className="nav-link-label">Çıkış Yap</span>
                 </button>

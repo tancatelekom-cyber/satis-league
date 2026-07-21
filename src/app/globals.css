@@ -14526,3 +14526,44 @@ textarea::placeholder {
     display: none;
   }
 }
+
+.nav-logout-form {
+  grid-column: 1 / -1;
+  width: 100%;
+  margin-top: 6px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.nav-logout-button {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  min-height: 50px;
+  padding: 8px 12px;
+  cursor: pointer;
+  border: 1px solid rgba(248, 113, 113, 0.3);
+  border-radius: 14px;
+  color: #fff1f2;
+  font-weight: 800;
+  text-align: left;
+  background: linear-gradient(135deg, rgba(190, 24, 93, 0.28), rgba(220, 38, 38, 0.2));
+}
+
+.nav-logout-button:hover,
+.nav-logout-button:focus-visible {
+  color: #ffffff;
+  background: linear-gradient(135deg, rgba(225, 29, 72, 0.42), rgba(220, 38, 38, 0.34));
+}
+
+.desktop-nav-dropdown .nav-logout-button .nav-link-icon,
+.mobile-nav-overlay .nav-logout-button .nav-link-icon {
+  background: linear-gradient(135deg, #fb7185, #dc2626);
+}
+
+@media (max-width: 960px) {
+  .mobile-nav-overlay .nav-logout-form {
+    margin-top: auto;
+  }
+}

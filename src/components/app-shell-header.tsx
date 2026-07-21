@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import { logoutAction } from "@/app/auth-actions";
 import { getDashboardPalette } from "@/lib/dashboard-colors";
 
 type NavItem = {
@@ -206,6 +207,12 @@ export function AppShellHeader({
                 <span className="nav-link-label">{item.label}</span>
               </Link>
             ))}
+            <form action={logoutAction} className="nav-logout-form">
+              <button className="nav-link nav-logout-button" type="submit" onClick={() => setMenuOpen(false)}>
+                <span className="nav-link-icon" aria-hidden="true">🚪</span>
+                <span className="nav-link-label">Çıkış Yap</span>
+              </button>
+            </form>
           </nav>
         ) : null}
       </div>
@@ -224,6 +231,12 @@ export function AppShellHeader({
                   <span className="nav-link-label">{item.label}</span>
                 </Link>
               ))}
+              <form action={logoutAction} className="nav-logout-form">
+                <button className="nav-link nav-logout-button" type="submit" onClick={() => setMenuOpen(false)}>
+                  <span className="nav-link-icon" aria-hidden="true">🚪</span>
+                  <span className="nav-link-label">Çıkış Yap</span>
+                </button>
+              </form>
             </nav>,
             document.body
           )

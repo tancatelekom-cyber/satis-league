@@ -90,6 +90,28 @@ export function AppShellHeader({
     return () => controller.abort();
   }, [initialDashboardRole, pathname]);
 
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setMenuOpen(false);
+    }
+
+    function closeOnOutsideClick(event: PointerEvent) {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      if (target.closest(".menu-toggle, .desktop-nav-dropdown, .mobile-nav-overlay")) return;
+      setMenuOpen(false);
+    }
+
+    document.addEventListener("keydown", closeOnEscape);
+    document.addEventListener("pointerdown", closeOnOutsideClick);
+    return () => {
+      document.removeEventListener("keydown", closeOnEscape);
+      document.removeEventListener("pointerdown", closeOnOutsideClick);
+    };
+  }, [menuOpen]);
+
   const navItems = useMemo(() => {
     const items = false && initialCanEvaluate
       ? [...baseNavItems, { href: "/degerlendirme", label: "Degerlendirme", mobileLabel: "Deger", icon: "D" }]
@@ -161,29 +183,35 @@ export function AppShellHeader({
           className="menu-toggle"
           type="button"
           aria-expanded={menuOpen}
-          aria-controls="app-navigation-menu"
+          aria-controls="app-navigation-menu-desktop app-navigation-menu-mobile"
           onClick={() => setMenuOpen((value) => !value)}
         >
-          {menuOpen ? "Kapat" : "Menu"}
+          {menuOpen ? "Kapat" : "Menü"}
         </button>
 
-        <nav className="nav-links" aria-label="Uygulama menusu">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              className={`nav-link ${isActive(pathname, item.href) ? "nav-link-active" : ""}`}
-              href={item.href}
-              onClick={() => setMenuOpen(false)}
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
+        {menuOpen ? (
+          <nav
+            className="desktop-nav-dropdown"
+            id="app-navigation-menu-desktop"
+            aria-label="Masaüstü uygulama menüsü"
+          >
+            {navItems.map((item) => (
+              <Link
+                key={`desktop-${item.href}`}
+                className={`nav-link ${isActive(pathname, item.href) ? "nav-link-active" : ""}`}
+                href={item.href}
+                onClick={() => setMenuOpen(false)}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+        ) : null}
       </div>
 
       {menuOpen && typeof document !== "undefined"
         ? createPortal(
-            <nav className="mobile-nav-overlay" id="app-navigation-menu" aria-label="Mobil uygulama menusu">
+            <nav className="mobile-nav-overlay" id="app-navigation-menu-mobile" aria-label="Mobil uygulama menusu">
               {navItems.map((item) => (
                 <Link
                   key={`mobile-${item.href}`}

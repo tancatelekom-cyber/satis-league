@@ -286,6 +286,10 @@ button {
   display: none;
 }
 
+.desktop-nav-dropdown {
+  display: none;
+}
+
 .nav-link {
   padding: 8px 12px;
   border-radius: 999px;
@@ -304,6 +308,81 @@ button {
   color: #ffffff;
   background: rgba(88, 240, 196, 0.18);
   border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+@media (min-width: 961px) {
+  .topbar-app {
+    position: relative;
+    min-height: 88px;
+  }
+
+  .topbar-app .nav-cluster {
+    position: relative;
+    width: auto;
+    flex: 0 0 auto;
+  }
+
+  .topbar-app .menu-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 112px;
+    min-height: 48px;
+    padding: 10px 22px;
+    cursor: pointer;
+    color: #f7faff;
+    font-weight: 800;
+    background: rgba(255, 255, 255, 0.09);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
+    transition: transform 160ms ease, background 160ms ease;
+  }
+
+  .topbar-app .menu-toggle:hover,
+  .topbar-app .menu-toggle:focus-visible {
+    transform: translateY(-1px);
+    background: rgba(255, 255, 255, 0.16);
+  }
+
+  .desktop-nav-dropdown {
+    position: absolute;
+    top: calc(100% + 16px);
+    right: 0;
+    z-index: 900;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    width: min(760px, calc(100vw - 64px));
+    max-height: min(620px, calc(100vh - 150px));
+    padding: 16px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 22px;
+    background: rgba(5, 35, 43, 0.98);
+    backdrop-filter: blur(24px);
+    box-shadow: 0 28px 70px rgba(3, 18, 28, 0.42);
+  }
+
+  .desktop-nav-dropdown .nav-link {
+    display: flex;
+    align-items: center;
+    min-height: 52px;
+    padding: 12px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.055);
+  }
+
+  .desktop-nav-dropdown .nav-link:hover,
+  .desktop-nav-dropdown .nav-link:focus-visible {
+    background: rgba(255, 255, 255, 0.14);
+  }
+
+  .desktop-nav-dropdown .nav-link-active {
+    background: linear-gradient(135deg, rgba(88, 240, 196, 0.24), rgba(88, 240, 196, 0.1));
+    border-color: rgba(121, 244, 208, 0.32);
+  }
 }
 
 .device-cards {

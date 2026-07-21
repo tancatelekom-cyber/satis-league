@@ -14435,3 +14435,94 @@ textarea::placeholder {
     text-align: left;
   }
 }
+
+@media (max-width: 760px) {
+  .goal-company-trend-panel.goal-company-summary-panel {
+    gap: 7px;
+    margin-top: 8px;
+    padding: 7px;
+    border-radius: 14px;
+  }
+
+  .goal-company-summary-panel .goal-live-prime-head h3 {
+    margin: 0;
+    font-size: 0.82rem;
+    line-height: 1.1;
+  }
+
+  .goal-company-summary-panel .goal-company-trend-table-wrap {
+    border-radius: 11px;
+  }
+
+  .goal-company-trend-table.goal-company-summary-table {
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+  }
+
+  .goal-company-summary-table th:first-child,
+  .goal-company-summary-table td:first-child {
+    width: 28%;
+  }
+
+  .goal-company-summary-table th:not(:first-child),
+  .goal-company-summary-table td:not(:first-child) {
+    width: 14.4%;
+  }
+
+  .goal-company-trend-table.goal-company-summary-table th,
+  .goal-company-trend-table.goal-company-summary-table td,
+  .goal-company-trend-table.goal-company-summary-table tbody td,
+  .goal-company-trend-table.goal-company-summary-table .goal-company-trend-company {
+    padding: 5px 2px;
+    font-size: 0.56rem !important;
+    line-height: 1.08;
+    letter-spacing: -0.015em;
+  }
+
+  .goal-company-trend-table.goal-company-summary-table thead th {
+    padding: 5px 1px;
+    font-size: 0.5rem !important;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+  }
+
+  .goal-company-trend-table.goal-company-summary-table tbody th {
+    padding: 6px 5px;
+    font-size: 0.54rem !important;
+    font-weight: 800;
+    line-height: 1.12;
+    white-space: normal;
+    word-break: normal;
+    overflow-wrap: normal;
+    hyphens: none;
+  }
+
+  .goal-company-summary-table .goal-company-trend-category-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 3px;
+  }
+
+  .goal-company-summary-table .goal-company-trend-category-label > span {
+    word-break: normal;
+    overflow-wrap: normal;
+    hyphens: none;
+  }
+
+  .goal-company-summary-table .goal-company-trend-category-label small {
+    padding: 2px 4px;
+    font-size: 0.42rem;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .goal-company-summary-table .goal-company-trend-value {
+    gap: 2px;
+    white-space: nowrap;
+  }
+
+  .goal-company-summary-table .goal-company-trend-indicator {
+    display: none;
+  }
+}

@@ -4077,13 +4077,13 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                 </div>
 
                 {effectiveView === "company" && visibleTrendStoreCodes.length && companyTrendSummaryRows.length ? (
-                  <div className="goal-company-trend-panel">
+                  <div className="goal-company-trend-panel goal-company-summary-panel">
                     <div className="goal-live-prime-head">
                       <h3>Ay Sonu Gidisat Ozeti</h3>
                     </div>
 
                     <div className="goal-company-trend-table-wrap">
-                      <table className="goal-company-trend-table">
+                      <table className="goal-company-trend-table goal-company-summary-table">
                         <thead>
                           <tr>
                             <th>Kategori</th>

@@ -116,10 +116,28 @@ export async function POST(request: Request) {
     finalTargetProfileId = targetProfile.id;
     multiplierStoreId = targetProfile.store_id ?? actor.store_id;
   } else {
-    finalTargetStoreId = targetStoreId || actor.store_id;
+    if (actor.role !== "admin" && targetStoreId && targetStoreId !== actor.store_id) {
+      return NextResponse.json(
+        { message: "Sadece kendi magazaniz icin satis girebilirsiniz." },
+        { status: 403 }
+      );
+    }
+
+    finalTargetStoreId = actor.role === "admin" ? targetStoreId || actor.store_id : actor.store_id;
 
     if (!finalTargetStoreId) {
-      return NextResponse.json({ message: "Magaza bazli kampanyada magaza bulunamadi." }, { status: 400 });
+      return NextResponse.json({ message: "Hedef magaza secilmedi." }, { status: 400 });
+    }
+
+    const { data: targetStore } = await admin
+      .from("stores")
+      .select("id")
+      .eq("id", finalTargetStoreId)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (!targetStore) {
+      return NextResponse.json({ message: "Secilen magaza aktif degil veya bulunamadi." }, { status: 403 });
     }
   }
 

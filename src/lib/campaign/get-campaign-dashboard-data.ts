@@ -45,6 +45,7 @@ export type ActiveCampaignLeaderboard = {
 export type UserCampaignDashboardData = {
   profile: ProfileSummary & { store_id?: string | null };
   teamProfiles: { id: string; full_name: string }[];
+  targetStores: { id: string; name: string }[];
   plannedCampaigns: CampaignPageCampaign[];
   activeCampaigns: CampaignPageCampaign[];
   finishedCampaigns: CampaignPageCampaign[];
@@ -239,6 +240,10 @@ export async function getCampaignDashboardData(userId: string): Promise<UserCamp
     )
     .map((person) => ({ id: person.id, full_name: person.full_name }))
     .sort((a, b) => a.full_name.localeCompare(b.full_name, "tr"));
+  const targetStores = storeRows
+    .filter((store) => profile.role === "admin" || store.id === profile.store_id)
+    .map((store) => ({ id: store.id, name: store.name }))
+    .sort((a, b) => a.name.localeCompare(b.name, "tr"));
 
   const campaignCards = allCampaignRows.map((campaign) => ({
     ...campaign,
@@ -277,6 +282,7 @@ export async function getCampaignDashboardData(userId: string): Promise<UserCamp
   return {
     profile,
     teamProfiles,
+    targetStores,
     plannedCampaigns,
     activeCampaigns,
     finishedCampaigns,

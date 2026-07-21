@@ -107,11 +107,18 @@ export default async function CampaignDetailPage({
     dashboard.teamProfiles.some((person) => person.id === dashboard.profile.id)
       ? dashboard.profile.id
       : dashboard.teamProfiles[0]?.id ?? dashboard.profile.id;
+  const defaultStoreId =
+    dashboard.targetStores.some((store) => store.id === dashboard.profile.store_id)
+      ? dashboard.profile.store_id ?? null
+      : dashboard.targetStores[0]?.id ?? null;
   const targetProfileIds =
     campaign.mode === "employee"
       ? dashboard.teamProfiles.map((person) => person.id)
       : [];
-  const targetStoreIds = campaign.mode === "store" && dashboard.profile.store_id ? [dashboard.profile.store_id] : [];
+  const targetStoreIds =
+    campaign.mode === "store"
+      ? dashboard.targetStores.map((store) => store.id)
+      : [];
   const initialQuantityMap: Record<string, number> = {};
   const participantProductTotals = new Map<string, Map<string, number>>();
   const participantPointTotals = new Map<string, number>();
@@ -443,11 +450,12 @@ export default async function CampaignDetailPage({
               campaignId={campaign.id}
               campaignMode={campaign.mode}
               defaultProfileId={defaultProfileId}
-              defaultStoreId={dashboard.profile.store_id ?? null}
+              defaultStoreId={defaultStoreId}
               initialQuantities={initialQuantityMap}
               products={campaign.products}
               scoring={campaign.scoring}
               teamProfiles={dashboard.teamProfiles}
+              storeOptions={dashboard.targetStores}
             />
           </div>
         </section>

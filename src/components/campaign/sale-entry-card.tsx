@@ -8,6 +8,11 @@ type TeamProfileOption = {
   full_name: string;
 };
 
+type StoreOption = {
+  id: string;
+  name: string;
+};
+
 type SaleEntryCardProps = {
   campaignId: string;
   campaignMode: CampaignMode;
@@ -21,6 +26,7 @@ type SaleEntryCardProps = {
   defaultProfileId: string;
   defaultStoreId: string | null;
   teamProfiles: TeamProfileOption[];
+  storeOptions: StoreOption[];
   initialQuantities: Record<string, number>;
 };
 
@@ -42,9 +48,11 @@ export function SaleEntryCard({
   defaultProfileId,
   defaultStoreId,
   teamProfiles,
+  storeOptions,
   initialQuantities
 }: SaleEntryCardProps) {
   const [selectedProfileId, setSelectedProfileId] = useState(defaultProfileId);
+  const [selectedStoreId, setSelectedStoreId] = useState(defaultStoreId ?? storeOptions[0]?.id ?? "");
   const [draftValues, setDraftValues] = useState<Record<string, string>>(() =>
     Object.fromEntries(Object.entries(initialQuantities).map(([key, value]) => [key, String(value)]))
   );
@@ -52,7 +60,7 @@ export function SaleEntryCard({
   const [errorMessages, setErrorMessages] = useState<Record<string, string>>({});
   const timeoutRefs = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
-  const currentTargetId = campaignMode === "employee" ? selectedProfileId : defaultStoreId;
+  const currentTargetId = campaignMode === "employee" ? selectedProfileId : selectedStoreId || null;
   const selectedProfileName =
     campaignMode === "employee"
       ? teamProfiles.find((person) => person.id === selectedProfileId)?.full_name ?? "Secili personel"
@@ -61,7 +69,7 @@ export function SaleEntryCard({
   const summaryHint =
     campaignMode === "employee"
       ? `${selectedProfileName ?? "Secili personel"} icin anlik toplam adetler`
-      : "Secili magazanin anlik urun toplamlari";
+      : `${storeOptions.find((store) => store.id === selectedStoreId)?.name ?? "Secili magaza"} icin anlik urun toplamlari`;
 
   const currentEntries = useMemo(
     () =>
@@ -191,6 +199,23 @@ export function SaleEntryCard({
             {teamProfiles.map((person) => (
               <option key={person.id} value={person.id}>
                 {person.full_name}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
+
+      {campaignMode === "store" && storeOptions.length > 0 ? (
+        <label className="field compact live-sale-target-select">
+          <span>Hedef Magaza</span>
+          <select
+            name="targetStoreId"
+            onChange={(event) => setSelectedStoreId(event.target.value)}
+            value={selectedStoreId}
+          >
+            {storeOptions.map((store) => (
+              <option key={store.id} value={store.id}>
+                {store.name}
               </option>
             ))}
           </select>

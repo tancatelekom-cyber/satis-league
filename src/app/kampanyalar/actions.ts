@@ -151,11 +151,34 @@ export async function submitSaleEntryAction(formData: FormData) {
     finalTargetProfileId = targetProfile!.id;
     multiplierStoreId = targetProfile!.store_id ?? actorRow.store_id;
   } else {
-    finalTargetStoreId = targetStoreId || actorRow.store_id;
+    if (actorRow.role !== "admin" && targetStoreId && targetStoreId !== actorRow.store_id) {
+      redirectWithMessage(
+        "Sadece kendi magazaniz icin satis girebilirsiniz.",
+        "error",
+        errorRedirectTo
+      );
+    }
+
+    finalTargetStoreId = actorRow.role === "admin" ? targetStoreId || actorRow.store_id : actorRow.store_id;
 
     if (!finalTargetStoreId) {
       redirectWithMessage(
-        "Magaza bazli kampanyada kullanicinin magazasi olmali.",
+        "Hedef magaza secilmedi.",
+        "error",
+        errorRedirectTo
+      );
+    }
+
+    const { data: targetStore } = await admin
+      .from("stores")
+      .select("id")
+      .eq("id", finalTargetStoreId!)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (!targetStore) {
+      redirectWithMessage(
+        "Secilen magaza aktif degil veya bulunamadi.",
         "error",
         errorRedirectTo
       );

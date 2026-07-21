@@ -14271,3 +14271,108 @@ textarea::placeholder {
     max-height: none;
   }
 }
+
+@media (min-width: 961px) {
+  .goal-page > .page-title {
+    margin: 16px 0 8px;
+    font-size: clamp(1.8rem, 2.8vw, 2.65rem);
+    line-height: 1;
+  }
+
+  .goal-page .goal-control-shell {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px 12px;
+  }
+
+  .goal-page .goal-control-shell > * {
+    grid-column: 1 / -1;
+  }
+
+  .goal-page .goal-tab-row {
+    gap: 8px;
+    margin: 0;
+  }
+
+  .goal-page .goal-tab {
+    min-height: 42px;
+    padding: 7px 14px;
+    font-size: 0.92rem;
+    box-shadow: 0 7px 16px rgba(8, 22, 40, 0.06);
+  }
+
+  .goal-page .goal-summary-strip {
+    grid-column: 1;
+    gap: 7px;
+    margin: 0;
+  }
+
+  .goal-page .goal-summary-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-height: 54px;
+    padding: 8px 11px;
+    border-radius: 14px;
+    box-shadow: 0 7px 16px rgba(8, 22, 40, 0.055);
+  }
+
+  .goal-page .goal-summary-card span {
+    margin: 0;
+    font-size: 0.75rem;
+  }
+
+  .goal-page .goal-summary-card strong {
+    margin: 0;
+    font-size: 1rem;
+  }
+
+  .goal-page .goal-filter-card {
+    grid-column: 2;
+    align-self: stretch;
+    margin: 0;
+    padding: 9px 10px;
+    border-radius: 16px;
+  }
+
+  .goal-page .goal-filter-card-with-select {
+    display: grid;
+    grid-template-columns: minmax(190px, 0.8fr) minmax(300px, 1.2fr);
+    align-items: end;
+    gap: 9px;
+  }
+
+  .goal-page .goal-filter-card .league-filter-grid {
+    gap: 6px;
+  }
+
+  .goal-page .goal-filter-card .league-filter-label {
+    margin-bottom: 4px;
+    font-size: 0.68rem;
+  }
+
+  .goal-page .goal-filter-card .filter-select-value,
+  .goal-page .goal-filter-card .filter-select-shell .filter-select-value {
+    min-height: 38px;
+    padding-top: 0.55rem;
+    padding-bottom: 0.55rem;
+    font-size: 0.82rem;
+  }
+
+  .goal-page .goal-mode-row {
+    gap: 7px;
+    margin-top: 0;
+  }
+
+  .goal-page .goal-mode-button {
+    min-height: 38px;
+    padding: 7px 10px;
+    border-radius: 13px;
+    font-size: 0.83rem;
+    box-shadow: 0 7px 16px rgba(8, 22, 40, 0.06);
+  }
+
+  .goal-page .goal-placeholder-card {
+    grid-column: 1 / -1;
+  }
+}

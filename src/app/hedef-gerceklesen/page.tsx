@@ -3768,7 +3768,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
   }));
 
   return (
-      <main>
+      <main className="goal-page">
         <h1 className="page-title">Hedef Gerceklesen</h1>
 
         <section className="goal-control-shell">
@@ -3837,7 +3837,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
           ) : null}
 
           {effectiveView !== "company" ? (
-            <section className="guide-card game-brief-card goal-filter-card">
+            <section className="guide-card game-brief-card goal-filter-card goal-filter-card-with-select">
               <div className="league-filter-grid goal-filter-grid">
                 {effectivePanel === "detail" || effectiveView === "store" ? (
                   <div className="league-filter-item league-filter-item-wide">

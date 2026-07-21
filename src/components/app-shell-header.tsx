@@ -15,21 +15,21 @@ type NavItem = {
 };
 
 const baseNavItems: NavItem[] = [
-  { href: "/", label: "Ana Sayfa" },
-  { href: "/hedef-gerceklesen", label: "Hedef Gerceklesen", mobileLabel: "Hedef", icon: "H" },
-  { href: "/magaza-muduru-primi", label: "Magaza Muduru Primi", mobileLabel: "Mudur Prim", icon: "R" },
-  { href: "/gelir-gider", label: "Gelir Gider", mobileLabel: "Gelir", icon: "G" },
-  { href: "/web-kontor", label: "Web Kontor", mobileLabel: "Kontor", icon: "O" },
-  { href: "/eksik-evrak", label: "Eksik Evrak", mobileLabel: "Evrak", icon: "E" },
-  { href: "/pos-komisyon", label: "POS Komisyon", mobileLabel: "POS", icon: "M" },
-  { href: "/tarifeler", label: "Tarifeler", mobileLabel: "Tarife", icon: "T" },
-  { href: "/cihaz-fiyat-listesi", label: "Cihaz Fiyat Listesi", mobileLabel: "Cihaz", icon: "C" },
-  { href: "/haftalik-calisma-programi", label: "Haftalik Calisma Programi", mobileLabel: "Program", icon: "W" },
-  { href: "/kampanyalar", label: "Gunluk Kampanyalar", mobileLabel: "Kampanya", icon: "K" },
-  { href: "/aylik-kampanyalar", label: "Aylik Kampanyalar", mobileLabel: "Aylik", icon: "A" },
-  { href: "/lig", label: "Yildizlar Kulubu", mobileLabel: "Lig", icon: "L" },
-  { href: "/stok-bilgisi", label: "Stok Bilgisi", mobileLabel: "Stok", icon: "S" },
-  { href: "/hesabim", label: "Hesabim", mobileLabel: "Hesap", icon: "P" }
+  { href: "/", label: "Ana Sayfa", icon: "🏠" },
+  { href: "/hedef-gerceklesen", label: "Hedef Gerceklesen", mobileLabel: "Hedef", icon: "🎯" },
+  { href: "/magaza-muduru-primi", label: "Magaza Muduru Primi", mobileLabel: "Mudur Prim", icon: "💰" },
+  { href: "/gelir-gider", label: "Gelir Gider", mobileLabel: "Gelir", icon: "📊" },
+  { href: "/web-kontor", label: "Web Kontor", mobileLabel: "Kontor", icon: "🌐" },
+  { href: "/eksik-evrak", label: "Eksik Evrak", mobileLabel: "Evrak", icon: "📄" },
+  { href: "/pos-komisyon", label: "POS Komisyon", mobileLabel: "POS", icon: "💳" },
+  { href: "/tarifeler", label: "Tarifeler", mobileLabel: "Tarife", icon: "📶" },
+  { href: "/cihaz-fiyat-listesi", label: "Cihaz Fiyat Listesi", mobileLabel: "Cihaz", icon: "📱" },
+  { href: "/haftalik-calisma-programi", label: "Haftalik Calisma Programi", mobileLabel: "Program", icon: "📅" },
+  { href: "/kampanyalar", label: "Gunluk Kampanyalar", mobileLabel: "Kampanya", icon: "🏆" },
+  { href: "/aylik-kampanyalar", label: "Aylik Kampanyalar", mobileLabel: "Aylik", icon: "🗓️" },
+  { href: "/lig", label: "Yildizlar Kulubu", mobileLabel: "Lig", icon: "⭐" },
+  { href: "/stok-bilgisi", label: "Stok Bilgisi", mobileLabel: "Stok", icon: "📦" },
+  { href: "/hesabim", label: "Hesabim", mobileLabel: "Hesap", icon: "👤" }
 ];
 
 function isActive(pathname: string, href: string) {
@@ -114,7 +114,7 @@ export function AppShellHeader({
 
   const navItems = useMemo(() => {
     const items = false && initialCanEvaluate
-      ? [...baseNavItems, { href: "/degerlendirme", label: "Degerlendirme", mobileLabel: "Deger", icon: "D" }]
+      ? [...baseNavItems, { href: "/degerlendirme", label: "Degerlendirme", mobileLabel: "Deger", icon: "📝" }]
       : baseNavItems;
 
     const itemsWithManagerPrime = initialCanOpenManagerPrime
@@ -138,11 +138,11 @@ export function AppShellHeader({
       : itemsWithMissingDocs.filter((item) => item.href !== "/haftalik-calisma-programi");
 
     const itemsWithPresentation = initialCanOpenEvaluationPresentation
-      ? [...itemsWithWorkSchedule, { href: "/degerlendirme-sunumu", label: "Degerlendirme Sunumu", mobileLabel: "Sunum", icon: "U" }]
+      ? [...itemsWithWorkSchedule, { href: "/degerlendirme-sunumu", label: "Degerlendirme Sunumu", mobileLabel: "Sunum", icon: "📈" }]
       : itemsWithWorkSchedule;
 
     return initialIsAdmin
-      ? [...itemsWithPresentation, { href: "/admin", label: "Admin Paneli", mobileLabel: "Admin", icon: "Y" }]
+      ? [...itemsWithPresentation, { href: "/admin", label: "Admin Paneli", mobileLabel: "Admin", icon: "⚙️" }]
       : itemsWithPresentation;
   }, [initialCanEvaluate, initialCanOpenEvaluationPresentation, initialCanOpenManagerPrime, initialCanOpenMissingDocs, initialCanOpenRevenueExpense, initialCanOpenWebKontor, initialCanOpenWorkSchedule, initialIsAdmin]);
 
@@ -202,7 +202,8 @@ export function AppShellHeader({
                 href={item.href}
                 onClick={() => setMenuOpen(false)}
               >
-                {item.label}
+                <span className="nav-link-icon" aria-hidden="true">{item.icon ?? "•"}</span>
+                <span className="nav-link-label">{item.label}</span>
               </Link>
             ))}
           </nav>
@@ -219,7 +220,8 @@ export function AppShellHeader({
                   href={item.href}
                   onClick={() => setMenuOpen(false)}
                 >
-                  {item.label}
+                  <span className="nav-link-icon" aria-hidden="true">{item.icon ?? "•"}</span>
+                  <span className="nav-link-label">{item.label}</span>
                 </Link>
               ))}
             </nav>,

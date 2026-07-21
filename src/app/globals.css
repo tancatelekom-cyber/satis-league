@@ -313,6 +313,7 @@ button {
 @media (min-width: 961px) {
   .topbar-app {
     position: relative;
+    z-index: 10000;
     min-height: 88px;
   }
 
@@ -347,7 +348,7 @@ button {
     position: absolute;
     top: calc(100% + 16px);
     right: 0;
-    z-index: 900;
+    z-index: 10001;
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
@@ -367,6 +368,7 @@ button {
   .desktop-nav-dropdown .nav-link {
     display: flex;
     align-items: center;
+    gap: 11px;
     min-height: 52px;
     padding: 12px 14px;
     border: 1px solid rgba(255, 255, 255, 0.07);
@@ -14374,5 +14376,62 @@ textarea::placeholder {
 
   .goal-page .goal-placeholder-card {
     grid-column: 1 / -1;
+  }
+}
+
+.desktop-nav-dropdown .nav-link-icon,
+.mobile-nav-overlay .nav-link-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  margin: 0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 11px;
+  font-size: 1.15rem;
+  line-height: 1;
+  background: linear-gradient(135deg, #60a5fa, #2563eb);
+  box-shadow: 0 7px 16px rgba(0, 0, 0, 0.2);
+}
+
+.desktop-nav-dropdown .nav-link:nth-child(6n + 2) .nav-link-icon,
+.mobile-nav-overlay .nav-link:nth-child(6n + 2) .nav-link-icon {
+  background: linear-gradient(135deg, #fbbf24, #f97316);
+}
+
+.desktop-nav-dropdown .nav-link:nth-child(6n + 3) .nav-link-icon,
+.mobile-nav-overlay .nav-link:nth-child(6n + 3) .nav-link-icon {
+  background: linear-gradient(135deg, #34d399, #059669);
+}
+
+.desktop-nav-dropdown .nav-link:nth-child(6n + 4) .nav-link-icon,
+.mobile-nav-overlay .nav-link:nth-child(6n + 4) .nav-link-icon {
+  background: linear-gradient(135deg, #f472b6, #db2777);
+}
+
+.desktop-nav-dropdown .nav-link:nth-child(6n + 5) .nav-link-icon,
+.mobile-nav-overlay .nav-link:nth-child(6n + 5) .nav-link-icon {
+  background: linear-gradient(135deg, #a78bfa, #7c3aed);
+}
+
+.desktop-nav-dropdown .nav-link:nth-child(6n) .nav-link-icon,
+.mobile-nav-overlay .nav-link:nth-child(6n) .nav-link-icon {
+  background: linear-gradient(135deg, #22d3ee, #0891b2);
+}
+
+.desktop-nav-dropdown .nav-link-label,
+.mobile-nav-overlay .nav-link-label {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 960px) {
+  .mobile-nav-overlay .nav-link {
+    justify-content: flex-start;
+    gap: 11px;
+    padding: 7px 12px;
+    text-align: left;
   }
 }

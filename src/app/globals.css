@@ -13115,6 +13115,10 @@ textarea::placeholder {
 }
 
 @media (max-width: 560px) {
+  .goal-company-success-dashboard .goal-dashboard-hero {
+    display: none;
+  }
+
   .goal-dashboard-hero {
     align-items: stretch;
     flex-direction: column;

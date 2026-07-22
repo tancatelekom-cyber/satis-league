@@ -12877,6 +12877,10 @@ textarea::placeholder {
   font-size: 0.68rem;
 }
 
+.goal-success-dashboard-link-wide {
+  width: 100%;
+}
+
 .goal-dashboard-status-layout {
   grid-template-columns: 190px 1fr;
   gap: 24px;

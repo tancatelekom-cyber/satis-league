@@ -2764,12 +2764,14 @@ function GoalSuccessDashboardLink({
   categories,
   href,
   label,
-  colorBlindMode
+  colorBlindMode,
+  wide = false
 }: {
   categories: GoalCategorySummary[];
   href: string;
   label: string;
   colorBlindMode: boolean;
+  wide?: boolean;
 }) {
   const dashboardPalette = getDashboardPalette(colorBlindMode);
   const targetedCategories = categories.filter(
@@ -2795,7 +2797,7 @@ function GoalSuccessDashboardLink({
 
   return (
     <a
-      className="goal-success-dashboard-link"
+      className={`goal-success-dashboard-link ${wide ? "goal-success-dashboard-link-wide" : ""}`}
       href={href}
       aria-label={`${label} başarı oranı ${formatPercent(successPercent)}. Dashboardu aç.`}
     >
@@ -3885,6 +3887,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                 href={buildHref("company", { panel: "dashboard", openDashboard: true })}
                 label="Firma"
                 colorBlindMode={colorBlindDashboardMode}
+                wide
               />
             ) : (
               <section className="guide-card game-brief-card goal-filter-card">

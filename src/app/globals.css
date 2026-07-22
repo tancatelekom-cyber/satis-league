@@ -12845,7 +12845,7 @@ textarea::placeholder {
   padding: 14px 16px;
   border: 1px solid rgba(123, 213, 255, 0.16);
   border-radius: 18px;
-  background: #1c484c;
+  background: #2c6568;
   box-shadow: 0 10px 24px rgba(5, 7, 31, 0.16);
   text-decoration: none;
   transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;

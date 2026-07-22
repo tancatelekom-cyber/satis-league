@@ -12845,7 +12845,7 @@ textarea::placeholder {
   padding: 14px 16px;
   border: 1px solid rgba(123, 213, 255, 0.16);
   border-radius: 18px;
-  background: linear-gradient(145deg, rgba(41, 42, 85, 0.96), rgba(32, 32, 71, 0.96));
+  background: #1c484c;
   box-shadow: 0 10px 24px rgba(5, 7, 31, 0.16);
   text-decoration: none;
   transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
@@ -12883,6 +12883,8 @@ textarea::placeholder {
   margin-inline: 0;
   justify-self: stretch;
   box-sizing: border-box;
+  background: #1c484c;
+  border-color: rgba(255, 255, 255, 0.14);
 }
 
 .goal-page .goal-control-shell > .goal-success-dashboard-link-wide {

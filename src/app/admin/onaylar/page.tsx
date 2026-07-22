@@ -182,6 +182,17 @@ export default async function ApprovalAdminPage({ searchParams }: ApprovalAdminP
 
       <AdminSectionNav currentPath="/admin/onaylar" />
 
+      <section className="user-management-organization-link">
+        <div>
+          <span className="user-management-organization-icon" aria-hidden="true">🧭</span>
+          <span>
+            <strong>Organizasyon Şeması</strong>
+            <small>Genel koordinatör, mağaza müdürleri ve çalışanları şube bazında görüntüleyin.</small>
+          </span>
+        </div>
+        <a className="button-primary" href="/admin/organizasyon">Şemayı Aç →</a>
+      </section>
+
       <section className="admin-stack">
         <article className="admin-card">
           <h3>Bekleyen Kayit Onaylari</h3>

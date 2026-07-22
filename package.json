@@ -12,6 +12,7 @@
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.49.8",
     "next": "^16.2.4",
+    "pdfmake": "^0.3.11",
     "react": "^19.2.5",
     "react-dom": "^19.2.5"
   },

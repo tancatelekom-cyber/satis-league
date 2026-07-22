@@ -38,7 +38,8 @@ const adminGroups = [
     icon: "🏢",
     links: [
       { href: "/admin/magazalar", icon: "🏬", label: "Mağazalar", description: "Mağaza ekle, düzenle veya pasife al" },
-      { href: "/admin/onaylar", icon: "👥", label: "Kullanıcı Yönetimi", description: "Kullanıcıları, onayları ve şifreleri yönet" }
+      { href: "/admin/onaylar", icon: "👥", label: "Kullanıcı Yönetimi", description: "Kullanıcıları, onayları ve şifreleri yönet" },
+      { href: "/admin/organizasyon", icon: "🧭", label: "Organizasyon Şeması", description: "Şube bazlı ekip hiyerarşisini görüntüle" }
     ]
   }
 ] as const;
@@ -59,7 +60,7 @@ export function AdminSectionNav({ currentPath }: AdminSectionNavProps) {
             <strong>Yönetim Alanları</strong>
             <small>İşlem yapmak istediğiniz bölümü seçin</small>
           </span>
-          <span className="admin-directory-count">16 bölüm</span>
+          <span className="admin-directory-count">17 bölüm</span>
         </summary>
 
         <div className="admin-directory-body">

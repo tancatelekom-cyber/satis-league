@@ -2478,6 +2478,291 @@ textarea::placeholder {
   line-height: 1.6;
 }
 
+.admin-center-page {
+  display: grid;
+  gap: 20px;
+}
+
+.admin-center-hero {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: clamp(20px, 3vw, 30px);
+  border: 1px solid rgba(4, 92, 96, 0.16);
+  border-radius: 26px;
+  background:
+    radial-gradient(circle at 85% 20%, rgba(255, 209, 102, 0.2), transparent 24%),
+    linear-gradient(135deg, rgba(4, 92, 96, 0.96), rgba(27, 116, 119, 0.9));
+  box-shadow: 0 18px 38px rgba(8, 22, 40, 0.14);
+}
+
+.admin-center-hero-icon {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.14);
+  font-size: 2rem;
+}
+
+.admin-center-eyebrow {
+  color: #bff4ec;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+}
+
+.admin-center-hero .page-title {
+  margin: 4px 0 5px;
+  color: #ffffff;
+  text-shadow: none;
+}
+
+.admin-center-hero .page-subtitle {
+  margin: 0;
+  color: #e3f6f4;
+}
+
+.admin-center-page .admin-overview-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.admin-center-page .admin-overview-card {
+  position: relative;
+  min-height: 150px;
+  padding: 18px;
+  overflow: hidden;
+}
+
+.admin-overview-icon {
+  display: grid !important;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  margin-bottom: 12px;
+  border-radius: 12px;
+  background: rgba(4, 92, 96, 0.1);
+  font-size: 1.15rem;
+}
+
+.admin-overview-label {
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.admin-directory-details {
+  border: 1px solid rgba(4, 92, 96, 0.14);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.58);
+  box-shadow: 0 14px 30px rgba(8, 22, 40, 0.08);
+  overflow: hidden;
+}
+
+.admin-directory-summary {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+  list-style: none;
+  cursor: pointer;
+  color: #10203b;
+}
+
+.admin-directory-summary::-webkit-details-marker {
+  display: none;
+}
+
+.admin-directory-summary-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: #1c6468;
+  font-size: 1.25rem;
+}
+
+.admin-directory-summary strong,
+.admin-directory-summary small {
+  display: block;
+}
+
+.admin-directory-summary strong {
+  font-size: 1.06rem;
+}
+
+.admin-directory-summary small {
+  margin-top: 3px;
+  color: #5d7290;
+}
+
+.admin-directory-count {
+  padding: 7px 11px;
+  border-radius: 999px;
+  background: rgba(4, 92, 96, 0.1);
+  color: #195b61;
+  font-size: 0.75rem;
+  font-weight: 900;
+}
+
+.admin-directory-body {
+  padding: 0 16px 18px;
+}
+
+.admin-shortcut-groups {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.admin-shortcut-group {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid rgba(4, 92, 96, 0.1);
+  border-radius: 20px;
+  background: rgba(241, 248, 248, 0.78);
+}
+
+.admin-shortcut-group h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  color: #12344d;
+  font-size: 0.92rem;
+}
+
+.admin-shortcut-group .admin-shortcuts {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  margin: 0;
+}
+
+.admin-shortcut-group .admin-shortcut-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 78px;
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.admin-shortcut-group .admin-shortcut-card:hover,
+.admin-shortcut-group .admin-shortcut-card:focus-visible {
+  transform: translateY(-2px);
+  border-color: rgba(4, 92, 96, 0.34);
+  box-shadow: 0 12px 22px rgba(8, 22, 40, 0.1);
+}
+
+.admin-shortcut-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: rgba(4, 92, 96, 0.1);
+  font-size: 1.05rem;
+}
+
+.admin-shortcut-copy {
+  min-width: 0;
+}
+
+.admin-shortcut-copy strong,
+.admin-shortcut-copy small {
+  display: block;
+}
+
+.admin-shortcut-copy strong {
+  margin: 0;
+  font-size: 0.86rem;
+}
+
+.admin-shortcut-copy small {
+  margin-top: 3px;
+  color: #60748f;
+  font-size: 0.7rem;
+  line-height: 1.25;
+}
+
+.admin-shortcut-arrow {
+  color: #2b6970;
+  font-weight: 900;
+}
+
+.admin-shortcut-group .admin-shortcut-card-active .admin-shortcut-icon {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.admin-shortcut-group .admin-shortcut-card-active small,
+.admin-shortcut-group .admin-shortcut-card-active .admin-shortcut-arrow {
+  color: #ffffff;
+}
+
+.admin-home-link {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: #1c6468;
+  color: #ffffff;
+}
+
+.admin-home-link strong,
+.admin-home-link small {
+  display: block;
+  color: #ffffff;
+}
+
+@media (max-width: 960px) {
+  .admin-center-page .admin-overview-grid,
+  .admin-shortcut-groups {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-center-hero {
+    align-items: flex-start;
+    padding: 18px;
+  }
+
+  .admin-center-hero-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 15px;
+    font-size: 1.45rem;
+  }
+
+  .admin-center-page .admin-overview-grid,
+  .admin-shortcut-groups,
+  .admin-shortcut-group .admin-shortcuts {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-center-page .admin-overview-card {
+    min-height: 0;
+  }
+
+  .admin-directory-count {
+    display: none;
+  }
+}
+
 .executive-hero-card {
   background: linear-gradient(180deg, rgba(7, 95, 101, 0.92), rgba(15, 126, 131, 0.9));
   color: #f6fbff;

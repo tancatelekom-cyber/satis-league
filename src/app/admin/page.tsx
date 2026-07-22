@@ -23,12 +23,17 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const data = await getAdminDashboardData();
 
   return (
-    <main>
-      <h1 className="page-title">Admin Kontrol Merkezi</h1>
-      <p className="page-subtitle">
-        Telefonda daha rahat kullanabilmeniz icin admin alanlarini ayri sayfalara bolduk.
-        Asagidan istediginiz alana tek dokunusla gecebilirsiniz.
-      </p>
+    <main className="admin-center-page">
+      <section className="admin-center-hero">
+        <span className="admin-center-hero-icon" aria-hidden="true">⚙️</span>
+        <div>
+          <span className="admin-center-eyebrow">YÖNETİM PANELİ</span>
+          <h1 className="page-title">Admin Kontrol Merkezi</h1>
+          <p className="page-subtitle">
+            Sistem durumunu izleyin ve yönetmek istediğiniz alana hızlıca ulaşın.
+          </p>
+        </div>
+      </section>
 
       {params?.message ? (
         <div className={`message-box ${params.type === "error" ? "error-box" : "success-box"}`}>
@@ -36,11 +41,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         </div>
       ) : null}
 
-      <AdminSectionNav currentPath="/admin" />
-
       <section className="admin-overview-grid">
         <article className="admin-overview-card">
-          <span>Aktif Sezon</span>
+          <span className="admin-overview-icon" aria-hidden="true">🗓️</span>
+          <span className="admin-overview-label">Aktif Sezon</span>
           <strong>{data.activeSeason?.name ?? "Aktif sezon yok"}</strong>
           <p>
             {data.activeSeason
@@ -50,90 +54,28 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         </article>
 
         <article className="admin-overview-card">
-          <span>Bekleyen Onay</span>
+          <span className="admin-overview-icon" aria-hidden="true">👤</span>
+          <span className="admin-overview-label">Bekleyen Onay</span>
           <strong>{data.approvalRows.length}</strong>
           <p>Kullanici Yonetimi sayfasinda onay bekleyen hesaplar bulunuyor.</p>
         </article>
 
         <article className="admin-overview-card">
-          <span>Aktif Magaza</span>
+          <span className="admin-overview-icon" aria-hidden="true">🏬</span>
+          <span className="admin-overview-label">Aktif Mağaza</span>
           <strong>{data.storeRows.filter((store) => store.is_active).length}</strong>
           <p>Magaza sayfasindan kayit ekraninda gorunen magazalari yonetin.</p>
         </article>
 
         <article className="admin-overview-card">
-          <span>Son Sezon Girdisi</span>
+          <span className="admin-overview-icon" aria-hidden="true">📥</span>
+          <span className="admin-overview-label">Son Sezon Girdisi</span>
           <strong>{data.activeSeasonSales.length}</strong>
           <p>Sezon Satislari sayfasinda son girisleri filtreleyip duzenleyin.</p>
         </article>
       </section>
 
-      <section className="admin-quick-grid">
-        <a className="admin-quick-card" href="/admin/sezonlar">
-          <strong>Sezon Yonetimi</strong>
-          <span>Sezon ac, urunleri ekle, magaza carpanlarini belirle.</span>
-        </a>
-        <a className="admin-quick-card" href="/admin/sezon-satislari">
-          <strong>Sezon Satislari</strong>
-          <span>Aktif sezon icin calisan veya magaza bazli giris yap.</span>
-        </a>
-        <a className="admin-quick-card" href="/admin/kampanyalar">
-          <strong>Canli Kampanyalar</strong>
-          <span>Kampanya olustur, odul ekle, sonlandir veya sil.</span>
-        </a>
-        <a className="admin-quick-card" href="/admin/aylik-kampanyalar">
-          <strong>Aylik Kampanyalar</strong>
-          <span>Slider icin gorseller yukle, degistir ve kaldir.</span>
-        </a>
-        <a className="admin-quick-card" href="/admin/bildirimler">
-          <strong>Popup Bildirimler</strong>
-          <span>Ana ekranda acilacak duyurulari tarih ve role gore yonet.</span>
-        </a>
-        <a className="admin-quick-card" href="/admin/tarifeler">
-          <strong>Tarifeler</strong>
-          <span>Turkcell tarifelerini ekle, duzenle ve kategorilere ayir.</span>
-        </a>
-        <a className="admin-quick-card" href="/admin/gelir-gider">
-          <strong>Gelir Gider</strong>
-          <span>Gelir, gider ve net karlilik menusunun erisimini yonet.</span>
-        </a>
-        <a className="admin-quick-card" href="/admin/web-kontor">
-          <strong>Web Kontor</strong>
-          <span>Web Kontor menusunun hangi rollerde gorunecegini ayarla.</span>
-        </a>
-        <a className="admin-quick-card" href="/admin/mudur-primi">
-          <strong>Mudur Primi</strong>
-          <span>Magaza muduru prim ekraninin yetkilerini ve kategori-sutun eslesmelerini yonet.</span>
-        </a>
-        <a className="admin-quick-card" href="/admin/eksik-evrak">
-          <strong>Eksik Evrak</strong>
-          <span>Eksik ve ulasmayan evrak menusunun hangi rollerde gorunecegini ayarla.</span>
-        </a>
-        <a className="admin-quick-card" href="/admin/pos-komisyon">
-          <strong>POS Komisyon</strong>
-          <span>Kredi karti cekimlerinde kullanilan komisyon oranini guncelle.</span>
-        </a>
-        <a className="admin-quick-card" href="/admin/calisan-analiz">
-          <strong>Calisan Analizi</strong>
-          <span>Tek personeli sec, guclu ve zayif alanlarini firma ortalamasina gore aninda gor.</span>
-        </a>
-        <a className="admin-quick-card" href="/admin/magazalar">
-          <strong>Magazalar</strong>
-          <span>Kayit ekraninda gorunen magazalari burada yonet.</span>
-        </a>
-        <a className="admin-quick-card" href="/admin/mudur-sunumu">
-          <strong>Mudur Sunumu</strong>
-          <span>Magaza mudurlerine anlatilacak anlik hedef gerceklesen kritikleri ve aksiyonlari ac.</span>
-        </a>
-        <a className="admin-quick-card" href="/admin/onaylar">
-          <strong>Kullanici Yonetimi</strong>
-          <span>Kullanici bilgilerini, durumunu ve sifresini yonet.</span>
-        </a>
-        <a className="admin-quick-card" href="/admin/siralama">
-          <strong>Siralama</strong>
-          <span>Sezon ligi ve canli liderlik ekranlarina gec.</span>
-        </a>
-      </section>
+      <AdminSectionNav currentPath="/admin" />
     </main>
   );
 }

@@ -1,42 +1,101 @@
 import Link from "next/link";
 
-const adminLinks = [
-  { href: "/admin", label: "Admin Ana Sayfa", description: "Genel ozet ve hizli gecisler" },
-  { href: "/admin/sezonlar", label: "Sezon Yonetimi", description: "Sezon olustur, guncelle, aktif yap" },
-  { href: "/admin/sezon-satislari", label: "Sezon Satislari", description: "Admin sezon satislarini gir ve duzenle" },
-  { href: "/admin/kampanyalar", label: "Canli Kampanyalar", description: "Kampanya ac, guncelle, sonlandir" },
-  { href: "/admin/aylik-kampanyalar", label: "Aylik Kampanyalar", description: "Gorsel yukle, degistir ve sil" },
-  { href: "/admin/bildirimler", label: "Popup Bildirimler", description: "Ana ekran duyurularini yonet" },
-  { href: "/admin/tarifeler", label: "Tarifeler", description: "Tarife ekle, duzenle, kategorilere ayir" },
-  { href: "/admin/gelir-gider", label: "Gelir Gider", description: "Gelir gider menusunun yetkilerini yonet" },
-  { href: "/admin/web-kontor", label: "Web Kontor", description: "Menu yetkisini ve gorunurlugunu yonet" },
-  { href: "/admin/mudur-primi", label: "Mudur Primi", description: "Magaza muduru prim menusu ve kolon eslesmelerini yonet" },
-  { href: "/admin/eksik-evrak", label: "Eksik Evrak", description: "Menu yetkisini ve gorunurlugunu yonet" },
-  { href: "/admin/pos-komisyon", label: "POS Komisyon", description: "POS komisyon oranini tanimla ve guncelle" },
-  { href: "/admin/magazalar", label: "Magazalar", description: "Magaza ekle, pasif yap, duzenle" },
-  { href: "/admin/calisan-analiz", label: "Calisan Analizi", description: "Secili calisani firma ortalamasina gore detayli incele" },
-  { href: "/admin/onaylar", label: "Kullanici Yonetimi", description: "Kullanici bilgilerini ve sifrelerini yonet" },
-  { href: "/admin/mudur-sunumu", label: "Mudur Sunumu", description: "Anlik hedef gerceklesenlere gore sunum ekranini ac" },
-  { href: "/admin/siralama", label: "Siralama", description: "Lig ve liderlik ekranlarina hizli erisim" }
-];
+const adminGroups = [
+  {
+    title: "Sezon ve Performans",
+    icon: "📊",
+    links: [
+      { href: "/admin/sezonlar", icon: "🗓️", label: "Sezon Yönetimi", description: "Sezon oluştur, güncelle ve aktif yap" },
+      { href: "/admin/sezon-satislari", icon: "📈", label: "Sezon Satışları", description: "Sezon satışlarını gir ve düzenle" },
+      { href: "/admin/siralama", icon: "🏆", label: "Sıralama", description: "Lig ve liderlik ekranlarına eriş" },
+      { href: "/admin/calisan-analiz", icon: "🔎", label: "Çalışan Analizi", description: "Personel performansını ayrıntılı incele" },
+      { href: "/admin/mudur-sunumu", icon: "🎯", label: "Müdür Sunumu", description: "Hedef gerçekleşen sunumunu yönet" }
+    ]
+  },
+  {
+    title: "Kampanya ve İçerik",
+    icon: "📣",
+    links: [
+      { href: "/admin/kampanyalar", icon: "🚀", label: "Canlı Kampanyalar", description: "Kampanya aç, güncelle ve sonlandır" },
+      { href: "/admin/aylik-kampanyalar", icon: "🖼️", label: "Aylık Kampanyalar", description: "Kampanya görsellerini yönet" },
+      { href: "/admin/bildirimler", icon: "🔔", label: "Popup Bildirimler", description: "Ana ekran duyurularını yönet" },
+      { href: "/admin/tarifeler", icon: "📶", label: "Tarifeler", description: "Tarifeleri ve kategorileri düzenle" }
+    ]
+  },
+  {
+    title: "Operasyon ve Yetkiler",
+    icon: "⚙️",
+    links: [
+      { href: "/admin/gelir-gider", icon: "💹", label: "Gelir Gider", description: "Menü erişim yetkilerini yönet" },
+      { href: "/admin/web-kontor", icon: "🌐", label: "Web Kontör", description: "Menü yetkisini ve görünürlüğünü yönet" },
+      { href: "/admin/mudur-primi", icon: "💰", label: "Müdür Primi", description: "Prim yetkilerini ve kolonları yönet" },
+      { href: "/admin/eksik-evrak", icon: "📄", label: "Eksik Evrak", description: "Evrak menüsü yetkilerini yönet" },
+      { href: "/admin/pos-komisyon", icon: "💳", label: "POS Komisyon", description: "Komisyon oranını tanımla ve güncelle" }
+    ]
+  },
+  {
+    title: "Organizasyon",
+    icon: "🏢",
+    links: [
+      { href: "/admin/magazalar", icon: "🏬", label: "Mağazalar", description: "Mağaza ekle, düzenle veya pasife al" },
+      { href: "/admin/onaylar", icon: "👥", label: "Kullanıcı Yönetimi", description: "Kullanıcıları, onayları ve şifreleri yönet" }
+    ]
+  }
+] as const;
 
 type AdminSectionNavProps = {
   currentPath: string;
 };
 
 export function AdminSectionNav({ currentPath }: AdminSectionNavProps) {
+  const isHome = currentPath === "/admin";
+
   return (
-    <section className="admin-shortcuts">
-      {adminLinks.map((item) => (
-        <Link
-          key={item.href}
-          className={`admin-shortcut-card ${currentPath === item.href ? "admin-shortcut-card-active" : ""}`}
-          href={item.href}
-        >
-          <strong>{item.label}</strong>
-          <span>{item.description}</span>
-        </Link>
-      ))}
-    </section>
+    <nav className="admin-directory" aria-label="Admin yönetim alanları">
+      <details className="admin-directory-details" open={isHome}>
+        <summary className="admin-directory-summary">
+          <span className="admin-directory-summary-icon" aria-hidden="true">🧭</span>
+          <span>
+            <strong>Yönetim Alanları</strong>
+            <small>İşlem yapmak istediğiniz bölümü seçin</small>
+          </span>
+          <span className="admin-directory-count">16 bölüm</span>
+        </summary>
+
+        <div className="admin-directory-body">
+          {!isHome ? (
+            <Link className="admin-home-link" href="/admin">
+              <span className="admin-shortcut-icon" aria-hidden="true">🏠</span>
+              <span><strong>Admin Ana Sayfa</strong><small>Genel özete geri dön</small></span>
+              <span aria-hidden="true">→</span>
+            </Link>
+          ) : null}
+
+          <div className="admin-shortcut-groups">
+            {adminGroups.map((group) => (
+              <section className="admin-shortcut-group" key={group.title}>
+                <h2><span aria-hidden="true">{group.icon}</span>{group.title}</h2>
+                <div className="admin-shortcuts">
+                  {group.links.map((item) => (
+                    <Link
+                      key={item.href}
+                      className={`admin-shortcut-card ${currentPath === item.href ? "admin-shortcut-card-active" : ""}`}
+                      href={item.href}
+                    >
+                      <span className="admin-shortcut-icon" aria-hidden="true">{item.icon}</span>
+                      <span className="admin-shortcut-copy">
+                        <strong>{item.label}</strong>
+                        <small>{item.description}</small>
+                      </span>
+                      <span className="admin-shortcut-arrow" aria-hidden="true">→</span>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        </div>
+      </details>
+    </nav>
   );
 }

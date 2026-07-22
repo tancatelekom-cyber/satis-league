@@ -2807,7 +2807,10 @@ function GoalSuccessDashboardLink({
       </div>
       <div
         className="goal-dashboard-gauge"
-        style={{ background: `conic-gradient(${gaugeColor} 0% ${gaugePercent}%, #dbe7ef ${gaugePercent}% 100%)` }}
+        style={{
+          "--goal-success-color": gaugeColor,
+          "--goal-success-percent": `${gaugePercent}%`
+        } as CSSProperties}
         role="img"
         aria-label={`${label} başarı oranı ${formatPercent(successPercent)}`}
       >

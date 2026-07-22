@@ -43,7 +43,7 @@ export async function GET() {
         label: "Mağaza Başarı",
         percent: calculateStoreDashboardSuccess(rows, dayStats, storeName),
         colorBlindMode,
-        href: `/hedef-gerceklesen?view=store&store=${encodeURIComponent(storeName)}&panel=dashboard`
+        href: `/hedef-gerceklesen?view=store&store=${encodeURIComponent(storeName)}&panel=dashboard&openDashboard=1`
       });
     }
 
@@ -52,7 +52,7 @@ export async function GET() {
       label: "Firma Başarı",
       percent: calculateCompanyDashboardSuccess(rows, dayStats),
       colorBlindMode,
-      href: "/hedef-gerceklesen?view=company&panel=dashboard"
+      href: "/hedef-gerceklesen?view=company&panel=dashboard&openDashboard=1"
     });
   } catch {
     return NextResponse.json({ visible: false });

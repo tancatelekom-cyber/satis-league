@@ -60,7 +60,9 @@ export function LoginForm({ message }: LoginFormProps) {
       return;
     }
 
-    window.location.assign("/");
+    const confirmation = await confirmResponse.json().catch(() => null) as { redirectTo?: string } | null;
+    const redirectTo = confirmation?.redirectTo?.startsWith("/") ? confirmation.redirectTo : "/";
+    window.location.assign(redirectTo);
   }
 
   return (

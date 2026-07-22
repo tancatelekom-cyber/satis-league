@@ -50,6 +50,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false }, { status: 401 });
   }
 
+  let redirectTo = "/";
+
   try {
     const admin = createAdminClient();
     const { data, error } = await admin.auth.admin.getUserById(user.id);
@@ -63,11 +65,25 @@ export async function POST(request: Request) {
 
       if (updateError) console.error("Login count could not be updated", updateError);
     }
+
+    const { data: profile, error: profileError } = await admin
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (profileError) {
+      console.error("Login redirect profile could not be loaded", profileError);
+    } else if (profile?.role === "manager") {
+      redirectTo = "/hedef-gerceklesen?view=store&panel=detail";
+    } else if (profile?.role === "management" || profile?.role === "admin") {
+      redirectTo = "/hedef-gerceklesen?view=company&panel=detail";
+    }
   } catch (error) {
     console.error("Login count tracking failed", error);
   }
 
-  const response = NextResponse.json({ ok: true });
+  const response = NextResponse.json({ ok: true, redirectTo });
   response.cookies.set(APP_SESSION_COOKIE, createAppSessionValue(), {
     httpOnly: true,
     sameSite: "lax",

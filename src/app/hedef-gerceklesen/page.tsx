@@ -29,6 +29,7 @@ type GoalActualPageProps = {
   searchParams?: Promise<{
     category?: string;
     employee?: string;
+    openDashboard?: string;
     store?: string;
     panel?: string;
     view?: string;
@@ -656,6 +657,7 @@ function buildHref(
     employee?: string;
     store?: string;
     category?: string;
+    openDashboard?: boolean;
     panel?: string;
   }
 ) {
@@ -665,6 +667,7 @@ function buildHref(
   if (options?.store) params.set("store", options.store);
   if (options?.category) params.set("category", options.category);
   if (options?.panel) params.set("panel", options.panel);
+  if (options?.openDashboard) params.set("openDashboard", "1");
   return `/hedef-gerceklesen?${params.toString()}`;
 }
 
@@ -2757,6 +2760,64 @@ function GoalActualOnlyCategoryCards({ categories }: { categories: GoalCategoryS
   );
 }
 
+function GoalSuccessDashboardLink({
+  categories,
+  href,
+  label,
+  colorBlindMode
+}: {
+  categories: GoalCategorySummary[];
+  href: string;
+  label: string;
+  colorBlindMode: boolean;
+}) {
+  const dashboardPalette = getDashboardPalette(colorBlindMode);
+  const targetedCategories = categories.filter(
+    (category) =>
+      normalizeCategoryKey(category.title) !== normalizeCategoryKey("AKSESUAR CIRO") &&
+      !isEntryCount(category.title) &&
+      !isWebKontorCategory(category.title) &&
+      category.hasTarget &&
+      (category.target ?? 0) > 0
+  );
+  const successfulCount = targetedCategories.filter(
+    (category) => (category.projectedPercent ?? category.actualPercent ?? 0) >= 100
+  ).length;
+  const successPercent = targetedCategories.length > 0
+    ? (successfulCount / targetedCategories.length) * 100
+    : 0;
+  const gaugePercent = Math.max(0, Math.min(100, successPercent));
+  const gaugeColor = successPercent >= 80
+    ? dashboardPalette.success
+    : successPercent >= 60
+      ? dashboardPalette.near
+      : dashboardPalette.risk;
+
+  return (
+    <a
+      className="goal-success-dashboard-link"
+      href={href}
+      aria-label={`${label} başarı oranı ${formatPercent(successPercent)}. Dashboardu aç.`}
+    >
+      <div className="goal-dashboard-card-head">
+        <h3>{label} Başarı Grafiği</h3>
+        <span>Dashboardu aç →</span>
+      </div>
+      <div
+        className="goal-dashboard-gauge"
+        style={{ background: `conic-gradient(${gaugeColor} 0% ${gaugePercent}%, #dbe7ef ${gaugePercent}% 100%)` }}
+        role="img"
+        aria-label={`${label} başarı oranı ${formatPercent(successPercent)}`}
+      >
+        <div>
+          <strong>{formatPercent(successPercent)}</strong>
+          <span>başarı</span>
+        </div>
+      </div>
+    </a>
+  );
+}
+
 function StoreGoalDashboard({
   storeName,
   categories,
@@ -3102,7 +3163,7 @@ function CompanyStoreSuccessDashboard({
           return (
             <a
               className="goal-company-success-card"
-              href={buildHref("store", { store: store.storeName, panel: "dashboard" })}
+              href={buildHref("store", { store: store.storeName, panel: "dashboard", openDashboard: true })}
               key={`company-dashboard-${store.storeName}`}
             >
               <div className="goal-dashboard-card-head">
@@ -3158,6 +3219,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
   const selectedStore = String(params?.store ?? "").trim();
   const selectedCategory = String(params?.category ?? "").trim();
   const selectedPanel = String(params?.panel ?? "").trim();
+  const canOpenDashboard = String(params?.openDashboard ?? "").trim() === "1";
 
   const supabase = await createClient();
   const {
@@ -3194,8 +3256,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
         ? "store"
         : "employee";
   const requestedView = selectedView || defaultView;
-  const requestedPanel =
-    selectedPanel || (profile.role === "admin" || profile.role === "management" || profile.role === "manager" ? "dashboard" : "detail");
+  const requestedPanel = selectedPanel || "detail";
   const effectiveView: GoalView = canViewAll
     ? requestedView === "store"
       ? "store"
@@ -3204,9 +3265,9 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
         : "employee"
     : "employee";
   const effectivePanel: GoalPanel =
-    effectiveView === "store" && requestedPanel === "dashboard"
+    effectiveView === "store" && requestedPanel === "dashboard" && canOpenDashboard
       ? "dashboard"
-      : effectiveView === "company" && requestedPanel === "dashboard"
+      : effectiveView === "company" && requestedPanel === "dashboard" && canOpenDashboard
         ? "dashboard"
       : effectiveView === "employee" && requestedPanel === "ranking"
         ? "ranking"
@@ -3775,7 +3836,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
         <div className="goal-tab-row">
           <a
             className={`goal-tab ${effectiveView === "employee" ? "goal-tab-active" : ""}`}
-            href={buildHref("employee", { employee: effectiveEmployee, panel: effectivePanel })}
+            href={buildHref("employee", { employee: effectiveEmployee, panel: "detail" })}
           >
             Calisan
           </a>
@@ -3783,7 +3844,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
             <>
               <a
                 className={`goal-tab ${effectiveView === "store" ? "goal-tab-active" : ""}`}
-                href={buildHref("store", { store: effectiveStore, panel: effectivePanel })}
+                href={buildHref("store", { store: effectiveStore, panel: "detail" })}
               >
                 Magaza
               </a>
@@ -3818,22 +3879,22 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
           </section>
 
           {effectiveView === "company" ? (
-            <section className="guide-card game-brief-card goal-filter-card">
-              <div className="goal-mode-row">
-                <a
-                  className={`goal-mode-button ${effectivePanel === "detail" ? "goal-mode-button-active" : ""}`}
-                  href={buildHref("company", { panel: "detail" })}
-                >
-                  Firma Hedef Gerçekleşen
-                </a>
-                <a
-                  className={`goal-mode-button ${effectivePanel === "dashboard" ? "goal-mode-button-active" : ""}`}
-                  href={buildHref("company", { panel: "dashboard" })}
-                >
-                  Dashboard
-                </a>
-              </div>
-            </section>
+            effectivePanel === "detail" ? (
+              <GoalSuccessDashboardLink
+                categories={companyCategorySummaries}
+                href={buildHref("company", { panel: "dashboard", openDashboard: true })}
+                label="Firma"
+                colorBlindMode={colorBlindDashboardMode}
+              />
+            ) : (
+              <section className="guide-card game-brief-card goal-filter-card">
+                <div className="goal-mode-row">
+                  <a className="goal-mode-button" href={buildHref("company", { panel: "detail" })}>
+                    Firma Hedef Gerçekleşen
+                  </a>
+                </div>
+              </section>
+            )
           ) : null}
 
           {effectiveView !== "company" ? (
@@ -3865,20 +3926,23 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
               </div>
 
               {effectiveView === "store" ? (
-                <div className="goal-mode-row">
-                  <a
-                    className={`goal-mode-button ${effectivePanel === "detail" ? "goal-mode-button-active" : ""}`}
-                    href={buildHref("store", { store: activeStoreName, panel: "detail" })}
-                  >
-                    Hedef Gerçekleşen
-                  </a>
-                  <a
-                    className={`goal-mode-button ${effectivePanel === "dashboard" ? "goal-mode-button-active" : ""}`}
-                    href={buildHref("store", { store: activeStoreName, panel: "dashboard" })}
-                  >
-                    Dashboard
-                  </a>
-                </div>
+                effectivePanel === "detail" ? (
+                  <GoalSuccessDashboardLink
+                    categories={storeCategorySummaries}
+                    href={buildHref("store", { store: activeStoreName, panel: "dashboard", openDashboard: true })}
+                    label={activeStoreName || "Mağaza"}
+                    colorBlindMode={colorBlindDashboardMode}
+                  />
+                ) : (
+                  <div className="goal-mode-row">
+                    <a
+                      className="goal-mode-button"
+                      href={buildHref("store", { store: activeStoreName, panel: "detail" })}
+                    >
+                      Hedef Gerçekleşen
+                    </a>
+                  </div>
+                )
               ) : (
                 <div className="goal-mode-row">
                   <a

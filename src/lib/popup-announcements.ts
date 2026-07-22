@@ -1,3 +1,4 @@
+import { unstable_noStore as noStore } from "next/cache";
 import type { UserRole } from "@/lib/types";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -137,6 +138,8 @@ export async function getActivePopupAnnouncementsForProfile(profile: {
   role: UserRole;
   approval?: string | null;
 }) {
+  noStore();
+
   if (profile.approval !== "approved") {
     return [];
   }
@@ -202,6 +205,8 @@ export async function getActivePopupAnnouncementsForProfile(profile: {
 }
 
 export async function getAdminPopupAnnouncements() {
+  noStore();
+
   const admin = createAdminClient();
 
   let data: PopupAnnouncementRow[] | null = null;

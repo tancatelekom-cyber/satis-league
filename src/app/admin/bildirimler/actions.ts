@@ -23,6 +23,14 @@ function redirectWithMessage(message: string, type: "success" | "error" = "succe
   redirect(`/admin/bildirimler?${params.toString()}`);
 }
 
+function isNextRedirectError(error: unknown) {
+  if (!error || typeof error !== "object" || !("digest" in error)) {
+    return false;
+  }
+
+  return String((error as { digest?: unknown }).digest ?? "").startsWith("NEXT_REDIRECT");
+}
+
 function toIstanbulIso(value: FormDataEntryValue | null) {
   const rawValue = typeof value === "string" ? value.trim() : "";
 
@@ -182,6 +190,10 @@ export async function createPopupAnnouncementAction(formData: FormData) {
     revalidatePath("/admin/bildirimler");
     redirectWithMessage("Popup bildirim olusturuldu.");
   } catch (error) {
+    if (isNextRedirectError(error)) {
+      throw error;
+    }
+
     const message =
       error instanceof Error
         ? error.message
@@ -189,6 +201,41 @@ export async function createPopupAnnouncementAction(formData: FormData) {
 
     redirectWithMessage(message, "error");
   }
+}
+
+export async function updatePopupAnnouncementTitleAction(formData: FormData) {
+  await requireAdminAccess();
+
+  const id = String(formData.get("id") ?? "").trim();
+  const title = String(formData.get("title") ?? "").trim();
+
+  if (!id) {
+    redirectWithMessage("Duzenlenecek bildirim bulunamadi.", "error");
+  }
+
+  if (!title) {
+    redirectWithMessage("Popup basligi bos birakilamaz.", "error");
+  }
+
+  const admin = createAdminClient();
+  const { data: updatedAnnouncement, error } = await admin
+    .from("popup_announcements")
+    .update({ title, updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .select("id, title")
+    .single();
+
+  if (error) {
+    redirectWithMessage(`Popup basligi guncellenemedi: ${error.message}`, "error");
+  }
+
+  if (!updatedAnnouncement || updatedAnnouncement.title !== title) {
+    redirectWithMessage("Popup basligi kaydedilemedi. Lutfen tekrar deneyin.", "error");
+  }
+
+  revalidatePath("/");
+  revalidatePath("/admin/bildirimler");
+  redirectWithMessage("Yayindaki popup basligi guncellendi.");
 }
 
 export async function updatePopupAnnouncementAction(formData: FormData) {
@@ -309,6 +356,10 @@ export async function updatePopupAnnouncementAction(formData: FormData) {
     revalidatePath("/admin/bildirimler");
     redirectWithMessage("Popup bildirimin konusu ve icerigi guncellendi.");
   } catch (error) {
+    if (isNextRedirectError(error)) {
+      throw error;
+    }
+
     const message =
       error instanceof Error
         ? error.message

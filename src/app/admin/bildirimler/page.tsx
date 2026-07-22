@@ -15,7 +15,8 @@ import {
   deletePopupAnnouncementAction,
   togglePopupAnnouncementAction,
   updateAutoPopupSettingAction,
-  updatePopupAnnouncementAction
+  updatePopupAnnouncementAction,
+  updatePopupAnnouncementTitleAction
 } from "@/app/admin/bildirimler/actions";
 
 type AdminPopupAnnouncementsPageProps = {
@@ -308,8 +309,16 @@ export default async function AdminPopupAnnouncementsPage({ searchParams }: Admi
 
                     <label className="field">
                       <span>Konu / Baslik</span>
-                      <input name="title" defaultValue={announcement.title} required />
+                      <input name="title" defaultValue={announcement.title} maxLength={160} required />
                     </label>
+
+                    <button
+                      className="button-secondary"
+                      formAction={updatePopupAnnouncementTitleAction}
+                      type="submit"
+                    >
+                      Sadece Basligi Kaydet
+                    </button>
 
                     <label className="field">
                       <span>Bildirim Metni</span>

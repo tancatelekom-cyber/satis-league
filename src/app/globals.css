@@ -12879,6 +12879,14 @@ textarea::placeholder {
 
 .goal-success-dashboard-link-wide {
   width: 100%;
+  max-width: none;
+  margin-inline: 0;
+  justify-self: stretch;
+  box-sizing: border-box;
+}
+
+.goal-page .goal-control-shell > .goal-success-dashboard-link-wide {
+  grid-column: 1 / -1;
 }
 
 .goal-dashboard-status-layout {

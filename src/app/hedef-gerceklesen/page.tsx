@@ -2861,6 +2861,7 @@ function DashboardCategoryHoverTable({
   >;
   remainingDays: number;
 }) {
+  const accordionName = `goal-dashboard-hover-${normalizeCategoryKey(title).replace(/[^A-Z0-9]+/g, "-")}`;
   const renderMetricCells = (row: GoalMetricSummary) => {
     const dailyMinimum = row.hasTarget
       ? buildNeedRows(row, remainingDays).find((need) => need.threshold === 100)?.dailyRequired ?? 0
@@ -2914,7 +2915,7 @@ function DashboardCategoryHoverTable({
                 <tr>
                   <th>
                     {children.length ? (
-                      <details className="goal-dashboard-hover-category-toggle">
+                      <details className="goal-dashboard-hover-category-toggle" name={accordionName}>
                         <summary>
                           <span className="goal-dashboard-hover-category-arrow">⌄</span>
                           <span>{row.title}</span>

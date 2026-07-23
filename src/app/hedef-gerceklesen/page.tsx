@@ -4335,12 +4335,18 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                               <th>{row.title}</th>
                               {visibleTrendStoreCodes.map((storeCode) => {
                                 const store = row.stores.find((item) => item.storeCode === storeCode);
+                                const isActivationCountCritical =
+                                  normalizeCategoryKey(row.title).includes("AKTIVASYON ADET") &&
+                                  store?.projectedPercent !== null &&
+                                  store?.projectedPercent !== undefined &&
+                                  store.projectedPercent < 60;
                                 const comparisonState =
                                   storeCode === highlightedTrendStoreCode && row.title !== "Giris Sayilari"
                                     ? getTrendComparisonState(store?.projectedPercent, row.companyProjectedPercent)
                                     : null;
                                 const cellClasses = [
                                   storeCode === highlightedTrendStoreCode ? "goal-company-trend-selected" : "",
+                                  isActivationCountCritical ? "goal-company-trend-activation-critical" : "",
                                   store?.projectedPercent !== null &&
                                   store?.projectedPercent !== undefined &&
                                   store.projectedPercent >= 100
@@ -4368,6 +4374,12 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                                 className={`goal-company-trend-company ${
                                   row.companyProjectedPercent !== null && row.companyProjectedPercent >= 100
                                     ? "goal-company-trend-good"
+                                    : ""
+                                } ${
+                                  normalizeCategoryKey(row.title).includes("AKTIVASYON ADET") &&
+                                  row.companyProjectedPercent !== null &&
+                                  row.companyProjectedPercent < 60
+                                    ? "goal-company-trend-activation-critical"
                                     : ""
                                 }`}
                               >

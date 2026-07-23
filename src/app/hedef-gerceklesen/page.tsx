@@ -2963,7 +2963,11 @@ function StoreGoalDashboard({
                   : dashboardPalette.risk;
             const displayValue = category.hasTarget ? formatPercent(projectedPercent) : formatNumber(category.actual);
             return (
-              <div className="goal-dashboard-category-pie-card" key={`dashboard-category-${category.title}`}>
+              <div
+                className="goal-dashboard-category-pie-card"
+                key={`dashboard-category-${category.title}`}
+                tabIndex={0}
+              >
                 <div
                   className="goal-dashboard-category-pie"
                   style={{ background: `conic-gradient(${color} 0% ${piePercent}%, #e2e8f0 ${piePercent}% 100%)` }}
@@ -2978,6 +2982,19 @@ function StoreGoalDashboard({
                 </div>
                 <strong>{category.title}</strong>
                 <span>{category.hasTarget ? `Şu an ${formatPercent(actualPercent)}` : "Hedef tanımlı değil"}</span>
+                <div className="goal-dashboard-category-hover-detail">
+                  <strong>{storeName || "Mağaza"}</strong>
+                  <div className="goal-dashboard-category-current-grid">
+                    <span>
+                      <small>Hedef</small>
+                      <b>{category.hasTarget ? formatNumber(category.target) : "-"}</b>
+                    </span>
+                    <span>
+                      <small>Gerçekleşen</small>
+                      <b>{formatNumber(category.actual)}</b>
+                    </span>
+                  </div>
+                </div>
               </div>
             );
           })}
@@ -3158,7 +3175,11 @@ function CompanyStoreSuccessDashboard({
             const displayValue = category.hasTarget ? formatPercent(projectedPercent) : formatNumber(category.actual);
 
             return (
-              <div className="goal-dashboard-category-pie-card" key={`company-dashboard-category-${category.title}`}>
+              <div
+                className="goal-dashboard-category-pie-card"
+                key={`company-dashboard-category-${category.title}`}
+                tabIndex={0}
+              >
                 <div
                   className="goal-dashboard-category-pie"
                   style={{ background: `conic-gradient(${color} 0% ${piePercent}%, #e2e8f0 ${piePercent}% 100%)` }}
@@ -3173,6 +3194,24 @@ function CompanyStoreSuccessDashboard({
                 </div>
                 <strong>{category.title}</strong>
                 <span>{category.hasTarget ? `Şu an ${formatPercent(actualPercent)}` : "Hedef tanımlı değil"}</span>
+                <div className="goal-dashboard-category-hover-detail goal-dashboard-category-company-detail">
+                  <strong>Şubelerin Hedef Gerçekleşenleri</strong>
+                  <div className="goal-dashboard-category-store-list">
+                    {(category.storeDetails ?? []).map((store) => (
+                      <div className="goal-dashboard-category-store-row" key={`${category.title}-${store.title}`}>
+                        <b>{store.title}</b>
+                        <span>
+                          <small>Hedef</small>
+                          <strong>{store.hasTarget ? formatNumber(store.target) : "-"}</strong>
+                        </span>
+                        <span>
+                          <small>Gerçekleşen</small>
+                          <strong>{formatNumber(store.actual)}</strong>
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             );
           })}

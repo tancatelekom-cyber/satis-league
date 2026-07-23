@@ -13806,9 +13806,16 @@ textarea::placeholder {
   min-width: 0;
   display: grid;
   justify-items: center;
+  align-self: start;
   gap: 7px;
   text-align: center;
   color: #ffffff;
+  outline: none;
+}
+
+.goal-dashboard-category-pie-card:focus-visible {
+  border-radius: 12px;
+  box-shadow: 0 0 0 2px rgba(99, 217, 232, 0.8);
 }
 
 .goal-dashboard-category-pie {
@@ -13839,6 +13846,105 @@ textarea::placeholder {
 .goal-dashboard-category-pie-card > span {
   color: #b9c9e8;
   font-size: 0.75rem;
+}
+
+.goal-dashboard-category-hover-detail {
+  width: 100%;
+  max-height: 0;
+  margin-top: 0;
+  overflow: hidden;
+  border: 0 solid rgba(99, 217, 232, 0.26);
+  border-radius: 12px;
+  background: #1c1d46;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-6px);
+  transition: max-height 220ms ease, margin-top 180ms ease, padding 180ms ease, border-width 180ms ease,
+    opacity 150ms ease, transform 180ms ease, visibility 0s linear 220ms;
+}
+
+.goal-dashboard-category-pie-card:hover .goal-dashboard-category-hover-detail,
+.goal-dashboard-category-pie-card:focus-within .goal-dashboard-category-hover-detail {
+  max-height: min(430px, 55vh);
+  margin-top: 5px;
+  padding: 10px;
+  overflow-y: auto;
+  border-width: 1px;
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition-delay: 0s;
+}
+
+.goal-dashboard-category-hover-detail > strong {
+  display: block;
+  margin-bottom: 8px;
+  color: #ffffff;
+  font-size: 0.74rem;
+  line-height: 1.2;
+}
+
+.goal-dashboard-category-current-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.goal-dashboard-category-current-grid > span {
+  display: grid;
+  gap: 3px;
+  padding: 7px 5px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.goal-dashboard-category-hover-detail small {
+  color: #aebfdd;
+  font-size: 0.58rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.goal-dashboard-category-current-grid b {
+  color: #ffffff;
+  font-size: 0.76rem;
+}
+
+.goal-dashboard-category-store-list {
+  display: grid;
+  gap: 6px;
+}
+
+.goal-dashboard-category-store-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: center;
+  gap: 5px;
+  padding: 7px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.07);
+  text-align: left;
+}
+
+.goal-dashboard-category-store-row > b {
+  grid-column: 1 / -1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: #ffffff;
+  font-size: 0.68rem;
+  text-align: center;
+}
+
+.goal-dashboard-category-store-row > span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  text-align: center;
+}
+
+.goal-dashboard-category-store-row strong {
+  color: #ffffff;
+  font-size: 0.68rem;
 }
 
 .goal-company-success-grid {

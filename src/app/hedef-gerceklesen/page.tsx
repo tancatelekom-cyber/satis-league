@@ -4569,7 +4569,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
 
                 {effectiveView === "company" && detailZeroActualItems.length ? (
                   <div className="evaluation-zero-alert">
-                    <strong>Gozden kacirdigin kalemler</strong>
+                    <strong>Firmada Hedef Gerçekleşeni Sıfır Olan Kalemler</strong>
                     <p>Gercekleseni 0 olan bu kalemler bugun mutlaka kontrol edilmeli.</p>
                     <div>
                       {detailZeroActualItems.map((item) => (

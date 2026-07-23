@@ -14021,6 +14021,27 @@ textarea::placeholder {
   display: table-row;
 }
 
+.goal-dashboard-hover-row-group > tr:first-child > th,
+.goal-dashboard-hover-row-group > tr:first-child > td {
+  transition: background-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
+}
+
+.goal-dashboard-hover-row-group:has(.goal-dashboard-hover-category-toggle[open]) > tr:first-child > th {
+  background: #78bdb5;
+  color: #082f35;
+  box-shadow: inset 5px 0 0 #145d61;
+}
+
+.goal-dashboard-hover-row-group:has(.goal-dashboard-hover-category-toggle[open]) > tr:first-child > td {
+  background: #d7efeb;
+  color: #123f43;
+  font-weight: 900;
+}
+
+.goal-dashboard-hover-row-group:has(.goal-dashboard-hover-category-toggle[open]) .goal-dashboard-hover-category-arrow {
+  color: #082f35;
+}
+
 .goal-dashboard-hover-child-row th {
   padding-left: 34px;
   background: #eaf2f9 !important;

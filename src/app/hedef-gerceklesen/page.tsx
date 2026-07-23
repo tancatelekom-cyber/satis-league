@@ -2446,12 +2446,14 @@ function EmployeeGoalCategoryTable({
   categories,
   remainingDays = 0,
   productionRewardRows = [],
-  productPointRows = []
+  productPointRows = [],
+  informationRows = []
 }: {
   categories: GoalCategorySummary[];
   remainingDays?: number;
   productionRewardRows?: GoalProductionRewardRow[];
   productPointRows?: GoalProductPointRow[];
+  informationRows?: GoalSeparateInfoRow[];
 }) {
   type EmployeeGoalTableMetric = GoalMetricSummary & { title: string };
 
@@ -2680,6 +2682,26 @@ function EmployeeGoalCategoryTable({
             </details>
           );
         })}
+
+        {informationRows.length ? (
+          <section className="goal-employee-table-information-section" aria-label="Bilgilendirme kalemleri mevcut değerleri">
+            <div className="goal-employee-table-information-head">
+              <strong>Bilgilendirme Kalemleri</strong>
+              <span>Yalnızca mevcut değerler</span>
+            </div>
+            {informationRows.map((row) => (
+              <div className="goal-employee-table-row goal-employee-table-information-row" key={`goal-information-${row.title}`}>
+                <div className="goal-employee-table-cell goal-employee-table-cell-title">
+                  <span className="goal-employee-table-title-label">{row.title}</span>
+                </div>
+                <div className="goal-employee-table-cell goal-employee-table-information-current">
+                  <small>Mevcut Değer</small>
+                  <strong>{formatGoalValue(row.actual, row.actualIsPercent)}</strong>
+                </div>
+              </div>
+            ))}
+          </section>
+        ) : null}
       </div>
     </div>
   );
@@ -4329,10 +4351,11 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                     <p className="subtle">Firma verisi bulunamadi.</p>
                   )
                 ) : effectiveView === "store" ? (
-                  storeCategorySummaries.length ? (
+                  storeCategorySummaries.length || storeSeparateInfoRows.length ? (
                     <EmployeeGoalCategoryTable
                       categories={storeCategorySummaries}
                       remainingDays={dayStats.remainingDays}
+                      informationRows={storeSeparateInfoRows}
                     />
                   ) : (
                     <p className="subtle">Bu magaza icin kategori verisi bulunamadi.</p>
@@ -4373,10 +4396,6 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                       <p className="subtle">Bu magazada hedef tanimli kalem bulunamadi.</p>
                     )}
                   </div>
-                ) : null}
-
-                {effectiveView === "store" ? (
-                  <SeparateInfoTable title="Bilgilendirme Kalemleri" rows={storeSeparateInfoRows} />
                 ) : null}
 
                 {effectiveView === "company" && visibleTrendStoreCodes.length && companyDailyNeedSummaryRows.length ? (

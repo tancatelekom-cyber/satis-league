@@ -4357,7 +4357,11 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                                   .join(" ");
 
                                 return (
-                                  <td key={`trend-${row.title}-${storeCode}`} className={cellClasses}>
+                                  <td
+                                    key={`trend-${row.title}-${storeCode}`}
+                                    className={cellClasses}
+                                    tabIndex={isActivationCountCritical ? 0 : undefined}
+                                  >
                                     <span className="goal-company-trend-value">
                                       <span>{formatPercent(store?.projectedPercent)}</span>
                                       {comparisonState ? (
@@ -4367,6 +4371,11 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                                         />
                                       ) : null}
                                     </span>
+                                    {isActivationCountCritical ? (
+                                      <span className="goal-company-trend-critical-message">
+                                        %60 altında destek primi alamamaktasınız
+                                      </span>
+                                    ) : null}
                                   </td>
                                 );
                               })}
@@ -4382,8 +4391,22 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                                     ? "goal-company-trend-activation-critical"
                                     : ""
                                 }`}
+                                tabIndex={
+                                  normalizeCategoryKey(row.title).includes("AKTIVASYON ADET") &&
+                                  row.companyProjectedPercent !== null &&
+                                  row.companyProjectedPercent < 60
+                                    ? 0
+                                    : undefined
+                                }
                               >
-                                {formatPercent(row.companyProjectedPercent)}
+                                <span>{formatPercent(row.companyProjectedPercent)}</span>
+                                {normalizeCategoryKey(row.title).includes("AKTIVASYON ADET") &&
+                                row.companyProjectedPercent !== null &&
+                                row.companyProjectedPercent < 60 ? (
+                                  <span className="goal-company-trend-critical-message">
+                                    %60 altında destek primi alamamaktasınız
+                                  </span>
+                                ) : null}
                               </td>
                             </tr>
                           ))}

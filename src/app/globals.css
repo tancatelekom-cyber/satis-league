@@ -13987,6 +13987,38 @@ textarea::placeholder {
   background: #ffffff;
 }
 
+.goal-dashboard-hover-table tfoot th,
+.goal-dashboard-hover-table tfoot td {
+  padding: 13px 10px;
+  border-top: 2px solid #2f7777;
+  border-right: 1px solid rgba(16, 32, 59, 0.13);
+  background: #c3e3df;
+  color: #0b3b40;
+  font-size: 0.8rem;
+  font-weight: 900;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.goal-dashboard-hover-table tfoot th {
+  min-width: 150px;
+  background: #78bdb5;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.goal-dashboard-hover-table tfoot td:last-child {
+  border-right: 0;
+}
+
+.goal-dashboard-hover-table tfoot td.goal-dashboard-hover-good {
+  color: #078329;
+}
+
+.goal-dashboard-hover-table tfoot td.goal-dashboard-hover-bad {
+  color: #c91414;
+}
+
 .goal-dashboard-hover-category-toggle summary {
   display: inline-flex;
   align-items: center;

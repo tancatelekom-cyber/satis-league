@@ -2850,7 +2850,8 @@ function DashboardCategoryHoverTable({
   title,
   firstColumnLabel,
   rows,
-  remainingDays
+  remainingDays,
+  footerRow
 }: {
   title: string;
   firstColumnLabel: string;
@@ -2861,6 +2862,7 @@ function DashboardCategoryHoverTable({
     }
   >;
   remainingDays: number;
+  footerRow?: GoalMetricSummary & { title: string };
 }) {
   const accordionName = `goal-dashboard-hover-${normalizeCategoryKey(title).replace(/[^A-Z0-9]+/g, "-")}`;
   const renderMetricCells = (row: GoalMetricSummary) => {
@@ -2943,6 +2945,14 @@ function DashboardCategoryHoverTable({
               </tbody>
             );
           })}
+          {footerRow ? (
+            <tfoot>
+              <tr>
+                <th>{footerRow.title}</th>
+                {renderMetricCells(footerRow)}
+              </tr>
+            </tfoot>
+          ) : null}
         </table>
       </div>
     </div>
@@ -3294,6 +3304,7 @@ function CompanyStoreSuccessDashboard({
                   firstColumnLabel="Şube"
                   rows={category.storeDetails ?? []}
                   remainingDays={dayStats.remainingDays}
+                  footerRow={{ ...category, title: "Firma Genel Toplam" }}
                 />
               </div>
             );

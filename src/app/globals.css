@@ -14061,17 +14061,29 @@ textarea::placeholder {
 .goal-dashboard-hover-row-group:has(.goal-dashboard-hover-category-toggle[open]) > tr:first-child > th {
   background: #78bdb5;
   color: #082f35;
-  box-shadow: inset 5px 0 0 #145d61;
+  box-shadow: inset 5px 0 0 #145d61, inset 0 4px 0 #145d61;
 }
 
 .goal-dashboard-hover-row-group:has(.goal-dashboard-hover-category-toggle[open]) > tr:first-child > td {
   background: #d7efeb;
   color: #123f43;
   font-weight: 900;
+  box-shadow: inset 0 4px 0 #145d61;
 }
 
 .goal-dashboard-hover-row-group:has(.goal-dashboard-hover-category-toggle[open]) .goal-dashboard-hover-category-arrow {
   color: #082f35;
+}
+
+.goal-dashboard-hover-row-group:has(.goal-dashboard-hover-category-toggle[open]) > tr:first-child > th,
+.goal-dashboard-hover-row-group:has(.goal-dashboard-hover-category-toggle[open]) > tr:first-child > td {
+  border-top: 3px solid #145d61;
+}
+
+.goal-dashboard-hover-row-group:has(.goal-dashboard-hover-category-toggle[open]) > tr:last-child > th,
+.goal-dashboard-hover-row-group:has(.goal-dashboard-hover-category-toggle[open]) > tr:last-child > td {
+  border-bottom: 3px solid #145d61;
+  box-shadow: inset 0 -4px 0 #145d61;
 }
 
 .goal-dashboard-hover-child-row th {

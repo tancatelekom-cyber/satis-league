@@ -3095,6 +3095,29 @@ textarea::placeholder {
   overflow-wrap: anywhere;
 }
 
+.organization-leave-badge {
+  display: inline-flex;
+  width: fit-content;
+  margin-top: 5px;
+  padding: 3px 7px;
+  border: 1px solid rgba(181, 124, 21, 0.28);
+  border-radius: 999px;
+  background: #fff4d6;
+  color: #8a5b08;
+  font-size: 0.62rem;
+  font-style: normal;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.organization-coordinator-card .organization-leave-badge {
+  border-color: rgba(255, 228, 163, 0.42);
+  background: rgba(255, 228, 163, 0.16);
+  color: #ffe4a3;
+}
+
 .organization-person-row strong {
   color: #17364d;
   font-size: 0.8rem;

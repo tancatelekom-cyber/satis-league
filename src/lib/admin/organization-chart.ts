@@ -27,9 +27,7 @@ export function buildOrganizationChartData(
   profiles: AdminManagedProfile[],
   allStores: AdminStore[]
 ): OrganizationChartData {
-  const activeProfiles = profiles.filter(
-    (profile) => profile.approval === "approved" && !profile.is_on_leave
-  );
+  const activeProfiles = profiles.filter((profile) => profile.approval === "approved");
   const coordinator = activeProfiles.find(
     (profile) => normalizeName(profile.full_name) === normalizeName(ORGANIZATION_COORDINATOR_NAME)
   );

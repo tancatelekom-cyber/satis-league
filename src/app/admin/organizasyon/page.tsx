@@ -32,12 +32,6 @@ export default async function OrganizationChartPage() {
 
       <AdminSectionNav currentPath="/admin/organizasyon" />
 
-      <section className="organization-summary" aria-label="Organizasyon özeti">
-        <div><span>🏬</span><strong>{stores.length}</strong><small>Şube</small></div>
-        <div><span>🧑‍💼</span><strong>{managerCount}</strong><small>Mağaza Müdürü</small></div>
-        <div><span>👥</span><strong>{employeeCount}</strong><small>Çalışan</small></div>
-      </section>
-
       <section className="organization-chart-shell">
         <div className="organization-coordinator-wrap">
           <article className="organization-person-card organization-coordinator-card">
@@ -45,7 +39,8 @@ export default async function OrganizationChartPage() {
             <span className="organization-person-copy">
               <small>Genel Koordinatör</small>
               <strong>Emre Terzi</strong>
-              {coordinator ? <span>{coordinator.email}</span> : <span>Kullanıcı kaydıyla eşleşmedi</span>}
+              {coordinator?.is_on_leave ? <em className="organization-leave-badge">İzinli</em> : null}
+              {!coordinator ? <span>Kullanıcı kaydıyla eşleşmedi</span> : null}
             </span>
           </article>
         </div>
@@ -65,7 +60,10 @@ export default async function OrganizationChartPage() {
                   store.managers.map((manager) => (
                     <div className="organization-person-row organization-manager-row" key={manager.id}>
                       <span className="organization-mini-avatar" aria-hidden="true">🧑‍💼</span>
-                      <div><strong>{manager.full_name}</strong><small>{manager.email}</small></div>
+                      <div>
+                        <strong>{manager.full_name}</strong>
+                        {manager.is_on_leave ? <em className="organization-leave-badge">İzinli</em> : null}
+                      </div>
                     </div>
                   ))
                 ) : (
@@ -80,7 +78,10 @@ export default async function OrganizationChartPage() {
                     store.employees.map((employee) => (
                       <div className="organization-person-row" key={employee.id}>
                         <span className="organization-mini-avatar" aria-hidden="true">👤</span>
-                        <div><strong>{employee.full_name}</strong><small>{employee.email}</small></div>
+                        <div>
+                          <strong>{employee.full_name}</strong>
+                          {employee.is_on_leave ? <em className="organization-leave-badge">İzinli</em> : null}
+                        </div>
                       </div>
                     ))
                   ) : (
@@ -93,12 +94,21 @@ export default async function OrganizationChartPage() {
         </div>
       </section>
 
+      <section className="organization-summary" aria-label="Organizasyon özeti">
+        <div><span>🏬</span><strong>{stores.length}</strong><small>Şube</small></div>
+        <div><span>🧑‍💼</span><strong>{managerCount}</strong><small>Mağaza Müdürü</small></div>
+        <div><span>👥</span><strong>{employeeCount}</strong><small>Çalışan</small></div>
+      </section>
+
       {unassignedProfiles.length ? (
         <section className="organization-unassigned">
           <div><strong>⚠️ Şubesi Atanmamış Kullanıcılar</strong><span>Organizasyon şemasına bağlanamayan kayıtlar</span></div>
           <div className="organization-unassigned-list">
             {unassignedProfiles.map((profile) => (
-              <span key={profile.id}>{profile.full_name} · {profile.role === "manager" ? "Mağaza Müdürü" : "Çalışan"}</span>
+              <span key={profile.id}>
+                {profile.full_name} · {profile.role === "manager" ? "Mağaza Müdürü" : "Çalışan"}
+                {profile.is_on_leave ? " · İzinli" : ""}
+              </span>
             ))}
           </div>
         </section>

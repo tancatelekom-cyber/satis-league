@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { CopyCoachingButton } from "@/components/evaluation/copy-coaching-button";
 import { CompanyDailyNeedsTable } from "@/components/evaluation/company-daily-needs-table";
 import { DashboardShareButton } from "@/components/evaluation/dashboard-share-button";
+import { DashboardCategoryInteractiveGrid } from "@/components/evaluation/dashboard-category-interactive-grid";
 import { FormattedCoachingText } from "@/components/evaluation/formatted-coaching-text";
 import { SpeakCoachingButton } from "@/components/evaluation/speak-coaching-button";
 import { StoreDailyNeedsTable } from "@/components/evaluation/store-daily-needs-table";
@@ -2892,6 +2893,14 @@ function DashboardCategoryHoverTable({
 
   return (
     <div className="goal-dashboard-category-hover-detail">
+      <button
+        className="goal-dashboard-category-hover-close"
+        data-dashboard-category-close
+        type="button"
+        aria-label="Açılan kategori tablosunu kapat"
+      >
+        ×
+      </button>
       <strong>{title}</strong>
       <div className="goal-dashboard-hover-table-wrap">
         <table className="goal-dashboard-hover-table">
@@ -3044,7 +3053,7 @@ function StoreGoalDashboard({
           <h3>Kategori Ay Sonu Pasta Özeti</h3>
           <span>Tüm kategorilerin ay sonu hedef gidişatı</span>
         </div>
-        <div className="goal-dashboard-category-pies">
+        <DashboardCategoryInteractiveGrid>
           {dashboardCategories.map((category) => {
             const actualPercent = category.actualPercent ?? 0;
             const projectedPercent = category.projectedPercent ?? actualPercent;
@@ -3061,7 +3070,6 @@ function StoreGoalDashboard({
               <div
                 className="goal-dashboard-category-pie-card"
                 key={`dashboard-category-${category.title}`}
-                tabIndex={0}
               >
                 <div
                   className="goal-dashboard-category-pie"
@@ -3086,7 +3094,7 @@ function StoreGoalDashboard({
               </div>
             );
           })}
-        </div>
+        </DashboardCategoryInteractiveGrid>
       </article>
 
       {canShare ? (
@@ -3248,7 +3256,7 @@ function CompanyStoreSuccessDashboard({
           <h3>Firma Kategori Ay Sonu Pasta Özeti</h3>
           <span>Tüm kategorilerin firma ay sonu hedef gidişatı</span>
         </div>
-        <div className="goal-dashboard-category-pies">
+        <DashboardCategoryInteractiveGrid>
           {companyDashboardCategories.map((category) => {
             const actualPercent = category.actualPercent ?? 0;
             const projectedPercent = category.projectedPercent ?? actualPercent;
@@ -3266,7 +3274,6 @@ function CompanyStoreSuccessDashboard({
               <div
                 className="goal-dashboard-category-pie-card"
                 key={`company-dashboard-category-${category.title}`}
-                tabIndex={0}
               >
                 <div
                   className="goal-dashboard-category-pie"
@@ -3291,7 +3298,7 @@ function CompanyStoreSuccessDashboard({
               </div>
             );
           })}
-        </div>
+        </DashboardCategoryInteractiveGrid>
       </article>
 
       <div className="goal-company-success-grid">

@@ -13814,6 +13814,16 @@ textarea::placeholder {
   outline: none;
 }
 
+.goal-dashboard-category-interactive-item {
+  min-width: 0;
+  outline: none;
+}
+
+.goal-dashboard-category-interactive-item:focus-visible {
+  border-radius: 12px;
+  box-shadow: 0 0 0 2px rgba(99, 217, 232, 0.8);
+}
+
 .goal-dashboard-category-card {
   position: relative;
   z-index: 10;
@@ -13875,8 +13885,7 @@ textarea::placeholder {
     opacity 150ms ease, transform 180ms ease, visibility 0s linear 220ms;
 }
 
-.goal-dashboard-category-pie-card:hover .goal-dashboard-category-hover-detail,
-.goal-dashboard-category-pie-card:focus-within .goal-dashboard-category-hover-detail {
+.goal-dashboard-category-interactive-item[data-open="true"] .goal-dashboard-category-hover-detail {
   max-height: min(520px, 62vh);
   margin-top: 5px;
   padding: 10px;
@@ -13888,8 +13897,36 @@ textarea::placeholder {
   transition-delay: 0s;
 }
 
+.goal-dashboard-category-hover-close {
+  position: absolute;
+  top: 7px;
+  right: 8px;
+  z-index: 2;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(32, 85, 87, 0.2);
+  border-radius: 50%;
+  background: #e4f0ef;
+  color: #17484c;
+  font-size: 1.2rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.goal-dashboard-category-hover-close:hover,
+.goal-dashboard-category-hover-close:focus-visible {
+  border-color: #2f7777;
+  background: #d2e7e5;
+  outline: none;
+}
+
 .goal-dashboard-category-hover-detail > strong {
   display: block;
+  padding-right: 38px;
   margin-bottom: 8px;
   color: #123f43;
   font-size: 0.88rem;

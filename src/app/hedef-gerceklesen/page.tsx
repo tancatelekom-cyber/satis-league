@@ -2448,13 +2448,15 @@ function EmployeeGoalCategoryTable({
   remainingDays = 0,
   productionRewardRows = [],
   productPointRows = [],
-  informationRows = []
+  informationRows = [],
+  emphasizeOpenGroups = false
 }: {
   categories: GoalCategorySummary[];
   remainingDays?: number;
   productionRewardRows?: GoalProductionRewardRow[];
   productPointRows?: GoalProductPointRow[];
   informationRows?: GoalSeparateInfoRow[];
+  emphasizeOpenGroups?: boolean;
 }) {
   type EmployeeGoalTableMetric = GoalMetricSummary & { title: string };
 
@@ -2510,7 +2512,11 @@ function EmployeeGoalCategoryTable({
   };
 
   return (
-    <div className="goal-employee-table-shell">
+    <div
+      className={`goal-employee-table-shell${
+        emphasizeOpenGroups ? " goal-employee-table-shell-emphasized" : ""
+      }`}
+    >
       <div className="goal-employee-table-head">
         <div className="goal-employee-table-cell goal-employee-table-cell-title">Kategori</div>
         <div className="goal-employee-table-cell">Hedef</div>
@@ -4477,6 +4483,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                       <EmployeeGoalCategoryTable
                         categories={companyCategorySummaries}
                         remainingDays={dayStats.remainingDays}
+                        emphasizeOpenGroups
                       />
                       <CompanyInformationCurrentTable rows={companySeparateInfoRows} />
                     </>
@@ -4489,6 +4496,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                       categories={storeCategorySummaries}
                       remainingDays={dayStats.remainingDays}
                       informationRows={storeSeparateInfoRows}
+                      emphasizeOpenGroups
                     />
                   ) : (
                     <p className="subtle">Bu magaza icin kategori verisi bulunamadi.</p>

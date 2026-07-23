@@ -2993,6 +2993,18 @@ function StoreGoalDashboard({
                       <small>Gerçekleşen</small>
                       <b>{formatNumber(category.actual)}</b>
                     </span>
+                    <span>
+                      <small>Ay Sonu Değer</small>
+                      <b>{category.showProjection ? formatNumber(category.projectedActual) : "-"}</b>
+                    </span>
+                    <span>
+                      <small>Ay Sonu %</small>
+                      <b>
+                        {category.hasTarget && category.showProjection && category.projectedPercent !== null
+                          ? formatPercent(category.projectedPercent)
+                          : "-"}
+                      </b>
+                    </span>
                   </div>
                 </div>
               </div>
@@ -3207,6 +3219,18 @@ function CompanyStoreSuccessDashboard({
                         <span>
                           <small>Gerçekleşen</small>
                           <strong>{formatNumber(store.actual)}</strong>
+                        </span>
+                        <span>
+                          <small>Ay Sonu Değer</small>
+                          <strong>{store.showProjection ? formatNumber(store.projectedActual) : "-"}</strong>
+                        </span>
+                        <span>
+                          <small>Ay Sonu %</small>
+                          <strong>
+                            {store.hasTarget && store.showProjection && store.projectedPercent !== null
+                              ? formatPercent(store.projectedPercent)
+                              : "-"}
+                          </strong>
                         </span>
                       </div>
                     ))}

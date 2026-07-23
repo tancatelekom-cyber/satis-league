@@ -13853,9 +13853,10 @@ textarea::placeholder {
   max-height: 0;
   margin-top: 0;
   overflow: hidden;
-  border: 0 solid rgba(99, 217, 232, 0.26);
+  border: 0 solid rgba(44, 119, 119, 0.28);
   border-radius: 12px;
-  background: #1c1d46;
+  background: #f7fbfb;
+  box-shadow: 0 14px 30px rgba(7, 30, 52, 0.2);
   opacity: 0;
   visibility: hidden;
   transform: translateY(-6px);
@@ -13879,7 +13880,7 @@ textarea::placeholder {
 .goal-dashboard-category-hover-detail > strong {
   display: block;
   margin-bottom: 8px;
-  color: #ffffff;
+  color: #123f43;
   font-size: 0.74rem;
   line-height: 1.2;
 }
@@ -13895,18 +13896,19 @@ textarea::placeholder {
   gap: 3px;
   padding: 7px 5px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(44, 119, 119, 0.14);
+  background: #eaf4f3;
 }
 
 .goal-dashboard-category-hover-detail small {
-  color: #aebfdd;
+  color: #58708f;
   font-size: 0.58rem;
   font-weight: 700;
   text-transform: uppercase;
 }
 
 .goal-dashboard-category-current-grid b {
-  color: #ffffff;
+  color: #123f43;
   font-size: 0.76rem;
 }
 
@@ -13922,7 +13924,8 @@ textarea::placeholder {
   gap: 5px;
   padding: 7px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(44, 119, 119, 0.13);
+  background: #eaf4f3;
   text-align: left;
 }
 
@@ -13930,7 +13933,7 @@ textarea::placeholder {
   grid-column: 1 / -1;
   min-width: 0;
   overflow-wrap: anywhere;
-  color: #ffffff;
+  color: #123f43;
   font-size: 0.68rem;
   text-align: center;
 }
@@ -13939,11 +13942,14 @@ textarea::placeholder {
   display: grid;
   gap: 2px;
   min-width: 0;
+  padding: 5px 3px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.72);
   text-align: center;
 }
 
 .goal-dashboard-category-store-row strong {
-  color: #ffffff;
+  color: #123f43;
   font-size: 0.68rem;
 }
 

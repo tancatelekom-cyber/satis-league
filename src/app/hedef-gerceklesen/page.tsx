@@ -2845,6 +2845,100 @@ function GoalSuccessDashboardLink({
   );
 }
 
+function DashboardCategoryHoverTable({
+  title,
+  firstColumnLabel,
+  rows,
+  remainingDays
+}: {
+  title: string;
+  firstColumnLabel: string;
+  rows: Array<
+    GoalMetricSummary & {
+      title: string;
+      children?: Array<GoalMetricSummary & { title: string }>;
+    }
+  >;
+  remainingDays: number;
+}) {
+  const renderMetricCells = (row: GoalMetricSummary) => {
+    const dailyMinimum = row.hasTarget
+      ? buildNeedRows(row, remainingDays).find((need) => need.threshold === 100)?.dailyRequired ?? 0
+      : null;
+    const projectedPercentClass =
+      row.hasTarget && row.showProjection && row.projectedPercent !== null
+        ? row.projectedPercent >= 100
+          ? "goal-dashboard-hover-good"
+          : "goal-dashboard-hover-bad"
+        : "";
+
+    return (
+      <>
+        <td>{row.hasTarget ? formatNumber(row.target) : "-"}</td>
+        <td>{formatNumber(row.actual)}</td>
+        <td>{row.hasTarget ? formatNumber(row.remaining) : "-"}</td>
+        <td>{row.hasTarget && row.actualPercent !== null ? formatPercent(row.actualPercent) : "-"}</td>
+        <td>{row.showProjection ? formatNumber(row.projectedActual) : "-"}</td>
+        <td className={projectedPercentClass}>
+          {row.hasTarget && row.showProjection && row.projectedPercent !== null
+            ? formatPercent(row.projectedPercent)
+            : "-"}
+        </td>
+        <td>{dailyMinimum !== null ? formatNumber(dailyMinimum) : "-"}</td>
+      </>
+    );
+  };
+
+  return (
+    <div className="goal-dashboard-category-hover-detail">
+      <strong>{title}</strong>
+      <div className="goal-dashboard-hover-table-wrap">
+        <table className="goal-dashboard-hover-table">
+          <thead>
+            <tr>
+              <th>{firstColumnLabel}</th>
+              <th>Hedef</th>
+              <th>Gerç.</th>
+              <th>Kalan</th>
+              <th>Anlık %</th>
+              <th>Ay Sonu</th>
+              <th>Ay Sonu %</th>
+              <th>Günlük Min</th>
+            </tr>
+          </thead>
+          {rows.map((row) => {
+            const children = row.children ?? [];
+
+            return (
+              <tbody className="goal-dashboard-hover-row-group" key={`${title}-${row.title}`}>
+                <tr>
+                  <th>
+                    {children.length ? (
+                      <details className="goal-dashboard-hover-category-toggle">
+                        <summary>
+                          <span className="goal-dashboard-hover-category-arrow">⌄</span>
+                          <span>{row.title}</span>
+                        </summary>
+                      </details>
+                    ) : row.title}
+                  </th>
+                  {renderMetricCells(row)}
+                </tr>
+                {children.map((child) => (
+                  <tr className="goal-dashboard-hover-child-row" key={`${title}-${row.title}-${child.title}`}>
+                    <th>{child.title}</th>
+                    {renderMetricCells(child)}
+                  </tr>
+                ))}
+              </tbody>
+            );
+          })}
+        </table>
+      </div>
+    </div>
+  );
+}
+
 function StoreGoalDashboard({
   storeName,
   categories,
@@ -2982,31 +3076,12 @@ function StoreGoalDashboard({
                 </div>
                 <strong>{category.title}</strong>
                 <span>{category.hasTarget ? `Şu an ${formatPercent(actualPercent)}` : "Hedef tanımlı değil"}</span>
-                <div className="goal-dashboard-category-hover-detail">
-                  <strong>{storeName || "Mağaza"}</strong>
-                  <div className="goal-dashboard-category-current-grid">
-                    <span>
-                      <small>Hedef</small>
-                      <b>{category.hasTarget ? formatNumber(category.target) : "-"}</b>
-                    </span>
-                    <span>
-                      <small>Gerçekleşen</small>
-                      <b>{formatNumber(category.actual)}</b>
-                    </span>
-                    <span>
-                      <small>Ay Sonu Değer</small>
-                      <b>{category.showProjection ? formatNumber(category.projectedActual) : "-"}</b>
-                    </span>
-                    <span>
-                      <small>Ay Sonu %</small>
-                      <b>
-                        {category.hasTarget && category.showProjection && category.projectedPercent !== null
-                          ? formatPercent(category.projectedPercent)
-                          : "-"}
-                      </b>
-                    </span>
-                  </div>
-                </div>
+                <DashboardCategoryHoverTable
+                  title={`${storeName || "Mağaza"} Hedef Gerçekleşen`}
+                  firstColumnLabel="Kategori"
+                  rows={[category]}
+                  remainingDays={dayStats.remainingDays}
+                />
               </div>
             );
           })}
@@ -3206,36 +3281,12 @@ function CompanyStoreSuccessDashboard({
                 </div>
                 <strong>{category.title}</strong>
                 <span>{category.hasTarget ? `Şu an ${formatPercent(actualPercent)}` : "Hedef tanımlı değil"}</span>
-                <div className="goal-dashboard-category-hover-detail goal-dashboard-category-company-detail">
-                  <strong>Şubelerin Hedef Gerçekleşenleri</strong>
-                  <div className="goal-dashboard-category-store-list">
-                    {(category.storeDetails ?? []).map((store) => (
-                      <div className="goal-dashboard-category-store-row" key={`${category.title}-${store.title}`}>
-                        <b>{store.title}</b>
-                        <span>
-                          <small>Hedef</small>
-                          <strong>{store.hasTarget ? formatNumber(store.target) : "-"}</strong>
-                        </span>
-                        <span>
-                          <small>Gerçekleşen</small>
-                          <strong>{formatNumber(store.actual)}</strong>
-                        </span>
-                        <span>
-                          <small>Ay Sonu Değer</small>
-                          <strong>{store.showProjection ? formatNumber(store.projectedActual) : "-"}</strong>
-                        </span>
-                        <span>
-                          <small>Ay Sonu %</small>
-                          <strong>
-                            {store.hasTarget && store.showProjection && store.projectedPercent !== null
-                              ? formatPercent(store.projectedPercent)
-                              : "-"}
-                          </strong>
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                <DashboardCategoryHoverTable
+                  title={`${category.title} · Şubelerin Hedef Gerçekleşenleri`}
+                  firstColumnLabel="Şube"
+                  rows={category.storeDetails ?? []}
+                  remainingDays={dayStats.remainingDays}
+                />
               </div>
             );
           })}

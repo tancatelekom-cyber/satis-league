@@ -4581,8 +4581,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
 
                 {effectiveView === "company" && companyStoreZeroActualGroups.length ? (
                   <div className="evaluation-zero-alert evaluation-zero-alert-stores">
-                    <strong>Subelerin gozden kacirdigi kalemler</strong>
-                    <p>Firma toplaminda sifir kalan kalemler sube bazinda asagida listelenir.</p>
+                    <strong>Şubelerimizde gerçekleşeni sıfır olan kalemler</strong>
                     <div className="evaluation-zero-store-list">
                       {companyStoreZeroActualGroups.map((group) => (
                         <div key={group.storeCode} className="evaluation-zero-store-card">

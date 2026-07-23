@@ -13982,6 +13982,94 @@ textarea::placeholder {
   font-size: 0.75rem;
 }
 
+.goal-dashboard-activation-critical .goal-dashboard-category-pie {
+  animation: goal-dashboard-activation-pie-alarm 0.78s ease-in-out infinite;
+}
+
+.goal-dashboard-activation-warning {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: min(190px, 100%);
+  padding: 8px 9px;
+  border: 2px solid #fecaca;
+  border-radius: 10px;
+  background: #b91c1c;
+  color: #ffffff !important;
+  box-shadow: 0 8px 20px rgba(127, 29, 29, 0.42);
+  font-size: 0.7rem !important;
+  font-weight: 1000;
+  line-height: 1.2;
+  text-transform: uppercase;
+  animation: goal-dashboard-activation-warning-alarm 0.62s ease-in-out infinite;
+}
+
+.goal-dashboard-activation-warning strong {
+  color: #ffffff;
+  font: inherit;
+}
+
+.goal-dashboard-activation-alarm {
+  flex: 0 0 auto;
+  font-size: 1.15rem !important;
+  line-height: 1;
+}
+
+.goal-dashboard-activation-critical:hover .goal-dashboard-activation-warning,
+.goal-dashboard-category-interactive-item:focus-within
+  .goal-dashboard-activation-critical
+  .goal-dashboard-activation-warning {
+  display: flex;
+}
+
+@keyframes goal-dashboard-activation-pie-alarm {
+  0%,
+  100% {
+    filter: brightness(1);
+    box-shadow:
+      0 18px 30px rgba(8, 31, 54, 0.15),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+    transform: scale(1);
+  }
+
+  50% {
+    filter: brightness(1.28) saturate(1.5);
+    box-shadow:
+      0 0 0 8px rgba(239, 68, 68, 0.2),
+      0 0 26px rgba(239, 68, 68, 0.88),
+      inset 0 0 0 4px rgba(127, 29, 29, 0.68);
+    transform: scale(1.06);
+  }
+}
+
+@keyframes goal-dashboard-activation-warning-alarm {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.46;
+    transform: scale(0.97);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .goal-dashboard-activation-critical .goal-dashboard-category-pie,
+  .goal-dashboard-activation-warning {
+    animation: none;
+  }
+
+  .goal-dashboard-activation-critical .goal-dashboard-category-pie {
+    box-shadow:
+      0 0 0 7px rgba(239, 68, 68, 0.2),
+      0 0 22px rgba(239, 68, 68, 0.72),
+      inset 0 0 0 4px rgba(127, 29, 29, 0.6);
+  }
+}
+
 .goal-dashboard-category-hover-detail {
   position: absolute;
   z-index: 30;

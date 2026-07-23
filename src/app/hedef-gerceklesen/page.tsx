@@ -3082,9 +3082,15 @@ function StoreGoalDashboard({
                   ? dashboardPalette.near
                   : dashboardPalette.risk;
             const displayValue = category.hasTarget ? formatPercent(projectedPercent) : formatNumber(category.actual);
+            const isActivationSupportCritical =
+              category.hasTarget &&
+              normalizeCategoryKey(category.title).includes("AKTIVASYON ADET") &&
+              projectedPercent < 60;
             return (
               <div
-                className="goal-dashboard-category-pie-card"
+                className={`goal-dashboard-category-pie-card ${
+                  isActivationSupportCritical ? "goal-dashboard-activation-critical" : ""
+                }`}
                 key={`dashboard-category-${category.title}`}
               >
                 <div
@@ -3101,6 +3107,14 @@ function StoreGoalDashboard({
                 </div>
                 <strong>{category.title}</strong>
                 <span>{category.hasTarget ? `Şu an ${formatPercent(actualPercent)}` : "Hedef tanımlı değil"}</span>
+                {isActivationSupportCritical ? (
+                  <span className="goal-dashboard-activation-warning" role="alert">
+                    <span className="goal-dashboard-activation-alarm" aria-hidden="true">
+                      🚨
+                    </span>
+                    <strong>%60 altında şube destek primini alamamaktasınız</strong>
+                  </span>
+                ) : null}
                 <DashboardCategoryHoverTable
                   title={`${storeName || "Mağaza"} Hedef Gerçekleşen`}
                   firstColumnLabel="Kategori"

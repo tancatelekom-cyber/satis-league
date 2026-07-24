@@ -2703,7 +2703,17 @@ function EmployeeGoalCategoryTable({
                 </div>
                 <div className="goal-employee-table-cell goal-employee-table-information-current">
                   <small>Mevcut Değer</small>
-                  <strong>{formatGoalValue(row.actual, row.actualIsPercent)}</strong>
+                  <strong
+                    className={
+                      row.isAtOrAboveTarget
+                        ? "goal-employee-table-value-good"
+                        : row.isBelowTarget
+                          ? "goal-employee-table-value-bad"
+                          : undefined
+                    }
+                  >
+                    {formatGoalValue(row.actual, row.actualIsPercent)}
+                  </strong>
                 </div>
               </div>
             ))}

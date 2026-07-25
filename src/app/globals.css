@@ -7733,11 +7733,15 @@ textarea::placeholder {
   isolation: isolate;
   min-height: 190px;
   padding: 22px 20px;
-  border-bottom-color: rgba(0, 94, 188, 0.36);
+  border-bottom: 6px solid rgba(0, 91, 204, 0.78);
   background:
     linear-gradient(90deg, rgba(0, 129, 255, 0.38), transparent 40%, transparent 60%, rgba(255, 70, 54, 0.35)),
     repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0 7px, transparent 7px 14px);
   box-shadow: none;
+}
+
+.duel-matchup-compact-row:last-child {
+  border-bottom: 0;
 }
 
 .duel-matchup-compact-row::before {

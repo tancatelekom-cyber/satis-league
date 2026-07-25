@@ -226,7 +226,12 @@ export default async function DuelDetailPage({ params, searchParams }: DuelDetai
           <CampaignSummaryMatrix
             columns={matrixColumns}
             exportHref={`/kampanyalar/duello/${duel.id}/excel`}
+            imageMatchups={duel.matchups.map((matchup) => ({
+              matchupNo: matchup.matchupNo,
+              participantIds: matchup.participants.map((participant) => participant.id)
+            }))}
             rows={duel.productMatrix}
+            shareImage
             subtitle="Her katilimci veya grup icin urun bazli anlik ozet"
             title="Duello Urun Ozetleri"
           />

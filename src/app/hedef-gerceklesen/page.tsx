@@ -865,11 +865,11 @@ function buildStoreMetricSummary(
 
   return {
     target: hasTarget ? totalTarget : null,
-    actual: totalActual,
+    actual: scope ? achievementActual : totalActual,
     achievementActual,
     actualPercent: hasTarget ? (achievementActual / totalTarget) * 100 : null,
     remaining: hasTarget ? Math.max(totalTarget - achievementActual, 0) : null,
-    projectedActual,
+    projectedActual: hasApplicableCap ? projectedAchievementActual : projectedActual,
     projectedPercent:
       hasTarget && showProjection && projectedAchievementActual !== null
         ? (projectedAchievementActual / totalTarget) * 100
@@ -926,7 +926,7 @@ function buildStoreCategorySummaries(rows: GoalStoreRow[], workedDays: number, t
       const children = group.children
         .map((row) => ({
           title: row.subCategory,
-          ...buildStoreMetricSummary([row], workedDays, totalDays, null)
+          ...buildStoreMetricSummary([row], workedDays, totalDays, "store")
         }))
         .sort((a, b) => a.title.localeCompare(b.title, "tr"));
 
@@ -1309,7 +1309,7 @@ function buildCompanyDailyNeedSummaryRows(
 
           const childStores = Array.from(childStoreMap.entries())
             .map(([storeCode, rows]) => {
-              const summary = buildStoreMetricSummary(rows, workedDays, totalDays, null);
+              const summary = buildStoreMetricSummary(rows, workedDays, totalDays, "store");
               return {
                 storeCode,
                 cells: buildNeedRows(summary, remainingDays)
@@ -1871,7 +1871,7 @@ function buildCompanyCategorySummaries(rows: GoalStoreRow[], workedDays: number,
       const children = childRows
         .map((row) => ({
           title: row.subCategory,
-          ...buildStoreMetricSummary([row], workedDays, totalDays, null)
+          ...buildStoreMetricSummary([row], workedDays, totalDays, "company")
         }))
         .sort((a, b) => a.title.localeCompare(b.title, "tr"));
 
@@ -1896,7 +1896,7 @@ function buildCompanyCategorySummaries(rows: GoalStoreRow[], workedDays: number,
           const storeChildren = Array.from(storeChildMap.entries())
             .map(([subCategory, subCategoryRows]) => ({
               title: subCategory,
-              ...buildStoreMetricSummary(subCategoryRows, workedDays, totalDays, null)
+              ...buildStoreMetricSummary(subCategoryRows, workedDays, totalDays, "store")
             }))
             .sort((a, b) => a.title.localeCompare(b.title, "tr", { sensitivity: "base" }));
 

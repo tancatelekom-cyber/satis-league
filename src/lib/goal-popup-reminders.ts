@@ -177,11 +177,11 @@ function buildStoreMetricSummary(
 
   return {
     target: hasTarget ? totalTarget : null,
-    actual: totalActual,
+    actual: scope ? achievementActual : totalActual,
     achievementActual,
     actualPercent: hasTarget ? (achievementActual / totalTarget) * 100 : null,
     remaining: hasTarget ? Math.max(totalTarget - achievementActual, 0) : null,
-    projectedActual,
+    projectedActual: hasApplicableCap ? projectedAchievementActual : projectedActual,
     projectedPercent:
       hasTarget && showProjection && projectedAchievementActual !== null
         ? (projectedAchievementActual / totalTarget) * 100
@@ -273,7 +273,7 @@ function buildStoreCategorySummaries(rows: GoalStoreRow[], workedDays: number, t
       const children = group.children
         .map((row) => ({
           title: row.subCategory,
-          ...buildStoreMetricSummary([row], workedDays, totalDays, null)
+          ...buildStoreMetricSummary([row], workedDays, totalDays, "store")
         }))
         .sort((a, b) => a.title.localeCompare(b.title, "tr"));
 
@@ -352,7 +352,7 @@ function buildCompanyCategorySummaries(rows: GoalStoreRow[], workedDays: number,
       const children = group.children
         .map((row) => ({
           title: row.subCategory,
-          ...buildStoreMetricSummary([row], workedDays, totalDays, null)
+          ...buildStoreMetricSummary([row], workedDays, totalDays, "company")
         }))
         .sort((a, b) => a.title.localeCompare(b.title, "tr"));
 

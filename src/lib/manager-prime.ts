@@ -8,7 +8,8 @@ export type ManagerPrimeColumnKey =
   | "activation"
   | "terminal"
   | "sol"
-  | "accessory";
+  | "accessory"
+  | "service";
 
 export type ManagerPrimeSettings = {
   scale: string;
@@ -34,6 +35,7 @@ export type ManagerPrimeSheetRow = {
   terminalReward: number;
   solReward: number;
   accessoryRate: number;
+  serviceRate: number;
 };
 
 export type ManagerPrimeMetricKey =
@@ -42,7 +44,8 @@ export type ManagerPrimeMetricKey =
   | "activation"
   | "terminal"
   | "sol"
-  | "accessory";
+  | "accessory"
+  | "service";
 
 export type ManagerPrimeMetric = {
   key: ManagerPrimeMetricKey;
@@ -87,6 +90,8 @@ export type ManagerPrimeSummary = {
   projectedRecontractReward: number;
   currentAccessoryReward: number;
   projectedAccessoryReward: number;
+  currentServiceReward: number;
+  projectedServiceReward: number;
   rows: ManagerPrimeBreakdownRow[];
   metrics: Record<ManagerPrimeMetricKey, ManagerPrimeMetric>;
   opportunities: ManagerPrimeOpportunity[];
@@ -117,7 +122,8 @@ const METRIC_LABELS: Record<ManagerPrimeMetricKey, string> = {
   activation: "AKTIVASYON PUAN",
   terminal: "TERMINAL",
   sol: "SOL",
-  accessory: "AKSESUAR KARLILIK"
+  accessory: "AKSESUAR KARLILIK",
+  service: "HIZMET"
 };
 
 function buildSheetUrl(gid: string) {
@@ -363,6 +369,7 @@ export async function fetchManagerPrimeSheetRows(settings?: ManagerPrimeSettings
   const terminalIndex = columnLetterToIndex(resolvedSettings.terminal);
   const solIndex = columnLetterToIndex(resolvedSettings.sol);
   const accessoryIndex = columnLetterToIndex(resolvedSettings.accessory);
+  const serviceIndex = columnLetterToIndex("H");
 
   return rows
     .slice(1)
@@ -378,7 +385,8 @@ export async function fetchManagerPrimeSheetRows(settings?: ManagerPrimeSettings
         row[activationIndex],
         row[terminalIndex],
         row[solIndex],
-        row[accessoryIndex]
+        row[accessoryIndex],
+        row[serviceIndex]
       ].some((value) => normalizeText(value ?? ""));
 
       if (!hasAnyValue && !thresholdPercent) {
@@ -392,7 +400,8 @@ export async function fetchManagerPrimeSheetRows(settings?: ManagerPrimeSettings
         activationReward: parseRewardString(row[activationIndex] ?? ""),
         terminalReward: parseRewardString(row[terminalIndex] ?? ""),
         solReward: parseRewardString(row[solIndex] ?? ""),
-        accessoryRate: parseLocalizedNumber(row[accessoryIndex] ?? "")
+        accessoryRate: parseLocalizedNumber(row[accessoryIndex] ?? ""),
+        serviceRate: parseLocalizedNumber(row[serviceIndex] ?? "")
       };
     })
     .filter((row): row is ManagerPrimeSheetRow => Boolean(row))
@@ -418,7 +427,8 @@ export async function buildManagerPrimeSummary(managerName: string, storeName: s
     activation: buildMetric("activation", managerRows, dayStats, settings.activationCategory),
     terminal: buildMetric("terminal", managerRows, dayStats, settings.terminalCategory),
     sol: buildMetric("sol", managerRows, dayStats, settings.solCategory),
-    accessory: buildMetric("accessory", managerRows, dayStats, settings.accessoryCategory)
+    accessory: buildMetric("accessory", managerRows, dayStats, settings.accessoryCategory),
+    service: buildMetric("service", managerRows, dayStats, "HIZMET")
   } satisfies Record<ManagerPrimeMetricKey, ManagerPrimeMetric>;
 
   const recontractUnitReward = 10;
@@ -505,8 +515,31 @@ export async function buildManagerPrimeSummary(managerName: string, storeName: s
     projectedReward: projectedAccessoryReward
   });
 
-  const currentPrimeTotal = currentNonAccessoryBaseTotal + currentRecontractReward + currentAccessoryReward;
-  const projectedPrimeTotal = projectedNonAccessoryBaseTotal + projectedRecontractReward + projectedAccessoryReward;
+  const serviceCurrentScale = findScaleRow(sheetRows, metrics.service.actualTempo);
+  const serviceProjectedScale = findScaleRow(sheetRows, metrics.service.projectedTempo);
+  const serviceHasTarget = Boolean(metrics.service.target && metrics.service.target > 0);
+  const currentServiceRate = serviceHasTarget ? (serviceCurrentScale?.serviceRate ?? 0) : 10;
+  const projectedServiceRate = serviceHasTarget ? (serviceProjectedScale?.serviceRate ?? 0) : 10;
+  const currentServiceReward = metrics.service.actual * (currentServiceRate / 100);
+  const projectedServiceReward = metrics.service.projected * (projectedServiceRate / 100);
+
+  rows.push({
+    key: "service",
+    label: metrics.service.label,
+    actualTempo: metrics.service.actualTempo,
+    projectedTempo: metrics.service.projectedTempo,
+    currentScaleLabel: serviceHasTarget ? buildScaleLabel(serviceCurrentScale?.thresholdPercent ?? 0) : "Hedef yok",
+    projectedScaleLabel: serviceHasTarget ? buildScaleLabel(serviceProjectedScale?.thresholdPercent ?? 0) : "Hedef yok",
+    currentBaseValue: currentServiceRate,
+    projectedBaseValue: projectedServiceRate,
+    currentReward: currentServiceReward,
+    projectedReward: projectedServiceReward
+  });
+
+  const currentPrimeTotal =
+    currentNonAccessoryBaseTotal + currentRecontractReward + currentAccessoryReward + currentServiceReward;
+  const projectedPrimeTotal =
+    projectedNonAccessoryBaseTotal + projectedRecontractReward + projectedAccessoryReward + projectedServiceReward;
 
   const opportunities: ManagerPrimeOpportunity[] = [];
   const remainingDays = Math.max(0, dayStats.remainingDays);
@@ -574,7 +607,8 @@ export async function buildManagerPrimeSummary(managerName: string, storeName: s
         currentProjectedBaseValue +
         nextProjectedBaseValue +
         projectedRecontractReward +
-        projectedAccessoryReward;
+        projectedAccessoryReward +
+        projectedServiceReward;
       estimatedIncrease = Math.max(0, nextPrimeTotal - projectedPrimeTotal);
 
       opportunities.push({
@@ -607,6 +641,26 @@ export async function buildManagerPrimeSummary(managerName: string, storeName: s
         }
       }
     }
+
+    if (metrics.service.target && metrics.service.target > 0) {
+      const nextServiceScale = findNextScaleRow(sheetRows, metrics.service.projectedTempo);
+      if (nextServiceScale) {
+        const requiredTotal = (metrics.service.target * nextServiceScale.thresholdPercent) / 100;
+        const additionalRequiredTotal = Math.max(0, requiredTotal - metrics.service.actual);
+
+        if (additionalRequiredTotal > 0) {
+          const nextProjectedServiceReward = requiredTotal * ((nextServiceScale.serviceRate ?? 0) / 100);
+          opportunities.push({
+            key: "service",
+            label: metrics.service.label,
+            nextScaleLabel: buildScaleLabel(nextServiceScale.thresholdPercent),
+            estimatedIncrease: Math.max(0, nextProjectedServiceReward - projectedServiceReward),
+            dailyRequired: additionalRequiredTotal / remainingDays,
+            additionalRequiredTotal
+          });
+        }
+      }
+    }
   }
 
   opportunities.sort((left, right) => right.estimatedIncrease - left.estimatedIncrease || left.dailyRequired - right.dailyRequired);
@@ -622,6 +676,8 @@ export async function buildManagerPrimeSummary(managerName: string, storeName: s
     projectedRecontractReward,
     currentAccessoryReward,
     projectedAccessoryReward,
+    currentServiceReward,
+    projectedServiceReward,
     rows,
     metrics,
     opportunities

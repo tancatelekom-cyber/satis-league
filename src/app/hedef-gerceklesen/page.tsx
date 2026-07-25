@@ -20,7 +20,9 @@ import {
   fetchGoalLivePrimeSettings,
   fetchGoalProductPointRows,
   fetchGoalProductionRewardRows,
-  fetchGoalStoreRows
+  fetchGoalStoreRows,
+  getGoalAchievementActual,
+  goalActualCapApplies
 } from "@/lib/goal-actuals";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -65,6 +67,7 @@ type EmployeeSummary = {
 type GoalMetricSummary = {
   target: number | null;
   actual: number;
+  achievementActual?: number;
   actualPercent: number | null;
   remaining: number | null;
   projectedActual: number | null;
@@ -829,9 +832,15 @@ function buildMetricSummary(rows: GoalActualRow[], workedDays: number, totalDays
   };
 }
 
-function buildStoreMetricSummary(rows: GoalStoreRow[], workedDays: number, totalDays: number): GoalMetricSummary {
+function buildStoreMetricSummary(
+  rows: GoalStoreRow[],
+  workedDays: number,
+  totalDays: number,
+  scope: "store" | "company" = "store"
+): GoalMetricSummary {
   const totalTarget = rows.reduce((sum, row) => sum + (row.target ?? 0), 0);
   const totalActual = rows.reduce((sum, row) => sum + row.actual, 0);
+  const achievementActual = rows.reduce((sum, row) => sum + getGoalAchievementActual(row, scope), 0);
   const hasTarget = totalTarget > 0;
   const showProjection = rows.every((row) => row.includeProjection);
   const projectedActual = showProjection
@@ -839,14 +848,30 @@ function buildStoreMetricSummary(rows: GoalStoreRow[], workedDays: number, total
       ? Math.floor((totalActual / workedDays) * totalDays)
       : totalActual
     : null;
+  const hasApplicableCap = rows.some((row) => goalActualCapApplies(row, scope));
+  const projectedAchievementActual =
+    showProjection && projectedActual !== null
+      ? hasApplicableCap
+        ? Math.floor(
+            rows.reduce((sum, row) => {
+              const rowProjectedActual = workedDays > 0 ? (row.actual / workedDays) * totalDays : row.actual;
+              return sum + getGoalAchievementActual(row, scope, rowProjectedActual);
+            }, 0)
+          )
+        : projectedActual
+      : null;
 
   return {
     target: hasTarget ? totalTarget : null,
     actual: totalActual,
-    actualPercent: hasTarget ? (totalActual / totalTarget) * 100 : null,
-    remaining: hasTarget ? Math.max(totalTarget - totalActual, 0) : null,
+    achievementActual,
+    actualPercent: hasTarget ? (achievementActual / totalTarget) * 100 : null,
+    remaining: hasTarget ? Math.max(totalTarget - achievementActual, 0) : null,
     projectedActual,
-    projectedPercent: hasTarget && showProjection && projectedActual !== null ? (projectedActual / totalTarget) * 100 : null,
+    projectedPercent:
+      hasTarget && showProjection && projectedAchievementActual !== null
+        ? (projectedAchievementActual / totalTarget) * 100
+        : null,
     hasTarget,
     showProjection
   };
@@ -1449,6 +1474,9 @@ function buildCompanyRows(rows: GoalStoreRow[]): GoalStoreRow[] {
         subCategory: first.subCategory,
         target: targets.length ? aggregate(targets) : null,
         actual: aggregate(actuals),
+        actualCap: first.actualCap ?? null,
+        actualCapIsPercent: first.actualCapIsPercent ?? false,
+        actualCapScope: first.actualCapScope ?? null,
         targetIsPercent: first.targetIsPercent ?? false,
         actualIsPercent: first.actualIsPercent ?? false,
         includeProjection: first.includeProjection,
@@ -1836,11 +1864,11 @@ function buildCompanyCategorySummaries(rows: GoalStoreRow[], workedDays: number,
       const rawCategoryRows = groupedRawRows.get(mainCategory) ?? [];
       const mainOnlyRows = companyCategoryRows.filter((row) => !row.subCategory);
       const childRows = companyCategoryRows.filter((row) => Boolean(row.subCategory));
-      const summary = buildStoreMetricSummary(companyCategoryRows, workedDays, totalDays);
+      const summary = buildStoreMetricSummary(companyCategoryRows, workedDays, totalDays, "company");
       const children = childRows
         .map((row) => ({
           title: row.subCategory,
-          ...buildStoreMetricSummary([row], workedDays, totalDays)
+          ...buildStoreMetricSummary([row], workedDays, totalDays, "company")
         }))
         .sort((a, b) => a.title.localeCompare(b.title, "tr"));
 
@@ -1882,7 +1910,7 @@ function buildCompanyCategorySummaries(rows: GoalStoreRow[], workedDays: number,
         childCount: children.length,
         children,
         storeDetails,
-        ...buildStoreMetricSummary([...mainOnlyRows, ...childRows], workedDays, totalDays)
+        ...buildStoreMetricSummary([...mainOnlyRows, ...childRows], workedDays, totalDays, "company")
       };
     });
 }
@@ -1892,7 +1920,7 @@ function canViewAllGoalActual(role: UserRole | string | null | undefined) {
 }
 
 function buildNeedRows(
-  summary: Pick<GoalMetricSummary, "hasTarget" | "target" | "actual">,
+  summary: Pick<GoalMetricSummary, "hasTarget" | "target" | "actual" | "achievementActual">,
   remainingDays: number
 ): GoalNeedRow[] {
   if (!summary.hasTarget || !summary.target) {
@@ -1901,7 +1929,7 @@ function buildNeedRows(
 
   return [80, 90, 100, 110, 120].map((threshold) => {
     const targetValue = (summary.target ?? 0) * (threshold / 100);
-    const remainingTotal = Math.max(targetValue - summary.actual, 0);
+    const remainingTotal = Math.max(targetValue - (summary.achievementActual ?? summary.actual), 0);
     const dailyRequired = remainingDays > 0 ? Math.ceil(remainingTotal / remainingDays) : remainingTotal > 0 ? Math.ceil(remainingTotal) : 0;
 
     return {

@@ -14,6 +14,9 @@ export type GoalStoreRow = {
   subCategory: string;
   target: number | null;
   actual: number;
+  actualCap?: number | null;
+  actualCapIsPercent?: boolean;
+  actualCapScope?: "company" | "store-and-company" | null;
   targetIsPercent?: boolean;
   actualIsPercent?: boolean;
   includeProjection: boolean;
@@ -146,6 +149,37 @@ function parseLocalizedNumber(value: string) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+export function goalActualCapApplies(row: GoalStoreRow, scope: "store" | "company") {
+  if (!row.actualCap || row.actualCap <= 0 || !row.actualCapScope) {
+    return false;
+  }
+
+  return scope === "company" || row.actualCapScope === "store-and-company";
+}
+
+export function getGoalAchievementActual(
+  row: GoalStoreRow,
+  scope: "store" | "company",
+  actual = row.actual
+) {
+  if (!goalActualCapApplies(row, scope)) {
+    return actual;
+  }
+
+  const actualCap = row.actualCap;
+  if (!actualCap || actualCap <= 0) {
+    return actual;
+  }
+
+  const capValue = row.actualCapIsPercent
+    ? row.target && row.target > 0
+      ? row.target * (actualCap / 100)
+      : null
+    : actualCap;
+
+  return capValue !== null && capValue > 0 ? Math.min(actual, capValue) : actual;
+}
+
 async function fetchGoalActualRowsFromSheet() {
   const response = await fetch(buildSheetUrl(PRS_SHEET_NAME, PRS_SHEET_GID), {
     cache: "no-store",
@@ -244,6 +278,8 @@ async function fetchGoalStoreRowsFromSheet() {
       const projectionFlag = normalizeText(row[5] ?? "").toUpperCase();
       const companyModeFlag = normalizeText(row[6] ?? "").toUpperCase();
       const separateInfoFlag = normalizeText(row[7] ?? "").toUpperCase();
+      const actualCapRaw = normalizeText(row[8] ?? "");
+      const actualCapScopeFlag = normalizeText(row[9] ?? "").toUpperCase();
       const targetIsPercent = targetRaw.includes("%");
       const actualIsPercent = actualRaw.includes("%");
 
@@ -253,6 +289,15 @@ async function fetchGoalStoreRowsFromSheet() {
 
       const target = targetRaw ? parseLocalizedNumber(targetRaw) : null;
       const actual = parseLocalizedNumber(actualRaw);
+      const actualCap = actualCapRaw ? parseLocalizedNumber(actualCapRaw) : null;
+      const actualCapScope =
+        actualCap && actualCap > 0
+          ? actualCapScopeFlag === "SF"
+            ? "store-and-company"
+            : actualCapScopeFlag === "F"
+              ? "company"
+              : null
+          : null;
 
       return {
         storeCode,
@@ -260,6 +305,9 @@ async function fetchGoalStoreRowsFromSheet() {
         subCategory,
         target: target && target > 0 ? target : null,
         actual,
+        actualCap: actualCap && actualCap > 0 ? actualCap : null,
+        actualCapIsPercent: actualCapRaw.includes("%"),
+        actualCapScope,
         targetIsPercent,
         actualIsPercent,
         includeProjection: projectionFlag === "E",

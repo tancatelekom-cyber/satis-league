@@ -1,4 +1,9 @@
-import type { GoalDayStats, GoalStoreRow } from "@/lib/goal-actuals";
+import {
+  getGoalAchievementActual,
+  goalActualCapApplies,
+  type GoalDayStats,
+  type GoalStoreRow
+} from "@/lib/goal-actuals";
 
 function normalizeKey(value: string) {
   return value
@@ -52,7 +57,11 @@ function aggregateCompanyRows(rows: GoalStoreRow[]) {
   });
 }
 
-function calculateCategorySuccess(rows: GoalStoreRow[], dayStats: GoalDayStats) {
+function calculateCategorySuccess(
+  rows: GoalStoreRow[],
+  dayStats: GoalDayStats,
+  scope: "store" | "company"
+) {
   const categoryGroups = new Map<string, GoalStoreRow[]>();
 
   rows
@@ -68,11 +77,23 @@ function calculateCategorySuccess(rows: GoalStoreRow[], dayStats: GoalDayStats) 
       const target = categoryRows.reduce((sum, row) => sum + (row.target ?? 0), 0);
       if (target <= 0) return null;
 
-      const actual = categoryRows.reduce((sum, row) => sum + row.actual, 0);
+      const actual = categoryRows.reduce((sum, row) => sum + getGoalAchievementActual(row, scope), 0);
       const canProject = categoryRows.every((row) => row.includeProjection);
-      const projected = canProject && dayStats.workedDays > 0
-        ? Math.floor((actual / dayStats.workedDays) * dayStats.totalDays)
-        : actual;
+      const hasApplicableCap = categoryRows.some((row) => goalActualCapApplies(row, scope));
+      const projected =
+        canProject && dayStats.workedDays > 0
+          ? hasApplicableCap
+            ? Math.floor(
+                categoryRows.reduce((sum, row) => {
+                  const rowProjectedActual = (row.actual / dayStats.workedDays) * dayStats.totalDays;
+                  return sum + getGoalAchievementActual(row, scope, rowProjectedActual);
+                }, 0)
+              )
+            : Math.floor(
+                (categoryRows.reduce((sum, row) => sum + row.actual, 0) / dayStats.workedDays) *
+                  dayStats.totalDays
+              )
+          : actual;
       return (projected / target) * 100;
     })
     .filter((value): value is number => value !== null);
@@ -85,11 +106,12 @@ export function calculateStoreDashboardSuccess(rows: GoalStoreRow[], dayStats: G
   const normalizedStore = normalizeKey(storeName);
   return calculateCategorySuccess(
     rows.filter((row) => normalizeKey(row.storeCode) === normalizedStore),
-    dayStats
+    dayStats,
+    "store"
   );
 }
 
 export function calculateCompanyDashboardSuccess(rows: GoalStoreRow[], dayStats: GoalDayStats) {
   const dashboardRows = rows.filter((row) => !row.separateInfo && normalizeKey(row.mainCategory) !== "TUM KATEGORILER");
-  return calculateCategorySuccess(aggregateCompanyRows(dashboardRows), dayStats);
+  return calculateCategorySuccess(aggregateCompanyRows(dashboardRows), dayStats, "company");
 }

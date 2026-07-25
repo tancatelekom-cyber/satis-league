@@ -84,20 +84,27 @@ async function buildArenaPng(
   if (!context) throw new Error("Gorsel olusturulamadi.");
 
   const background = context.createLinearGradient(0, 0, width, height);
-  background.addColorStop(0, "#071426");
-  background.addColorStop(0.5, "#102746");
-  background.addColorStop(1, "#071426");
+  background.addColorStop(0, "#8ed3ff");
+  background.addColorStop(0.52, "#cceaff");
+  background.addColorStop(1, "#ffb99f");
   context.fillStyle = background;
   context.fillRect(0, 0, width, height);
 
+  const headerGradient = context.createLinearGradient(0, 0, width, 0);
+  headerGradient.addColorStop(0, "#005bcc");
+  headerGradient.addColorStop(0.5, "#125cc8");
+  headerGradient.addColorStop(1, "#ed3c36");
+  context.fillStyle = headerGradient;
+  context.fillRect(0, 0, width, headerHeight);
+
   context.textAlign = "center";
-  context.fillStyle = "#ffcf5a";
+  context.fillStyle = "#ffffff";
   context.font = "900 30px Arial";
   context.fillText("CANLI DUELLO", width / 2, 54);
   context.fillStyle = "#ffffff";
   context.font = "900 56px Arial";
   context.fillText(fitText(context, title, 950), width / 2, 122);
-  context.fillStyle = "#a9c9ee";
+  context.fillStyle = "#fff58a";
   context.font = "700 24px Arial";
   context.fillText("ANLIK SKOR TABLOSU", width / 2, 164);
 
@@ -115,32 +122,35 @@ async function buildArenaPng(
     const cardTop = top + 28;
 
     [
-      { participant: left, score: leftScore, wins: leftWins, x: 55, align: "left" as const },
-      { participant: right, score: rightScore, wins: rightWins, x: 600, align: "right" as const }
+      { participant: left, score: leftScore, wins: leftWins, x: 55, side: "left" as const },
+      { participant: right, score: rightScore, wins: rightWins, x: 600, side: "right" as const }
     ].forEach((side) => {
       const loses = !draw && !side.wins;
       const cardGradient = context.createLinearGradient(side.x, cardTop, side.x + cardWidth, cardTop + cardHeight);
       if (side.wins) {
-        cardGradient.addColorStop(0, "#176b4d");
-        cardGradient.addColorStop(1, "#07362f");
+        cardGradient.addColorStop(0, "#00dc70");
+        cardGradient.addColorStop(1, "#008d55");
       } else if (loses) {
-        cardGradient.addColorStop(0, "#6d2637");
-        cardGradient.addColorStop(1, "#2d111d");
+        cardGradient.addColorStop(0, "#ff3157");
+        cardGradient.addColorStop(1, "#bf1039");
+      } else if (side.side === "right") {
+        cardGradient.addColorStop(0, "#ff9d00");
+        cardGradient.addColorStop(1, "#f02648");
       } else {
-        cardGradient.addColorStop(0, "#185e73");
-        cardGradient.addColorStop(1, "#12344f");
+        cardGradient.addColorStop(0, "#00b9ff");
+        cardGradient.addColorStop(1, "#0057d9");
       }
 
       roundedRect(context, side.x, cardTop, cardWidth, cardHeight, 34);
       context.fillStyle = cardGradient;
       context.fill();
       context.lineWidth = 5;
-      context.strokeStyle = side.wins ? "#48e890" : loses ? "#ff6060" : "#66e0dc";
+      context.strokeStyle = side.wins ? "#e7fff2" : loses ? "#ffe8eb" : "#ffffff";
       context.stroke();
 
       const centerX = side.x + cardWidth / 2;
       context.textAlign = "center";
-      context.fillStyle = side.wins ? "#a7ffd0" : loses ? "#ffb3b3" : "#9ff7ef";
+      context.fillStyle = side.wins ? "#c5ffdd" : loses ? "#ffd0d0" : "#ffffff";
       context.font = "900 22px Arial";
       context.fillText(draw ? "BERABERE" : side.wins ? "KAZANIYOR" : "KAYBEDIYOR", centerX, cardTop + 44);
       context.fillStyle = "#ffffff";
@@ -148,14 +158,14 @@ async function buildArenaPng(
       context.fillText(fitText(context, side.participant?.label ?? "Taraf", 370), centerX, cardTop + 92);
       context.font = "900 66px Arial";
       context.fillText(scoreLabel(side.score, scoring), centerX, cardTop + 168);
-      context.fillStyle = side.wins ? "#d2ffe5" : loses ? "#ffd0d0" : "#d8ffff";
+      context.fillStyle = "#ffffff";
       context.font = "700 21px Arial";
       context.fillText(fitText(context, outcomeLabel(side.participant), 370), centerX, cardTop + 225);
     });
 
     context.beginPath();
     context.arc(width / 2, cardTop + cardHeight / 2, 66, 0, Math.PI * 2);
-    context.fillStyle = "#10213c";
+    context.fillStyle = "#09172c";
     context.fill();
     context.lineWidth = 6;
     context.strokeStyle = "#ffcb52";
@@ -166,7 +176,7 @@ async function buildArenaPng(
     context.fillText("VS", width / 2, cardTop + cardHeight / 2 + 16);
   });
 
-  context.fillStyle = "#7895b8";
+  context.fillStyle = "#125cc8";
   context.font = "600 18px Arial";
   context.textAlign = "center";
   context.fillText("TANCA+ DUELLO", width / 2, height - 28);

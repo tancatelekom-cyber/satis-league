@@ -7697,12 +7697,12 @@ textarea::placeholder {
 }
 
 .duel-matchup-compact {
-  border: 2px solid #4f91d8;
+  border: 2px solid #0877dc;
   border-radius: 26px;
   background:
-    radial-gradient(circle at 50% 0%, rgba(255, 198, 68, 0.34), transparent 36%),
-    linear-gradient(145deg, #dcefff, #eef8ff 52%, #fff0e8);
-  box-shadow: 0 20px 46px rgba(38, 102, 166, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.72);
+    radial-gradient(circle at 50% 0%, rgba(255, 190, 0, 0.58), transparent 36%),
+    linear-gradient(145deg, #8ed3ff, #cceaff 52%, #ffb99f);
+  box-shadow: 0 20px 46px rgba(0, 91, 184, 0.28), inset 0 0 0 1px rgba(255, 255, 255, 0.78);
 }
 
 .duel-matchup-compact-head,
@@ -7713,7 +7713,7 @@ textarea::placeholder {
 
 .duel-matchup-compact-head {
   padding: 12px 20px;
-  background: linear-gradient(90deg, #347fd2, #5a8fd0 50%, #ef745d);
+  background: linear-gradient(90deg, #005bcc, #125cc8 50%, #ed3c36);
   border-bottom-color: rgba(255, 255, 255, 0.46);
 }
 
@@ -7733,10 +7733,10 @@ textarea::placeholder {
   isolation: isolate;
   min-height: 190px;
   padding: 22px 20px;
-  border-bottom-color: rgba(67, 128, 190, 0.25);
+  border-bottom-color: rgba(0, 94, 188, 0.36);
   background:
-    linear-gradient(90deg, rgba(54, 149, 234, 0.22), transparent 39%, transparent 61%, rgba(255, 119, 87, 0.2)),
-    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.24) 0 7px, transparent 7px 14px);
+    linear-gradient(90deg, rgba(0, 129, 255, 0.38), transparent 40%, transparent 60%, rgba(255, 70, 54, 0.35)),
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0 7px, transparent 7px 14px);
   box-shadow: none;
 }
 
@@ -7757,8 +7757,8 @@ textarea::placeholder {
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.72);
   border-radius: 20px;
-  background: linear-gradient(145deg, #54c4ff, #287de0);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42), 0 12px 24px rgba(28, 108, 190, 0.2);
+  background: linear-gradient(145deg, #00b9ff, #0057d9);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.48), 0 12px 26px rgba(0, 75, 180, 0.34);
 }
 
 .duel-matchup-side-left::after,
@@ -7781,8 +7781,8 @@ textarea::placeholder {
   justify-items: end;
   text-align: right;
   border-color: rgba(255, 255, 255, 0.72);
-  background: linear-gradient(215deg, #ffad65, #ee5962);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42), 0 12px 24px rgba(213, 73, 83, 0.2);
+  background: linear-gradient(215deg, #ff9d00, #f02648);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.48), 0 12px 26px rgba(199, 25, 56, 0.32);
 }
 
 .duel-matchup-side-right::after {
@@ -7791,26 +7791,28 @@ textarea::placeholder {
 }
 
 .duel-matchup-compact-person .duel-matchup-compact-name {
-  color: #f5f9ff;
+  color: #ffffff;
   font-size: clamp(1rem, 2vw, 1.35rem);
   font-weight: 900;
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+  text-shadow: 0 2px 5px rgba(0, 28, 76, 0.72);
 }
 
 .duel-matchup-compact-person small {
-  color: rgba(255, 255, 255, 0.9);
+  color: #ffffff;
+  text-shadow: 0 1px 3px rgba(0, 27, 68, 0.7);
 }
 
 .duel-matchup-compact-person .duel-matchup-score {
-  color: #fff;
+  color: #fff58a;
   font-size: clamp(1.9rem, 5vw, 3.25rem);
   font-weight: 900;
   letter-spacing: -0.04em;
-  text-shadow: 0 0 20px rgba(93, 188, 255, 0.38);
+  text-shadow: 0 2px 4px rgba(0, 25, 66, 0.82), 0 0 16px rgba(255, 235, 59, 0.42);
 }
 
 .duel-matchup-compact-person .duel-current-outcome {
-  color: rgba(255, 255, 255, 0.94);
+  color: #ffffff;
+  font-weight: 800;
 }
 
 .duel-player-status {
@@ -7819,7 +7821,7 @@ textarea::placeholder {
   padding: 4px 9px;
   border: 1px solid rgba(255, 255, 255, 0.72);
   border-radius: 999px;
-  background: rgba(20, 63, 116, 0.26);
+  background: rgba(0, 49, 126, 0.76);
   color: #ffffff;
   font-size: 0.62rem;
   font-weight: 900;
@@ -7827,7 +7829,7 @@ textarea::placeholder {
 }
 
 .duel-matchup-side-right .duel-player-status {
-  background: rgba(128, 38, 50, 0.25);
+  background: rgba(135, 8, 39, 0.76);
   color: #ffffff;
 }
 
@@ -7875,13 +7877,13 @@ textarea::placeholder {
 
 .duel-matchup-compact-person.duel-matchup-compact-winner {
   border-color: rgba(231, 255, 242, 0.96);
-  background: linear-gradient(145deg, #56dfa0, #16a76e);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42), 0 0 28px rgba(39, 221, 128, 0.3);
+  background: linear-gradient(145deg, #00dc70, #008d55);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.48), 0 0 28px rgba(0, 200, 83, 0.42);
 }
 
 .duel-matchup-compact-person.duel-matchup-compact-winner .duel-matchup-compact-name,
 .duel-matchup-compact-person.duel-matchup-compact-winner small {
-  color: #a7ffd0 !important;
+  color: #ffffff !important;
 }
 
 .duel-matchup-compact-person.duel-matchup-compact-winner .duel-player-status {
@@ -7904,13 +7906,13 @@ textarea::placeholder {
 
 .duel-matchup-compact-person.duel-matchup-compact-loser {
   border-color: rgba(255, 232, 235, 0.94);
-  background: linear-gradient(145deg, #ff8791, #dd4563);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.38), 0 0 22px rgba(221, 47, 67, 0.23);
+  background: linear-gradient(145deg, #ff3157, #bf1039);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.46), 0 0 24px rgba(226, 20, 65, 0.38);
 }
 
 .duel-matchup-compact-person.duel-matchup-compact-loser .duel-matchup-compact-name,
 .duel-matchup-compact-person.duel-matchup-compact-loser small {
-  color: #ffb3b3 !important;
+  color: #ffffff !important;
 }
 
 .duel-matchup-compact-person.duel-matchup-compact-loser .duel-player-status {

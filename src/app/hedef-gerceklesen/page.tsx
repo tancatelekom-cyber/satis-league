@@ -836,11 +836,13 @@ function buildStoreMetricSummary(
   rows: GoalStoreRow[],
   workedDays: number,
   totalDays: number,
-  scope: "store" | "company" = "store"
+  scope: "store" | "company" | null = "store"
 ): GoalMetricSummary {
   const totalTarget = rows.reduce((sum, row) => sum + (row.target ?? 0), 0);
   const totalActual = rows.reduce((sum, row) => sum + row.actual, 0);
-  const achievementActual = rows.reduce((sum, row) => sum + getGoalAchievementActual(row, scope), 0);
+  const achievementActual = scope
+    ? rows.reduce((sum, row) => sum + getGoalAchievementActual(row, scope), 0)
+    : totalActual;
   const hasTarget = totalTarget > 0;
   const showProjection = rows.every((row) => row.includeProjection);
   const projectedActual = showProjection
@@ -848,14 +850,14 @@ function buildStoreMetricSummary(
       ? Math.floor((totalActual / workedDays) * totalDays)
       : totalActual
     : null;
-  const hasApplicableCap = rows.some((row) => goalActualCapApplies(row, scope));
+  const hasApplicableCap = scope ? rows.some((row) => goalActualCapApplies(row, scope)) : false;
   const projectedAchievementActual =
     showProjection && projectedActual !== null
       ? hasApplicableCap
         ? Math.floor(
             rows.reduce((sum, row) => {
               const rowProjectedActual = workedDays > 0 ? (row.actual / workedDays) * totalDays : row.actual;
-              return sum + getGoalAchievementActual(row, scope, rowProjectedActual);
+              return sum + getGoalAchievementActual(row, scope ?? "store", rowProjectedActual);
             }, 0)
           )
         : projectedActual
@@ -924,7 +926,7 @@ function buildStoreCategorySummaries(rows: GoalStoreRow[], workedDays: number, t
       const children = group.children
         .map((row) => ({
           title: row.subCategory,
-          ...buildStoreMetricSummary([row], workedDays, totalDays)
+          ...buildStoreMetricSummary([row], workedDays, totalDays, null)
         }))
         .sort((a, b) => a.title.localeCompare(b.title, "tr"));
 
@@ -933,7 +935,8 @@ function buildStoreCategorySummaries(rows: GoalStoreRow[], workedDays: number, t
         childCount: children.length,
         children,
         storeDetails: [],
-        ...summary
+        ...summary,
+        actual: summary.achievementActual ?? summary.actual
       };
     });
 }
@@ -1306,7 +1309,7 @@ function buildCompanyDailyNeedSummaryRows(
 
           const childStores = Array.from(childStoreMap.entries())
             .map(([storeCode, rows]) => {
-              const summary = buildStoreMetricSummary(rows, workedDays, totalDays);
+              const summary = buildStoreMetricSummary(rows, workedDays, totalDays, null);
               return {
                 storeCode,
                 cells: buildNeedRows(summary, remainingDays)
@@ -1868,7 +1871,7 @@ function buildCompanyCategorySummaries(rows: GoalStoreRow[], workedDays: number,
       const children = childRows
         .map((row) => ({
           title: row.subCategory,
-          ...buildStoreMetricSummary([row], workedDays, totalDays, "company")
+          ...buildStoreMetricSummary([row], workedDays, totalDays, null)
         }))
         .sort((a, b) => a.title.localeCompare(b.title, "tr"));
 
@@ -1893,14 +1896,17 @@ function buildCompanyCategorySummaries(rows: GoalStoreRow[], workedDays: number,
           const storeChildren = Array.from(storeChildMap.entries())
             .map(([subCategory, subCategoryRows]) => ({
               title: subCategory,
-              ...buildStoreMetricSummary(subCategoryRows, workedDays, totalDays)
+              ...buildStoreMetricSummary(subCategoryRows, workedDays, totalDays, null)
             }))
             .sort((a, b) => a.title.localeCompare(b.title, "tr", { sensitivity: "base" }));
+
+          const storeSummary = buildStoreMetricSummary(storeRows, workedDays, totalDays);
 
           return {
             title: storeCode,
             children: storeChildren,
-            ...buildStoreMetricSummary(storeRows, workedDays, totalDays)
+            ...storeSummary,
+            actual: storeSummary.achievementActual ?? storeSummary.actual
           };
         })
         .sort((a, b) => a.title.localeCompare(b.title, "tr", { sensitivity: "base" }));
@@ -1910,7 +1916,8 @@ function buildCompanyCategorySummaries(rows: GoalStoreRow[], workedDays: number,
         childCount: children.length,
         children,
         storeDetails,
-        ...buildStoreMetricSummary([...mainOnlyRows, ...childRows], workedDays, totalDays, "company")
+        ...summary,
+        actual: summary.achievementActual ?? summary.actual
       };
     });
 }

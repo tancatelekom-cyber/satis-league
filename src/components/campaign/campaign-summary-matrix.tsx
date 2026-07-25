@@ -49,10 +49,10 @@ async function buildMatrixPng({
   rows,
   imageMatchups
 }: Pick<CampaignSummaryMatrixProps, "title" | "subtitle" | "columns" | "rows" | "imageMatchups">) {
-  const nameWidth = 280;
-  const productWidth = 160;
-  const totalWidth = 160;
-  const headerHeight = 210;
+  const nameWidth = 250;
+  const productWidth = 108;
+  const totalWidth = 140;
+  const tableHeaderHeight = 210;
   const rowHeight = 72;
   const matchupTitleHeight = 44;
   const matchupDividerHeight = 12;
@@ -80,7 +80,8 @@ async function buildMatrixPng({
     rows.length * productWidth +
     totalWidth * 2;
   const height =
-    headerHeight +
+    112 +
+    tableHeaderHeight +
     matchupGroups.reduce(
       (sum, group) => sum + matchupTitleHeight + Math.max(group.participants.length, 1) * rowHeight + matchupDividerHeight,
       0
@@ -117,23 +118,35 @@ async function buildMatrixPng({
 
   let x = 0;
   headers.forEach((header, index) => {
+    const isProductHeader = index > 0 && index < headers.length - 2;
     context.fillStyle = index === 0 || index >= headers.length - 2 ? "#ffe09a" : "#d8efff";
-    context.fillRect(x, tableTop, header.width, 76);
-    context.strokeStyle = "#9eddd2";
+    context.fillRect(x, tableTop, header.width, tableHeaderHeight);
+    context.strokeStyle = "#79cfc0";
     context.lineWidth = 2;
-    context.strokeRect(x, tableTop, header.width, 76);
+    context.strokeRect(x, tableTop, header.width, tableHeaderHeight);
     context.fillStyle = "#071426";
-    context.font = "900 17px Arial";
-    context.textAlign = index === 0 ? "left" : "center";
-    context.fillText(
-      fitCanvasText(context, header.label, header.width - 20),
-      index === 0 ? x + 18 : x + header.width / 2,
-      tableTop + 46
-    );
+    context.font = isProductHeader ? "900 20px Arial" : "900 19px Arial";
+    if (isProductHeader) {
+      context.save();
+      context.translate(x + header.width / 2, tableTop + tableHeaderHeight / 2);
+      context.rotate(-Math.PI / 2);
+      context.textAlign = "center";
+      context.textBaseline = "middle";
+      context.fillText(fitCanvasText(context, header.label, tableHeaderHeight - 28), 0, 0);
+      context.restore();
+    } else {
+      context.textAlign = index === 0 ? "left" : "center";
+      context.textBaseline = "alphabetic";
+      context.fillText(
+        fitCanvasText(context, header.label, header.width - 20),
+        index === 0 ? x + 18 : x + header.width / 2,
+        tableTop + tableHeaderHeight / 2 + 7
+      );
+    }
     x += header.width;
   });
 
-  let currentY = tableTop + 76;
+  let currentY = tableTop + tableHeaderHeight;
   let participantStripeIndex = 0;
   matchupGroups.forEach((group, groupIndex) => {
     context.fillStyle = "#125cc8";
@@ -166,11 +179,13 @@ async function buildMatrixPng({
           ? participantStripeIndex % 2 === 0 ? "#fff4c8" : "#ffefb3"
           : participantStripeIndex % 2 === 0 ? "#f9fcff" : "#eef7fb";
         context.fillRect(x, currentY, header.width, rowHeight);
-        context.strokeStyle = "#b9e9df";
+        context.strokeStyle = "#9eddd2";
+        context.lineWidth = 2;
         context.strokeRect(x, currentY, header.width, rowHeight);
         context.fillStyle = isTotalColumn ? "#006c68" : "#071426";
-        context.font = `${columnIndex === 0 || isTotalColumn ? "900" : "700"} 17px Arial`;
+        context.font = `${columnIndex === 0 || isTotalColumn ? "900" : "900"} ${columnIndex === 0 ? "19" : "21"}px Arial`;
         context.textAlign = columnIndex === 0 ? "left" : "center";
+        context.textBaseline = "alphabetic";
         context.fillText(
           fitCanvasText(context, String(values[columnIndex] ?? ""), header.width - 20),
           columnIndex === 0 ? x + 18 : x + header.width / 2,

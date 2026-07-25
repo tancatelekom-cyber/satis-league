@@ -174,6 +174,18 @@ async function buildArenaPng(
     context.font = "italic 900 46px Arial";
     context.textAlign = "center";
     context.fillText("VS", width / 2, cardTop + cardHeight / 2 + 16);
+
+    if (index < matchups.length - 1) {
+      const dividerY = top + matchupHeight - 12;
+      const divider = context.createLinearGradient(70, dividerY, width - 70, dividerY);
+      divider.addColorStop(0, "rgba(0, 91, 204, 0)");
+      divider.addColorStop(0.18, "#005bcc");
+      divider.addColorStop(0.5, "#ffcb52");
+      divider.addColorStop(0.82, "#ed3c36");
+      divider.addColorStop(1, "rgba(237, 60, 54, 0)");
+      context.fillStyle = divider;
+      context.fillRect(70, dividerY, width - 140, 10);
+    }
   });
 
   context.fillStyle = "#125cc8";

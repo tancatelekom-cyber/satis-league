@@ -114,6 +114,8 @@ type DuelCard = {
     name: string;
     participantCells: number[];
     total: number;
+    totalPoints: number;
+    basePoints: number;
   }>;
 };
 
@@ -237,7 +239,10 @@ function buildDuelCard(input: {
       id: product.id,
       name: product.name,
       participantCells,
-      total: participantCells.reduce((sum, value) => sum + value, 0)
+      total: participantCells.reduce((sum, value) => sum + value, 0),
+      totalPoints:
+        participantCells.reduce((sum, value) => sum + value, 0) * Number(product.base_points ?? 0),
+      basePoints: Number(product.base_points ?? 0)
     };
   });
 

@@ -211,7 +211,7 @@ export async function GET(request: Request) {
   ];
 
   summary.rows.forEach((row) => {
-    const accessoryRow = row.key === "accessory";
+    const rateRow = row.key === "accessory" || row.key === "service";
     const recontractRow = row.key === "recontract";
     rows.push([
       row.label,
@@ -219,12 +219,12 @@ export async function GET(request: Request) {
       formatPercent(row.projectedTempo),
       row.currentScaleLabel,
       row.projectedScaleLabel,
-      accessoryRow
+      rateRow
         ? formatPercent(row.currentBaseValue, 0)
         : recontractRow
           ? `${formatCurrency(row.currentBaseValue)}/adet`
           : formatCurrency(row.currentBaseValue),
-      accessoryRow
+      rateRow
         ? formatPercent(row.projectedBaseValue, 0)
         : recontractRow
           ? `${formatCurrency(row.projectedBaseValue)}/adet`

@@ -372,7 +372,7 @@ export default async function ManagerPrimePage({ searchParams }: PageProps) {
             </thead>
             <tbody>
               {summary.rows.map((row) => {
-                const accessoryRow = row.key === "accessory";
+                const rateRow = row.key === "accessory" || row.key === "service";
                 const recontractRow = row.key === "recontract";
 
                 return (
@@ -383,14 +383,14 @@ export default async function ManagerPrimePage({ searchParams }: PageProps) {
                     <td>{row.currentScaleLabel}</td>
                     <td>{row.projectedScaleLabel}</td>
                     <td>
-                      {accessoryRow
+                      {rateRow
                         ? formatPercent(row.currentBaseValue, 0)
                         : recontractRow
                           ? `${formatCurrency(row.currentBaseValue)}/adet`
                           : formatCurrency(row.currentBaseValue)}
                     </td>
                     <td>
-                      {accessoryRow
+                      {rateRow
                         ? formatPercent(row.projectedBaseValue, 0)
                         : recontractRow
                           ? `${formatCurrency(row.projectedBaseValue)}/adet`

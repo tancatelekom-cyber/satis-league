@@ -3151,16 +3151,24 @@ function StoreGoalDashboard({
               category.hasTarget &&
               normalizeCategoryKey(category.title).includes("AKTIVASYON ADET") &&
               projectedPercent < 60;
+            const isEmployeeZeroActual =
+              isEmployeeDashboard &&
+              category.hasTarget &&
+              actualPercent <= 0;
             return (
               <div
                 className={`goal-dashboard-category-pie-card ${
                   isActivationSupportCritical ? "goal-dashboard-activation-critical" : ""
-                }`}
+                } ${isEmployeeZeroActual ? "goal-dashboard-employee-zero-actual" : ""}`}
                 key={`dashboard-category-${category.title}`}
               >
                 <div
                   className="goal-dashboard-category-pie"
-                  style={{ background: `conic-gradient(${color} 0% ${piePercent}%, #e2e8f0 ${piePercent}% 100%)` }}
+                  style={{
+                    background: isEmployeeZeroActual
+                      ? "conic-gradient(#ef4444 0% 100%)"
+                      : `conic-gradient(${color} 0% ${piePercent}%, #e2e8f0 ${piePercent}% 100%)`
+                  }}
                   role="img"
                   aria-label={
                     category.hasTarget
@@ -4150,7 +4158,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
           {effectiveView !== "company" ? (
             <section className="guide-card game-brief-card goal-filter-card goal-filter-card-with-select">
               <div className="league-filter-grid goal-filter-grid">
-                {effectivePanel === "detail" || effectiveView === "store" ? (
+                {effectivePanel === "detail" || effectivePanel === "dashboard" || effectiveView === "store" ? (
                   <div className="league-filter-item league-filter-item-wide">
                     <span className="league-filter-label">{effectiveView === "store" ? "Magaza" : "Calisan"}</span>
                     <FilterSelectNav

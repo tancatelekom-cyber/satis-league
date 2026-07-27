@@ -14401,6 +14401,33 @@ textarea::placeholder {
   gap: 18px;
 }
 
+.goal-store-employee-success-section .goal-company-success-grid {
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+}
+
+.goal-store-employee-success-card {
+  gap: 10px;
+  padding: 14px 12px;
+}
+
+.goal-store-employee-success-card .goal-dashboard-card-head h3 {
+  font-size: 0.9rem;
+}
+
+.goal-store-employee-success-card .goal-dashboard-card-head span,
+.goal-store-employee-success-card .goal-company-success-open {
+  font-size: 0.72rem;
+}
+
+.goal-store-employee-success-card .goal-company-success-pie {
+  width: min(128px, 34vw);
+}
+
+.goal-store-employee-success-card .goal-company-success-pie strong {
+  font-size: 1.25rem;
+}
+
 .goal-store-employee-success-critical {
   border-color: rgba(239, 68, 68, 0.72);
   animation: goal-store-employee-critical-card 0.82s ease-in-out infinite;

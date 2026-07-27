@@ -14396,6 +14396,40 @@ textarea::placeholder {
   font-weight: 700;
 }
 
+.goal-store-employee-success-section {
+  display: grid;
+  gap: 18px;
+}
+
+.goal-store-employee-success-critical {
+  border-color: rgba(239, 68, 68, 0.72);
+  animation: goal-store-employee-critical-card 0.82s ease-in-out infinite;
+}
+
+.goal-store-employee-success-critical .goal-company-success-pie {
+  animation: goal-dashboard-activation-pie-alarm 0.78s ease-in-out infinite;
+}
+
+@keyframes goal-store-employee-critical-card {
+  0%,
+  100% {
+    background: #292a55;
+    box-shadow: 0 14px 28px rgba(5, 7, 31, 0.2);
+  }
+
+  50% {
+    background: #641f32;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.22), 0 18px 34px rgba(127, 29, 29, 0.52);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .goal-store-employee-success-critical,
+  .goal-store-employee-success-critical .goal-company-success-pie {
+    animation: none;
+  }
+}
+
 @media (max-width: 900px) {
   .goal-dashboard-kpi-grid,
   .goal-dashboard-category-pies {

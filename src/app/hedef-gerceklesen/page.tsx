@@ -3522,6 +3522,10 @@ function CompanyStoreSuccessDashboard({
         </DashboardCategoryInteractiveGrid>
       </article>
 
+      <div className="goal-company-dashboard-section-divider" role="separator">
+        <span>Şube Başarı Grafikleri</span>
+      </div>
+
       <div className="goal-company-success-grid">
         {stores.map((store) => {
           const piePercent = Math.max(0, Math.min(100, store.successPercent));
@@ -3615,6 +3619,10 @@ function CompanyStoreSuccessDashboard({
           title="Firma Başarı Dashboardu"
           subtitle="Şubelerin ay sonu başarı oranları"
           detailColumns={2}
+          detailDivider={{
+            beforeIndex: companyDashboardCategories.length,
+            title: "Şube Başarı Grafikleri"
+          }}
           colorBlindMode={colorBlindMode}
           statusItems={[
             { label: "Hedefte", count: companyAchievedCount, tone: "success" },
@@ -3684,7 +3692,10 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
 
   const canViewAll = canViewAllGoalActual(profile.role);
   const isAdminViewer = profile.role === "admin";
-  const canShareDashboard = profile.role === "admin" || profile.role === "management";
+  const canShareDashboard =
+    profile.role === "admin" ||
+    profile.role === "management" ||
+    profile.role === "manager";
   const colorBlindDashboardMode = isColorBlindDashboardUser(user.id);
   const currentUserFullName = String((profile as { full_name?: string | null }).full_name ?? "").trim();
   const currentUserStore = (profile as { store?: Array<{ name: string }> | { name: string } | null }).store;

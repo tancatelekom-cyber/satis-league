@@ -9,6 +9,8 @@ function normalizeKey(value: string) {
   return value
     .trim()
     .toLocaleUpperCase("tr-TR")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
     .replace(/İ/g, "I")
     .replace(/Ğ/g, "G")
     .replace(/Ü/g, "U")

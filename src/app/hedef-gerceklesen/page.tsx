@@ -951,12 +951,23 @@ function average(values: number[]) {
 function normalizeCategoryKey(value: string) {
   return value
     .toLocaleUpperCase("tr-TR")
+    .replace(/Ä°/g, "I")
+    .replace(/Ä/g, "G")
+    .replace(/Ãœ/g, "U")
+    .replace(/Å/g, "S")
+    .replace(/Ã–/g, "O")
+    .replace(/Ã‡/g, "C")
     .replace(/\u0130/g, "I")
     .replace(/\u011E/g, "G")
     .replace(/\u00DC/g, "U")
     .replace(/\u015E/g, "S")
     .replace(/\u00D6/g, "O")
     .replace(/\u00C7/g, "C");
+}
+
+function isServiceCategory(title: string) {
+  const upperTitle = title.toLocaleUpperCase("tr-TR");
+  return upperTitle.includes("HİZMET") || normalizeCategoryKey(title).includes("HIZMET");
 }
 
 function isEntryCount(title: string) {
@@ -2851,7 +2862,7 @@ function GoalSuccessDashboardLink({
   const targetedCategories = categories.filter(
     (category) =>
       normalizeCategoryKey(category.title) !== normalizeCategoryKey("AKSESUAR CIRO") &&
-      !normalizeCategoryKey(category.title).includes(normalizeCategoryKey("HIZMET")) &&
+      !isServiceCategory(category.title) &&
       !isEntryCount(category.title) &&
       !isWebKontorCategory(category.title) &&
       category.hasTarget &&
@@ -3222,7 +3233,7 @@ function CompanyStoreSuccessDashboard({
       const categories = buildStoreCategorySummaries(storeRows, dayStats.workedDays, dayStats.totalDays).filter(
         (category) =>
           normalizeCategoryKey(category.title) !== normalizeCategoryKey("AKSESUAR CIRO") &&
-          !normalizeCategoryKey(category.title).includes(normalizeCategoryKey("HIZMET")) &&
+          !isServiceCategory(category.title) &&
           !isEntryCount(category.title) &&
           !isWebKontorCategory(category.title) &&
           category.hasTarget &&
@@ -3242,7 +3253,7 @@ function CompanyStoreSuccessDashboard({
   const companyDashboardCategories = buildCompanyCategorySummaries(rows, dayStats.workedDays, dayStats.totalDays).filter(
     (category) =>
       normalizeCategoryKey(category.title) !== normalizeCategoryKey("AKSESUAR CIRO") &&
-      !normalizeCategoryKey(category.title).includes(normalizeCategoryKey("HIZMET")) &&
+      !isServiceCategory(category.title) &&
       !isEntryCount(category.title) &&
       !isWebKontorCategory(category.title)
   );

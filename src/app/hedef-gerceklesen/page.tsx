@@ -3301,6 +3301,21 @@ function StoreGoalDashboard({
           title={`${dashboardSubject} ${isEmployeeDashboard ? "Personel" : "Şube"} Dashboardu`}
           subtitle="Ay sonu hedef gidişatı ve kategori başarı oranları"
           colorBlindMode={colorBlindMode}
+          statusItems={[
+            { label: "Hedefte", count: achievedCount, tone: "success" },
+            { label: "Hedefe Yakın", count: closeCount, tone: "near" },
+            { label: "Riskli", count: riskCount, tone: "risk" }
+          ]}
+          rankingItems={
+            isEmployeeDashboard
+              ? []
+              : employeeSuccessRows.map((employee) => ({
+                  label: employee.employeeName,
+                  percent: employee.successPercent,
+                  detail: `${employee.successfulCount}/${employee.totalCount} hedefe giden kalem`,
+                  colorMode: "success" as const
+                }))
+          }
           items={[
             {
               label: "Başarı Oranı",
@@ -3310,6 +3325,7 @@ function StoreGoalDashboard({
             ...dashboardCategories.map((category) => ({
               label: category.title,
               percent: category.hasTarget ? category.projectedPercent ?? category.actualPercent ?? 0 : 0,
+              colorMode: "category" as const,
               detail: category.hasTarget
                 ? `Şu an ${formatPercent(category.actualPercent ?? 0)}`
                 : `Mevcut ${formatNumber(category.actual)}`
@@ -3599,18 +3615,37 @@ function CompanyStoreSuccessDashboard({
           title="Firma Başarı Dashboardu"
           subtitle="Şubelerin ay sonu başarı oranları"
           detailColumns={2}
-          detailColorMode="success"
           colorBlindMode={colorBlindMode}
+          statusItems={[
+            { label: "Hedefte", count: companyAchievedCount, tone: "success" },
+            { label: "Hedefe Yakın", count: companyCloseCount, tone: "near" },
+            { label: "Riskli", count: companyRiskCount, tone: "risk" }
+          ]}
+          rankingItems={employeeSuccessRows.map((employee) => ({
+            label: employee.employeeName,
+            percent: employee.successPercent,
+            detail: `${employee.successfulCount}/${employee.totalCount} hedefe giden kalem`,
+            colorMode: "success" as const
+          }))}
           items={[
             {
               label: "Firma Başarı Oranı",
               percent: companySuccessPercent,
               detail: `${companyAchievedCount}/${companyCategories.length} hedefe giden kalem`
             },
+            ...companyDashboardCategories.map((category) => ({
+              label: `Kategori · ${category.title}`,
+              percent: category.hasTarget ? category.projectedPercent ?? category.actualPercent ?? 0 : 0,
+              detail: category.hasTarget
+                ? `Şu an ${formatPercent(category.actualPercent ?? 0)}`
+                : `Mevcut ${formatNumber(category.actual)}`,
+              colorMode: "category" as const
+            })),
             ...stores.map((store) => ({
-              label: store.storeName,
+              label: `Şube · ${store.storeName}`,
               percent: store.successPercent,
-              detail: `${store.successfulCount}/${store.totalCount} hedefe giden kalem`
+              detail: `${store.successfulCount}/${store.totalCount} hedefe giden kalem`,
+              colorMode: "success" as const
             }))
           ]}
         />

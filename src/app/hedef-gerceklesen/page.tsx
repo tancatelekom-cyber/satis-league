@@ -3023,6 +3023,46 @@ function DashboardCategoryHoverTable({
   );
 }
 
+function buildEmployeeDashboardSuccessRows(employeeRows: GoalActualRow[], dayStats: GoalDayStats) {
+  const employeeMap = new Map<string, GoalActualRow[]>();
+  employeeRows.forEach((row) => {
+    if (!row.employeeName) return;
+    const current = employeeMap.get(row.employeeName) ?? [];
+    current.push(row);
+    employeeMap.set(row.employeeName, current);
+  });
+
+  return Array.from(employeeMap.entries())
+    .map(([employeeName, rows]) => {
+      const employeeCategories = buildCategorySummaries(rows, dayStats.workedDays, dayStats.totalDays).filter(
+        (category) =>
+          normalizeCategoryKey(category.title) !== normalizeCategoryKey("AKSESUAR CIRO") &&
+          !isServiceCategory(category.title) &&
+          !isEntryCount(category.title) &&
+          !isWebKontorCategory(category.title) &&
+          category.hasTarget &&
+          (category.target ?? 0) > 0
+      );
+      const successfulCount = employeeCategories.filter(
+        (category) => (category.projectedPercent ?? category.actualPercent ?? 0) >= 100
+      ).length;
+      return {
+        employeeName,
+        successfulCount,
+        totalCount: employeeCategories.length,
+        successPercent: employeeCategories.length > 0
+          ? (successfulCount / employeeCategories.length) * 100
+          : 0
+      };
+    })
+    .sort(
+      (left, right) =>
+        right.successPercent - left.successPercent ||
+        right.successfulCount - left.successfulCount ||
+        left.employeeName.localeCompare(right.employeeName, "tr")
+    );
+}
+
 function StoreGoalDashboard({
   storeName,
   categories,
@@ -3068,42 +3108,7 @@ function StoreGoalDashboard({
     : successPercent >= 60
       ? dashboardPalette.near
       : dashboardPalette.risk;
-  const employeeMap = new Map<string, GoalActualRow[]>();
-  employeeRows.forEach((row) => {
-    if (!row.employeeName) return;
-    const current = employeeMap.get(row.employeeName) ?? [];
-    current.push(row);
-    employeeMap.set(row.employeeName, current);
-  });
-  const employeeSuccessRows = Array.from(employeeMap.entries())
-    .map(([employeeName, rows]) => {
-      const employeeCategories = buildCategorySummaries(rows, dayStats.workedDays, dayStats.totalDays).filter(
-        (category) =>
-          normalizeCategoryKey(category.title) !== normalizeCategoryKey("AKSESUAR CIRO") &&
-          !isServiceCategory(category.title) &&
-          !isEntryCount(category.title) &&
-          !isWebKontorCategory(category.title) &&
-          category.hasTarget &&
-          (category.target ?? 0) > 0
-      );
-      const successfulCount = employeeCategories.filter(
-        (category) => (category.projectedPercent ?? category.actualPercent ?? 0) >= 100
-      ).length;
-      return {
-        employeeName,
-        successfulCount,
-        totalCount: employeeCategories.length,
-        successPercent: employeeCategories.length > 0
-          ? (successfulCount / employeeCategories.length) * 100
-          : 0
-      };
-    })
-    .sort(
-      (left, right) =>
-        right.successPercent - left.successPercent ||
-        right.successfulCount - left.successfulCount ||
-        left.employeeName.localeCompare(right.employeeName, "tr")
-    );
+  const employeeSuccessRows = buildEmployeeDashboardSuccessRows(employeeRows, dayStats);
 
   return (
     <section className="goal-store-dashboard">
@@ -3318,11 +3323,13 @@ function StoreGoalDashboard({
 
 function CompanyStoreSuccessDashboard({
   rows,
+  employeeRows,
   dayStats,
   canShare,
   colorBlindMode
 }: {
   rows: GoalStoreRow[];
+  employeeRows: GoalActualRow[];
   dayStats: GoalDayStats;
   canShare: boolean;
   colorBlindMode: boolean;
@@ -3386,6 +3393,7 @@ function CompanyStoreSuccessDashboard({
   const companyStatusTotal = Math.max(1, companyCategories.length);
   const companyAchievedEnd = (companyAchievedCount / companyStatusTotal) * 100;
   const companyCloseEnd = companyAchievedEnd + (companyCloseCount / companyStatusTotal) * 100;
+  const employeeSuccessRows = buildEmployeeDashboardSuccessRows(employeeRows, dayStats);
 
   return (
     <section className="goal-store-dashboard goal-company-success-dashboard">
@@ -3532,6 +3540,59 @@ function CompanyStoreSuccessDashboard({
           );
         })}
       </div>
+
+      {employeeSuccessRows.length ? (
+        <article className="goal-dashboard-chart-card goal-store-employee-success-section">
+          <div className="goal-dashboard-card-head">
+            <h3>Tüm Personellerin Başarı Sıralaması</h3>
+            <span>En yüksek başarı oranından en düşüğe doğru sıralanmıştır.</span>
+          </div>
+          <div className="goal-store-employee-ranking-chart">
+            {employeeSuccessRows.map((employee) => {
+              const barPercent = Math.max(0, Math.min(100, employee.successPercent));
+              const isCritical = employee.successPercent < 20;
+              const color = employee.successPercent >= 80
+                ? dashboardPalette.success
+                : employee.successPercent >= 60
+                  ? dashboardPalette.near
+                  : dashboardPalette.risk;
+
+              return (
+                <a
+                  className={`goal-store-employee-ranking-row ${
+                    isCritical ? "goal-store-employee-success-critical" : ""
+                  }`}
+                  href={buildHref("employee", {
+                    employee: employee.employeeName,
+                    panel: "dashboard",
+                    openDashboard: true
+                  })}
+                  key={`company-employee-dashboard-${employee.employeeName}`}
+                >
+                  <div className="goal-store-employee-ranking-name">
+                    <strong>{employee.employeeName}</strong>
+                    <span>{employee.successfulCount}/{employee.totalCount} kalem</span>
+                  </div>
+                  <div
+                    className="goal-store-employee-success-bar"
+                    role="img"
+                    aria-label={`${employee.employeeName} başarı oranı ${formatPercent(employee.successPercent)}`}
+                  >
+                    <span
+                      className="goal-store-employee-success-bar-fill"
+                      style={{
+                        width: `${barPercent}%`,
+                        background: isCritical ? "#ef4444" : color
+                      }}
+                    />
+                    <strong>{formatPercent(employee.successPercent)}</strong>
+                  </div>
+                </a>
+              );
+            })}
+          </div>
+        </article>
+      ) : null}
 
       {canShare ? (
         <DashboardShareButton
@@ -4390,6 +4451,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
           ) : effectivePanel === "dashboard" && effectiveView === "company" ? (
             <CompanyStoreSuccessDashboard
               rows={filteredStoreRows}
+              employeeRows={filteredEmployeeCoreRows}
               dayStats={dayStats}
               canShare={canShareDashboard}
               colorBlindMode={colorBlindDashboardMode}

@@ -119,8 +119,8 @@ function concatBytes(parts: Uint8Array[]) {
 async function canvasToPdfBlob(canvas: HTMLCanvasElement) {
   const encoder = new TextEncoder();
   const pageWidth = 595.28;
-  const pageHeight = 841.89;
-  const sourcePageHeight = Math.floor(canvas.width * (pageHeight / pageWidth));
+  const pageHeight = pageWidth * (canvas.height / canvas.width);
+  const sourcePageHeight = canvas.height;
   const images: Array<{ bytes: Uint8Array; width: number; height: number; renderedHeight: number }> = [];
 
   for (let sourceY = 0; sourceY < canvas.height; sourceY += sourcePageHeight) {
@@ -496,8 +496,11 @@ export function DashboardShareButton(props: DashboardShareButtonProps) {
       const fileName = `${safeFileName(props.title)}-dashboard.pdf`;
       const file = new File([pdfBlob], fileName, { type: "application/pdf" });
       const shareData = { files: [file], title: props.title, text: `${props.title} PDF` };
+      const isMobileDevice =
+        /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+        (window.matchMedia("(pointer: coarse)").matches && window.innerWidth <= 1024);
 
-      if (navigator.share && (!navigator.canShare || navigator.canShare(shareData))) {
+      if (isMobileDevice && navigator.share && (!navigator.canShare || navigator.canShare(shareData))) {
         await navigator.share(shareData);
         setStatus("PDF paylaşım menüsü açıldı.");
       } else {
@@ -528,7 +531,7 @@ export function DashboardShareButton(props: DashboardShareButtonProps) {
           onClick={downloadOrShareDashboardPdf}
           type="button"
         >
-          PDF İndir / Paylaş
+          PDF İndir<span className="goal-dashboard-pdf-mobile-label"> / Paylaş</span>
         </button>
       </div>
       {status ? <p className="campaign-share-status">{status}</p> : null}

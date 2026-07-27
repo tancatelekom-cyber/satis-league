@@ -3028,18 +3028,23 @@ function StoreGoalDashboard({
   categories,
   dayStats,
   canShare,
-  colorBlindMode
+  colorBlindMode,
+  dashboardScope = "store"
 }: {
   storeName: string;
   categories: GoalCategorySummary[];
   dayStats: GoalDayStats;
   canShare: boolean;
   colorBlindMode: boolean;
+  dashboardScope?: "store" | "employee";
 }) {
+  const isEmployeeDashboard = dashboardScope === "employee";
+  const dashboardSubject = storeName || (isEmployeeDashboard ? "Personel" : "Mağaza");
   const dashboardPalette = getDashboardPalette(colorBlindMode);
   const dashboardSourceCategories = categories.filter(
     (category) =>
       normalizeCategoryKey(category.title) !== normalizeCategoryKey("AKSESUAR CIRO") &&
+      !isServiceCategory(category.title) &&
       !isEntryCount(category.title) &&
       !isWebKontorCategory(category.title)
   );
@@ -3066,8 +3071,10 @@ function StoreGoalDashboard({
     <section className="goal-store-dashboard">
       <div className="goal-dashboard-hero">
         <div>
-          <span className="goal-dashboard-eyebrow">MAĞAZA PERFORMANS DASHBOARDU</span>
-          <h2>{storeName || "Mağaza"}</h2>
+          <span className="goal-dashboard-eyebrow">
+            {isEmployeeDashboard ? "PERSONEL PERFORMANS DASHBOARDU" : "MAĞAZA PERFORMANS DASHBOARDU"}
+          </span>
+          <h2>{dashboardSubject}</h2>
           <p>Hedef, gerçekleşen ve ay sonu gidişatının tek sayfalık görsel analizi.</p>
         </div>
         <div className="goal-dashboard-period">
@@ -3174,7 +3181,7 @@ function StoreGoalDashboard({
                   </span>
                 ) : null}
                 <DashboardCategoryHoverTable
-                  title={`${storeName || "Mağaza"} Hedef Gerçekleşen`}
+                  title={`${dashboardSubject} Hedef Gerçekleşen`}
                   firstColumnLabel="Kategori"
                   rows={[category]}
                   remainingDays={dayStats.remainingDays}
@@ -3187,7 +3194,7 @@ function StoreGoalDashboard({
 
       {canShare ? (
         <DashboardShareButton
-          title={`${storeName || "Mağaza"} Şube Dashboardu`}
+          title={`${dashboardSubject} ${isEmployeeDashboard ? "Personel" : "Şube"} Dashboardu`}
           subtitle="Ay sonu hedef gidişatı ve kategori başarı oranları"
           colorBlindMode={colorBlindMode}
           items={[
@@ -3508,6 +3515,8 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
     effectiveView === "store" && requestedPanel === "dashboard" && canOpenDashboard
       ? "dashboard"
       : effectiveView === "company" && requestedPanel === "dashboard" && canOpenDashboard
+        ? "dashboard"
+      : effectiveView === "employee" && requestedPanel === "dashboard" && canOpenDashboard
         ? "dashboard"
       : effectiveView === "employee" && requestedPanel === "ranking"
         ? "ranking"
@@ -4198,12 +4207,31 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                   >
                     Siralama
                   </a>
+                  <a
+                    className={`goal-mode-button ${effectivePanel === "dashboard" ? "goal-mode-button-active" : ""}`}
+                    href={buildHref("employee", {
+                      employee: activeEmployeeName,
+                      panel: "dashboard",
+                      openDashboard: true
+                    })}
+                  >
+                    Dashboard
+                  </a>
                 </div>
               )}
             </section>
           ) : null}
 
-          {effectivePanel === "dashboard" && effectiveView === "store" ? (
+          {effectivePanel === "dashboard" && effectiveView === "employee" ? (
+            <StoreGoalDashboard
+              storeName={activeEmployeeName}
+              categories={employeeCategorySummaries}
+              dayStats={dayStats}
+              canShare={canShareDashboard}
+              colorBlindMode={colorBlindDashboardMode}
+              dashboardScope="employee"
+            />
+          ) : effectivePanel === "dashboard" && effectiveView === "store" ? (
             <StoreGoalDashboard
               storeName={activeStoreName}
               categories={storeCategorySummaries}

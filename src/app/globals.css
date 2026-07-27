@@ -13996,7 +13996,8 @@ textarea::placeholder {
   font-size: 0.75rem;
 }
 
-.goal-dashboard-activation-critical .goal-dashboard-category-pie {
+.goal-dashboard-activation-critical .goal-dashboard-category-pie,
+.goal-dashboard-employee-zero-actual .goal-dashboard-category-pie {
   animation: goal-dashboard-activation-pie-alarm 0.78s ease-in-out infinite;
 }
 
@@ -14072,11 +14073,13 @@ textarea::placeholder {
 
 @media (prefers-reduced-motion: reduce) {
   .goal-dashboard-activation-critical .goal-dashboard-category-pie,
+  .goal-dashboard-employee-zero-actual .goal-dashboard-category-pie,
   .goal-dashboard-activation-warning {
     animation: none;
   }
 
-  .goal-dashboard-activation-critical .goal-dashboard-category-pie {
+  .goal-dashboard-activation-critical .goal-dashboard-category-pie,
+  .goal-dashboard-employee-zero-actual .goal-dashboard-category-pie {
     box-shadow:
       0 0 0 7px rgba(239, 68, 68, 0.2),
       0 0 22px rgba(239, 68, 68, 0.72),

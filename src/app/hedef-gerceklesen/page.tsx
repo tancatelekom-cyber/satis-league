@@ -2851,7 +2851,7 @@ function GoalSuccessDashboardLink({
   const targetedCategories = categories.filter(
     (category) =>
       normalizeCategoryKey(category.title) !== normalizeCategoryKey("AKSESUAR CIRO") &&
-      normalizeCategoryKey(category.title) !== normalizeCategoryKey("HIZMET") &&
+      !normalizeCategoryKey(category.title).includes(normalizeCategoryKey("HIZMET")) &&
       !isEntryCount(category.title) &&
       !isWebKontorCategory(category.title) &&
       category.hasTarget &&
@@ -3222,7 +3222,7 @@ function CompanyStoreSuccessDashboard({
       const categories = buildStoreCategorySummaries(storeRows, dayStats.workedDays, dayStats.totalDays).filter(
         (category) =>
           normalizeCategoryKey(category.title) !== normalizeCategoryKey("AKSESUAR CIRO") &&
-          normalizeCategoryKey(category.title) !== normalizeCategoryKey("HIZMET") &&
+          !normalizeCategoryKey(category.title).includes(normalizeCategoryKey("HIZMET")) &&
           !isEntryCount(category.title) &&
           !isWebKontorCategory(category.title) &&
           category.hasTarget &&
@@ -3242,7 +3242,7 @@ function CompanyStoreSuccessDashboard({
   const companyDashboardCategories = buildCompanyCategorySummaries(rows, dayStats.workedDays, dayStats.totalDays).filter(
     (category) =>
       normalizeCategoryKey(category.title) !== normalizeCategoryKey("AKSESUAR CIRO") &&
-      normalizeCategoryKey(category.title) !== normalizeCategoryKey("HIZMET") &&
+      !normalizeCategoryKey(category.title).includes(normalizeCategoryKey("HIZMET")) &&
       !isEntryCount(category.title) &&
       !isWebKontorCategory(category.title)
   );

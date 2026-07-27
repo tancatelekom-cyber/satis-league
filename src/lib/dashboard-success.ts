@@ -22,6 +22,7 @@ function isDashboardCategory(title: string) {
   return (
     normalized !== "TUM KATEGORILER" &&
     normalized !== "AKSESUAR CIRO" &&
+    normalized !== "HIZMET" &&
     !normalized.includes("GIRIS SAY") &&
     !normalized.includes("WEB KONTOR")
   );

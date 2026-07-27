@@ -5242,6 +5242,10 @@ textarea::placeholder {
   opacity: 0.7;
 }
 
+.goal-dashboard-pdf-mobile-label {
+  display: none;
+}
+
 .goal-dashboard-share-area .campaign-share-status {
   margin: 0;
   color: #d8f6f2;
@@ -5262,6 +5266,10 @@ textarea::placeholder {
 
   .goal-dashboard-pdf-download-button {
     width: 100%;
+  }
+
+  .goal-dashboard-pdf-mobile-label {
+    display: inline;
   }
 }
 

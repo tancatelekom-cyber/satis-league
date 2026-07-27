@@ -4065,10 +4065,20 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
 
   const employeeOptions = employeeNames.length
     ? employeeNames.map((name) => ({
-        value: buildHref("employee", { employee: name, panel: effectivePanel }),
+        value: buildHref("employee", {
+          employee: name,
+          panel: effectivePanel,
+          openDashboard: effectivePanel === "dashboard"
+        }),
         label: name
       }))
-    : [{ value: buildHref("employee", { panel: effectivePanel }), label: "Calisan bulunamadi" }];
+    : [{
+        value: buildHref("employee", {
+          panel: effectivePanel,
+          openDashboard: effectivePanel === "dashboard"
+        }),
+        label: "Calisan bulunamadi"
+      }];
 
   const storeOptions = storeNames.length
     ? storeNames.map((name) => ({
@@ -4166,7 +4176,11 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                       value={
                         effectiveView === "store"
                           ? buildHref("store", { store: activeStoreName, panel: effectivePanel })
-                          : buildHref("employee", { employee: activeEmployeeName, panel: effectivePanel })
+                          : buildHref("employee", {
+                              employee: activeEmployeeName,
+                              panel: effectivePanel,
+                              openDashboard: effectivePanel === "dashboard"
+                            })
                       }
                       options={effectiveView === "store" ? storeOptions : employeeOptions}
                     />

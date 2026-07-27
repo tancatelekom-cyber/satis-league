@@ -4169,10 +4169,20 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
 
   const storeOptions = storeNames.length
     ? storeNames.map((name) => ({
-        value: buildHref("store", { store: name, panel: effectivePanel }),
+        value: buildHref("store", {
+          store: name,
+          panel: effectivePanel,
+          openDashboard: effectivePanel === "dashboard"
+        }),
         label: name
       }))
-    : [{ value: buildHref("store", { panel: effectivePanel }), label: "Magaza bulunamadi" }];
+    : [{
+        value: buildHref("store", {
+          panel: effectivePanel,
+          openDashboard: effectivePanel === "dashboard"
+        }),
+        label: "Magaza bulunamadi"
+      }];
 
   const categoryOptions = rankingCategoryPool.map((category) => ({
     value:
@@ -4278,7 +4288,11 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                       ariaLabel={effectiveView === "store" ? "Magaza secimi" : "Calisan secimi"}
                       value={
                         effectiveView === "store"
-                          ? buildHref("store", { store: activeStoreName, panel: effectivePanel })
+                          ? buildHref("store", {
+                              store: activeStoreName,
+                              panel: effectivePanel,
+                              openDashboard: effectivePanel === "dashboard"
+                            })
                           : buildHref("employee", {
                               employee: activeEmployeeName,
                               panel: effectivePanel,

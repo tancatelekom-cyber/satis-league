@@ -3710,6 +3710,39 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
     sheetError = message;
   }
 
+  let activeDashboardEmployeeIds: Set<string> | null = null;
+  let activeDashboardEmployeeNames: Set<string> | null = null;
+  try {
+    const admin = createAdminClient();
+    const { data: activeProfiles, error: activeProfilesError } = await admin
+      .from("profiles")
+      .select("id, full_name")
+      .eq("approval", "approved")
+      .in("role", ["employee", "manager"]);
+
+    if (!activeProfilesError) {
+      activeDashboardEmployeeIds = new Set(
+        (activeProfiles ?? []).map((profile) => String(profile.id ?? "").trim()).filter(Boolean)
+      );
+      activeDashboardEmployeeNames = new Set(
+        (activeProfiles ?? [])
+          .map((profile) => normalizeEmployeeIdentity(String(profile.full_name ?? "")))
+          .filter(Boolean)
+      );
+    }
+  } catch {
+    activeDashboardEmployeeIds = null;
+    activeDashboardEmployeeNames = null;
+  }
+
+  const isActiveDashboardEmployee = (row: GoalActualRow) =>
+    activeDashboardEmployeeIds === null || activeDashboardEmployeeNames === null
+      ? true
+      : Boolean(
+          (row.personnelId && activeDashboardEmployeeIds.has(row.personnelId)) ||
+          activeDashboardEmployeeNames.has(normalizeEmployeeIdentity(row.employeeName))
+        );
+
   const allFilteredEmployeeRows = employeeRows.filter((row) => !isAggregateCategoryLabel(row.mainCategory));
   const employeeRowsByPersonnelId = employeeRows.filter((row) => row.personnelId && row.personnelId === user.id);
   const employeeRowsByName =
@@ -3724,6 +3757,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
   const filteredEmployeeRows = scopedEmployeeRows.filter((row) => !isAggregateCategoryLabel(row.mainCategory));
   const allFilteredEmployeeCoreRows = allFilteredEmployeeRows.filter((row) => !isLivePrimeCategory(row.mainCategory));
   const filteredEmployeeCoreRows = filteredEmployeeRows.filter((row) => !isLivePrimeCategory(row.mainCategory));
+  const activeDashboardEmployeeRows = filteredEmployeeCoreRows.filter(isActiveDashboardEmployee);
   const filteredStoreRows = storeRows.filter((row) => !isAggregateCategoryLabel(row.mainCategory) && !row.separateInfo);
   const separateInfoStoreRows = storeRows.filter((row) => !isAggregateCategoryLabel(row.mainCategory) && row.separateInfo);
 
@@ -4083,7 +4117,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
   );
   const storeCategorySummaries = buildStoreCategorySummaries(activeStoreRows, dayStats.workedDays, dayStats.totalDays);
   const activeStoreEmployeeRows = activeStoreName
-    ? filteredEmployeeCoreRows.filter((row) => normalizeStoreKey(row.storeName) === normalizeStoreKey(activeStoreName))
+    ? activeDashboardEmployeeRows.filter((row) => normalizeStoreKey(row.storeName) === normalizeStoreKey(activeStoreName))
     : [];
   const storeEmployeeProductionPlans = buildStoreEmployeeProductionPlans(
     activeStoreEmployeeRows,
@@ -4451,7 +4485,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
           ) : effectivePanel === "dashboard" && effectiveView === "company" ? (
             <CompanyStoreSuccessDashboard
               rows={filteredStoreRows}
-              employeeRows={filteredEmployeeCoreRows}
+              employeeRows={activeDashboardEmployeeRows}
               dayStats={dayStats}
               canShare={canShareDashboard}
               colorBlindMode={colorBlindDashboardMode}

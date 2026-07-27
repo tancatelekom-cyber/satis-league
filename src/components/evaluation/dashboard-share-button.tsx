@@ -7,12 +7,21 @@ type DashboardShareItem = {
   label: string;
   percent: number;
   detail: string;
+  colorMode?: "success" | "category";
+};
+
+type DashboardShareStatusItem = {
+  label: string;
+  count: number;
+  tone: "success" | "near" | "risk";
 };
 
 type DashboardShareButtonProps = {
   title: string;
   subtitle: string;
   items: DashboardShareItem[];
+  statusItems?: DashboardShareStatusItem[];
+  rankingItems?: DashboardShareItem[];
   detailColumns?: 2 | 3;
   detailColorMode?: "success" | "category";
   colorBlindMode?: boolean;
@@ -97,6 +106,8 @@ async function buildDashboardImage({
   title,
   subtitle,
   items,
+  statusItems = [],
+  rankingItems = [],
   detailColumns = 3,
   detailColorMode = "category",
   colorBlindMode = false
@@ -112,8 +123,15 @@ async function buildDashboardImage({
   const detailRows = Math.ceil(detailItems.length / columns);
   const headerHeight = 280;
   const footerHeight = 120;
+  const statusHeight = statusItems.length ? 270 : 0;
+  const statusBlockHeight = statusHeight ? gap + statusHeight : 0;
   const detailHeight = detailRows > 0 ? gap + detailRows * cardHeight + Math.max(0, detailRows - 1) * gap : 0;
-  const height = headerHeight + featuredHeight + detailHeight + footerHeight;
+  const rankingHeaderHeight = rankingItems.length ? 105 : 0;
+  const rankingRowHeight = 76;
+  const rankingHeight = rankingItems.length
+    ? gap + rankingHeaderHeight + rankingItems.length * rankingRowHeight
+    : 0;
+  const height = headerHeight + featuredHeight + statusBlockHeight + detailHeight + rankingHeight + footerHeight;
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
@@ -158,11 +176,52 @@ async function buildDashboardImage({
     context.fillText(fitText(context, featuredItem.detail, featuredWidth - 100), width / 2, featuredY + 510);
   }
 
+  const statusY = headerHeight + featuredHeight + gap;
+  if (statusItems.length) {
+    const statusTotal = Math.max(1, statusItems.reduce((total, item) => total + item.count, 0));
+    const palette = getDashboardPalette(colorBlindMode);
+    roundedRect(context, side, statusY, width - side * 2, statusHeight, 28);
+    context.fillStyle = "#292a55";
+    context.fill();
+    context.lineWidth = 3;
+    context.strokeStyle = "rgba(101, 220, 231, 0.25)";
+    context.stroke();
+
+    context.fillStyle = "#ffffff";
+    context.font = "900 36px Arial";
+    context.textAlign = "left";
+    context.fillText("Hedef Durumu Dağılımı", side + 42, statusY + 58);
+
+    const barX = side + 42;
+    const barY = statusY + 92;
+    const barWidth = width - side * 2 - 84;
+    const barHeight = 52;
+    let currentX = barX;
+    statusItems.forEach((item) => {
+      const segmentWidth = barWidth * (item.count / statusTotal);
+      context.fillStyle = palette[item.tone];
+      context.fillRect(currentX, barY, segmentWidth, barHeight);
+      currentX += segmentWidth;
+    });
+
+    statusItems.forEach((item, index) => {
+      const legendX = side + 42 + index * ((width - side * 2 - 84) / Math.max(1, statusItems.length));
+      context.fillStyle = palette[item.tone];
+      context.beginPath();
+      context.arc(legendX + 10, statusY + 198, 10, 0, Math.PI * 2);
+      context.fill();
+      context.fillStyle = "#ffffff";
+      context.font = "800 27px Arial";
+      context.fillText(`${item.label}: ${item.count}`, legendX + 32, statusY + 207);
+    });
+  }
+
+  const detailStartY = headerHeight + featuredHeight + statusBlockHeight;
   detailItems.forEach((item, index) => {
     const column = index % columns;
     const row = Math.floor(index / columns);
     const x = side + column * (cardWidth + gap);
-    const y = headerHeight + featuredHeight + gap + row * (cardHeight + gap);
+    const y = detailStartY + gap + row * (cardHeight + gap);
     roundedRect(context, x, y, cardWidth, cardHeight, 22);
     context.fillStyle = "#292a55";
     context.fill();
@@ -180,7 +239,7 @@ async function buildDashboardImage({
       item.percent,
       columns === 2 ? 28 : 24,
       columns === 2 ? 34 : 29,
-      detailColorMode,
+      item.colorMode ?? detailColorMode,
       colorBlindMode
     );
     context.fillStyle = "#ffffff";
@@ -191,6 +250,55 @@ async function buildDashboardImage({
     context.font = `600 ${columns === 2 ? 22 : 19}px Arial`;
     context.fillText(fitText(context, item.detail, cardWidth - 42), x + cardWidth / 2, y + (columns === 2 ? 302 : 258));
   });
+
+  if (rankingItems.length) {
+    const rankingY = detailStartY + detailHeight + gap;
+    context.fillStyle = "#ffffff";
+    context.font = "900 38px Arial";
+    context.textAlign = "left";
+    context.fillText("Personel Başarı Sıralaması", side, rankingY + 48);
+    context.fillStyle = "#b9c9e8";
+    context.font = "600 23px Arial";
+    context.fillText("En yüksek başarı oranından en düşüğe", side, rankingY + 82);
+
+    const palette = getDashboardPalette(colorBlindMode);
+    rankingItems.forEach((item, index) => {
+      const rowY = rankingY + rankingHeaderHeight + index * rankingRowHeight;
+      const labelWidth = 360;
+      const barX = side + labelWidth;
+      const barWidth = width - side * 2 - labelWidth;
+      const normalizedPercent = Math.max(0, Math.min(100, item.percent));
+      const color = normalizedPercent >= 80
+        ? palette.success
+        : normalizedPercent >= 60
+          ? palette.near
+          : palette.risk;
+
+      context.fillStyle = "#ffffff";
+      context.font = "800 25px Arial";
+      context.textAlign = "left";
+      context.fillText(fitText(context, item.label, labelWidth - 24), side, rowY + 36);
+      context.fillStyle = "#b9c9e8";
+      context.font = "600 18px Arial";
+      context.fillText(fitText(context, item.detail, labelWidth - 24), side, rowY + 61);
+
+      roundedRect(context, barX, rowY + 13, barWidth, 48, 24);
+      context.fillStyle = "#dce7ef";
+      context.fill();
+      const fillWidth = Math.max(4, barWidth * (normalizedPercent / 100));
+      roundedRect(context, barX, rowY + 13, fillWidth, 48, 24);
+      context.fillStyle = color;
+      context.fill();
+      context.fillStyle = "#17143e";
+      context.font = "900 23px Arial";
+      context.textAlign = "center";
+      context.fillText(
+        `%${item.percent.toLocaleString("tr-TR", { maximumFractionDigits: 1 })}`,
+        barX + barWidth / 2,
+        rowY + 46
+      );
+    });
+  }
 
   context.fillStyle = "#8ea4c7";
   context.font = "600 24px Arial";

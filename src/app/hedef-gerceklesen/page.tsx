@@ -3026,6 +3026,7 @@ function DashboardCategoryHoverTable({
 function StoreGoalDashboard({
   storeName,
   categories,
+  employeeRows = [],
   dayStats,
   canShare,
   colorBlindMode,
@@ -3033,6 +3034,7 @@ function StoreGoalDashboard({
 }: {
   storeName: string;
   categories: GoalCategorySummary[];
+  employeeRows?: GoalActualRow[];
   dayStats: GoalDayStats;
   canShare: boolean;
   colorBlindMode: boolean;
@@ -3066,6 +3068,37 @@ function StoreGoalDashboard({
     : successPercent >= 60
       ? dashboardPalette.near
       : dashboardPalette.risk;
+  const employeeMap = new Map<string, GoalActualRow[]>();
+  employeeRows.forEach((row) => {
+    if (!row.employeeName) return;
+    const current = employeeMap.get(row.employeeName) ?? [];
+    current.push(row);
+    employeeMap.set(row.employeeName, current);
+  });
+  const employeeSuccessRows = Array.from(employeeMap.entries())
+    .map(([employeeName, rows]) => {
+      const employeeCategories = buildCategorySummaries(rows, dayStats.workedDays, dayStats.totalDays).filter(
+        (category) =>
+          normalizeCategoryKey(category.title) !== normalizeCategoryKey("AKSESUAR CIRO") &&
+          !isServiceCategory(category.title) &&
+          !isEntryCount(category.title) &&
+          !isWebKontorCategory(category.title) &&
+          category.hasTarget &&
+          (category.target ?? 0) > 0
+      );
+      const successfulCount = employeeCategories.filter(
+        (category) => (category.projectedPercent ?? category.actualPercent ?? 0) >= 100
+      ).length;
+      return {
+        employeeName,
+        successfulCount,
+        totalCount: employeeCategories.length,
+        successPercent: employeeCategories.length > 0
+          ? (successfulCount / employeeCategories.length) * 100
+          : 0
+      };
+    })
+    .sort((left, right) => left.employeeName.localeCompare(right.employeeName, "tr"));
 
   return (
     <section className="goal-store-dashboard">
@@ -3199,6 +3232,61 @@ function StoreGoalDashboard({
           })}
         </DashboardCategoryInteractiveGrid>
       </article>
+
+      {!isEmployeeDashboard && employeeSuccessRows.length ? (
+        <article className="goal-dashboard-chart-card goal-store-employee-success-section">
+          <div className="goal-dashboard-card-head">
+            <h3>Personel Başarı Oranları</h3>
+            <span>Grafiğe tıklayarak personelin dashboardunu açabilirsiniz.</span>
+          </div>
+          <div className="goal-company-success-grid">
+            {employeeSuccessRows.map((employee) => {
+              const piePercent = Math.max(0, Math.min(100, employee.successPercent));
+              const isCritical = employee.successPercent < 20;
+              const color = employee.successPercent >= 80
+                ? dashboardPalette.success
+                : employee.successPercent >= 60
+                  ? dashboardPalette.near
+                  : dashboardPalette.risk;
+
+              return (
+                <a
+                  className={`goal-company-success-card goal-store-employee-success-card ${
+                    isCritical ? "goal-store-employee-success-critical" : ""
+                  }`}
+                  href={buildHref("employee", {
+                    employee: employee.employeeName,
+                    panel: "dashboard",
+                    openDashboard: true
+                  })}
+                  key={`store-employee-dashboard-${employee.employeeName}`}
+                >
+                  <div className="goal-dashboard-card-head">
+                    <h3>{employee.employeeName}</h3>
+                    <span>{employee.successfulCount}/{employee.totalCount} kalem</span>
+                  </div>
+                  <div
+                    className="goal-company-success-pie"
+                    style={{
+                      background: isCritical
+                        ? "conic-gradient(#ef4444 0% 100%)"
+                        : `conic-gradient(${color} 0% ${piePercent}%, #dce7ef ${piePercent}% 100%)`
+                    }}
+                    role="img"
+                    aria-label={`${employee.employeeName} başarı oranı ${formatPercent(employee.successPercent)}`}
+                  >
+                    <div>
+                      <strong>{formatPercent(employee.successPercent)}</strong>
+                      <span>başarı</span>
+                    </div>
+                  </div>
+                  <span className="goal-company-success-open">Personel dashboardunu aç →</span>
+                </a>
+              );
+            })}
+          </div>
+        </article>
+      ) : null}
 
       {canShare ? (
         <DashboardShareButton
@@ -4261,6 +4349,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
             <StoreGoalDashboard
               storeName={activeStoreName}
               categories={storeCategorySummaries}
+              employeeRows={activeStoreEmployeeRows}
               dayStats={dayStats}
               canShare={canShareDashboard}
               colorBlindMode={colorBlindDashboardMode}

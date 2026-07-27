@@ -4182,6 +4182,8 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
         : buildHref("employee", { employee: activeEmployeeName, category, panel: effectivePanel }),
     label: category
   }));
+  const navigationPanel: GoalPanel = effectivePanel === "dashboard" ? "dashboard" : "detail";
+  const keepDashboardOpen = navigationPanel === "dashboard";
 
   return (
       <main className="goal-page">
@@ -4191,7 +4193,11 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
         <div className="goal-tab-row">
           <a
             className={`goal-tab ${effectiveView === "employee" ? "goal-tab-active" : ""}`}
-            href={buildHref("employee", { employee: effectiveEmployee, panel: "detail" })}
+            href={buildHref("employee", {
+              employee: effectiveEmployee || activeEmployeeName,
+              panel: navigationPanel,
+              openDashboard: keepDashboardOpen
+            })}
           >
             Calisan
           </a>
@@ -4199,11 +4205,21 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
             <>
               <a
                 className={`goal-tab ${effectiveView === "store" ? "goal-tab-active" : ""}`}
-                href={buildHref("store", { store: effectiveStore, panel: "detail" })}
+                href={buildHref("store", {
+                  store: effectiveStore || activeStoreName,
+                  panel: navigationPanel,
+                  openDashboard: keepDashboardOpen
+                })}
               >
                 Magaza
               </a>
-              <a className={`goal-tab ${effectiveView === "company" ? "goal-tab-active" : ""}`} href={buildHref("company")}>
+              <a
+                className={`goal-tab ${effectiveView === "company" ? "goal-tab-active" : ""}`}
+                href={buildHref("company", {
+                  panel: navigationPanel,
+                  openDashboard: keepDashboardOpen
+                })}
+              >
                 Firma
               </a>
             </>

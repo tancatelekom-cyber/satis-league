@@ -3710,6 +3710,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
     sheetError = message;
   }
 
+  // Keep historical Sheet rows, but show only currently approved users in dashboard rankings.
   let activeDashboardEmployeeIds: Set<string> | null = null;
   let activeDashboardEmployeeNames: Set<string> | null = null;
   try {

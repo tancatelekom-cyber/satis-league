@@ -967,7 +967,8 @@ function normalizeCategoryKey(value: string) {
 
 function isServiceCategory(title: string) {
   const upperTitle = title.toLocaleUpperCase("tr-TR");
-  return upperTitle.includes("HİZMET") || normalizeCategoryKey(title).includes("HIZMET");
+  const compactTitle = normalizeCategoryKey(title).replace(/[^A-Z0-9]/g, "");
+  return upperTitle.includes("HİZMET") || compactTitle.includes("HIZMET");
 }
 
 function isEntryCount(title: string) {

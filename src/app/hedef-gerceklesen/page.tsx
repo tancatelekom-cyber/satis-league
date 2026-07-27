@@ -3098,7 +3098,12 @@ function StoreGoalDashboard({
           : 0
       };
     })
-    .sort((left, right) => left.employeeName.localeCompare(right.employeeName, "tr"));
+    .sort(
+      (left, right) =>
+        right.successPercent - left.successPercent ||
+        right.successfulCount - left.successfulCount ||
+        left.employeeName.localeCompare(right.employeeName, "tr")
+    );
 
   return (
     <section className="goal-store-dashboard">
@@ -3239,7 +3244,7 @@ function StoreGoalDashboard({
             <h3>Personel Başarı Oranları</h3>
             <span>Grafiğe tıklayarak personelin dashboardunu açabilirsiniz.</span>
           </div>
-          <div className="goal-company-success-grid">
+          <div className="goal-store-employee-ranking-chart">
             {employeeSuccessRows.map((employee) => {
               const piePercent = Math.max(0, Math.min(100, employee.successPercent));
               const isCritical = employee.successPercent < 20;
@@ -3251,7 +3256,7 @@ function StoreGoalDashboard({
 
               return (
                 <a
-                  className={`goal-company-success-card goal-store-employee-success-card ${
+                  className={`goal-store-employee-ranking-row ${
                     isCritical ? "goal-store-employee-success-critical" : ""
                   }`}
                   href={buildHref("employee", {
@@ -3261,8 +3266,8 @@ function StoreGoalDashboard({
                   })}
                   key={`store-employee-dashboard-${employee.employeeName}`}
                 >
-                  <div className="goal-dashboard-card-head">
-                    <h3>{employee.employeeName}</h3>
+                  <div className="goal-store-employee-ranking-name">
+                    <strong>{employee.employeeName}</strong>
                     <span>{employee.successfulCount}/{employee.totalCount} kalem</span>
                   </div>
                   <div
@@ -3279,7 +3284,6 @@ function StoreGoalDashboard({
                     />
                     <strong>{formatPercent(employee.successPercent)}</strong>
                   </div>
-                  <span className="goal-company-success-open">Personel dashboardunu aç →</span>
                 </a>
               );
             })}

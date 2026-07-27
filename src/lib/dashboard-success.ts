@@ -21,10 +21,11 @@ function normalizeKey(value: string) {
 
 function isDashboardCategory(title: string) {
   const normalized = normalizeKey(title);
+  const compact = normalized.replace(/[^A-Z0-9]/g, "");
   return (
     normalized !== "TUM KATEGORILER" &&
     normalized !== "AKSESUAR CIRO" &&
-    !normalized.includes("HIZMET") &&
+    !compact.includes("HIZMET") &&
     !normalized.includes("GIRIS SAY") &&
     !normalized.includes("WEB KONTOR")
   );

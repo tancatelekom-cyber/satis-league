@@ -5212,6 +5212,36 @@ textarea::placeholder {
   width: fit-content;
 }
 
+.goal-dashboard-share-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.goal-dashboard-pdf-download-button {
+  min-height: 48px;
+  padding: 10px 18px;
+  border: 1px solid rgba(99, 217, 232, 0.68);
+  border-radius: 14px;
+  background: #292a55;
+  color: #ffffff;
+  font: inherit;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.goal-dashboard-pdf-download-button:hover,
+.goal-dashboard-pdf-download-button:focus-visible {
+  background: #35376c;
+  outline: 2px solid rgba(99, 217, 232, 0.45);
+}
+
+.goal-dashboard-pdf-download-button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
 .goal-dashboard-share-area .campaign-share-status {
   margin: 0;
   color: #d8f6f2;
@@ -5223,6 +5253,14 @@ textarea::placeholder {
   }
 
   .goal-dashboard-share-area .campaign-whatsapp-share-button {
+    width: 100%;
+  }
+
+  .goal-dashboard-share-actions {
+    display: grid;
+  }
+
+  .goal-dashboard-pdf-download-button {
     width: 100%;
   }
 }
@@ -14332,6 +14370,35 @@ textarea::placeholder {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 16px;
+}
+
+.goal-company-dashboard-section-divider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+}
+
+.goal-company-dashboard-section-divider::before,
+.goal-company-dashboard-section-divider::after {
+  content: "";
+  height: 2px;
+  flex: 1;
+  background: linear-gradient(90deg, transparent, rgba(99, 217, 232, 0.82));
+}
+
+.goal-company-dashboard-section-divider::after {
+  background: linear-gradient(90deg, rgba(99, 217, 232, 0.82), transparent);
+}
+
+.goal-company-dashboard-section-divider span {
+  padding: 8px 14px;
+  border: 1px solid rgba(99, 217, 232, 0.38);
+  border-radius: 999px;
+  background: #292a55;
 }
 
 .goal-company-success-card {

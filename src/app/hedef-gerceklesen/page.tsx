@@ -3266,19 +3266,18 @@ function StoreGoalDashboard({
                     <span>{employee.successfulCount}/{employee.totalCount} kalem</span>
                   </div>
                   <div
-                    className="goal-company-success-pie"
-                    style={{
-                      background: isCritical
-                        ? "conic-gradient(#ef4444 0% 100%)"
-                        : `conic-gradient(${color} 0% ${piePercent}%, #dce7ef ${piePercent}% 100%)`
-                    }}
+                    className="goal-store-employee-success-bar"
                     role="img"
                     aria-label={`${employee.employeeName} başarı oranı ${formatPercent(employee.successPercent)}`}
                   >
-                    <div>
-                      <strong>{formatPercent(employee.successPercent)}</strong>
-                      <span>başarı</span>
-                    </div>
+                    <span
+                      className="goal-store-employee-success-bar-fill"
+                      style={{
+                        width: `${piePercent}%`,
+                        background: isCritical ? "#ef4444" : color
+                      }}
+                    />
+                    <strong>{formatPercent(employee.successPercent)}</strong>
                   </div>
                   <span className="goal-company-success-open">Personel dashboardunu aç →</span>
                 </a>

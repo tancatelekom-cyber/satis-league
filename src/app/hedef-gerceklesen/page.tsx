@@ -4194,30 +4194,34 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                   </div>
                 )
               ) : (
-                <div className="goal-mode-row">
-                  <a
-                    className={`goal-mode-button ${effectivePanel === "detail" ? "goal-mode-button-active" : ""}`}
-                    href={buildHref("employee", { employee: activeEmployeeName, panel: "detail" })}
-                  >
-                    Hedef Gerceklesen
-                  </a>
-                  <a
-                    className={`goal-mode-button ${effectivePanel === "ranking" ? "goal-mode-button-active" : ""}`}
-                    href={buildHref("employee", { employee: activeEmployeeName, category: effectiveCategory, panel: "ranking" })}
-                  >
-                    Siralama
-                  </a>
-                  <a
-                    className={`goal-mode-button ${effectivePanel === "dashboard" ? "goal-mode-button-active" : ""}`}
-                    href={buildHref("employee", {
-                      employee: activeEmployeeName,
-                      panel: "dashboard",
-                      openDashboard: true
-                    })}
-                  >
-                    Dashboard
-                  </a>
-                </div>
+                <>
+                  {effectivePanel === "detail" ? (
+                    <GoalSuccessDashboardLink
+                      categories={employeeCategorySummaries}
+                      href={buildHref("employee", {
+                        employee: activeEmployeeName,
+                        panel: "dashboard",
+                        openDashboard: true
+                      })}
+                      label={activeEmployeeName || "Personel"}
+                      colorBlindMode={colorBlindDashboardMode}
+                    />
+                  ) : null}
+                  <div className="goal-mode-row">
+                    <a
+                      className={`goal-mode-button ${effectivePanel === "detail" ? "goal-mode-button-active" : ""}`}
+                      href={buildHref("employee", { employee: activeEmployeeName, panel: "detail" })}
+                    >
+                      Hedef Gerceklesen
+                    </a>
+                    <a
+                      className={`goal-mode-button ${effectivePanel === "ranking" ? "goal-mode-button-active" : ""}`}
+                      href={buildHref("employee", { employee: activeEmployeeName, category: effectiveCategory, panel: "ranking" })}
+                    >
+                      Siralama
+                    </a>
+                  </div>
+                </>
               )}
             </section>
           ) : null}

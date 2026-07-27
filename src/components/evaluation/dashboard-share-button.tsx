@@ -22,6 +22,10 @@ type DashboardShareButtonProps = {
   items: DashboardShareItem[];
   statusItems?: DashboardShareStatusItem[];
   rankingItems?: DashboardShareItem[];
+  detailDivider?: {
+    beforeIndex: number;
+    title: string;
+  };
   detailColumns?: 2 | 3;
   detailColorMode?: "success" | "category";
   colorBlindMode?: boolean;
@@ -102,12 +106,103 @@ function canvasToBlob(canvas: HTMLCanvasElement) {
   });
 }
 
+function concatBytes(parts: Uint8Array[]) {
+  const result = new Uint8Array(parts.reduce((total, part) => total + part.length, 0));
+  let offset = 0;
+  parts.forEach((part) => {
+    result.set(part, offset);
+    offset += part.length;
+  });
+  return result;
+}
+
+async function canvasToPdfBlob(canvas: HTMLCanvasElement) {
+  const encoder = new TextEncoder();
+  const pageWidth = 595.28;
+  const pageHeight = 841.89;
+  const sourcePageHeight = Math.floor(canvas.width * (pageHeight / pageWidth));
+  const images: Array<{ bytes: Uint8Array; width: number; height: number; renderedHeight: number }> = [];
+
+  for (let sourceY = 0; sourceY < canvas.height; sourceY += sourcePageHeight) {
+    const sliceHeight = Math.min(sourcePageHeight, canvas.height - sourceY);
+    const slice = document.createElement("canvas");
+    slice.width = canvas.width;
+    slice.height = sliceHeight;
+    const context = slice.getContext("2d");
+    if (!context) throw new Error("PDF sayfası oluşturulamadı.");
+    context.drawImage(canvas, 0, sourceY, canvas.width, sliceHeight, 0, 0, canvas.width, sliceHeight);
+    const jpeg = await new Promise<Blob>((resolve, reject) => {
+      slice.toBlob(
+        (blob) => (blob ? resolve(blob) : reject(new Error("PDF görseli oluşturulamadı."))),
+        "image/jpeg",
+        0.94
+      );
+    });
+    images.push({
+      bytes: new Uint8Array(await jpeg.arrayBuffer()),
+      width: slice.width,
+      height: slice.height,
+      renderedHeight: pageWidth * (sliceHeight / canvas.width)
+    });
+  }
+
+  const objectCount = 2 + images.length * 3;
+  const objects: Uint8Array[] = new Array(objectCount + 1);
+  objects[1] = encoder.encode("<< /Type /Catalog /Pages 2 0 R >>");
+  objects[2] = encoder.encode(
+    `<< /Type /Pages /Kids [${images.map((_, index) => `${3 + index * 3} 0 R`).join(" ")}] /Count ${images.length} >>`
+  );
+  images.forEach((image, index) => {
+    const pageId = 3 + index * 3;
+    const contentId = pageId + 1;
+    const imageId = pageId + 2;
+    const imageName = `Im${index + 1}`;
+    const content = `q\n${pageWidth.toFixed(2)} 0 0 ${image.renderedHeight.toFixed(2)} 0 ${(pageHeight - image.renderedHeight).toFixed(2)} cm\n/${imageName} Do\nQ`;
+    objects[pageId] = encoder.encode(
+      `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] /Resources << /XObject << /${imageName} ${imageId} 0 R >> >> /Contents ${contentId} 0 R >>`
+    );
+    objects[contentId] = encoder.encode(`<< /Length ${encoder.encode(content).length} >>\nstream\n${content}\nendstream`);
+    objects[imageId] = concatBytes([
+      encoder.encode(
+        `<< /Type /XObject /Subtype /Image /Width ${image.width} /Height ${image.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${image.bytes.length} >>\nstream\n`
+      ),
+      image.bytes,
+      encoder.encode("\nendstream")
+    ]);
+  });
+
+  const chunks: Uint8Array[] = [encoder.encode("%PDF-1.4\n")];
+  const offsets = new Array(objectCount + 1).fill(0);
+  let byteOffset = chunks[0].length;
+  for (let objectId = 1; objectId <= objectCount; objectId += 1) {
+    offsets[objectId] = byteOffset;
+    const chunk = concatBytes([
+      encoder.encode(`${objectId} 0 obj\n`),
+      objects[objectId],
+      encoder.encode("\nendobj\n")
+    ]);
+    chunks.push(chunk);
+    byteOffset += chunk.length;
+  }
+  const xrefOffset = byteOffset;
+  chunks.push(
+    encoder.encode(
+      `xref\n0 ${objectCount + 1}\n0000000000 65535 f \n${offsets
+        .slice(1)
+        .map((offset) => `${String(offset).padStart(10, "0")} 00000 n \n`)
+        .join("")}trailer\n<< /Size ${objectCount + 1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`
+    )
+  );
+  return new Blob([concatBytes(chunks)], { type: "application/pdf" });
+}
+
 async function buildDashboardImage({
   title,
   subtitle,
   items,
   statusItems = [],
   rankingItems = [],
+  detailDivider,
   detailColumns = 3,
   detailColorMode = "category",
   colorBlindMode = false
@@ -120,12 +215,26 @@ async function buildDashboardImage({
   const featuredHeight = 560;
   const cardHeight = columns === 2 ? 330 : 290;
   const detailItems = items.slice(1);
-  const detailRows = Math.ceil(detailItems.length / columns);
+  const dividerIndex = detailDivider
+    ? Math.max(0, Math.min(detailItems.length, detailDivider.beforeIndex))
+    : detailItems.length;
+  const firstDetailRows = Math.ceil(dividerIndex / columns);
+  const secondDetailRows = detailDivider
+    ? Math.ceil((detailItems.length - dividerIndex) / columns)
+    : 0;
+  const detailRows = firstDetailRows + secondDetailRows;
+  const dividerHeight = detailDivider && detailItems.length > dividerIndex ? 105 : 0;
   const headerHeight = 280;
   const footerHeight = 120;
   const statusHeight = statusItems.length ? 270 : 0;
   const statusBlockHeight = statusHeight ? gap + statusHeight : 0;
-  const detailHeight = detailRows > 0 ? gap + detailRows * cardHeight + Math.max(0, detailRows - 1) * gap : 0;
+  const detailHeight = detailRows > 0
+    ? gap +
+      detailRows * cardHeight +
+      Math.max(0, firstDetailRows - 1) * gap +
+      Math.max(0, secondDetailRows - 1) * gap +
+      (dividerHeight ? gap + dividerHeight + gap : 0)
+    : 0;
   const rankingHeaderHeight = rankingItems.length ? 105 : 0;
   const rankingRowHeight = 76;
   const rankingHeight = rankingItems.length
@@ -217,11 +326,38 @@ async function buildDashboardImage({
   }
 
   const detailStartY = headerHeight + featuredHeight + statusBlockHeight;
+  const firstDetailHeight = firstDetailRows
+    ? firstDetailRows * cardHeight + Math.max(0, firstDetailRows - 1) * gap
+    : 0;
+  const secondDetailStartY = detailStartY + gap + firstDetailHeight + (dividerHeight ? gap + dividerHeight + gap : 0);
+
+  if (dividerHeight && detailDivider) {
+    const dividerY = detailStartY + gap + firstDetailHeight + gap;
+    context.strokeStyle = "rgba(101, 220, 231, 0.78)";
+    context.lineWidth = 3;
+    context.beginPath();
+    context.moveTo(side, dividerY + 45);
+    context.lineTo(width - side, dividerY + 45);
+    context.stroke();
+    const titleWidth = Math.min(650, context.measureText(detailDivider.title).width + 90);
+    roundedRect(context, width / 2 - titleWidth / 2, dividerY + 10, titleWidth, 70, 35);
+    context.fillStyle = "#292a55";
+    context.fill();
+    context.strokeStyle = "rgba(101, 220, 231, 0.78)";
+    context.stroke();
+    context.fillStyle = "#ffffff";
+    context.font = "900 31px Arial";
+    context.textAlign = "center";
+    context.fillText(detailDivider.title, width / 2, dividerY + 56);
+  }
+
   detailItems.forEach((item, index) => {
-    const column = index % columns;
-    const row = Math.floor(index / columns);
+    const isSecondGroup = Boolean(dividerHeight) && index >= dividerIndex;
+    const groupIndex = isSecondGroup ? index - dividerIndex : index;
+    const column = groupIndex % columns;
+    const row = Math.floor(groupIndex / columns);
     const x = side + column * (cardWidth + gap);
-    const y = detailStartY + gap + row * (cardHeight + gap);
+    const y = (isSecondGroup ? secondDetailStartY : detailStartY + gap) + row * (cardHeight + gap);
     roundedRect(context, x, y, cardWidth, cardHeight, 22);
     context.fillStyle = "#292a55";
     context.fill();
@@ -306,7 +442,7 @@ async function buildDashboardImage({
   context.fillText("Ay sonu hedef gidişatı", side, height - 48);
   context.textAlign = "right";
   context.fillText(new Date().toLocaleString("tr-TR"), width - side, height - 48);
-  return canvasToBlob(canvas);
+  return canvas;
 }
 
 function downloadImage(blob: Blob, fileName: string) {
@@ -326,7 +462,8 @@ export function DashboardShareButton(props: DashboardShareButtonProps) {
     setIsPreparing(true);
     setStatus("");
     try {
-      const blob = await buildDashboardImage(props);
+      const canvas = await buildDashboardImage(props);
+      const blob = await canvasToBlob(canvas);
       const fileName = `${safeFileName(props.title)}-dashboard.png`;
       const file = new File([blob], fileName, { type: "image/png" });
       const shareData = { files: [file], title: props.title, text: props.title };
@@ -350,12 +487,50 @@ export function DashboardShareButton(props: DashboardShareButtonProps) {
     }
   }
 
+  async function downloadOrShareDashboardPdf() {
+    setIsPreparing(true);
+    setStatus("");
+    try {
+      const canvas = await buildDashboardImage(props);
+      const pdfBlob = await canvasToPdfBlob(canvas);
+      const fileName = `${safeFileName(props.title)}-dashboard.pdf`;
+      const file = new File([pdfBlob], fileName, { type: "application/pdf" });
+      const shareData = { files: [file], title: props.title, text: `${props.title} PDF` };
+
+      if (navigator.share && (!navigator.canShare || navigator.canShare(shareData))) {
+        await navigator.share(shareData);
+        setStatus("PDF paylaşım menüsü açıldı.");
+      } else {
+        downloadImage(pdfBlob, fileName);
+        setStatus("Dashboard PDF olarak indirildi.");
+      }
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        setStatus("");
+      } else {
+        setStatus(error instanceof Error ? error.message : "Dashboard PDF olarak hazırlanamadı.");
+      }
+    } finally {
+      setIsPreparing(false);
+    }
+  }
+
   return (
     <div className="goal-dashboard-share-area">
+      <div className="goal-dashboard-share-actions">
       <button className="campaign-whatsapp-share-button" disabled={isPreparing} onClick={shareDashboard} type="button">
         <span aria-hidden="true">WA</span>
         {isPreparing ? "Görsel Hazırlanıyor…" : "WhatsApp’ta Resim Paylaş"}
       </button>
+        <button
+          className="goal-dashboard-pdf-download-button"
+          disabled={isPreparing}
+          onClick={downloadOrShareDashboardPdf}
+          type="button"
+        >
+          PDF İndir / Paylaş
+        </button>
+      </div>
       {status ? <p className="campaign-share-status">{status}</p> : null}
     </div>
   );

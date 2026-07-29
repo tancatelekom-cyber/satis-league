@@ -16319,6 +16319,20 @@ textarea::placeholder {
 .request-empty span { font-size: 2.7rem; }
 .request-empty h2 { margin: 8px 0 4px; color: #334155; }
 .request-empty p { margin: 0; }
+.nav-link-request-alert { position: relative; animation: request-menu-pulse 1.15s ease-in-out infinite; }
+.nav-link-request-alert .nav-link-icon { box-shadow: 0 0 0 0 rgba(239,68,68,.65); animation: request-icon-pulse 1.15s ease-out infinite; }
+.nav-request-count { display: grid; place-items: center; min-width: 23px; height: 23px; margin-left: auto; padding: 0 6px; border-radius: 999px; color: #fff; background: #dc2626; font-size: .72rem; font-weight: 900; }
+@keyframes request-menu-pulse { 0%,100% { background-color: transparent; } 50% { background-color: rgba(254,202,202,.32); } }
+@keyframes request-icon-pulse { 0% { box-shadow: 0 0 0 0 rgba(239,68,68,.65); } 75%,100% { box-shadow: 0 0 0 11px rgba(239,68,68,0); } }
+.request-alert-backdrop { position: fixed; z-index: 10000; inset: 0; display: grid; place-items: center; padding: 20px; background: rgba(2,6,23,.62); backdrop-filter: blur(5px); }
+.request-alert-popup { width: min(430px,100%); padding: 30px; border: 1px solid rgba(255,255,255,.5); border-radius: 22px; background: #fff; box-shadow: 0 24px 70px rgba(2,6,23,.32); text-align: center; }
+.request-alert-icon { display: grid; place-items: center; width: 66px; height: 66px; margin: 0 auto 14px; border-radius: 50%; background: #fee2e2; font-size: 2rem; animation: request-icon-pulse 1.15s ease-out infinite; }
+.request-alert-popup h2 { margin: 0 0 8px; color: #102a43; font-size: 1.45rem; }
+.request-alert-popup p { margin: 0; color: #64748b; }
+.request-alert-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 22px; }
+.request-alert-actions button, .request-alert-actions a { display: grid; place-items: center; min-height: 44px; padding: 10px 14px; border: 0; border-radius: 11px; font: inherit; font-weight: 850; text-decoration: none; cursor: pointer; }
+.request-alert-actions button { color: #475569; background: #e2e8f0; }
+.request-alert-actions a { color: #fff; background: #dc2626; }
 @media (max-width: 760px) {
   .request-page { width: min(100% - 20px, 1180px); margin-top: 14px; }
   .request-hero, .request-create-card, .request-list-section { padding: 18px; border-radius: 17px; }

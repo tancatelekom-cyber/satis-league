@@ -23,7 +23,7 @@ export function RequestCreateForm() {
       {isLeave ? (
         <>
           <label>Başlangıç tarihi<input name="startDate" type="date" required /></label>
-          <label>Bitiş tarihi<input name="endDate" type="date" required /></label>
+          <label>İş başı yapacağınız tarih<input name="endDate" type="date" required /></label>
           <label className="request-form-wide">Açıklama / mazeret<textarea name="description" rows={3} placeholder="İzin talebinizle ilgili açıklama ekleyin." /></label>
         </>
       ) : null}

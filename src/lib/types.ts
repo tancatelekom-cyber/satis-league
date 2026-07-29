@@ -1,4 +1,11 @@
 export type UserRole = "employee" | "manager" | "management" | "admin";
+export type RequestType = "annual_leave" | "excuse_leave" | "advance";
+export type RequestStatus =
+  | "manager_pending"
+  | "admin_pending"
+  | "implementation_pending"
+  | "completed"
+  | "rejected";
 export type CampaignMode = "employee" | "store";
 export type ScoringType = "points" | "quantity";
 export type DuelParticipantMode = "profile" | "group";

@@ -42,6 +42,8 @@ export async function createRequestAction(formData: FormData) {
   const description = String(formData.get("description") ?? "").trim();
   const startDate = String(formData.get("startDate") ?? "").trim() || null;
   const endDate = String(formData.get("endDate") ?? "").trim() || null;
+  const startTime = String(formData.get("startTime") ?? "").trim() || null;
+  const endTime = String(formData.get("endTime") ?? "").trim() || null;
   const neededDate = String(formData.get("neededDate") ?? "").trim() || null;
   const otherText = String(formData.get("otherText") ?? "").trim();
   const amountText = String(formData.get("advanceAmount") ?? "").replace(",", ".").trim();
@@ -51,6 +53,10 @@ export async function createRequestAction(formData: FormData) {
   if (type === "advance" && !neededDate) go("Avansın ihtiyaç olduğu tarihi seçin.", "error");
   if (type === "other" && !otherText) go("Talep metnini girin.", "error");
   if (startDate && endDate && endDate < startDate) go("İş başı tarihi izin başlangıcından önce olamaz.", "error");
+  if (type !== "advance" && type !== "other" && startDate === endDate) {
+    if (!startTime || !endTime) go("Aynı gün izinlerinde başlangıç ve iş başı saatlerini seçin.", "error");
+    if (endTime <= startTime) go("İş başı saati izin başlangıç saatinden sonra olmalıdır.", "error");
+  }
 
   const advanceAmount = type === "advance" ? Number(amountText) : null;
   if (type === "advance" && (!Number.isFinite(advanceAmount) || Number(advanceAmount) <= 0)) {
@@ -76,6 +82,8 @@ export async function createRequestAction(formData: FormData) {
     description: type === "other" ? otherText : description || null,
     start_date: type === "advance" ? neededDate : ["annual_leave", "excuse_leave"].includes(type) ? startDate : null,
     end_date: ["annual_leave", "excuse_leave"].includes(type) ? endDate : null,
+    start_time: ["annual_leave", "excuse_leave"].includes(type) && startDate === endDate ? startTime : null,
+    end_time: ["annual_leave", "excuse_leave"].includes(type) && startDate === endDate ? endTime : null,
     advance_amount: advanceAmount,
     collection_method: null,
     status,

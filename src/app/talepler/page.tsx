@@ -22,7 +22,7 @@ type PageProps = { searchParams?: Promise<{ view?: string; message?: string; typ
 const statusLabels: Record<RequestStatus, string> = {
   manager_pending: "Mağaza müdürü onayı bekliyor",
   suitability_pending: "Uygunluk onayı bekliyor",
-  admin_pending: "Admin onayı bekliyor",
+  admin_pending: "Koordinatör onayı bekliyor",
   implementation_pending: "Uygulama bekliyor",
   completed: "Uygulandı",
   rejected: "Reddedildi"
@@ -110,7 +110,7 @@ export default async function RequestsPage({ searchParams }: PageProps) {
                   <ol className="request-flow request-flow-four">
                     <li className={item.manager_approved_at || item.status !== "manager_pending" ? "done" : "active"}>Müdür onayı</li>
                     <li className={["admin_pending", "implementation_pending", "completed"].includes(item.status) ? "done" : item.status === "suitability_pending" ? "active" : ""}>Uygunluk onayı</li>
-                    <li className={item.admin_approved_at || ["implementation_pending", "completed"].includes(item.status) ? "done" : item.status === "admin_pending" ? "active" : ""}>Admin onayı</li>
+                    <li className={item.admin_approved_at || ["implementation_pending", "completed"].includes(item.status) ? "done" : item.status === "admin_pending" ? "active" : ""}>Koordinatör onayı</li>
                     <li className={item.status === "completed" ? "done" : item.status === "implementation_pending" ? "active" : ""}>Uygulama</li>
                   </ol>
                   {canManagerDecide || canAdminDecide || canSuitabilityApprove ? (
@@ -126,7 +126,7 @@ export default async function RequestsPage({ searchParams }: PageProps) {
                             </div>
                           </details>
                         ) : null}
-                        <button className="request-approve-button" type="submit">Onayla</button>
+                        <button className="request-approve-button" type="submit">{canAdminDecide ? "Koordinatör Onayı Yap" : "Onayla"}</button>
                       </form>
                       <form action={rejectRequestAction} className="request-reject-form"><input type="hidden" name="requestId" value={item.id} /><input name="reason" aria-label="Red nedeni" placeholder="Red nedeni" /><button className="request-reject-button" type="submit">Reddet</button></form>
                     </div>

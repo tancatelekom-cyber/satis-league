@@ -14,9 +14,9 @@ type RequestItem = {
   id: string; requester_id: string; store_id: string | null; request_type: RequestType; title: string;
   description: string | null; start_date: string | null; end_date: string | null; advance_amount: number | null;
   collection_method: string | null; status: RequestStatus; current_assignee_id: string | null;
-  rejection_reason: string | null; created_at: string; manager_approved_at: string | null;
+  rejected_by: string | null; rejection_reason: string | null; created_at: string; manager_approved_at: string | null;
   admin_approved_at: string | null; implemented_at: string | null;
-  requester: { full_name: string } | null; store: { name: string } | null;
+  requester: { full_name: string } | null; rejectedBy: { full_name: string } | null; store: { name: string } | null;
 };
 type PageProps = { searchParams?: Promise<{ view?: string; message?: string; type?: string }> };
 
@@ -51,7 +51,7 @@ export default async function RequestsPage({ searchParams }: PageProps) {
   if (!profile || profile.approval !== "approved") redirect("/giris");
 
   let query = admin.from("employee_requests")
-    .select("id, requester_id, store_id, request_type, title, description, start_date, end_date, advance_amount, collection_method, status, current_assignee_id, rejection_reason, created_at, manager_approved_at, admin_approved_at, implemented_at, requester:profiles!employee_requests_requester_id_fkey(full_name), store:stores(name)")
+    .select("id, requester_id, store_id, request_type, title, description, start_date, end_date, advance_amount, collection_method, status, current_assignee_id, rejected_by, rejection_reason, created_at, manager_approved_at, admin_approved_at, implemented_at, requester:profiles!employee_requests_requester_id_fkey(full_name), rejectedBy:profiles!employee_requests_rejected_by_fkey(full_name), store:stores(name)")
     .order("created_at", { ascending: false });
 
   if (profile.id === ADMIN_REQUEST_APPROVER_ID || profile.id === IMPLEMENTER_ID) {
@@ -119,6 +119,7 @@ export default async function RequestsPage({ searchParams }: PageProps) {
                     {item.request_type === "advance" ? <p><strong>Tutar:</strong> ₺{Number(item.advance_amount ?? 0).toLocaleString("tr-TR", { minimumFractionDigits: 2 })}</p> : null}
                     {item.collection_method ? <p><strong>Tahsilat:</strong> {item.collection_method}</p> : null}
                     {item.description ? <p className="request-description"><strong>Açıklama:</strong> {item.description}</p> : null}
+                    {item.rejectedBy?.full_name ? <p className="request-rejection"><strong>Reddeden:</strong> {item.rejectedBy.full_name}</p> : null}
                     {item.rejection_reason ? <p className="request-rejection"><strong>Red nedeni:</strong> {item.rejection_reason}</p> : null}
                   </div>
                   <ol className="request-flow request-flow-four">

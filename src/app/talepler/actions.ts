@@ -39,20 +39,21 @@ export async function createRequestAction(formData: FormData) {
   const actor = await getActor();
   const type = parseRequestType(String(formData.get("requestType") ?? ""));
   const description = String(formData.get("description") ?? "").trim();
-  const customTitle = String(formData.get("customTitle") ?? "").trim();
   const startDate = String(formData.get("startDate") ?? "").trim() || null;
   const endDate = String(formData.get("endDate") ?? "").trim() || null;
+  const neededDate = String(formData.get("neededDate") ?? "").trim() || null;
+  const otherText = String(formData.get("otherText") ?? "").trim();
   const amountText = String(formData.get("advanceAmount") ?? "").replace(",", ".").trim();
-  const collectionMethod = String(formData.get("collectionMethod") ?? "").trim() || null;
 
   if (!type) go("Talep türü seçilmedi.", "error");
   if (["annual_leave", "excuse_leave"].includes(type) && (!startDate || !endDate)) go("İzin başlangıç ve bitiş tarihlerini girin.", "error");
-  if (type === "other" && !customTitle) go("Diğer talep için talep başlığını girin.", "error");
+  if (type === "advance" && !neededDate) go("Avansın ihtiyaç olduğu tarihi seçin.", "error");
+  if (type === "other" && !otherText) go("Talep metnini girin.", "error");
   if (startDate && endDate && endDate < startDate) go("Bitiş tarihi başlangıçtan önce olamaz.", "error");
 
   const advanceAmount = type === "advance" ? Number(amountText) : null;
-  if (type === "advance" && (!Number.isFinite(advanceAmount) || Number(advanceAmount) <= 0 || !collectionMethod)) {
-    go("Avans miktarı ve tahsilat şeklini eksiksiz girin.", "error");
+  if (type === "advance" && (!Number.isFinite(advanceAmount) || Number(advanceAmount) <= 0)) {
+    go("Avans tutarını eksiksiz girin.", "error");
   }
 
   const status: RequestStatus = actor.role === "employee"
@@ -70,12 +71,12 @@ export async function createRequestAction(formData: FormData) {
         ? "Mazeret İzni Talebi"
         : type === "advance"
           ? "Avans Talebi"
-          : customTitle,
-    description: description || null,
-    start_date: ["annual_leave", "excuse_leave"].includes(type) ? startDate : null,
+          : "Diğer Talep",
+    description: type === "other" ? otherText : description || null,
+    start_date: type === "advance" ? neededDate : ["annual_leave", "excuse_leave"].includes(type) ? startDate : null,
     end_date: ["annual_leave", "excuse_leave"].includes(type) ? endDate : null,
     advance_amount: advanceAmount,
-    collection_method: type === "advance" ? collectionMethod : null,
+    collection_method: null,
     status,
     current_assignee_id: actor.role === "admin" ? ADMIN_REQUEST_APPROVER_ID : null
   });

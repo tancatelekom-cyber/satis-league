@@ -16,6 +16,7 @@ type NavItem = {
 };
 
 const baseNavItems: NavItem[] = [
+  { href: "/talepler", label: "Talepler", mobileLabel: "Talepler", icon: "📨" },
   { href: "/", label: "Ana Sayfa", icon: "🏠" },
   { href: "/hedef-gerceklesen", label: "Hedef Gerceklesen", mobileLabel: "Hedef", icon: "🎯" },
   { href: "/magaza-muduru-primi", label: "Magaza Muduru Primi", mobileLabel: "Mudur Prim", icon: "💰" },

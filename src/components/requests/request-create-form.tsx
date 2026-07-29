@@ -6,7 +6,10 @@ import type { RequestType } from "@/lib/types";
 
 export function RequestCreateForm() {
   const [type, setType] = useState<RequestType>("annual_leave");
+  const [startDate, setStartDate] = useState("");
+  const [returnDate, setReturnDate] = useState("");
   const isLeave = type === "annual_leave" || type === "excuse_leave";
+  const isSameDayLeave = isLeave && startDate !== "" && startDate === returnDate;
 
   return (
     <form action={createRequestAction} className="request-form">
@@ -22,8 +25,14 @@ export function RequestCreateForm() {
 
       {isLeave ? (
         <>
-          <label>Başlangıç tarihi<input name="startDate" type="date" required /></label>
-          <label>İş başı yapacağınız tarih<input name="endDate" type="date" required /></label>
+          <label>Başlangıç tarihi<input name="startDate" type="date" required value={startDate} onChange={(event) => setStartDate(event.target.value)} /></label>
+          <label>İş başı yapacağınız tarih<input name="endDate" type="date" required value={returnDate} onChange={(event) => setReturnDate(event.target.value)} /></label>
+          {isSameDayLeave ? (
+            <div className="request-time-range request-form-wide">
+              <label>İzin başlangıç saati<input name="startTime" type="time" required /></label>
+              <label>İş başı saati<input name="endTime" type="time" required /></label>
+            </div>
+          ) : null}
           <label className="request-form-wide">Açıklama / mazeret<textarea name="description" rows={3} placeholder="İzin talebinizle ilgili açıklama ekleyin." /></label>
         </>
       ) : null}

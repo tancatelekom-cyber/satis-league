@@ -58,7 +58,7 @@ export async function createRequestAction(formData: FormData) {
 
   const status: RequestStatus = actor.role === "employee"
     ? "manager_pending"
-    : "admin_pending";
+    : "suitability_pending";
 
   const admin = createAdminClient();
   const { error } = await admin.from("employee_requests").insert({
@@ -78,7 +78,7 @@ export async function createRequestAction(formData: FormData) {
     advance_amount: advanceAmount,
     collection_method: null,
     status,
-    current_assignee_id: actor.role === "admin" ? ADMIN_REQUEST_APPROVER_ID : null
+    current_assignee_id: status === "suitability_pending" ? IMPLEMENTER_ID : null
   });
 
   if (error) go(`Talep oluşturulamadı: ${error.message}`, "error");
@@ -101,7 +101,24 @@ export async function approveRequestAction(formData: FormData) {
   let update: Record<string, string | null> | null = null;
 
   if (request.status === "manager_pending" && actor.role === "manager" && actor.store_id === request.store_id) {
-    update = { status: "admin_pending", manager_approved_by: actor.id, manager_approved_at: now, current_assignee_id: null, updated_at: now };
+    update = { status: "suitability_pending", manager_approved_by: actor.id, manager_approved_at: now, current_assignee_id: IMPLEMENTER_ID, updated_at: now };
+  } else if (request.status === "suitability_pending" && actor.id === IMPLEMENTER_ID) {
+    const { data: requester } = await admin.from("profiles").select("role").eq("id", request.requester_id).single<{ role: UserRole }>();
+    const adjustedNeededDate = String(formData.get("adjustedNeededDate") ?? "").trim();
+    const adjustedAmountText = String(formData.get("adjustedAmount") ?? "").replace(",", ".").trim();
+    const adjustedAmount = adjustedAmountText ? Number(adjustedAmountText) : null;
+    if (adjustedAmountText && (!Number.isFinite(adjustedAmount) || Number(adjustedAmount) <= 0)) {
+      go("Yeni avans tutarı geçerli değil.", "error");
+    }
+    update = {
+      status: "admin_pending",
+      current_assignee_id: requester?.role === "admin" ? ADMIN_REQUEST_APPROVER_ID : null,
+      suitability_approved_by: actor.id,
+      suitability_approved_at: now,
+      ...(adjustedNeededDate ? { start_date: adjustedNeededDate } : {}),
+      ...(adjustedAmount !== null ? { advance_amount: String(adjustedAmount) } : {}),
+      updated_at: now
+    };
   } else if (
     request.status === "admin_pending"
     && (
@@ -130,9 +147,10 @@ export async function rejectRequestAction(formData: FormData) {
     .eq("id", requestId)
     .single<RequestRow>();
 
-  if (!request || !["manager_pending", "admin_pending"].includes(request.status)) go("Talep artık reddedilemez.", "error");
+  if (!request || !["manager_pending", "suitability_pending", "admin_pending"].includes(request.status)) go("Talep artık reddedilemez.", "error");
   const allowed =
     (request.status === "manager_pending" && actor.role === "manager" && actor.store_id === request.store_id)
+    || (request.status === "suitability_pending" && actor.id === IMPLEMENTER_ID)
     || (
       request.status === "admin_pending"
       && (
@@ -173,4 +191,16 @@ export async function completeRequestAction(formData: FormData) {
   if (error) go(`Talep tamamlanamadı: ${error.message}`, "error");
   revalidatePath(REQUEST_PATH);
   go("Talep uygulandı olarak işaretlendi.");
+}
+
+export async function deleteRequestAction(formData: FormData) {
+  const actor = await getActor();
+  const requestId = String(formData.get("requestId") ?? "").trim();
+  if (actor.role !== "admin") go("Talebi yalnızca admin silebilir.", "error");
+
+  const admin = createAdminClient();
+  const { error } = await admin.from("employee_requests").delete().eq("id", requestId);
+  if (error) go(`Talep silinemedi: ${error.message}`, "error");
+  revalidatePath(REQUEST_PATH);
+  go("Talep silindi.");
 }

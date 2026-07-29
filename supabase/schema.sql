@@ -101,7 +101,7 @@ create table if not exists public.employee_requests (
   id uuid primary key default gen_random_uuid(),
   requester_id uuid not null references public.profiles(id) on delete cascade,
   store_id uuid references public.stores(id) on delete set null,
-  request_type text not null check (request_type in ('annual_leave', 'excuse_leave', 'advance')),
+  request_type text not null check (request_type in ('annual_leave', 'excuse_leave', 'advance', 'other')),
   title text not null,
   description text,
   start_date date,

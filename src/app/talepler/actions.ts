@@ -170,6 +170,12 @@ export async function rejectRequestAction(formData: FormData) {
     current_assignee_id: null,
     rejected_by: actor.id,
     rejected_at: now,
+    rejection_stage:
+      request.status === "manager_pending"
+        ? "manager"
+        : request.status === "suitability_pending"
+          ? "suitability"
+          : "coordinator",
     rejection_reason: reason || "Talep uygun bulunmadı.",
     updated_at: now
   }).eq("id", request.id).eq("status", request.status);

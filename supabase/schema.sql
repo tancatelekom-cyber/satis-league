@@ -97,6 +97,45 @@ create table if not exists public.leave_periods (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.employee_requests (
+  id uuid primary key default gen_random_uuid(),
+  requester_id uuid not null references public.profiles(id) on delete cascade,
+  store_id uuid references public.stores(id) on delete set null,
+  request_type text not null check (request_type in ('annual_leave', 'excuse_leave', 'advance')),
+  title text not null,
+  description text,
+  start_date date,
+  end_date date,
+  advance_amount numeric(12,2),
+  collection_method text,
+  status text not null check (status in ('manager_pending', 'admin_pending', 'implementation_pending', 'completed', 'rejected')),
+  current_assignee_id uuid references public.profiles(id) on delete set null,
+  manager_approved_by uuid references public.profiles(id) on delete set null,
+  manager_approved_at timestamptz,
+  admin_approved_by uuid references public.profiles(id) on delete set null,
+  admin_approved_at timestamptz,
+  implemented_by uuid references public.profiles(id) on delete set null,
+  implemented_at timestamptz,
+  rejected_by uuid references public.profiles(id) on delete set null,
+  rejected_at timestamptz,
+  rejection_reason text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint employee_requests_date_range check (
+    start_date is null or end_date is null or end_date >= start_date
+  ),
+  constraint employee_requests_advance_amount check (
+    advance_amount is null or advance_amount > 0
+  )
+);
+
+create index if not exists employee_requests_requester_idx
+  on public.employee_requests (requester_id, created_at desc);
+create index if not exists employee_requests_store_status_idx
+  on public.employee_requests (store_id, status, created_at desc);
+create index if not exists employee_requests_assignee_idx
+  on public.employee_requests (current_assignee_id, status, created_at desc);
+
 create table if not exists public.seasons (
   id uuid primary key default gen_random_uuid(),
   name text not null,
@@ -706,6 +745,7 @@ alter table public.feature_menu_permissions enable row level security;
 alter table public.feature_profile_permissions enable row level security;
 alter table public.pos_commission_settings enable row level security;
 alter table public.manager_prime_settings enable row level security;
+alter table public.employee_requests enable row level security;
 
 drop policy if exists "active stores are visible to everyone" on public.stores;
 create policy "active stores are visible to everyone" on public.stores
@@ -815,3 +855,20 @@ for select using (auth.uid() is not null);
 drop policy if exists "authenticated users can view manager prime settings" on public.manager_prime_settings;
 create policy "authenticated users can view manager prime settings" on public.manager_prime_settings
 for select using (auth.uid() is not null);
+
+drop policy if exists "request participants can view employee requests" on public.employee_requests;
+create policy "request participants can view employee requests" on public.employee_requests
+for select using (
+  requester_id = auth.uid()
+  or current_assignee_id = auth.uid()
+  or auth.uid() = 'de688a42-d22a-48fa-b86f-32552bf2e1ac'::uuid
+  or exists (
+    select 1 from public.profiles actor
+    where actor.id = auth.uid()
+      and actor.approval = 'approved'
+      and (
+        actor.role in ('admin', 'management')
+        or (actor.role = 'manager' and actor.store_id = employee_requests.store_id)
+      )
+  )
+);

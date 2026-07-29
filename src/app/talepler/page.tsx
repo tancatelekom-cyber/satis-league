@@ -34,7 +34,13 @@ function formatDate(value: string | null) {
 }
 
 function formatDateTime(value: string | null) {
-  return value ? new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)) : "—";
+  return value
+    ? new Intl.DateTimeFormat("tr-TR", {
+        dateStyle: "medium",
+        timeStyle: "short",
+        timeZone: "Europe/Istanbul"
+      }).format(new Date(value))
+    : "—";
 }
 
 export default async function RequestsPage({ searchParams }: PageProps) {

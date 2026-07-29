@@ -1,5 +1,5 @@
 export type UserRole = "employee" | "manager" | "management" | "admin";
-export type RequestType = "annual_leave" | "excuse_leave" | "advance";
+export type RequestType = "annual_leave" | "excuse_leave" | "advance" | "other";
 export type RequestStatus =
   | "manager_pending"
   | "admin_pending"

@@ -16311,6 +16311,8 @@ textarea::placeholder {
 .request-flow li { padding: 9px; border-radius: 9px; color: #64748b; background: #e2e8f0; font-size: .78rem; font-weight: 800; text-align: center; }
 .request-flow li.active { color: #1e40af; background: #dbeafe; outline: 2px solid #93c5fd; }
 .request-flow li.done { color: #166534; background: #dcfce7; }
+.request-flow li.rejected { color: #991b1b; background: #fee2e2; outline: 2px solid #f87171; }
+.request-flow li.rejected::before { content: "✕ "; color: #dc2626; font-weight: 950; }
 .request-actions { display: flex; align-items: center; gap: 10px; margin-top: 15px; }
 .request-approve-form { display: grid; gap: 10px; }
 .request-adjust-details { min-width: min(430px, 100%); padding: 10px 12px; border: 1px solid #fdba74; border-radius: 11px; background: #fff7ed; }

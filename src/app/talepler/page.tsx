@@ -115,7 +115,7 @@ export default async function RequestsPage({ searchParams }: PageProps) {
                     <span className={`request-status request-status-${item.status}`}>{statusLabels[item.status]}</span>
                   </header>
                   <div className="request-details">
-                    {["annual_leave", "excuse_leave"].includes(item.request_type) ? <p><strong>Tarih:</strong> {formatDate(item.start_date)} – {formatDate(item.end_date)}</p> : null}
+                    {["annual_leave", "excuse_leave"].includes(item.request_type) ? <p><strong>İzin başlangıcı:</strong> {formatDate(item.start_date)} · <strong>İş başı tarihi:</strong> {formatDate(item.end_date)}</p> : null}
                     {item.request_type === "advance" ? <p><strong>İhtiyaç tarihi:</strong> {formatDate(item.start_date)}</p> : null}
                     {item.request_type === "advance" ? <p><strong>Tutar:</strong> ₺{Number(item.advance_amount ?? 0).toLocaleString("tr-TR", { minimumFractionDigits: 2 })}</p> : null}
                     {item.collection_method ? <p><strong>Tahsilat:</strong> {item.collection_method}</p> : null}

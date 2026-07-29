@@ -48,10 +48,8 @@ export default async function RequestsPage({ searchParams }: PageProps) {
     .select("id, requester_id, store_id, request_type, title, description, start_date, end_date, advance_amount, collection_method, status, current_assignee_id, rejection_reason, created_at, manager_approved_at, admin_approved_at, implemented_at, requester:profiles!employee_requests_requester_id_fkey(full_name), store:stores(name)")
     .order("created_at", { ascending: false });
 
-  if (profile.id === ADMIN_REQUEST_APPROVER_ID) {
-    // Özel onay kullanıcısı tüm talep akışını ve sonuçlarını görebilir.
-  } else if (profile.id === IMPLEMENTER_ID) {
-    query = query.or(`requester_id.eq.${profile.id},current_assignee_id.eq.${profile.id}`);
+  if (profile.id === ADMIN_REQUEST_APPROVER_ID || profile.id === IMPLEMENTER_ID) {
+    // Özel yönetici kullanıcıları tüm talep akışını ve sonuçlarını görebilir.
   } else if (profile.role === "employee") query = query.eq("requester_id", profile.id);
   else if (profile.role === "manager") {
     const { data: branchEmployees } = await admin
@@ -62,7 +60,7 @@ export default async function RequestsPage({ searchParams }: PageProps) {
       .eq("approval", "approved");
     const visibleRequesterIds = [profile.id, ...(branchEmployees ?? []).map((employee) => employee.id)];
     query = query.in("requester_id", visibleRequesterIds);
-  }
+  } else if (profile.role === "management") query = query.eq("requester_id", profile.id);
 
   const { data, error } = await query;
   const requests = (data ?? []) as unknown as RequestItem[];

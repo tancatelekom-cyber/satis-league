@@ -2,6 +2,7 @@ export type UserRole = "employee" | "manager" | "management" | "admin";
 export type RequestType = "annual_leave" | "excuse_leave" | "advance" | "other";
 export type RequestStatus =
   | "manager_pending"
+  | "suitability_pending"
   | "admin_pending"
   | "implementation_pending"
   | "completed"

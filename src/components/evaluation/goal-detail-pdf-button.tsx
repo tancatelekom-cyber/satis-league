@@ -49,6 +49,7 @@ export function GoalDetailPdfButton({ scopeLabel }: GoalDetailPdfButtonProps) {
   return (
     <div className="goal-detail-pdf-actions">
       <button
+        aria-label="Hedef gerçekleşen tablolarını PDF olarak indir"
         className="goal-detail-pdf-button"
         disabled={isPreparing}
         onClick={downloadPdf}

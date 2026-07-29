@@ -3,7 +3,7 @@ import { requireUser } from "@/lib/auth/require-user";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { RequestStatus, RequestType, UserRole } from "@/lib/types";
 import { RequestCreateForm } from "@/components/requests/request-create-form";
-import { approveRequestAction, completeRequestAction, rejectRequestAction } from "./actions";
+import { approveRequestAction, completeRequestAction, deleteRequestAction, rejectRequestAction } from "./actions";
 
 const IMPLEMENTER_ID = "7998f539-5077-472b-ba65-a1d45533eafa";
 const ADMIN_REQUEST_APPROVER_ID = "de688a42-d22a-48fa-b86f-32552bf2e1ac";
@@ -21,6 +21,7 @@ type PageProps = { searchParams?: Promise<{ view?: string; message?: string; typ
 
 const statusLabels: Record<RequestStatus, string> = {
   manager_pending: "Mağaza müdürü onayı bekliyor",
+  suitability_pending: "Uygunluk onayı bekliyor",
   admin_pending: "Admin onayı bekliyor",
   implementation_pending: "Uygulama bekliyor",
   completed: "Uygulandı",
@@ -91,6 +92,7 @@ export default async function RequestsPage({ searchParams }: PageProps) {
                   || (!item.current_assignee_id && profile.role === "admin")
                 );
               const canComplete = item.status === "implementation_pending" && profile.id === IMPLEMENTER_ID;
+              const canSuitabilityApprove = item.status === "suitability_pending" && profile.id === IMPLEMENTER_ID;
               return (
                 <article className="request-card" key={item.id}>
                   <header>
@@ -105,18 +107,32 @@ export default async function RequestsPage({ searchParams }: PageProps) {
                     {item.description ? <p className="request-description"><strong>Açıklama:</strong> {item.description}</p> : null}
                     {item.rejection_reason ? <p className="request-rejection"><strong>Red nedeni:</strong> {item.rejection_reason}</p> : null}
                   </div>
-                  <ol className="request-flow">
+                  <ol className="request-flow request-flow-four">
                     <li className={item.manager_approved_at || item.status !== "manager_pending" ? "done" : "active"}>Müdür onayı</li>
+                    <li className={["admin_pending", "implementation_pending", "completed"].includes(item.status) ? "done" : item.status === "suitability_pending" ? "active" : ""}>Uygunluk onayı</li>
                     <li className={item.admin_approved_at || ["implementation_pending", "completed"].includes(item.status) ? "done" : item.status === "admin_pending" ? "active" : ""}>Admin onayı</li>
                     <li className={item.status === "completed" ? "done" : item.status === "implementation_pending" ? "active" : ""}>Uygulama</li>
                   </ol>
-                  {canManagerDecide || canAdminDecide ? (
+                  {canManagerDecide || canAdminDecide || canSuitabilityApprove ? (
                     <div className="request-actions">
-                      <form action={approveRequestAction}><input type="hidden" name="requestId" value={item.id} /><button className="request-approve-button" type="submit">Onayla</button></form>
+                      <form action={approveRequestAction} className="request-approve-form">
+                        <input type="hidden" name="requestId" value={item.id} />
+                        {canSuitabilityApprove && item.request_type === "advance" ? (
+                          <details className="request-adjust-details">
+                            <summary>Yeni tarih / tutar belirle</summary>
+                            <div>
+                              <label>Yeni ihtiyaç tarihi<input name="adjustedNeededDate" type="date" /></label>
+                              <label>Yeni tutar (₺)<input name="adjustedAmount" type="number" min="1" step="0.01" placeholder={String(item.advance_amount ?? "")} /></label>
+                            </div>
+                          </details>
+                        ) : null}
+                        <button className="request-approve-button" type="submit">Onayla</button>
+                      </form>
                       <form action={rejectRequestAction} className="request-reject-form"><input type="hidden" name="requestId" value={item.id} /><input name="reason" aria-label="Red nedeni" placeholder="Red nedeni" /><button className="request-reject-button" type="submit">Reddet</button></form>
                     </div>
                   ) : null}
                   {canComplete ? <form action={completeRequestAction} className="request-actions"><input type="hidden" name="requestId" value={item.id} /><button className="request-complete-button" type="submit">Uygulandı</button></form> : null}
+                  {profile.role === "admin" ? <form action={deleteRequestAction} className="request-delete-form"><input type="hidden" name="requestId" value={item.id} /><button className="request-delete-button" type="submit">Talebi sil</button></form> : null}
                 </article>
               );
             })}

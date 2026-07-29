@@ -96,6 +96,8 @@ export default async function RootLayout({
         if (user.id === "7998f539-5077-472b-ba65-a1d45533eafa") {
           const { count } = await requestAdmin.from("employee_requests").select("id", { count: "exact", head: true }).eq("status", "implementation_pending").eq("current_assignee_id", user.id);
           pendingRequestCount += count ?? 0;
+          const { count: suitabilityCount } = await requestAdmin.from("employee_requests").select("id", { count: "exact", head: true }).eq("status", "suitability_pending").eq("current_assignee_id", user.id);
+          pendingRequestCount += suitabilityCount ?? 0;
         }
         const resolvedManagerPrimeAccess = await getResolvedFeatureAccessForProfile("mudur-primi", user.id, profile.role);
         canOpenManagerPrime = resolvedManagerPrimeAccess.allowed;

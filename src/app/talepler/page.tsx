@@ -13,6 +13,7 @@ type Profile = { id: string; full_name: string; role: UserRole; approval: string
 type RequestItem = {
   id: string; requester_id: string; store_id: string | null; request_type: RequestType; title: string;
   description: string | null; start_date: string | null; end_date: string | null; advance_amount: number | null;
+  start_time: string | null; end_time: string | null;
   collection_method: string | null; status: RequestStatus; current_assignee_id: string | null;
   rejected_by: string | null; rejection_stage: "manager" | "suitability" | "coordinator" | "implementation" | null;
   rejection_reason: string | null; created_at: string; manager_approved_at: string | null;
@@ -52,7 +53,7 @@ export default async function RequestsPage({ searchParams }: PageProps) {
   if (!profile || profile.approval !== "approved") redirect("/giris");
 
   let query = admin.from("employee_requests")
-    .select("id, requester_id, store_id, request_type, title, description, start_date, end_date, advance_amount, collection_method, status, current_assignee_id, rejected_by, rejection_stage, rejection_reason, created_at, manager_approved_at, suitability_approved_at, admin_approved_at, implemented_at, requester:profiles!employee_requests_requester_id_fkey(full_name), rejectedBy:profiles!employee_requests_rejected_by_fkey(full_name), store:stores(name)")
+    .select("id, requester_id, store_id, request_type, title, description, start_date, end_date, start_time, end_time, advance_amount, collection_method, status, current_assignee_id, rejected_by, rejection_stage, rejection_reason, created_at, manager_approved_at, suitability_approved_at, admin_approved_at, implemented_at, requester:profiles!employee_requests_requester_id_fkey(full_name), rejectedBy:profiles!employee_requests_rejected_by_fkey(full_name), store:stores(name)")
     .order("created_at", { ascending: false });
 
   if (profile.id === ADMIN_REQUEST_APPROVER_ID || profile.id === IMPLEMENTER_ID) {
@@ -116,6 +117,7 @@ export default async function RequestsPage({ searchParams }: PageProps) {
                   </header>
                   <div className="request-details">
                     {["annual_leave", "excuse_leave"].includes(item.request_type) ? <p><strong>İzin başlangıcı:</strong> {formatDate(item.start_date)} · <strong>İş başı tarihi:</strong> {formatDate(item.end_date)}</p> : null}
+                    {item.start_time && item.end_time ? <p><strong>Saat aralığı:</strong> {item.start_time.slice(0, 5)} – {item.end_time.slice(0, 5)}</p> : null}
                     {item.request_type === "advance" ? <p><strong>İhtiyaç tarihi:</strong> {formatDate(item.start_date)}</p> : null}
                     {item.request_type === "advance" ? <p><strong>Tutar:</strong> ₺{Number(item.advance_amount ?? 0).toLocaleString("tr-TR", { minimumFractionDigits: 2 })}</p> : null}
                     {item.collection_method ? <p><strong>Tahsilat:</strong> {item.collection_method}</p> : null}

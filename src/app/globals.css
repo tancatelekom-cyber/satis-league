@@ -16297,6 +16297,7 @@ textarea::placeholder {
 .request-type { color: #0f766e; }
 .request-status { padding: 7px 10px; border-radius: 999px; font-size: .75rem; font-weight: 850; text-align: center; }
 .request-status-manager_pending { color: #854d0e; background: #fef9c3; }
+.request-status-suitability_pending { color: #9a3412; background: #ffedd5; }
 .request-status-admin_pending { color: #1e40af; background: #dbeafe; }
 .request-status-implementation_pending { color: #6b21a8; background: #f3e8ff; }
 .request-status-completed { color: #166534; background: #dcfce7; }
@@ -16306,13 +16307,22 @@ textarea::placeholder {
 .request-description, .request-rejection { grid-column: 1 / -1; }
 .request-rejection { color: #b91c1c !important; }
 .request-flow { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin: 0; padding: 0; list-style: none; }
+.request-flow-four { grid-template-columns: repeat(4,1fr); }
 .request-flow li { padding: 9px; border-radius: 9px; color: #64748b; background: #e2e8f0; font-size: .78rem; font-weight: 800; text-align: center; }
 .request-flow li.active { color: #1e40af; background: #dbeafe; outline: 2px solid #93c5fd; }
 .request-flow li.done { color: #166534; background: #dcfce7; }
 .request-actions { display: flex; align-items: center; gap: 10px; margin-top: 15px; }
+.request-approve-form { display: grid; gap: 10px; }
+.request-adjust-details { min-width: min(430px, 100%); padding: 10px 12px; border: 1px solid #fdba74; border-radius: 11px; background: #fff7ed; }
+.request-adjust-details summary { color: #9a3412; font-size: .82rem; font-weight: 850; cursor: pointer; }
+.request-adjust-details > div { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+.request-adjust-details label { display: grid; gap: 5px; color: #7c2d12; font-size: .75rem; font-weight: 750; }
+.request-adjust-details input { min-height: 40px; padding: 8px 10px; border: 1px solid #fdba74; border-radius: 9px; background: #fff; font: inherit; }
 .request-approve-button { background: #15803d; }
 .request-reject-button { background: #dc2626; }
 .request-complete-button { background: linear-gradient(135deg,#7e22ce,#9333ea); }
+.request-delete-form { margin-top: 14px; padding-top: 13px; border-top: 1px dashed #fecaca; text-align: right; }
+.request-delete-button { padding: 8px 12px; border: 1px solid #fca5a5; border-radius: 9px; color: #b91c1c; background: #fff; font: inherit; font-size: .8rem; font-weight: 800; cursor: pointer; }
 .request-reject-form { display: flex; align-items: center; gap: 8px; flex: 1; }
 .request-reject-form input { max-width: 320px; }
 .request-empty { padding: 42px 20px; color: #64748b; text-align: center; }
@@ -16344,4 +16354,7 @@ textarea::placeholder {
   .request-description, .request-rejection { grid-column: auto; }
   .request-status { align-self: flex-start; }
   .request-reject-form input { max-width: none; }
+  .request-flow-four { grid-template-columns: 1fr 1fr; }
+  .request-adjust-details { min-width: 0; }
+  .request-adjust-details > div { grid-template-columns: 1fr; }
 }

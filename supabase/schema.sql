@@ -120,6 +120,7 @@ create table if not exists public.employee_requests (
   implemented_at timestamptz,
   rejected_by uuid references public.profiles(id) on delete set null,
   rejected_at timestamptz,
+  rejection_stage text check (rejection_stage in ('manager', 'suitability', 'coordinator', 'implementation')),
   rejection_reason text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),

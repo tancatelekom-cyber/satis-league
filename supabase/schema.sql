@@ -863,13 +863,16 @@ create policy "request participants can view employee requests" on public.employ
 for select using (
   requester_id = auth.uid()
   or current_assignee_id = auth.uid()
-  or auth.uid() = 'de688a42-d22a-48fa-b86f-32552bf2e1ac'::uuid
+  or auth.uid() in (
+    'de688a42-d22a-48fa-b86f-32552bf2e1ac'::uuid,
+    '7998f539-5077-472b-ba65-a1d45533eafa'::uuid
+  )
   or exists (
     select 1 from public.profiles actor
     where actor.id = auth.uid()
       and actor.approval = 'approved'
       and (
-        actor.role in ('admin', 'management')
+        actor.role = 'admin'
         or (
           actor.role = 'manager'
           and (

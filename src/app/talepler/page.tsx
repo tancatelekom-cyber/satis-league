@@ -7,6 +7,7 @@ import { approveRequestAction, completeRequestAction, deleteRequestAction, rejec
 
 const IMPLEMENTER_ID = "7998f539-5077-472b-ba65-a1d45533eafa";
 const ADMIN_REQUEST_APPROVER_ID = "de688a42-d22a-48fa-b86f-32552bf2e1ac";
+const COORDINATOR_ID = "b3df7df9-b781-4ba0-8829-97a3aa790229";
 
 type Profile = { id: string; full_name: string; role: UserRole; approval: string; store_id: string | null };
 type RequestItem = {
@@ -89,7 +90,7 @@ export default async function RequestsPage({ searchParams }: PageProps) {
               const canAdminDecide = item.status === "admin_pending"
                 && (
                   (item.current_assignee_id && item.current_assignee_id === profile.id)
-                  || (!item.current_assignee_id && profile.role === "admin")
+                  || (!item.current_assignee_id && profile.id === COORDINATOR_ID)
                 );
               const canComplete = item.status === "implementation_pending" && profile.id === IMPLEMENTER_ID;
               const canSuitabilityApprove = item.status === "suitability_pending" && profile.id === IMPLEMENTER_ID;

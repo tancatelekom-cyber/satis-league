@@ -8,6 +8,7 @@ import type { RequestStatus, RequestType, UserRole } from "@/lib/types";
 
 const IMPLEMENTER_ID = "7998f539-5077-472b-ba65-a1d45533eafa";
 const ADMIN_REQUEST_APPROVER_ID = "de688a42-d22a-48fa-b86f-32552bf2e1ac";
+const COORDINATOR_ID = "b3df7df9-b781-4ba0-8829-97a3aa790229";
 const REQUEST_PATH = "/talepler";
 
 type Actor = { id: string; role: UserRole; approval: string; store_id: string | null };
@@ -112,7 +113,10 @@ export async function approveRequestAction(formData: FormData) {
     }
     update = {
       status: "admin_pending",
-      current_assignee_id: requester?.role === "admin" ? ADMIN_REQUEST_APPROVER_ID : null,
+      current_assignee_id:
+        requester?.role === "admin" && request.requester_id === COORDINATOR_ID
+          ? ADMIN_REQUEST_APPROVER_ID
+          : COORDINATOR_ID,
       suitability_approved_by: actor.id,
       suitability_approved_at: now,
       ...(adjustedNeededDate ? { start_date: adjustedNeededDate } : {}),
@@ -123,7 +127,7 @@ export async function approveRequestAction(formData: FormData) {
     request.status === "admin_pending"
     && (
       (request.current_assignee_id && request.current_assignee_id === actor.id)
-      || (!request.current_assignee_id && actor.role === "admin")
+      || (!request.current_assignee_id && actor.id === COORDINATOR_ID)
     )
   ) {
     update = { status: "implementation_pending", admin_approved_by: actor.id, admin_approved_at: now, current_assignee_id: IMPLEMENTER_ID, updated_at: now };
@@ -155,7 +159,7 @@ export async function rejectRequestAction(formData: FormData) {
       request.status === "admin_pending"
       && (
         (request.current_assignee_id && request.current_assignee_id === actor.id)
-        || (!request.current_assignee_id && actor.role === "admin")
+        || (!request.current_assignee_id && actor.id === COORDINATOR_ID)
       )
     );
   if (!allowed) go("Bu talebi reddetme yetkiniz yok.", "error");

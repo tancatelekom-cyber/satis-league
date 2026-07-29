@@ -40,30 +40,40 @@ function buildGoalPdfCanvas(page: HTMLElement, scopeLabel: string) {
   const pageSliceHeight = Math.floor(width * (595 / 842));
   type PdfBlock =
     | { text: string; kind: "title" | "heading" | "spacer" }
-    | { cells: string[]; columnCount: number; header: boolean; kind: "tableRow" };
+    | {
+        cells: Array<{ text: string; span: number }>;
+        columnCount: number;
+        header: boolean;
+        rowIndex: number;
+        kind: "tableRow";
+      };
   const blocks: PdfBlock[] = [
     { text: `${scopeLabel} Hedef Gerçekleşen`, kind: "title" }
   ];
 
   page.querySelectorAll<HTMLElement>("h1, h2, h3, h4, details > summary, table").forEach((element) => {
     if (element instanceof HTMLTableElement) {
-      const rows = Array.from(element.querySelectorAll<HTMLTableRowElement>("tr")).map((row) => ({
-        cells: Array.from(row.querySelectorAll<HTMLElement>("th, td")).map((cell) =>
-          cell.innerText.replace(/\s+/g, " ").trim()
-        ),
-        header: Boolean(row.querySelector("th"))
-      }));
-      const columnCount = Math.max(1, ...rows.map((row) => row.cells.length));
-      rows.forEach((row) => {
-        if (row.cells.some(Boolean)) {
-          blocks.push({ cells: row.cells, columnCount, header: row.header, kind: "tableRow" });
+      const rows = Array.from(element.querySelectorAll<HTMLTableRowElement>("tr")).map((row) => {
+        const cells = Array.from(row.querySelectorAll<HTMLTableCellElement>("th, td")).map((cell) => ({
+          text: (cell.textContent ?? "").replace(/\s+/g, " ").trim(),
+          span: Math.max(1, cell.colSpan || 1)
+        }));
+        return { cells, header: Boolean(row.querySelector("th")) };
+      });
+      const columnCount = Math.max(
+        1,
+        ...rows.map((row) => row.cells.reduce((total, cell) => total + cell.span, 0))
+      );
+      rows.forEach((row, rowIndex) => {
+        if (row.cells.some((cell) => Boolean(cell.text))) {
+          blocks.push({ cells: row.cells, columnCount, header: row.header, rowIndex, kind: "tableRow" });
         }
       });
       blocks.push({ text: "", kind: "spacer" });
       return;
     }
 
-    const text = element.innerText.replace(/\s+/g, " ").trim();
+    const text = (element.textContent ?? "").replace(/\s+/g, " ").trim();
     if (text) blocks.push({ text, kind: element.tagName === "H1" ? "title" : "heading" });
   });
 
@@ -81,9 +91,11 @@ function buildGoalPdfCanvas(page: HTMLElement, scopeLabel: string) {
       measureContext.font = `${block.header ? "700" : "500"} ${block.columnCount >= 6 ? 16 : 19}px Arial`;
       const maxLines = Math.max(
         1,
-        ...block.cells.map((cell, index) =>
-          wrapText(measureContext, cell, (index === 0 ? firstWidth : otherWidth) - 20).length
-        )
+        ...block.cells.map((cell, index) => {
+          const cellWidth =
+            index === 0 ? firstWidth + otherWidth * (cell.span - 1) : otherWidth * cell.span;
+          return wrapText(measureContext, cell.text, cellWidth - 20).length;
+        })
       );
       estimatedHeight += maxLines * 27 + 24;
       return;
@@ -119,32 +131,37 @@ function buildGoalPdfCanvas(page: HTMLElement, scopeLabel: string) {
       const fontSize = block.columnCount >= 6 ? 16 : 19;
       const tableLineHeight = fontSize + 9;
       context.font = `${block.header ? "700" : "500"} ${fontSize}px Arial`;
-      const cellLines = Array.from({ length: block.columnCount }, (_, index) =>
-        wrapText(
-          context,
-          block.cells[index] ?? "",
-          (index === 0 ? firstWidth : otherWidth) - 20
-        )
-      );
-      const rowHeight = Math.max(1, ...cellLines.map((lines) => lines.length)) * tableLineHeight + 24;
+      const cellLayouts = block.cells.map((cell, index) => {
+        const cellWidth =
+          index === 0 ? firstWidth + otherWidth * (cell.span - 1) : otherWidth * cell.span;
+        return { ...cell, cellWidth, lines: wrapText(context, cell.text, cellWidth - 20) };
+      });
+      const rowHeight = Math.max(1, ...cellLayouts.map((cell) => cell.lines.length)) * tableLineHeight + 24;
       const pageOffset = y % pageSliceHeight;
       if (pageOffset + rowHeight > pageSliceHeight - 30) {
         y += pageSliceHeight - pageOffset + 30;
       }
 
       let x = side;
-      cellLines.forEach((lines, index) => {
-        const cellWidth = index === 0 ? firstWidth : otherWidth;
-        context.fillStyle = block.header ? "#dbeafe" : index % 2 === 0 ? "#ffffff" : "#f8fafc";
-        context.fillRect(x, y, cellWidth, rowHeight);
-        context.strokeStyle = "#94a3b8";
-        context.lineWidth = 1.5;
-        context.strokeRect(x, y, cellWidth, rowHeight);
-        context.fillStyle = block.header ? "#172554" : "#1f2937";
-        lines.forEach((line, lineIndex) => {
+      cellLayouts.forEach((cell, index) => {
+        context.fillStyle = block.header
+          ? "#1e3a8a"
+          : index === 0
+            ? block.rowIndex % 2 === 0
+              ? "#dbeafe"
+              : "#bfdbfe"
+            : block.rowIndex % 2 === 0
+              ? "#f8fafc"
+              : "#eff6ff";
+        context.fillRect(x, y, cell.cellWidth, rowHeight);
+        context.strokeStyle = block.header ? "#1e40af" : "#93c5fd";
+        context.lineWidth = block.header ? 2 : 1.5;
+        context.strokeRect(x, y, cell.cellWidth, rowHeight);
+        context.fillStyle = block.header ? "#ffffff" : index === 0 ? "#172554" : "#1f2937";
+        cell.lines.forEach((line, lineIndex) => {
           context.fillText(line, x + 10, y + 22 + lineIndex * tableLineHeight);
         });
-        x += cellWidth;
+        x += cell.cellWidth;
       });
       y += rowHeight;
       return;

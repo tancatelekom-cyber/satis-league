@@ -53,7 +53,16 @@ export default async function RequestsPage({ searchParams }: PageProps) {
   } else if (profile.id === IMPLEMENTER_ID) {
     query = query.or(`requester_id.eq.${profile.id},current_assignee_id.eq.${profile.id}`);
   } else if (profile.role === "employee") query = query.eq("requester_id", profile.id);
-  else if (profile.role === "manager") query = query.eq("store_id", profile.store_id ?? "00000000-0000-0000-0000-000000000000");
+  else if (profile.role === "manager") {
+    const { data: branchEmployees } = await admin
+      .from("profiles")
+      .select("id")
+      .eq("store_id", profile.store_id ?? "00000000-0000-0000-0000-000000000000")
+      .eq("role", "employee")
+      .eq("approval", "approved");
+    const visibleRequesterIds = [profile.id, ...(branchEmployees ?? []).map((employee) => employee.id)];
+    query = query.in("requester_id", visibleRequesterIds);
+  }
 
   const { data, error } = await query;
   const requests = (data ?? []) as unknown as RequestItem[];

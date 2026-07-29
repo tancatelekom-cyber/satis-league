@@ -16,7 +16,6 @@ type NavItem = {
 };
 
 const baseNavItems: NavItem[] = [
-  { href: "/talepler", label: "Talepler", mobileLabel: "Talepler", icon: "📨" },
   { href: "/", label: "Ana Sayfa", icon: "🏠" },
   { href: "/hedef-gerceklesen", label: "Hedef Gerceklesen", mobileLabel: "Hedef", icon: "🎯" },
   { href: "/magaza-muduru-primi", label: "Magaza Muduru Primi", mobileLabel: "Mudur Prim", icon: "💰" },
@@ -31,7 +30,8 @@ const baseNavItems: NavItem[] = [
   { href: "/aylik-kampanyalar", label: "Aylik Kampanyalar", mobileLabel: "Aylik", icon: "🗓️" },
   { href: "/lig", label: "Yildizlar Kulubu", mobileLabel: "Lig", icon: "⭐" },
   { href: "/stok-bilgisi", label: "Stok Bilgisi", mobileLabel: "Stok", icon: "📦" },
-  { href: "/hesabim", label: "Hesabim", mobileLabel: "Hesap", icon: "👤" }
+  { href: "/hesabim", label: "Hesabim", mobileLabel: "Hesap", icon: "👤" },
+  { href: "/talepler", label: "Talepler", mobileLabel: "Talepler", icon: "📨" }
 ];
 
 function isActive(pathname: string, href: string) {
@@ -49,6 +49,7 @@ type AppShellHeaderProps = {
   initialCanOpenWebKontor?: boolean;
   initialCanOpenMissingDocs?: boolean;
   initialDashboardRole?: "manager" | "management" | "admin" | null;
+  initialPendingRequestCount?: number;
 };
 
 type HeaderSuccessData = {
@@ -68,10 +69,12 @@ export function AppShellHeader({
   initialCanOpenRevenueExpense = false,
   initialCanOpenWebKontor = false,
   initialCanOpenMissingDocs = false,
-  initialDashboardRole = null
+  initialDashboardRole = null,
+  initialPendingRequestCount = 0
 }: AppShellHeaderProps) {
   const pathname = usePathname() ?? "/";
   const [menuOpen, setMenuOpen] = useState(false);
+  const [requestPopupOpen, setRequestPopupOpen] = useState(initialPendingRequestCount > 0);
   const [successData, setSuccessData] = useState<HeaderSuccessData | null>(null);
   const headerDashboardPalette = getDashboardPalette(Boolean(successData?.colorBlindMode));
 
@@ -200,12 +203,13 @@ export function AppShellHeader({
             {navItems.map((item) => (
               <Link
                 key={`desktop-${item.href}`}
-                className={`nav-link ${isActive(pathname, item.href) ? "nav-link-active" : ""}`}
+                className={`nav-link ${isActive(pathname, item.href) ? "nav-link-active" : ""} ${item.href === "/talepler" && initialPendingRequestCount > 0 ? "nav-link-request-alert" : ""}`}
                 href={item.href}
                 onClick={() => setMenuOpen(false)}
               >
                 <span className="nav-link-icon" aria-hidden="true">{item.icon ?? "•"}</span>
                 <span className="nav-link-label">{item.label}</span>
+                {item.href === "/talepler" && initialPendingRequestCount > 0 ? <span className="nav-request-count">{initialPendingRequestCount}</span> : null}
               </Link>
             ))}
             <form action={logoutAction} className="nav-logout-form">
@@ -224,12 +228,13 @@ export function AppShellHeader({
               {navItems.map((item) => (
                 <Link
                   key={`mobile-${item.href}`}
-                  className={`nav-link ${isActive(pathname, item.href) ? "nav-link-active" : ""}`}
+                  className={`nav-link ${isActive(pathname, item.href) ? "nav-link-active" : ""} ${item.href === "/talepler" && initialPendingRequestCount > 0 ? "nav-link-request-alert" : ""}`}
                   href={item.href}
                   onClick={() => setMenuOpen(false)}
                 >
                   <span className="nav-link-icon" aria-hidden="true">{item.icon ?? "•"}</span>
                   <span className="nav-link-label">{item.label}</span>
+                  {item.href === "/talepler" && initialPendingRequestCount > 0 ? <span className="nav-request-count">{initialPendingRequestCount}</span> : null}
                 </Link>
               ))}
               <form action={logoutAction} className="nav-logout-form">
@@ -239,6 +244,22 @@ export function AppShellHeader({
                 </button>
               </form>
             </nav>,
+            document.body
+          )
+        : null}
+      {requestPopupOpen && initialPendingRequestCount > 0 && typeof document !== "undefined"
+        ? createPortal(
+            <div className="request-alert-backdrop">
+              <section className="request-alert-popup" role="dialog" aria-modal="true" aria-labelledby="request-alert-title">
+                <span className="request-alert-icon" aria-hidden="true">🔔</span>
+                <h2 id="request-alert-title">Bekleyen bir onayınız var</h2>
+                <p>{initialPendingRequestCount} talep işlem yapmanızı bekliyor.</p>
+                <div className="request-alert-actions">
+                  <button type="button" onClick={() => setRequestPopupOpen(false)}>Daha sonra</button>
+                  <Link href="/talepler" onClick={() => { setRequestPopupOpen(false); setMenuOpen(false); }}>Talepleri aç</Link>
+                </div>
+              </section>
+            </div>,
             document.body
           )
         : null}

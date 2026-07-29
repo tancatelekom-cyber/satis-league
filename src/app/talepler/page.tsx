@@ -2,7 +2,8 @@ import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/require-user";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { RequestStatus, RequestType, UserRole } from "@/lib/types";
-import { approveRequestAction, completeRequestAction, createRequestAction, rejectRequestAction } from "./actions";
+import { RequestCreateForm } from "@/components/requests/request-create-form";
+import { approveRequestAction, completeRequestAction, rejectRequestAction } from "./actions";
 
 const IMPLEMENTER_ID = "7998f539-5077-472b-ba65-a1d45533eafa";
 const ADMIN_REQUEST_APPROVER_ID = "de688a42-d22a-48fa-b86f-32552bf2e1ac";
@@ -71,17 +72,7 @@ export default async function RequestsPage({ searchParams }: PageProps) {
 
       <section className="request-create-card">
         <div className="request-section-heading"><span>YENİ TALEP</span><h2>Talep oluştur</h2></div>
-        <form action={createRequestAction} className="request-form">
-          <label>Talep türü<select name="requestType" required defaultValue="annual_leave"><option value="annual_leave">Yıllık izin</option><option value="excuse_leave">Mazeret izni</option><option value="advance">Avans</option><option value="other">Diğer</option></select></label>
-          <label>Diğer talep başlığı<input name="customTitle" type="text" maxLength={120} placeholder="Örn. ekipman talebi" /></label>
-          <label>Başlangıç tarihi<input name="startDate" type="date" /></label>
-          <label>Bitiş tarihi<input name="endDate" type="date" /></label>
-          <label>Avans miktarı (₺)<input name="advanceAmount" type="number" min="1" step="0.01" placeholder="Örn. 5000" /></label>
-          <label>Tahsilat şekli<select name="collectionMethod" defaultValue=""><option value="">Seçiniz</option><option value="Maaştan kesinti">Maaştan kesinti</option><option value="Primden kesinti">Primden kesinti</option><option value="Maaş ve primden kesinti">Maaş ve primden kesinti</option></select></label>
-          <label className="request-form-wide">Açıklama / mazeret<textarea name="description" rows={3} placeholder="Talebinizle ilgili açıklama ekleyin." /></label>
-          <button className="request-primary-button" type="submit">Talebi oluştur</button>
-        </form>
-        <p className="request-form-note">İzin taleplerinde tarihleri; avans talebinde miktar ve tahsilat şeklini doldurun.</p>
+        <RequestCreateForm />
       </section>
 
       <section className="request-list-section">
@@ -108,6 +99,7 @@ export default async function RequestsPage({ searchParams }: PageProps) {
                   </header>
                   <div className="request-details">
                     {["annual_leave", "excuse_leave"].includes(item.request_type) ? <p><strong>Tarih:</strong> {formatDate(item.start_date)} – {formatDate(item.end_date)}</p> : null}
+                    {item.request_type === "advance" ? <p><strong>İhtiyaç tarihi:</strong> {formatDate(item.start_date)}</p> : null}
                     {item.request_type === "advance" ? <p><strong>Tutar:</strong> ₺{Number(item.advance_amount ?? 0).toLocaleString("tr-TR", { minimumFractionDigits: 2 })}</p> : null}
                     {item.collection_method ? <p><strong>Tahsilat:</strong> {item.collection_method}</p> : null}
                     {item.description ? <p className="request-description"><strong>Açıklama:</strong> {item.description}</p> : null}

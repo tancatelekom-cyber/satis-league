@@ -47,10 +47,10 @@ export async function createRequestAction(formData: FormData) {
   const amountText = String(formData.get("advanceAmount") ?? "").replace(",", ".").trim();
 
   if (!type) go("Talep türü seçilmedi.", "error");
-  if (["annual_leave", "excuse_leave"].includes(type) && (!startDate || !endDate)) go("İzin başlangıç ve bitiş tarihlerini girin.", "error");
+  if (["annual_leave", "excuse_leave"].includes(type) && (!startDate || !endDate)) go("İzin başlangıç ve iş başı tarihlerini girin.", "error");
   if (type === "advance" && !neededDate) go("Avansın ihtiyaç olduğu tarihi seçin.", "error");
   if (type === "other" && !otherText) go("Talep metnini girin.", "error");
-  if (startDate && endDate && endDate < startDate) go("Bitiş tarihi başlangıçtan önce olamaz.", "error");
+  if (startDate && endDate && endDate < startDate) go("İş başı tarihi izin başlangıcından önce olamaz.", "error");
 
   const advanceAmount = type === "advance" ? Number(amountText) : null;
   if (type === "advance" && (!Number.isFinite(advanceAmount) || Number(advanceAmount) <= 0)) {

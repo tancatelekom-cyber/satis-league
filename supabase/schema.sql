@@ -106,6 +106,8 @@ create table if not exists public.employee_requests (
   description text,
   start_date date,
   end_date date,
+  start_time time,
+  end_time time,
   advance_amount numeric(12,2),
   collection_method text,
   status text not null check (status in ('manager_pending', 'suitability_pending', 'admin_pending', 'implementation_pending', 'completed', 'rejected')),

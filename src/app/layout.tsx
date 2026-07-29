@@ -85,8 +85,8 @@ export default async function RootLayout({
           const { count } = await requestAdmin.from("employee_requests").select("id", { count: "exact", head: true }).eq("status", "manager_pending").eq("store_id", profile.store_id);
           pendingRequestCount += count ?? 0;
         }
-        if (profile.role === "admin") {
-          const { count } = await requestAdmin.from("employee_requests").select("id", { count: "exact", head: true }).eq("status", "admin_pending").is("current_assignee_id", null);
+        if (user.id === "b3df7df9-b781-4ba0-8829-97a3aa790229") {
+          const { count } = await requestAdmin.from("employee_requests").select("id", { count: "exact", head: true }).eq("status", "admin_pending").or(`current_assignee_id.eq.${user.id},current_assignee_id.is.null`);
           pendingRequestCount += count ?? 0;
         }
         if (user.id === "de688a42-d22a-48fa-b86f-32552bf2e1ac") {

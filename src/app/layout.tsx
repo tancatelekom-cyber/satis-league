@@ -3,6 +3,7 @@ import { AuthGate } from "@/components/auth/auth-gate";
 import { AppShellHeader } from "@/components/app-shell-header";
 import { PwaRegister } from "@/components/pwa-register";
 import { getResolvedFeatureAccessForProfile } from "@/lib/feature-menu-permissions";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { UserRole } from "@/lib/types";
 import "./globals.css";
@@ -50,6 +51,7 @@ export default async function RootLayout({
   let canOpenWebKontor = false;
   let canOpenMissingDocs = false;
   let dashboardRole: "manager" | "management" | "admin" | null = null;
+  let pendingRequestCount = 0;
 
   try {
     const supabase = await createClient();
@@ -60,7 +62,7 @@ export default async function RootLayout({
     if (user) {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("role, approval")
+        .select("role, approval, store_id")
         .eq("id", user.id)
         .single();
 
@@ -78,6 +80,23 @@ export default async function RootLayout({
           : null;
 
       if (profile?.approval === "approved") {
+        const requestAdmin = createAdminClient();
+        if (profile.role === "manager" && profile.store_id) {
+          const { count } = await requestAdmin.from("employee_requests").select("id", { count: "exact", head: true }).eq("status", "manager_pending").eq("store_id", profile.store_id);
+          pendingRequestCount += count ?? 0;
+        }
+        if (profile.role === "admin") {
+          const { count } = await requestAdmin.from("employee_requests").select("id", { count: "exact", head: true }).eq("status", "admin_pending").is("current_assignee_id", null);
+          pendingRequestCount += count ?? 0;
+        }
+        if (user.id === "de688a42-d22a-48fa-b86f-32552bf2e1ac") {
+          const { count } = await requestAdmin.from("employee_requests").select("id", { count: "exact", head: true }).eq("status", "admin_pending").eq("current_assignee_id", user.id);
+          pendingRequestCount += count ?? 0;
+        }
+        if (user.id === "7998f539-5077-472b-ba65-a1d45533eafa") {
+          const { count } = await requestAdmin.from("employee_requests").select("id", { count: "exact", head: true }).eq("status", "implementation_pending").eq("current_assignee_id", user.id);
+          pendingRequestCount += count ?? 0;
+        }
         const resolvedManagerPrimeAccess = await getResolvedFeatureAccessForProfile("mudur-primi", user.id, profile.role);
         canOpenManagerPrime = resolvedManagerPrimeAccess.allowed;
         const resolvedRevenueExpenseAccess = await getResolvedFeatureAccessForProfile("gelir-gider", user.id, profile.role);
@@ -98,6 +117,7 @@ export default async function RootLayout({
     canOpenWebKontor = false;
     canOpenMissingDocs = false;
     dashboardRole = null;
+    pendingRequestCount = 0;
   }
 
   return (
@@ -127,6 +147,7 @@ export default async function RootLayout({
             initialCanOpenWebKontor={canOpenWebKontor}
             initialCanOpenMissingDocs={canOpenMissingDocs}
             initialDashboardRole={dashboardRole}
+            initialPendingRequestCount={pendingRequestCount}
           />
 
           <AuthGate>{children}</AuthGate>

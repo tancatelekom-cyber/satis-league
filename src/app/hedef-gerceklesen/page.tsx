@@ -5,7 +5,6 @@ import { CompanyDailyNeedsTable } from "@/components/evaluation/company-daily-ne
 import { DashboardShareButton } from "@/components/evaluation/dashboard-share-button";
 import { DashboardCategoryInteractiveGrid } from "@/components/evaluation/dashboard-category-interactive-grid";
 import { FormattedCoachingText } from "@/components/evaluation/formatted-coaching-text";
-import { GoalDetailPdfButton } from "@/components/evaluation/goal-detail-pdf-button";
 import { SpeakCoachingButton } from "@/components/evaluation/speak-coaching-button";
 import { StoreDailyNeedsTable } from "@/components/evaluation/store-daily-needs-table";
 import { FilterSelectNav } from "@/components/ui/filter-select-nav";
@@ -5505,15 +5504,6 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
             </section>
           )}
 
-          <GoalDetailPdfButton
-            scopeLabel={
-              effectiveView === "company"
-                ? "Firma"
-                : effectiveView === "store"
-                  ? activeStoreName || "Şube"
-                  : activeEmployeeName || "Personel"
-            }
-          />
         </>
       )}
       </section>

@@ -870,7 +870,18 @@ for select using (
       and actor.approval = 'approved'
       and (
         actor.role in ('admin', 'management')
-        or (actor.role = 'manager' and actor.store_id = employee_requests.store_id)
+        or (
+          actor.role = 'manager'
+          and (
+            employee_requests.requester_id = actor.id
+            or exists (
+              select 1 from public.profiles requester
+              where requester.id = employee_requests.requester_id
+                and requester.role = 'employee'
+                and requester.store_id = actor.store_id
+            )
+          )
+        )
       )
   )
 );

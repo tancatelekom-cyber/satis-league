@@ -14,8 +14,9 @@ type RequestItem = {
   id: string; requester_id: string; store_id: string | null; request_type: RequestType; title: string;
   description: string | null; start_date: string | null; end_date: string | null; advance_amount: number | null;
   collection_method: string | null; status: RequestStatus; current_assignee_id: string | null;
-  rejected_by: string | null; rejection_reason: string | null; created_at: string; manager_approved_at: string | null;
-  admin_approved_at: string | null; implemented_at: string | null;
+  rejected_by: string | null; rejection_stage: "manager" | "suitability" | "coordinator" | "implementation" | null;
+  rejection_reason: string | null; created_at: string; manager_approved_at: string | null;
+  suitability_approved_at: string | null; admin_approved_at: string | null; implemented_at: string | null;
   requester: { full_name: string } | null; rejectedBy: { full_name: string } | null; store: { name: string } | null;
 };
 type PageProps = { searchParams?: Promise<{ view?: string; message?: string; type?: string }> };
@@ -51,7 +52,7 @@ export default async function RequestsPage({ searchParams }: PageProps) {
   if (!profile || profile.approval !== "approved") redirect("/giris");
 
   let query = admin.from("employee_requests")
-    .select("id, requester_id, store_id, request_type, title, description, start_date, end_date, advance_amount, collection_method, status, current_assignee_id, rejected_by, rejection_reason, created_at, manager_approved_at, admin_approved_at, implemented_at, requester:profiles!employee_requests_requester_id_fkey(full_name), rejectedBy:profiles!employee_requests_rejected_by_fkey(full_name), store:stores(name)")
+    .select("id, requester_id, store_id, request_type, title, description, start_date, end_date, advance_amount, collection_method, status, current_assignee_id, rejected_by, rejection_stage, rejection_reason, created_at, manager_approved_at, suitability_approved_at, admin_approved_at, implemented_at, requester:profiles!employee_requests_requester_id_fkey(full_name), rejectedBy:profiles!employee_requests_rejected_by_fkey(full_name), store:stores(name)")
     .order("created_at", { ascending: false });
 
   if (profile.id === ADMIN_REQUEST_APPROVER_ID || profile.id === IMPLEMENTER_ID) {
@@ -123,10 +124,10 @@ export default async function RequestsPage({ searchParams }: PageProps) {
                     {item.rejection_reason ? <p className="request-rejection"><strong>Red nedeni:</strong> {item.rejection_reason}</p> : null}
                   </div>
                   <ol className="request-flow request-flow-four">
-                    <li className={item.manager_approved_at || item.status !== "manager_pending" ? "done" : "active"}>Müdür onayı</li>
-                    <li className={["admin_pending", "implementation_pending", "completed"].includes(item.status) ? "done" : item.status === "suitability_pending" ? "active" : ""}>Uygunluk onayı</li>
-                    <li className={item.admin_approved_at || ["implementation_pending", "completed"].includes(item.status) ? "done" : item.status === "admin_pending" ? "active" : ""}>Koordinatör onayı</li>
-                    <li className={item.status === "completed" ? "done" : item.status === "implementation_pending" ? "active" : ""}>Uygulama</li>
+                    <li className={item.rejection_stage === "manager" ? "rejected" : item.manager_approved_at || item.status !== "manager_pending" ? "done" : "active"}>Müdür onayı</li>
+                    <li className={item.rejection_stage === "suitability" ? "rejected" : item.suitability_approved_at || ["admin_pending", "implementation_pending", "completed"].includes(item.status) ? "done" : item.status === "suitability_pending" ? "active" : ""}>Uygunluk onayı</li>
+                    <li className={item.rejection_stage === "coordinator" ? "rejected" : item.admin_approved_at || ["implementation_pending", "completed"].includes(item.status) ? "done" : item.status === "admin_pending" ? "active" : ""}>Koordinatör onayı</li>
+                    <li className={item.rejection_stage === "implementation" ? "rejected" : item.status === "completed" ? "done" : item.status === "implementation_pending" ? "active" : ""}>Uygulama</li>
                   </ol>
                   {canManagerDecide || canAdminDecide || canSuitabilityApprove ? (
                     <div className="request-actions">

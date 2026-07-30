@@ -29,7 +29,20 @@ type DashboardShareButtonProps = {
   detailColumns?: 2 | 3;
   detailColorMode?: "success" | "category";
   colorBlindMode?: boolean;
+  whatsappRecipients?: Array<{
+    id: string;
+    name: string;
+    phone: string;
+  }>;
 };
+
+function normalizeWhatsAppPhone(value: string) {
+  const digits = value.replace(/\D/g, "");
+  if (digits.startsWith("90") && digits.length === 12) return digits;
+  if (digits.startsWith("0") && digits.length === 11) return `90${digits.slice(1)}`;
+  if (digits.startsWith("5") && digits.length === 10) return `90${digits}`;
+  return digits;
+}
 
 function safeFileName(value: string) {
   return (
@@ -518,6 +531,15 @@ export function DashboardShareButton(props: DashboardShareButtonProps) {
     }
   }
 
+  function sendDashboardToWhatsApp(recipient: { name: string; phone: string }) {
+    const phone = normalizeWhatsAppPhone(recipient.phone);
+    if (!phone) return;
+    const message = encodeURIComponent(
+      `Merhaba ${recipient.name}, ${props.title} sizinle paylaşıldı. Dashboardu görüntülemek için: ${window.location.href}`
+    );
+    window.open(`https://wa.me/${phone}?text=${message}`, "_blank", "noopener,noreferrer");
+  }
+
   return (
     <div className="goal-dashboard-share-area">
       <div className="goal-dashboard-share-actions">
@@ -534,6 +556,20 @@ export function DashboardShareButton(props: DashboardShareButtonProps) {
           PDF İndir<span className="goal-dashboard-pdf-mobile-label"> / Paylaş</span>
         </button>
       </div>
+      {props.whatsappRecipients?.length ? (
+        <div className="goal-dashboard-recipient-actions">
+          {props.whatsappRecipients.map((recipient) => (
+            <button
+              className="goal-dashboard-recipient-button"
+              key={recipient.id}
+              onClick={() => sendDashboardToWhatsApp(recipient)}
+              type="button"
+            >
+              {recipient.name} kişisine WhatsApp’tan gönder
+            </button>
+          ))}
+        </div>
+      ) : null}
       {status ? <p className="campaign-share-status">{status}</p> : null}
     </div>
   );

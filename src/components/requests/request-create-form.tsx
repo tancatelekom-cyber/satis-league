@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { createRequestAction } from "@/app/talepler/actions";
 import type { RequestType } from "@/lib/types";
 
@@ -8,11 +8,23 @@ export function RequestCreateForm() {
   const [type, setType] = useState<RequestType>("annual_leave");
   const [startDate, setStartDate] = useState("");
   const [returnDate, setReturnDate] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const isSubmittingRef = useRef(false);
   const isLeave = type === "annual_leave" || type === "excuse_leave";
   const isSameDayLeave = isLeave && startDate !== "" && startDate === returnDate;
 
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    if (isSubmittingRef.current) {
+      event.preventDefault();
+      return;
+    }
+
+    isSubmittingRef.current = true;
+    setIsSubmitting(true);
+  }
+
   return (
-    <form action={createRequestAction} className="request-form">
+    <form action={createRequestAction} className="request-form" onSubmit={handleSubmit}>
       <label>
         Talep türü
         <select name="requestType" required value={type} onChange={(event) => setType(event.target.value as RequestType)}>
@@ -51,7 +63,9 @@ export function RequestCreateForm() {
         </label>
       ) : null}
 
-      <button className="request-primary-button" type="submit">Talebi oluştur</button>
+      <button className="request-primary-button" type="submit" disabled={isSubmitting}>
+        {isSubmitting ? "Talep oluşturuluyor..." : "Talebi oluştur"}
+      </button>
     </form>
   );
 }

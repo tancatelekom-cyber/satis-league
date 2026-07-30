@@ -39,6 +39,20 @@ type GoalActualPageProps = {
   }>;
 };
 
+type DashboardWhatsAppRecipient = {
+  id: string;
+  name: string;
+  phone: string;
+};
+
+type DashboardShareProfile = {
+  id: string;
+  full_name: string;
+  phone: string | null;
+  role: UserRole;
+  store: Array<{ name: string }> | { name: string } | null;
+};
+
 type EmployeeSummary = {
   name: string;
   totalTarget: number;
@@ -3070,6 +3084,7 @@ function StoreGoalDashboard({
   dayStats,
   canShare,
   colorBlindMode,
+  whatsappRecipients,
   dashboardScope = "store"
 }: {
   storeName: string;
@@ -3078,6 +3093,7 @@ function StoreGoalDashboard({
   dayStats: GoalDayStats;
   canShare: boolean;
   colorBlindMode: boolean;
+  whatsappRecipients: DashboardWhatsAppRecipient[];
   dashboardScope?: "store" | "employee";
 }) {
   const isEmployeeDashboard = dashboardScope === "employee";
@@ -3301,6 +3317,7 @@ function StoreGoalDashboard({
           title={`${dashboardSubject} ${isEmployeeDashboard ? "Personel" : "Şube"} Dashboardu`}
           subtitle="Ay sonu hedef gidişatı ve kategori başarı oranları"
           colorBlindMode={colorBlindMode}
+          whatsappRecipients={whatsappRecipients}
           statusItems={[
             { label: "Hedefte", count: achievedCount, tone: "success" },
             { label: "Hedefe Yakın", count: closeCount, tone: "near" },
@@ -3342,13 +3359,15 @@ function CompanyStoreSuccessDashboard({
   employeeRows,
   dayStats,
   canShare,
-  colorBlindMode
+  colorBlindMode,
+  whatsappRecipients
 }: {
   rows: GoalStoreRow[];
   employeeRows: GoalActualRow[];
   dayStats: GoalDayStats;
   canShare: boolean;
   colorBlindMode: boolean;
+  whatsappRecipients: DashboardWhatsAppRecipient[];
 }) {
   const dashboardPalette = getDashboardPalette(colorBlindMode);
   const storeMap = new Map<string, GoalStoreRow[]>();
@@ -3624,6 +3643,7 @@ function CompanyStoreSuccessDashboard({
             title: "Şube Başarı Grafikleri"
           }}
           colorBlindMode={colorBlindMode}
+          whatsappRecipients={whatsappRecipients}
           statusItems={[
             { label: "Hedefte", count: companyAchievedCount, tone: "success" },
             { label: "Hedefe Yakın", count: companyCloseCount, tone: "near" },
@@ -3695,7 +3715,8 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
   const canShareDashboard =
     profile.role === "admin" ||
     profile.role === "management" ||
-    profile.role === "manager";
+    profile.role === "manager" ||
+    profile.role === "employee";
   const colorBlindDashboardMode = isColorBlindDashboardUser(user.id);
   const currentUserFullName = String((profile as { full_name?: string | null }).full_name ?? "").trim();
   const currentUserStore = (profile as { store?: Array<{ name: string }> | { name: string } | null }).store;
@@ -3759,20 +3780,26 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
   // Keep historical Sheet rows, but show only currently approved users in dashboard rankings.
   let activeDashboardEmployeeIds: Set<string> | null = null;
   let activeDashboardEmployeeNames: Set<string> | null = null;
+  let dashboardShareProfiles: DashboardShareProfile[] = [];
   try {
     const admin = createAdminClient();
     const { data: activeProfiles, error: activeProfilesError } = await admin
       .from("profiles")
-      .select("id, full_name")
+      .select("id, full_name, phone, role, store:stores(name)")
       .eq("approval", "approved")
-      .in("role", ["employee", "manager"]);
+      .in("role", ["employee", "manager", "management", "admin"]);
 
     if (!activeProfilesError) {
+      dashboardShareProfiles = (activeProfiles ?? []) as unknown as DashboardShareProfile[];
       activeDashboardEmployeeIds = new Set(
-        (activeProfiles ?? []).map((profile) => String(profile.id ?? "").trim()).filter(Boolean)
+        dashboardShareProfiles
+          .filter((profile) => profile.role === "employee" || profile.role === "manager")
+          .map((profile) => String(profile.id ?? "").trim())
+          .filter(Boolean)
       );
       activeDashboardEmployeeNames = new Set(
-        (activeProfiles ?? [])
+        dashboardShareProfiles
+          .filter((profile) => profile.role === "employee" || profile.role === "manager")
           .map((profile) => normalizeEmployeeIdentity(String(profile.full_name ?? "")))
           .filter(Boolean)
       );
@@ -3964,6 +3991,37 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
 
   const activeEmployeeName = effectiveEmployee || employeeNames[0] || employeeSummaries[0]?.name || "";
   const activeStoreName = effectiveStore || storeSummaries[0]?.name || "";
+  const toWhatsAppRecipient = (recipient: DashboardShareProfile): DashboardWhatsAppRecipient => ({
+    id: recipient.id,
+    name: recipient.full_name,
+    phone: String(recipient.phone ?? "").trim()
+  });
+  const employeeWhatsAppRecipients = dashboardShareProfiles
+    .filter(
+      (candidate) =>
+        Boolean(candidate.phone) &&
+        normalizeEmployeeIdentity(candidate.full_name) === normalizeEmployeeIdentity(activeEmployeeName)
+    )
+    .map(toWhatsAppRecipient);
+  const storeWhatsAppRecipients = dashboardShareProfiles
+    .filter((candidate) => {
+      const storeRelation = candidate.store;
+      const candidateStoreName = Array.isArray(storeRelation)
+        ? String(storeRelation[0]?.name ?? "")
+        : String(storeRelation?.name ?? "");
+      return candidate.role === "manager"
+        && Boolean(candidate.phone)
+        && normalizeStoreKey(candidateStoreName) === normalizeStoreKey(activeStoreName);
+    })
+    .map(toWhatsAppRecipient);
+  const companyWhatsAppRecipients = dashboardShareProfiles
+    .filter(
+      (candidate) =>
+        Boolean(candidate.phone) &&
+        (candidate.role === "admin" || candidate.role === "management")
+    )
+    .map(toWhatsAppRecipient)
+    .sort((left, right) => left.name.localeCompare(right.name, "tr"));
   let storeLoginGapNotes: StoreLoginGapNote[] = [];
   let companyLoginGapNotes: CompanyLoginGapNote[] = [];
 
@@ -4518,6 +4576,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
               dayStats={dayStats}
               canShare={canShareDashboard}
               colorBlindMode={colorBlindDashboardMode}
+              whatsappRecipients={employeeWhatsAppRecipients}
               dashboardScope="employee"
             />
           ) : effectivePanel === "dashboard" && effectiveView === "store" ? (
@@ -4528,6 +4587,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
               dayStats={dayStats}
               canShare={canShareDashboard}
               colorBlindMode={colorBlindDashboardMode}
+              whatsappRecipients={storeWhatsAppRecipients}
             />
           ) : effectivePanel === "dashboard" && effectiveView === "company" ? (
             <CompanyStoreSuccessDashboard
@@ -4536,6 +4596,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
               dayStats={dayStats}
               canShare={canShareDashboard}
               colorBlindMode={colorBlindDashboardMode}
+              whatsappRecipients={companyWhatsAppRecipients}
             />
           ) : effectivePanel === "ranking" && effectiveView !== "company" ? (
             <section className="goal-panel-single">

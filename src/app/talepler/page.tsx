@@ -10,6 +10,13 @@ const ADMIN_REQUEST_APPROVER_ID = "de688a42-d22a-48fa-b86f-32552bf2e1ac";
 const COORDINATOR_ID = "b3df7df9-b781-4ba0-8829-97a3aa790229";
 
 type Profile = { id: string; full_name: string; role: UserRole; approval: string; store_id: string | null };
+type NotificationProfile = {
+  id: string;
+  full_name: string;
+  phone: string | null;
+  role: UserRole;
+  store_id: string | null;
+};
 type RequestItem = {
   id: string; requester_id: string; store_id: string | null; request_type: RequestType; title: string;
   description: string | null; start_date: string | null; end_date: string | null; advance_amount: number | null;
@@ -45,6 +52,15 @@ function formatDateTime(value: string | null) {
     : "—";
 }
 
+function normalizeWhatsAppPhone(value: string | null) {
+  const digits = String(value ?? "").replace(/\D/g, "");
+  if (!digits) return "";
+  if (digits.startsWith("90") && digits.length === 12) return digits;
+  if (digits.startsWith("0") && digits.length === 11) return `90${digits.slice(1)}`;
+  if (digits.startsWith("5") && digits.length === 10) return `90${digits}`;
+  return digits;
+}
+
 export default async function RequestsPage({ searchParams }: PageProps) {
   const user = await requireUser();
   const params = (await searchParams) ?? {};
@@ -72,6 +88,11 @@ export default async function RequestsPage({ searchParams }: PageProps) {
 
   const { data, error } = await query;
   const requests = (data ?? []) as unknown as RequestItem[];
+  const { data: notificationProfilesData } = await admin
+    .from("profiles")
+    .select("id, full_name, phone, role, store_id")
+    .eq("approval", "approved");
+  const notificationProfiles = (notificationProfilesData ?? []) as NotificationProfile[];
   const showCompleted = params.view === "completed";
   const visible = requests.filter((item) => showCompleted
     ? ["completed", "rejected"].includes(item.status)
@@ -109,6 +130,17 @@ export default async function RequestsPage({ searchParams }: PageProps) {
                 );
               const canComplete = item.status === "implementation_pending" && profile.id === IMPLEMENTER_ID;
               const canSuitabilityApprove = item.status === "suitability_pending" && profile.id === IMPLEMENTER_ID;
+              const notificationRecipient = item.status === "manager_pending"
+                ? notificationProfiles.find((candidate) => candidate.role === "manager" && candidate.store_id === item.store_id)
+                : item.current_assignee_id
+                  ? notificationProfiles.find((candidate) => candidate.id === item.current_assignee_id)
+                  : null;
+              const notificationPhone = normalizeWhatsAppPhone(notificationRecipient?.phone ?? null);
+              const whatsappMessage = notificationRecipient
+                ? encodeURIComponent(
+                    `Merhaba ${notificationRecipient.full_name}, ${item.requester?.full_name ?? "bir kullanıcı"} tarafından oluşturulan ${item.title} onayınızı bekliyor. TANCA+ uygulamasındaki Talepler menüsünden inceleyebilirsiniz.`
+                  )
+                : "";
               return (
                 <article className="request-card" key={item.id}>
                   <header>
@@ -150,6 +182,16 @@ export default async function RequestsPage({ searchParams }: PageProps) {
                     </div>
                   ) : null}
                   {canComplete ? <form action={completeRequestAction} className="request-actions"><input type="hidden" name="requestId" value={item.id} /><button className="request-complete-button" type="submit">Uygulandı</button></form> : null}
+                  {notificationPhone ? (
+                    <a
+                      className="request-whatsapp-button"
+                      href={`https://wa.me/${notificationPhone}?text=${whatsappMessage}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      WhatsApp’tan bildir
+                    </a>
+                  ) : null}
                   {profile.role === "admin" ? <form action={deleteRequestAction} className="request-delete-form"><input type="hidden" name="requestId" value={item.id} /><button className="request-delete-button" type="submit">Talebi sil</button></form> : null}
                 </article>
               );

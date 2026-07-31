@@ -54,11 +54,11 @@ export async function toggleLastDayCounterVisibilityAction(formData: FormData) {
   go(showOnHome ? "Sayaç ana ekranda gösteriliyor." : "Sayaç ana ekrandan gizlendi.");
 }
 
-export async function decrementLastDayCounterAction(formData: FormData) {
+export async function adjustLastDayCounterAction(formData: FormData) {
   await requireAdminAccess();
   const counterId = String(formData.get("counterId") ?? "").trim();
-  const decrementBy = Number(formData.get("decrementBy") ?? 1);
-  if (!counterId || !Number.isInteger(decrementBy) || decrementBy < 1) go("Geçerli bir düşüm miktarı girin.", "error");
+  const adjustment = Number(formData.get("adjustment"));
+  if (!counterId || ![-1, 1].includes(adjustment)) go("Geçerli bir sayaç işlemi seçin.", "error");
 
   const admin = createAdminClient();
   const { data: counter } = await admin
@@ -68,7 +68,7 @@ export async function decrementLastDayCounterAction(formData: FormData) {
     .single<{ remaining_count: number }>();
   if (!counter) go("Sayaç bulunamadı.", "error");
 
-  const remainingCount = Math.max(0, counter.remaining_count - decrementBy);
+  const remainingCount = Math.max(0, counter.remaining_count + adjustment);
   const { error } = await admin
     .from("last_day_counters")
     .update({
@@ -78,7 +78,7 @@ export async function decrementLastDayCounterAction(formData: FormData) {
     })
     .eq("id", counterId)
     .eq("remaining_count", counter.remaining_count);
-  if (error) go(`Düşüm yapılamadı: ${error.message}`, "error");
+  if (error) go(`Sayaç değiştirilemedi: ${error.message}`, "error");
   revalidatePath("/");
   revalidatePath(PATH);
   go(remainingCount === 0 ? "Sayaç tamamlandı." : `Kalan sayı ${remainingCount}.`);

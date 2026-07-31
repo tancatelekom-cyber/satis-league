@@ -49,10 +49,18 @@ export function LastDayCounterShareButton({ counters }: { counters: ShareCounter
         cardGradient.addColorStop(0, colors[0]);
         cardGradient.addColorStop(1, colors[1]);
         context.fillStyle = cardGradient;
+        context.beginPath();
         context.roundRect(60, y, width - 120, 120, 22);
         context.fill();
+
+        const categoryMaxWidth = 690;
+        let categoryFontSize = 32;
+        context.font = `800 ${categoryFontSize}px Arial`;
+        while (context.measureText(counter.category).width > categoryMaxWidth && categoryFontSize > 20) {
+          categoryFontSize -= 1;
+          context.font = `800 ${categoryFontSize}px Arial`;
+        }
         context.fillStyle = "#ffffff";
-        context.font = "800 32px Arial";
         context.fillText(counter.category, 90, y + 48);
         context.fillStyle = "#cbd5e1";
         context.font = "600 23px Arial";

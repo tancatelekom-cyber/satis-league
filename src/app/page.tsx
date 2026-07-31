@@ -16,6 +16,8 @@ import { getDuelDashboardData } from "@/lib/duel/get-duel-dashboard-data";
 import { LiveCampaignCountdown } from "@/components/campaign/live-campaign-countdown";
 import { CampaignLeaderboardShareButton } from "@/components/campaign/campaign-leaderboard-share-button";
 import { formatCampaignDateTime } from "@/lib/campaign-utils";
+import { LastDayCounters } from "@/components/last-day-counters";
+import { getLastDayCounters } from "@/lib/last-day-counters";
 
 export const dynamic = "force-dynamic";
 
@@ -394,6 +396,19 @@ export default async function HomePage() {
     ...(goalReminderPopup ? [goalReminderPopup] : []),
     ...activePopupAnnouncements
   ];
+  const allLastDayCounters = await getLastDayCounters();
+  const viewerRole = campaignDashboard?.profile.role;
+  const viewerStoreId = campaignDashboard?.profile.store_id ?? null;
+  const visibleLastDayCounters = allLastDayCounters.filter(
+    (counter) =>
+      counter.show_on_home &&
+      (
+        counter.scope === "company" ||
+        viewerRole === "admin" ||
+        viewerRole === "management" ||
+        (Boolean(viewerStoreId) && counter.store_id === viewerStoreId)
+      )
+  );
 
   const seasonRows = ((seasons as SeasonRecord[] | null) ?? []).filter((season) => season.is_active);
   const employeeProfiles =
@@ -485,6 +500,8 @@ export default async function HomePage() {
       {popupAnnouncements.length > 0 ? (
         <HomePopupAnnouncement announcements={popupAnnouncements} sessionKey={popupSessionKey} />
       ) : null}
+
+      <LastDayCounters counters={visibleLastDayCounters} canShare={viewerRole === "admin"} />
 
       {activeHomeDuels.length > 0 ? (
         <section className="home-active-duels">

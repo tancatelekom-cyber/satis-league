@@ -124,6 +124,12 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
     ? brandRows.filter((item) => item.productName === effectiveProduct)
     : brandRows;
   const filteredRows = sortDeviceRows(filteredRowsRaw);
+  const installmentRows = filteredRows.filter((item) => !isCashContractRow(item));
+  const contractCashPrice =
+    filteredRows.find((item) => isCashContractRow(item) && item.contractCashPrice && item.contractCashPrice > 0)
+      ?.contractCashPrice ??
+    filteredRows.find((item) => item.contractCashPrice && item.contractCashPrice > 0)?.contractCashPrice ??
+    null;
   const showDetailTable = Boolean(effectiveProduct);
 
   let cashDepotRows: CashDepotRow[] = [];
@@ -554,7 +560,6 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
                 <th>Kategori</th>
                 <th>Marka</th>
                 <th>Urun Adi</th>
-                <th>Pesine Kontrat</th>
                 {canViewDeviceZeroPoint ? <th>Bayi Prim Tutari</th> : null}
                 {canViewDeviceZeroPoint ? <th>Cihaz 0 Noktasi</th> : null}
                 <th>Taksit Sayisi</th>
@@ -565,7 +570,7 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
             <tbody>
               {filteredRows.length === 0 ? (
                 <tr>
-                  <td className="device-empty-row" colSpan={canViewDeviceZeroPoint ? 9 : 7}>
+                  <td className="device-empty-row" colSpan={canViewDeviceZeroPoint ? 8 : 6}>
                     {fetchError
                       ? "Cihaz listesi su an okunamiyor."
                       : effectiveBrand
@@ -574,23 +579,35 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
                   </td>
                 </tr>
               ) : (
-                filteredRows.map((item) => (
-                  <tr key={item.id}>
+                <>
+                  <tr className="device-contract-highlight-row">
+                    <td colSpan={canViewDeviceZeroPoint ? 8 : 6}>
+                      <div className="device-contract-highlight">
+                        <span>Peşine Kontrat</span>
+                        {contractCashPrice ? (
+                          canViewDeviceZeroPoint ? (
+                            <PressCopyField
+                              className="device-contract-copy"
+                              copyText={formatCurrency(contractCashPrice)}
+                              value={formatCurrency(contractCashPrice)}
+                            />
+                          ) : (
+                            <strong>{formatCurrency(contractCashPrice)}</strong>
+                          )
+                        ) : (
+                          <strong className="device-contract-missing">
+                            Peşine kontrat fiyatı başka bir başlıkla listeleniyor olabilir.
+                          </strong>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                  {installmentRows.map((item) => (
+                    <tr key={item.id}>
                     <td>{item.category}</td>
                     <td>{item.brand}</td>
                     <td>
                       <strong>{item.productName}</strong>
-                    </td>
-                    <td>
-                      {canViewDeviceZeroPoint ? (
-                        <PressCopyField
-                          className="device-copy-cell"
-                          copyText={formatCurrency(item.contractCashPrice)}
-                          value={formatCurrency(item.contractCashPrice)}
-                        />
-                      ) : (
-                        formatCurrency(item.contractCashPrice)
-                      )}
                     </td>
                     {canViewDeviceZeroPoint ? <td>{formatCurrency(item.dealerBonus)}</td> : null}
                     {canViewDeviceZeroPoint ? (
@@ -608,7 +625,8 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
                       <strong>{formatCurrency(item.totalPayable)}</strong>
                     </td>
                   </tr>
-                ))
+                  ))}
+                </>
               )}
             </tbody>
           </table>

@@ -5265,6 +5265,30 @@ textarea::placeholder {
   font-weight: 800;
 }
 
+.goal-company-category-filter-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin: 0 0 18px;
+  padding: 16px 18px;
+  border: 1px solid rgba(99, 217, 232, .38);
+  border-radius: 16px;
+  background: linear-gradient(135deg, #173f55, #176b70);
+  box-shadow: 0 10px 24px rgba(10, 43, 56, .18);
+}
+
+.goal-company-category-filter-panel > div {
+  display: grid;
+  gap: 3px;
+  color: #fff;
+}
+
+.goal-company-category-filter-panel > div > span {
+  color: #c9f2ef;
+  font-size: .82rem;
+}
+
 .goal-company-category-filter select {
   min-width: 220px;
   min-height: 40px;
@@ -5343,6 +5367,11 @@ textarea::placeholder {
 
   .goal-company-category-filter {
     width: 100%;
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .goal-company-category-filter-panel {
     align-items: stretch;
     flex-direction: column;
   }

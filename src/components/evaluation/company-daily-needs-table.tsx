@@ -88,7 +88,10 @@ export function CompanyDailyNeedsTable({
 
             return (
               <Fragment key={`daily-need-row-${row.rowKey}`}>
-                <tr className={row.level > 0 ? "goal-company-trend-child-row" : ""}>
+                <tr
+                  className={row.level > 0 ? "goal-company-trend-child-row" : ""}
+                  data-company-trend-category={row.groupKey}
+                >
                   <th>
                     <button
                       type="button"
@@ -139,7 +142,10 @@ export function CompanyDailyNeedsTable({
                 </tr>
 
                 {isExpanded ? (
-                  <tr className="company-daily-needs-detail-row">
+                  <tr
+                    className="company-daily-needs-detail-row"
+                    data-company-trend-category={row.groupKey}
+                  >
                     <td colSpan={visibleTrendStoreCodes.length + 2}>
                       <div className="company-daily-needs-detail-wrap">
                         <table className="company-daily-needs-detail-table">

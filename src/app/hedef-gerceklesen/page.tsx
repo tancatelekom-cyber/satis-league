@@ -1276,6 +1276,10 @@ function buildCompanyDailyNeedSummaryRows(
   return companyCategories
     .filter((category) => category.hasTarget)
     .flatMap((category) => {
+      const companyNeedThresholds =
+        normalizeCategoryKey(category.title) === normalizeCategoryKey("AKTIVASYON PUAN")
+          ? [80, 90, 100, 105, 110, 120]
+          : undefined;
       const storeMap = new Map<string, GoalStoreRow[]>();
 
       storeRows
@@ -1291,7 +1295,7 @@ function buildCompanyDailyNeedSummaryRows(
           const summary = buildStoreMetricSummary(rows, workedDays, totalDays);
           return {
             storeCode,
-            cells: buildNeedRows(summary, remainingDays)
+            cells: buildNeedRows(summary, remainingDays, companyNeedThresholds)
           };
         })
         .sort((a, b) => a.storeCode.localeCompare(b.storeCode, "tr"));
@@ -1302,7 +1306,7 @@ function buildCompanyDailyNeedSummaryRows(
         rowKey: category.title,
         level: 0,
         hasChildren: category.children.length > 0,
-        cells: buildNeedRows(category, remainingDays),
+        cells: buildNeedRows(category, remainingDays, companyNeedThresholds),
         stores
       } satisfies CompanyDailyNeedSummaryRow;
 
@@ -1940,13 +1944,14 @@ function canViewAllGoalActual(role: UserRole | string | null | undefined) {
 
 function buildNeedRows(
   summary: Pick<GoalMetricSummary, "hasTarget" | "target" | "actual" | "achievementActual">,
-  remainingDays: number
+  remainingDays: number,
+  thresholds = [80, 90, 100, 110, 120]
 ): GoalNeedRow[] {
   if (!summary.hasTarget || !summary.target) {
     return [];
   }
 
-  return [80, 90, 100, 110, 120].map((threshold) => {
+  return thresholds.map((threshold) => {
     const targetValue = (summary.target ?? 0) * (threshold / 100);
     const remainingTotal = Math.max(targetValue - (summary.achievementActual ?? summary.actual), 0);
     const dailyRequired = remainingDays > 0 ? Math.ceil(remainingTotal / remainingDays) : remainingTotal > 0 ? Math.ceil(remainingTotal) : 0;

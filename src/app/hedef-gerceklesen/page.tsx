@@ -4752,6 +4752,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
             <section className="goal-panel-single">
               <article
                 className="campaign-section-card goal-detail-card"
+                data-company-filter-scope={effectiveView === "company" ? "all-tables" : undefined}
                 id={effectiveView === "company" ? "company-goal-detail-content" : undefined}
               >
                 <div className="goal-section-head">

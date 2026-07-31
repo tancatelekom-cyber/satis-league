@@ -33,11 +33,22 @@ export function LastDayCounterShareButton({ counters }: { counters: ShareCounter
       context.fillText("TANCA+ • SON GÜN", 70, 65);
       context.fillStyle = "#ffffff";
       context.font = "900 58px Arial";
-      context.fillText("Sayaç Özeti", 70, 135);
+      context.fillText("Kalanlarımız", 70, 135);
+
+      const cardColors = [
+        ["#2563eb", "#1d4ed8"],
+        ["#7c3aed", "#c026d3"],
+        ["#ea580c", "#f59e0b"],
+        ["#0891b2", "#0f766e"]
+      ];
 
       counters.forEach((counter, index) => {
         const y = 190 + index * rowHeight;
-        context.fillStyle = "rgba(255,255,255,.12)";
+        const colors = counter.remaining <= 0 ? ["#15803d", "#16a34a"] : cardColors[index % cardColors.length];
+        const cardGradient = context.createLinearGradient(60, y, width - 60, y + 120);
+        cardGradient.addColorStop(0, colors[0]);
+        cardGradient.addColorStop(1, colors[1]);
+        context.fillStyle = cardGradient;
         context.roundRect(60, y, width - 120, 120, 22);
         context.fill();
         context.fillStyle = "#ffffff";
@@ -57,7 +68,7 @@ export function LastDayCounterShareButton({ counters }: { counters: ShareCounter
         canvas.toBlob((value) => value ? resolve(value) : reject(new Error("Görsel oluşturulamadı.")), "image/png")
       );
       const file = new File([blob], "son-gun-sayac.png", { type: "image/png" });
-      const shareData = { files: [file], title: "Son Gün Sayaç Özeti" };
+      const shareData = { files: [file], title: "Kalanlarımız" };
       if (navigator.share && (!navigator.canShare || navigator.canShare(shareData))) {
         await navigator.share(shareData);
       } else {

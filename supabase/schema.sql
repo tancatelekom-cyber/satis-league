@@ -381,6 +381,24 @@ create table if not exists public.popup_announcements (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.last_day_counters (
+  id uuid primary key default gen_random_uuid(),
+  category_name text not null,
+  scope text not null check (scope in ('company', 'store')),
+  store_id uuid references public.stores(id) on delete cascade,
+  remaining_count integer not null default 0 check (remaining_count >= 0),
+  is_active boolean not null default true,
+  show_on_home boolean not null default true,
+  completed_at timestamptz,
+  created_by uuid references public.profiles(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  check ((scope = 'company' and store_id is null) or (scope = 'store' and store_id is not null))
+);
+
+alter table public.last_day_counters
+  add column if not exists show_on_home boolean not null default true;
+
 alter table public.popup_announcements
   add column if not exists image_path text;
 
@@ -744,6 +762,7 @@ alter table public.duel_entries enable row level security;
 alter table public.season_sales_entries enable row level security;
 alter table public.notifications enable row level security;
 alter table public.popup_announcements enable row level security;
+alter table public.last_day_counters enable row level security;
 alter table public.popup_announcement_dismissals enable row level security;
 alter table public.weekly_work_schedules enable row level security;
 alter table public.feature_menu_permissions enable row level security;
@@ -808,6 +827,15 @@ for select using (
 );
 
 drop policy if exists "users can view popup dismissals" on public.popup_announcement_dismissals;
+drop policy if exists "approved users can view last day counters" on public.last_day_counters;
+create policy "approved users can view last day counters" on public.last_day_counters
+for select using (
+  exists (
+    select 1 from public.profiles p
+    where p.id = auth.uid() and p.approval = 'approved'
+  )
+);
+
 create policy "users can view popup dismissals" on public.popup_announcement_dismissals
 for select using (auth.uid() = profile_id);
 

@@ -1213,6 +1213,19 @@ button {
   text-align: right;
 }
 
+.device-contract-admin-values {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-left: auto;
+}
+
+.device-contract-admin-values span {
+  color: #5b3a00;
+  font-size: .95rem;
+  font-weight: 750;
+}
+
 .season-entry-table th,
 .season-entry-table td {
   padding: 14px 16px;

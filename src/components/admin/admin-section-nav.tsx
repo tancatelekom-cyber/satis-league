@@ -31,6 +31,7 @@ const adminGroups = [
       { href: "/admin/mudur-primi", icon: "💰", label: "Müdür Primi", description: "Prim yetkilerini ve kolonları yönet" },
       { href: "/admin/eksik-evrak", icon: "📄", label: "Eksik Evrak", description: "Evrak menüsü yetkilerini yönet" },
       { href: "/admin/pos-komisyon", icon: "💳", label: "POS Komisyon", description: "Komisyon oranını tanımla ve güncelle" }
+      ,{ href: "/admin/son-gun-sayac", icon: "⏳", label: "Son Gün Sayaç", description: "Firma ve mağaza sayaçlarını yönet" }
     ]
   },
   {
@@ -60,7 +61,7 @@ export function AdminSectionNav({ currentPath }: AdminSectionNavProps) {
             <strong>Yönetim Alanları</strong>
             <small>İşlem yapmak istediğiniz bölümü seçin</small>
           </span>
-          <span className="admin-directory-count">17 bölüm</span>
+          <span className="admin-directory-count">18 bölüm</span>
         </summary>
 
         <div className="admin-directory-body">

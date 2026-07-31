@@ -501,7 +501,11 @@ export default async function HomePage() {
         <HomePopupAnnouncement announcements={popupAnnouncements} sessionKey={popupSessionKey} />
       ) : null}
 
-      <LastDayCounters counters={visibleLastDayCounters} canShare={viewerRole === "admin"} />
+      <LastDayCounters
+        counters={visibleLastDayCounters}
+        canEdit={viewerRole === "admin"}
+        canShare={viewerRole === "admin"}
+      />
 
       {activeHomeDuels.length > 0 ? (
         <section className="home-active-duels">

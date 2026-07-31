@@ -5,7 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getCounterStoreName, getLastDayCounters } from "@/lib/last-day-counters";
 import {
   createLastDayCounterAction,
-  decrementLastDayCounterAction,
+  adjustLastDayCounterAction,
   deleteLastDayCounterAction,
   toggleLastDayCounterVisibilityAction
 } from "./actions";
@@ -72,13 +72,19 @@ export default async function LastDayCounterAdminPage({ searchParams }: PageProp
                 <input name="showOnHome" type="hidden" value={counter.show_on_home ? "false" : "true"} />
                 <button type="submit">{counter.show_on_home ? "Ana ekrandan gizle" : "Ana ekranda göster"}</button>
               </form>
-              {!completed ? (
-                <form action={decrementLastDayCounterAction} className="admin-counter-decrement-form">
+              <div className="admin-counter-adjust">
+                <form action={adjustLastDayCounterAction}>
                   <input name="counterId" type="hidden" value={counter.id} />
-                  <input aria-label="Düşüm miktarı" name="decrementBy" type="number" min="1" step="1" defaultValue="1" />
-                  <button type="submit">Düşüm Yap</button>
+                  <input name="adjustment" type="hidden" value="-1" />
+                  <button aria-label="Sayacı bir azalt" disabled={completed} type="submit">−</button>
                 </form>
-              ) : null}
+                <span>{counter.remaining_count.toLocaleString("tr-TR")}</span>
+                <form action={adjustLastDayCounterAction}>
+                  <input name="counterId" type="hidden" value={counter.id} />
+                  <input name="adjustment" type="hidden" value="1" />
+                  <button aria-label="Sayacı bir artır" type="submit">+</button>
+                </form>
+              </div>
               <form action={deleteLastDayCounterAction}>
                 <input name="counterId" type="hidden" value={counter.id} />
                 <button className="admin-counter-delete" type="submit">Sayacı sil</button>

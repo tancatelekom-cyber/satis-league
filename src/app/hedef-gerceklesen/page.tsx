@@ -1793,7 +1793,13 @@ function SeparateInfoTable({
   );
 }
 
-function CompanyInformationCurrentTable({ rows }: { rows: GoalSeparateInfoRow[] }) {
+function CompanyInformationCurrentTable({
+  rows,
+  companyCategoryFilter = false
+}: {
+  rows: GoalSeparateInfoRow[];
+  companyCategoryFilter?: boolean;
+}) {
   if (!rows.length) {
     return null;
   }
@@ -1823,7 +1829,10 @@ function CompanyInformationCurrentTable({ rows }: { rows: GoalSeparateInfoRow[] 
           </thead>
           <tbody>
             {rows.map((row) => (
-              <tr key={`company-information-current-${row.title}`}>
+              <tr
+                data-company-trend-category={companyCategoryFilter ? row.title : undefined}
+                key={`company-information-current-${row.title}`}
+              >
                 <td colSpan={3} className="goal-company-information-current-row-cell">
                   <details className="goal-company-information-current-details" name="company-information-current-accordion">
                     <summary className="goal-company-information-current-summary">
@@ -2523,7 +2532,8 @@ function EmployeeGoalCategoryTable({
   productPointRows = [],
   informationRows = [],
   emphasizeOpenGroups = false,
-  twoDecimalSatisfaction = false
+  twoDecimalSatisfaction = false,
+  companyCategoryFilter = false
 }: {
   categories: GoalCategorySummary[];
   remainingDays?: number;
@@ -2532,6 +2542,7 @@ function EmployeeGoalCategoryTable({
   informationRows?: GoalSeparateInfoRow[];
   emphasizeOpenGroups?: boolean;
   twoDecimalSatisfaction?: boolean;
+  companyCategoryFilter?: boolean;
 }) {
   type EmployeeGoalTableMetric = GoalMetricSummary & { title: string };
 
@@ -2614,13 +2625,21 @@ function EmployeeGoalCategoryTable({
           const hasExpandableBody = category.childCount > 0 || hasStoreDetails || Boolean(productionRewardPlan);
 
           if (!hasExpandableBody) {
-            return <div key={category.title}>{renderMetricRow(category)}</div>;
+            return (
+              <div
+                data-company-trend-category={companyCategoryFilter ? category.title : undefined}
+                key={category.title}
+              >
+                {renderMetricRow(category)}
+              </div>
+            );
           }
 
           return (
             <details
               key={category.title}
               className="goal-employee-table-details"
+              data-company-trend-category={companyCategoryFilter ? category.title : undefined}
               name="goal-category-accordion"
               open={index === 0}
             >
@@ -2776,7 +2795,11 @@ function EmployeeGoalCategoryTable({
               <span>Yalnızca mevcut değerler</span>
             </div>
             {informationRows.map((row) => (
-              <div className="goal-employee-table-row goal-employee-table-information-row" key={`goal-information-${row.title}`}>
+              <div
+                className="goal-employee-table-row goal-employee-table-information-row"
+                data-company-trend-category={companyCategoryFilter ? row.title : undefined}
+                key={`goal-information-${row.title}`}
+              >
                 <div className="goal-employee-table-cell goal-employee-table-cell-title">
                   <span className="goal-employee-table-title-label">{row.title}</span>
                 </div>
@@ -4727,7 +4750,10 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
             </section>
           ) : (
             <section className="goal-panel-single">
-              <article className="campaign-section-card goal-detail-card">
+              <article
+                className="campaign-section-card goal-detail-card"
+                id={effectiveView === "company" ? "company-goal-detail-content" : undefined}
+              >
                 <div className="goal-section-head">
                   <h2>
                     {effectiveView === "company"
@@ -4745,7 +4771,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                       <h3>Ay Sonu Gidisat Ozeti</h3>
                       <CompanyTrendCategoryFilter
                         categories={companyTrendFilterCategories}
-                        targetId="company-month-end-summary-table"
+                        targetId="company-goal-detail-content"
                       />
                     </div>
 
@@ -4966,8 +4992,12 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                         remainingDays={dayStats.remainingDays}
                         emphasizeOpenGroups
                         twoDecimalSatisfaction
+                        companyCategoryFilter
                       />
-                      <CompanyInformationCurrentTable rows={companySeparateInfoRows} />
+                      <CompanyInformationCurrentTable
+                        rows={companySeparateInfoRows}
+                        companyCategoryFilter
+                      />
                     </>
                   ) : (
                     <p className="subtle">Firma verisi bulunamadi.</p>

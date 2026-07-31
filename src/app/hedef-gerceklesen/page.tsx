@@ -686,6 +686,17 @@ function formatNumber(value: number | null | undefined) {
   });
 }
 
+function formatNumberTwoDecimals(value: number | null | undefined) {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return "-";
+  }
+
+  return value.toLocaleString("tr-TR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+}
+
 function formatPercent(value: number | null | undefined) {
   if (value === null || value === undefined || Number.isNaN(value)) {
     return "-";
@@ -699,6 +710,15 @@ function formatPercent(value: number | null | undefined) {
 
 function formatGoalValue(value: number | null | undefined, isPercent: boolean) {
   return isPercent ? formatPercent(value) : formatNumber(value);
+}
+
+function formatCompanyGoalValue(
+  title: string,
+  value: number | null | undefined,
+  isPercent: boolean
+) {
+  if (isPercent) return formatPercent(value);
+  return isSatisfactionCategory(title) ? formatNumberTwoDecimals(value) : formatNumber(value);
 }
 
 function formatCurrency(value: number | null | undefined) {
@@ -1651,7 +1671,7 @@ function SeparateInfoTable({
                     <th>{store.storeCode}</th>
                     {row.hasTarget ? (
                       <>
-                        <td>{formatGoalValue(store.target, store.targetIsPercent)}</td>
+                        <td>{formatCompanyGoalValue(row.title, store.target, store.targetIsPercent)}</td>
                         <td
                           className={
                             store.isAtOrAboveTarget
@@ -1661,11 +1681,11 @@ function SeparateInfoTable({
                                 : ""
                           }
                         >
-                          {formatGoalValue(store.actual, store.actualIsPercent)}
+                          {formatCompanyGoalValue(row.title, store.actual, store.actualIsPercent)}
                         </td>
                       </>
                     ) : (
-                      <td>{formatGoalValue(store.actual, store.actualIsPercent)}</td>
+                      <td>{formatCompanyGoalValue(row.title, store.actual, store.actualIsPercent)}</td>
                     )}
                   </tr>
                 ))}
@@ -1683,7 +1703,7 @@ function SeparateInfoTable({
         <th>{titleText}</th>
         {row.hasTarget ? (
           <>
-            <td>{formatGoalValue(row.target, row.targetIsPercent)}</td>
+            <td>{formatCompanyGoalValue(row.title, row.target, row.targetIsPercent)}</td>
             <td
               className={
                 row.isAtOrAboveTarget
@@ -1693,11 +1713,11 @@ function SeparateInfoTable({
                     : ""
               }
             >
-              {formatGoalValue(row.actual, row.actualIsPercent)}
+              {formatCompanyGoalValue(row.title, row.actual, row.actualIsPercent)}
             </td>
           </>
         ) : (
-          <td colSpan={hasAnyTarget ? 2 : 1}>{formatGoalValue(row.actual, row.actualIsPercent)}</td>
+          <td colSpan={hasAnyTarget ? 2 : 1}>{formatCompanyGoalValue(row.title, row.actual, row.actualIsPercent)}</td>
         )}
       </tr>
       {hasStoreBreakdown ? renderStoreBreakdown(row, keyPrefix) : null}
@@ -1810,8 +1830,8 @@ function CompanyInformationCurrentTable({ rows }: { rows: GoalSeparateInfoRow[] 
                         <span className="goal-company-trend-arrow">v</span>
                         <span>{row.title}</span>
                       </strong>
-                      <span>{row.hasTarget ? formatGoalValue(row.target, row.targetIsPercent) : "-"}</span>
-                      <span>{formatGoalValue(row.actual, row.actualIsPercent)}</span>
+                      <span>{row.hasTarget ? formatCompanyGoalValue(row.title, row.target, row.targetIsPercent) : "-"}</span>
+                      <span>{formatCompanyGoalValue(row.title, row.actual, row.actualIsPercent)}</span>
                     </summary>
 
                     <div className="goal-company-information-store-wrap">
@@ -1832,7 +1852,7 @@ function CompanyInformationCurrentTable({ rows }: { rows: GoalSeparateInfoRow[] 
                           {row.storeDetails.map((store) => (
                             <tr key={`company-information-current-${row.title}-${store.storeCode}`}>
                               <th>{store.storeCode}</th>
-                              <td>{store.hasTarget ? formatGoalValue(store.target, store.targetIsPercent) : "-"}</td>
+                              <td>{store.hasTarget ? formatCompanyGoalValue(row.title, store.target, store.targetIsPercent) : "-"}</td>
                               <td
                                 className={
                                   store.hasTarget
@@ -1842,7 +1862,7 @@ function CompanyInformationCurrentTable({ rows }: { rows: GoalSeparateInfoRow[] 
                                     : ""
                                 }
                               >
-                                {formatGoalValue(store.actual, store.actualIsPercent)}
+                                {formatCompanyGoalValue(row.title, store.actual, store.actualIsPercent)}
                               </td>
                             </tr>
                           ))}
@@ -2501,7 +2521,8 @@ function EmployeeGoalCategoryTable({
   productionRewardRows = [],
   productPointRows = [],
   informationRows = [],
-  emphasizeOpenGroups = false
+  emphasizeOpenGroups = false,
+  twoDecimalSatisfaction = false
 }: {
   categories: GoalCategorySummary[];
   remainingDays?: number;
@@ -2509,6 +2530,7 @@ function EmployeeGoalCategoryTable({
   productPointRows?: GoalProductPointRow[];
   informationRows?: GoalSeparateInfoRow[];
   emphasizeOpenGroups?: boolean;
+  twoDecimalSatisfaction?: boolean;
 }) {
   type EmployeeGoalTableMetric = GoalMetricSummary & { title: string };
 
@@ -2524,6 +2546,10 @@ function EmployeeGoalCategoryTable({
   ) => {
     const dailyNeedRow = buildNeedRows(summary, remainingDays).find((row) => row.threshold === 100);
     const dailyMinimum = summary.hasTarget ? dailyNeedRow?.dailyRequired ?? 0 : null;
+    const formatMetricNumber =
+      twoDecimalSatisfaction && isSatisfactionCategory(summary.title)
+        ? formatNumberTwoDecimals
+        : formatNumber;
     const hasExpandableBody = Boolean(options?.expandable);
     const projectedPercentClass =
       summary.hasTarget && summary.showProjection && summary.projectedPercent !== null
@@ -2548,13 +2574,13 @@ function EmployeeGoalCategoryTable({
         }`}
       >
         <div className="goal-employee-table-cell goal-employee-table-cell-title">{titleNode}</div>
-        <div className="goal-employee-table-cell">{summary.hasTarget ? formatNumber(summary.target) : "-"}</div>
-        <div className="goal-employee-table-cell">{formatNumber(summary.actual)}</div>
-        <div className="goal-employee-table-cell">{summary.hasTarget ? formatNumber(summary.remaining) : "-"}</div>
+        <div className="goal-employee-table-cell">{summary.hasTarget ? formatMetricNumber(summary.target) : "-"}</div>
+        <div className="goal-employee-table-cell">{formatMetricNumber(summary.actual)}</div>
+        <div className="goal-employee-table-cell">{summary.hasTarget ? formatMetricNumber(summary.remaining) : "-"}</div>
         <div className="goal-employee-table-cell">
           {summary.hasTarget && summary.actualPercent !== null ? formatPercent(summary.actualPercent) : "-"}
         </div>
-        <div className="goal-employee-table-cell">{summary.showProjection ? formatNumber(summary.projectedActual) : "-"}</div>
+        <div className="goal-employee-table-cell">{summary.showProjection ? formatMetricNumber(summary.projectedActual) : "-"}</div>
         <div className={`goal-employee-table-cell ${projectedPercentClass}`}>
           {summary.hasTarget && summary.showProjection && summary.projectedPercent !== null ? formatPercent(summary.projectedPercent) : "-"}
         </div>
@@ -4834,7 +4860,13 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                                 return (
                                   <td key={`current-${row.title}-${storeCode}`} className={cellClasses}>
                                     <span className="goal-company-trend-value">
-                                      <span>{row.valueType === "percent" ? formatPercent(store?.actual) : formatNumber(store?.actual)}</span>
+                                      <span>
+                                        {row.valueType === "percent"
+                                          ? formatPercent(store?.actual)
+                                          : isSatisfactionCategory(row.title)
+                                            ? formatNumberTwoDecimals(store?.actual)
+                                            : formatNumber(store?.actual)}
+                                      </span>
                                       {comparisonState ? (
                                         <span
                                           className={`goal-company-trend-indicator goal-company-trend-indicator-${comparisonState}`}
@@ -4858,7 +4890,11 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                                       : "goal-company-trend-good"
                                 }`}
                               >
-                                {row.valueType === "percent" ? formatPercent(row.companyActual) : formatNumber(row.companyActual)}
+                                {row.valueType === "percent"
+                                  ? formatPercent(row.companyActual)
+                                  : isSatisfactionCategory(row.title)
+                                    ? formatNumberTwoDecimals(row.companyActual)
+                                    : formatNumber(row.companyActual)}
                               </td>
                             </tr>
                           ))}
@@ -4887,7 +4923,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                                       stateClass
                                     ].filter(Boolean).join(" ")}
                                   >
-                                    {store ? formatGoalValue(store.actual, store.actualIsPercent) : "-"}
+                                    {store ? formatCompanyGoalValue(row.title, store.actual, store.actualIsPercent) : "-"}
                                   </td>
                                 );
                               })}
@@ -4900,7 +4936,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                                     : ""
                                 }`}
                               >
-                                {formatGoalValue(row.actual, row.actualIsPercent)}
+                                {formatCompanyGoalValue(row.title, row.actual, row.actualIsPercent)}
                               </td>
                             </tr>
                           ))}
@@ -4917,6 +4953,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                         categories={companyCategorySummaries}
                         remainingDays={dayStats.remainingDays}
                         emphasizeOpenGroups
+                        twoDecimalSatisfaction
                       />
                       <CompanyInformationCurrentTable rows={companySeparateInfoRows} />
                     </>

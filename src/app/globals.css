@@ -5208,6 +5208,27 @@ textarea::placeholder {
   gap: 8px;
 }
 
+.goal-company-category-filter {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #d8f6f2;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.goal-company-category-filter select {
+  min-width: 220px;
+  min-height: 40px;
+  padding: 8px 34px 8px 11px;
+  border: 1px solid rgba(99, 217, 232, 0.48);
+  border-radius: 10px;
+  background: #ffffff;
+  color: #172554;
+  font: inherit;
+  cursor: pointer;
+}
+
 .goal-dashboard-share-area .campaign-whatsapp-share-button {
   width: fit-content;
 }
@@ -5270,6 +5291,17 @@ textarea::placeholder {
 
   .goal-dashboard-pdf-mobile-label {
     display: inline;
+  }
+
+  .goal-company-category-filter {
+    width: 100%;
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .goal-company-category-filter select {
+    width: 100%;
+    min-width: 0;
   }
 }
 

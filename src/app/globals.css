@@ -1178,6 +1178,41 @@ button {
   border-collapse: collapse;
 }
 
+.device-contract-highlight-row td {
+  padding: 14px 16px !important;
+  border-bottom: 2px solid #d97706 !important;
+  background: linear-gradient(90deg, #fff1b8, #ffd166) !important;
+}
+
+.device-contract-highlight {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  color: #3d2b00;
+}
+
+.device-contract-highlight > span {
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: #9a3412;
+  color: #fff;
+  font-weight: 900;
+  letter-spacing: .03em;
+}
+
+.device-contract-highlight strong,
+.device-contract-copy {
+  color: #3d2b00;
+  font-size: 1.08rem;
+  font-weight: 900;
+}
+
+.device-contract-missing {
+  max-width: 650px;
+  text-align: right;
+}
+
 .season-entry-table th,
 .season-entry-table td {
   padding: 14px 16px;

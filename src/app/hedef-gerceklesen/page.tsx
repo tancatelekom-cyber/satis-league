@@ -2,6 +2,7 @@ import { Fragment, type CSSProperties } from "react";
 import { redirect } from "next/navigation";
 import { CopyCoachingButton } from "@/components/evaluation/copy-coaching-button";
 import { CompanyDailyNeedsTable } from "@/components/evaluation/company-daily-needs-table";
+import { CompanyTrendCategoryFilter } from "@/components/evaluation/company-trend-category-filter";
 import { DashboardShareButton } from "@/components/evaluation/dashboard-share-button";
 import { DashboardCategoryInteractiveGrid } from "@/components/evaluation/dashboard-category-interactive-grid";
 import { FormattedCoachingText } from "@/components/evaluation/formatted-coaching-text";
@@ -4276,6 +4277,13 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
           ])
         ).sort((a, b) => a.localeCompare(b, "tr"))
       : [];
+  const companyTrendFilterCategories = Array.from(
+    new Set([
+      ...companyTrendSummaryRows.map((row) => row.title),
+      ...companyCurrentSummaryRows.map((row) => row.title),
+      ...companySeparateInfoRows.map((row) => row.title)
+    ])
+  ).sort((left, right) => left.localeCompare(right, "tr"));
   const resolvedEmployeeStoreCode =
     effectiveView === "employee" ? resolveStoreCodeFromEmployeeRows(activeEmployeeRows, companyTrendStoreCodes, activeEmployeeStoreCode) : "";
   const employeeTrendStoreCodes =
@@ -4735,9 +4743,13 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                   <div className="goal-company-trend-panel goal-company-summary-panel">
                     <div className="goal-live-prime-head">
                       <h3>Ay Sonu Gidisat Ozeti</h3>
+                      <CompanyTrendCategoryFilter
+                        categories={companyTrendFilterCategories}
+                        targetId="company-month-end-summary-table"
+                      />
                     </div>
 
-                    <div className="goal-company-trend-table-wrap">
+                    <div className="goal-company-trend-table-wrap" id="company-month-end-summary-table">
                       <table className="goal-company-trend-table goal-company-summary-table">
                         <thead>
                           <tr>
@@ -4755,7 +4767,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                         </thead>
                         <tbody>
                           {companyTrendSummaryRows.map((row) => (
-                            <tr key={`trend-row-${row.title}`}>
+                            <tr data-company-trend-category={row.title} key={`trend-row-${row.title}`}>
                               <th>{row.title}</th>
                               {visibleTrendStoreCodes.map((storeCode) => {
                                 const store = row.stores.find((item) => item.storeCode === storeCode);
@@ -4836,7 +4848,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                           ))}
 
                           {companyCurrentSummaryRows.map((row) => (
-                            <tr key={`current-row-${row.title}`}>
+                            <tr data-company-trend-category={row.title} key={`current-row-${row.title}`}>
                               <th>{row.title}</th>
                               {visibleTrendStoreCodes.map((storeCode) => {
                                 const store = row.stores.find((item) => item.storeCode === storeCode);
@@ -4900,7 +4912,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                           ))}
 
                           {companySeparateInfoRows.map((row) => (
-                            <tr key={`information-row-${row.title}`}>
+                            <tr data-company-trend-category={row.title} key={`information-row-${row.title}`}>
                               <th>
                                 <span className="goal-company-trend-category-label">
                                   <span>{row.title}</span>

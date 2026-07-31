@@ -4770,14 +4770,23 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                   <span>{effectiveView === "company" ? "Kategori bazli toplu ozet" : "Kategori bazli detay"}</span>
                 </div>
 
+                {effectiveView === "company" && companyTrendFilterCategories.length ? (
+                  <div className="goal-company-category-filter-panel">
+                    <div>
+                      <strong>Tablo Kategori Filtresi</strong>
+                      <span>Seçiminiz aşağıdaki tüm firma tablolarına uygulanır.</span>
+                    </div>
+                    <CompanyTrendCategoryFilter
+                      categories={companyTrendFilterCategories}
+                      targetId="company-goal-detail-content"
+                    />
+                  </div>
+                ) : null}
+
                 {effectiveView === "company" && visibleTrendStoreCodes.length && companyTrendSummaryRows.length ? (
                   <div className="goal-company-trend-panel goal-company-summary-panel">
                     <div className="goal-live-prime-head">
                       <h3>Ay Sonu Gidisat Ozeti</h3>
-                      <CompanyTrendCategoryFilter
-                        categories={companyTrendFilterCategories}
-                        targetId="company-goal-detail-content"
-                      />
                     </div>
 
                     <div

@@ -22,6 +22,23 @@ export function CompanyTrendCategoryFilter({
         selectedCategory !== "" &&
         row.dataset.companyTrendCategory !== selectedCategory;
     });
+
+    target.querySelectorAll<HTMLElement>("[data-company-filter-table]").forEach((table) => {
+      const categoryRows = Array.from(
+        table.querySelectorAll<HTMLElement>("[data-company-trend-category]")
+      );
+      table.hidden =
+        selectedCategory !== "" &&
+        !categoryRows.some(
+          (row) => row.dataset.companyTrendCategory === selectedCategory
+        );
+    });
+
+    target
+      .querySelectorAll<HTMLElement>("[data-company-filter-hide-when-active]")
+      .forEach((section) => {
+        section.hidden = selectedCategory !== "";
+      });
   }, [selectedCategory, targetId]);
 
   return (

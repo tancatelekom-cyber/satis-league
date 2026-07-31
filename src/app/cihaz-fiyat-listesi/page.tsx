@@ -125,11 +125,10 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
     : brandRows;
   const filteredRows = sortDeviceRows(filteredRowsRaw);
   const installmentRows = filteredRows.filter((item) => !isCashContractRow(item));
-  const contractCashPrice =
+  const contractCashItem =
     filteredRows.find((item) => isCashContractRow(item) && item.contractCashPrice && item.contractCashPrice > 0)
-      ?.contractCashPrice ??
-    filteredRows.find((item) => item.contractCashPrice && item.contractCashPrice > 0)?.contractCashPrice ??
-    null;
+      ?? filteredRows.find((item) => item.contractCashPrice && item.contractCashPrice > 0);
+  const contractCashPrice = contractCashItem?.contractCashPrice ?? null;
   const showDetailTable = Boolean(effectiveProduct);
 
   let cashDepotRows: CashDepotRow[] = [];
@@ -535,15 +534,6 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
                       <strong>{formatCurrency(item.dealerBonus)}</strong>
                     </div>
                   ) : null}
-                  {canViewDeviceZeroPoint ? (
-                    <PressCopyField
-                      className="device-card-kv"
-                      copyText={formatCurrency(getDeviceZeroPoint(item))}
-                      label="Cihaz 0 Noktasi"
-                      labelClassName="subtle"
-                      value={formatCurrency(getDeviceZeroPoint(item))}
-                    />
-                  ) : null}
                 </div>
               </article>
             )
@@ -561,7 +551,6 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
                 <th>Marka</th>
                 <th>Urun Adi</th>
                 {canViewDeviceZeroPoint ? <th>Bayi Prim Tutari</th> : null}
-                {canViewDeviceZeroPoint ? <th>Cihaz 0 Noktasi</th> : null}
                 <th>Taksit Sayisi</th>
                 <th>Aylik Taksit</th>
                 <th>Toplam Odenecek</th>
@@ -570,7 +559,7 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
             <tbody>
               {filteredRows.length === 0 ? (
                 <tr>
-                  <td className="device-empty-row" colSpan={canViewDeviceZeroPoint ? 8 : 6}>
+                  <td className="device-empty-row" colSpan={canViewDeviceZeroPoint ? 7 : 6}>
                     {fetchError
                       ? "Cihaz listesi su an okunamiyor."
                       : effectiveBrand
@@ -581,7 +570,7 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
               ) : (
                 <>
                   <tr className="device-contract-highlight-row">
-                    <td colSpan={canViewDeviceZeroPoint ? 8 : 6}>
+                    <td colSpan={canViewDeviceZeroPoint ? 7 : 6}>
                       <div className="device-contract-highlight">
                         <span>Peşine Kontrat</span>
                         {contractCashPrice ? (
@@ -599,6 +588,12 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
                             Peşine kontrat fiyatı başka bir başlıkla listeleniyor olabilir.
                           </strong>
                         )}
+                        {canViewDeviceZeroPoint && contractCashItem ? (
+                          <div className="device-contract-admin-values">
+                            <span>Bayi Prim Tutarı: <strong>{formatCurrency(contractCashItem.dealerBonus)}</strong></span>
+                            <span>Cihaz 0 Noktası: <strong>{formatCurrency(getDeviceZeroPoint(contractCashItem))}</strong></span>
+                          </div>
+                        ) : null}
                       </div>
                     </td>
                   </tr>
@@ -610,15 +605,6 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
                       <strong>{item.productName}</strong>
                     </td>
                     {canViewDeviceZeroPoint ? <td>{formatCurrency(item.dealerBonus)}</td> : null}
-                    {canViewDeviceZeroPoint ? (
-                      <td>
-                        <PressCopyField
-                          className="device-copy-cell"
-                          copyText={formatCurrency(getDeviceZeroPoint(item))}
-                          value={formatCurrency(getDeviceZeroPoint(item))}
-                        />
-                      </td>
-                    ) : null}
                     <td>{item.installmentCount > 0 ? `${item.installmentCount} Ay` : "-"}</td>
                     <td>{isCashContractRow(item) ? "Pesin/Kontrat" : formatCurrency(item.monthlyInstallment)}</td>
                     <td>

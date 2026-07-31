@@ -398,6 +398,8 @@ export default async function HomePage() {
   ];
   const allLastDayCounters = await getLastDayCounters();
   const viewerRole = campaignDashboard?.profile.role;
+  const canManageHomeCounters =
+    campaignDashboard?.profile.id === "9d481c04-49b3-48de-8559-3e11185338bc";
   const viewerStoreId = campaignDashboard?.profile.store_id ?? null;
   const visibleLastDayCounters = allLastDayCounters.filter(
     (counter) =>
@@ -503,8 +505,8 @@ export default async function HomePage() {
 
       <LastDayCounters
         counters={visibleLastDayCounters}
-        canEdit={viewerRole === "admin"}
-        canShare={viewerRole === "admin"}
+        canEdit={canManageHomeCounters}
+        canShare={canManageHomeCounters}
       />
 
       {activeHomeDuels.length > 0 ? (

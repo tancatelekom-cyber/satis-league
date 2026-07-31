@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 
 type CompanyDailyNeedsTableCell = {
   threshold: number;
@@ -48,6 +48,55 @@ export function CompanyDailyNeedsTable({
 }: CompanyDailyNeedsTableProps) {
   const [openKeys, setOpenKeys] = useState<string[]>([]);
   const [expandedRows, setExpandedRows] = useState<string[]>([]);
+  const previousOpenState = useRef<{
+    openKeys: string[];
+    expandedRows: string[];
+  } | null>(null);
+
+  useEffect(() => {
+    const table = document.querySelector(".company-daily-needs-table");
+    const target = table?.closest("#company-goal-detail-content");
+    if (!target) return;
+
+    function handleCategoryFilter(event: Event) {
+      const selectedCategory = (
+        event as CustomEvent<{ selectedCategory?: string }>
+      ).detail?.selectedCategory ?? "";
+
+      if (selectedCategory) {
+        if (!previousOpenState.current) {
+          previousOpenState.current = { openKeys, expandedRows };
+        }
+
+        const matchingRows = rows.filter(
+          (row) => row.groupKey === selectedCategory
+        );
+        setOpenKeys((current) =>
+          Array.from(new Set([...current, selectedCategory]))
+        );
+        setExpandedRows((current) =>
+          Array.from(
+            new Set([...current, ...matchingRows.map((row) => row.rowKey)])
+          )
+        );
+      } else if (previousOpenState.current) {
+        setOpenKeys(previousOpenState.current.openKeys);
+        setExpandedRows(previousOpenState.current.expandedRows);
+        previousOpenState.current = null;
+      }
+    }
+
+    target.addEventListener(
+      "company-category-filter-change",
+      handleCategoryFilter
+    );
+    return () => {
+      target.removeEventListener(
+        "company-category-filter-change",
+        handleCategoryFilter
+      );
+    };
+  }, [expandedRows, openKeys, rows]);
 
   function toggleGroup(groupKey: string) {
     setOpenKeys((current) =>

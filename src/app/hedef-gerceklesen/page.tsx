@@ -1805,7 +1805,10 @@ function CompanyInformationCurrentTable({
   }
 
   return (
-    <div className="goal-company-information-current-panel">
+    <div
+      className="goal-company-information-current-panel"
+      data-company-filter-table={companyCategoryFilter ? "" : undefined}
+    >
       <div className="goal-live-prime-head">
         <div>
           <h3>Bilgilendirme Kalemleri - Mevcut Durum</h3>
@@ -2606,6 +2609,7 @@ function EmployeeGoalCategoryTable({
       className={`goal-employee-table-shell${
         emphasizeOpenGroups ? " goal-employee-table-shell-emphasized" : ""
       }`}
+      data-company-filter-table={companyCategoryFilter ? "" : undefined}
     >
       <div className="goal-employee-table-head">
         <div className="goal-employee-table-cell goal-employee-table-cell-title">Kategori</div>
@@ -4776,7 +4780,11 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                       />
                     </div>
 
-                    <div className="goal-company-trend-table-wrap" id="company-month-end-summary-table">
+                    <div
+                      className="goal-company-trend-table-wrap"
+                      data-company-filter-table
+                      id="company-month-end-summary-table"
+                    >
                       <table className="goal-company-trend-table goal-company-summary-table">
                         <thead>
                           <tr>
@@ -5053,7 +5061,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                 ) : null}
 
                 {effectiveView === "company" && visibleTrendStoreCodes.length && companyDailyNeedSummaryRows.length ? (
-                  <div className="goal-company-trend-panel">
+                  <div className="goal-company-trend-panel" data-company-filter-table>
                     <div className="goal-live-prime-head">
                       <h3>Gunluk Ihtiyaclar</h3>
                     </div>
@@ -5066,7 +5074,11 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                 ) : null}
 
                 {effectiveView === "company" && shouldShowDocumentIssueAlert ? (
-                  <a href="/eksik-evrak" className="evaluation-zero-alert goal-document-issue-alert goal-document-issue-link">
+                  <a
+                    href="/eksik-evrak"
+                    className="evaluation-zero-alert goal-document-issue-alert goal-document-issue-link"
+                    data-company-filter-hide-when-active
+                  >
                     <strong>Firma Geneli Evrak Uyarisi Var</strong>
                     <p>Firma geneli detay icin Eksik Evrak menusunden kontrol ediniz.</p>
                     <div>
@@ -5081,7 +5093,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                 ) : null}
 
                 {effectiveView === "company" && detailZeroActualItems.length ? (
-                  <div className="evaluation-zero-alert">
+                  <div className="evaluation-zero-alert" data-company-filter-hide-when-active>
                     <strong>Firmada Hedef Gerçekleşeni Sıfır Olan Kalemler</strong>
                     <p>Gercekleseni 0 olan bu kalemler bugun mutlaka kontrol edilmeli.</p>
                     <div>
@@ -5093,7 +5105,10 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                 ) : null}
 
                 {effectiveView === "company" && companyStoreZeroActualGroups.length ? (
-                  <div className="evaluation-zero-alert evaluation-zero-alert-stores">
+                  <div
+                    className="evaluation-zero-alert evaluation-zero-alert-stores"
+                    data-company-filter-hide-when-active
+                  >
                     <strong>Şubelerimizde gerçekleşeni sıfır olan kalemler</strong>
                     <div className="evaluation-zero-store-list">
                       {companyStoreZeroActualGroups.map((group) => (
@@ -5288,7 +5303,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                 ) : null}
 
                 {effectiveView === "company" && companyEmployeeProductionPlans.length ? (
-                  <div className="goal-store-production-panel">
+                  <div className="goal-store-production-panel" data-company-filter-hide-when-active>
                     <div className="goal-live-prime-head">
                       <h3>Personel Uretim Puani Skala Ihtiyaclari</h3>
                     </div>

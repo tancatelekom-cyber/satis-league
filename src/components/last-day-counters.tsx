@@ -1,7 +1,16 @@
 import { getCounterStoreName, type LastDayCounter } from "@/lib/last-day-counters";
 import { LastDayCounterShareButton } from "@/components/last-day-counter-share-button";
+import { adjustLastDayCounterAction } from "@/app/admin/son-gun-sayac/actions";
 
-export function LastDayCounters({ counters, canShare = false }: { counters: LastDayCounter[]; canShare?: boolean }) {
+export function LastDayCounters({
+  counters,
+  canShare = false,
+  canEdit = false
+}: {
+  counters: LastDayCounter[];
+  canShare?: boolean;
+  canEdit?: boolean;
+}) {
   if (!counters.length) return null;
 
   return (
@@ -31,6 +40,23 @@ export function LastDayCounters({ counters, canShare = false }: { counters: Last
                 <strong className="last-day-counter-value">{counter.remaining_count.toLocaleString("tr-TR")}</strong>
               )}
               <p>{completed ? "Tamamlandı" : "Kalan"}</p>
+              {canEdit ? (
+                <div className="admin-counter-adjust">
+                  <form action={adjustLastDayCounterAction}>
+                    <input name="counterId" type="hidden" value={counter.id} />
+                    <input name="adjustment" type="hidden" value="-1" />
+                    <input name="returnTo" type="hidden" value="/" />
+                    <button aria-label="Sayacı bir azalt" disabled={completed} type="submit">−</button>
+                  </form>
+                  <span>{counter.remaining_count.toLocaleString("tr-TR")}</span>
+                  <form action={adjustLastDayCounterAction}>
+                    <input name="counterId" type="hidden" value={counter.id} />
+                    <input name="adjustment" type="hidden" value="1" />
+                    <input name="returnTo" type="hidden" value="/" />
+                    <button aria-label="Sayacı bir artır" type="submit">+</button>
+                  </form>
+                </div>
+              ) : null}
             </article>
           );
         })}

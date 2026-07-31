@@ -16517,3 +16517,6 @@ textarea::placeholder {
   padding: 0.55rem 0.8rem;
   width: 100%;
 }
+.goal-detail-card [hidden] {
+  display: none !important;
+}

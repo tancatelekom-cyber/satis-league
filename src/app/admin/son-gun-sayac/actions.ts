@@ -7,8 +7,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 const PATH = "/admin/son-gun-sayac";
 
-function go(message: string, type: "success" | "error" = "success"): never {
-  redirect(`${PATH}?${new URLSearchParams({ message, type })}`);
+function go(message: string, type: "success" | "error" = "success", path = PATH): never {
+  redirect(`${path}?${new URLSearchParams({ message, type })}`);
 }
 
 export async function createLastDayCounterAction(formData: FormData) {
@@ -58,7 +58,8 @@ export async function adjustLastDayCounterAction(formData: FormData) {
   await requireAdminAccess();
   const counterId = String(formData.get("counterId") ?? "").trim();
   const adjustment = Number(formData.get("adjustment"));
-  if (!counterId || ![-1, 1].includes(adjustment)) go("Geçerli bir sayaç işlemi seçin.", "error");
+  const returnTo = formData.get("returnTo") === "/" ? "/" : PATH;
+  if (!counterId || ![-1, 1].includes(adjustment)) go("Geçerli bir sayaç işlemi seçin.", "error", returnTo);
 
   const admin = createAdminClient();
   const { data: counter } = await admin
@@ -66,7 +67,7 @@ export async function adjustLastDayCounterAction(formData: FormData) {
     .select("remaining_count")
     .eq("id", counterId)
     .single<{ remaining_count: number }>();
-  if (!counter) go("Sayaç bulunamadı.", "error");
+  if (!counter) go("Sayaç bulunamadı.", "error", returnTo);
 
   const remainingCount = Math.max(0, counter.remaining_count + adjustment);
   const { error } = await admin
@@ -78,10 +79,10 @@ export async function adjustLastDayCounterAction(formData: FormData) {
     })
     .eq("id", counterId)
     .eq("remaining_count", counter.remaining_count);
-  if (error) go(`Sayaç değiştirilemedi: ${error.message}`, "error");
+  if (error) go(`Sayaç değiştirilemedi: ${error.message}`, "error", returnTo);
   revalidatePath("/");
   revalidatePath(PATH);
-  go(remainingCount === 0 ? "Sayaç tamamlandı." : `Kalan sayı ${remainingCount}.`);
+  go(remainingCount === 0 ? "Sayaç tamamlandı." : `Kalan sayı ${remainingCount}.`, "success", returnTo);
 }
 
 export async function deleteLastDayCounterAction(formData: FormData) {

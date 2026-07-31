@@ -82,6 +82,9 @@ export function CompanyDailyNeedsTable({
             const isOpen = openKeys.includes(row.groupKey);
             const isExpanded = expandedRows.includes(row.rowKey);
             const defaultCell = row.cells.find((item) => item.threshold === 100);
+            const thresholds = row.cells.some((item) => item.threshold === 105)
+              ? [80, 90, 100, 105, 110, 120]
+              : THRESHOLDS;
 
             return (
               <Fragment key={`daily-need-row-${row.rowKey}`}>
@@ -150,7 +153,7 @@ export function CompanyDailyNeedsTable({
                             </tr>
                           </thead>
                           <tbody>
-                            {THRESHOLDS.map((threshold) => {
+                            {thresholds.map((threshold) => {
                               const companyCell = row.cells.find((item) => item.threshold === threshold);
                               const companyComplete = (companyCell?.dailyRequired ?? 0) <= 0;
 

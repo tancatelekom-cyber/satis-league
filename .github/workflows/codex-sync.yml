@@ -1,5 +1,6 @@
 name: Codex one-time sync
 on:
+  workflow_dispatch:
   push:
     paths:
       - .github/workflows/codex-sync.yml

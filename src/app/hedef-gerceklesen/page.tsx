@@ -3160,7 +3160,9 @@ function StoreGoalDashboard({
   }).length;
   const riskCount = Math.max(0, targetedCategories.length - achievedCount - closeCount);
   const successPercent = targetedCategories.length > 0 ? (achievedCount / targetedCategories.length) * 100 : 0;
-  const dashboardCategories = dashboardSourceCategories;
+  const dashboardCategories = [...dashboardSourceCategories].sort(
+    (left, right) => Number(isSatisfactionCategory(left.title)) - Number(isSatisfactionCategory(right.title))
+  );
   const statusTotal = Math.max(1, targetedCategories.length);
   const achievedEnd = (achievedCount / statusTotal) * 100;
   const closeEnd = achievedEnd + (closeCount / statusTotal) * 100;
@@ -3272,8 +3274,8 @@ function StoreGoalDashboard({
                 key={`dashboard-category-${category.title}`}
               >
                 <div
-                  className={`goal-dashboard-category-pie ${isSatisfaction ? "goal-dashboard-satisfaction-symbol" : ""}`}
-                  style={{
+                  className={isSatisfaction ? "goal-dashboard-satisfaction-symbol" : "goal-dashboard-category-pie"}
+                  style={isSatisfaction ? { color } : {
                     background: isEmployeeZeroActual
                       ? "conic-gradient(#ef4444 0% 100%)"
                       : `conic-gradient(${color} 0% ${piePercent}%, #e2e8f0 ${piePercent}% 100%)`
@@ -3472,6 +3474,8 @@ function CompanyStoreSuccessDashboard({
       !isServiceCategory(category.title) &&
       !isEntryCount(category.title) &&
       !isWebKontorCategory(category.title)
+  ).sort(
+    (left, right) => Number(isSatisfactionCategory(left.title)) - Number(isSatisfactionCategory(right.title))
   );
   const companyCategories = companyDashboardCategories.filter(
     (category) => !isSatisfactionCategory(category.title) && category.hasTarget && (category.target ?? 0) > 0
@@ -3586,8 +3590,10 @@ function CompanyStoreSuccessDashboard({
                 key={`company-dashboard-category-${category.title}`}
               >
                 <div
-                  className={`goal-dashboard-category-pie ${isSatisfaction ? "goal-dashboard-satisfaction-symbol" : ""}`}
-                  style={{ background: `conic-gradient(${color} 0% ${piePercent}%, #e2e8f0 ${piePercent}% 100%)` }}
+                  className={isSatisfaction ? "goal-dashboard-satisfaction-symbol" : "goal-dashboard-category-pie"}
+                  style={isSatisfaction
+                    ? { color }
+                    : { background: `conic-gradient(${color} 0% ${piePercent}%, #e2e8f0 ${piePercent}% 100%)` }}
                   role="img"
                   aria-label={
                     isSatisfaction

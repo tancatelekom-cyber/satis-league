@@ -14140,6 +14140,22 @@ textarea::placeholder {
   font-weight: 800;
 }
 
+.goal-dashboard-satisfaction-symbol > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.goal-dashboard-satisfaction-symbol > div > span {
+  font-size: 3.4rem;
+  line-height: 0.8;
+}
+
+.goal-dashboard-satisfaction-symbol > div > strong {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
 .goal-dashboard-category-pie-card > strong {
   max-width: 150px;
   font-size: 0.82rem;

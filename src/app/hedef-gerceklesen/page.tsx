@@ -2988,6 +2988,7 @@ function DashboardCategoryHoverTable({
   footerRow?: GoalMetricSummary & { title: string };
 }) {
   const accordionName = `goal-dashboard-hover-${normalizeCategoryKey(title).replace(/[^A-Z0-9]+/g, "-")}`;
+  const formatMetricNumber = isSatisfactionCategory(title) ? formatNumberTwoDecimals : formatNumber;
   const renderMetricCells = (row: GoalMetricSummary) => {
     const dailyMinimum = row.hasTarget
       ? buildNeedRows(row, remainingDays).find((need) => need.threshold === 100)?.dailyRequired ?? 0
@@ -3001,11 +3002,11 @@ function DashboardCategoryHoverTable({
 
     return (
       <>
-        <td>{row.hasTarget ? formatNumber(row.target) : "-"}</td>
-        <td>{formatNumber(row.actual)}</td>
-        <td>{row.hasTarget ? formatNumber(row.remaining) : "-"}</td>
+        <td>{row.hasTarget ? formatMetricNumber(row.target) : "-"}</td>
+        <td>{formatMetricNumber(row.actual)}</td>
+        <td>{row.hasTarget ? formatMetricNumber(row.remaining) : "-"}</td>
         <td>{row.hasTarget && row.actualPercent !== null ? formatPercent(row.actualPercent) : "-"}</td>
-        <td>{row.showProjection ? formatNumber(row.projectedActual) : "-"}</td>
+        <td>{row.showProjection ? formatMetricNumber(row.projectedActual) : "-"}</td>
         <td className={projectedPercentClass}>
           {row.hasTarget && row.showProjection && row.projectedPercent !== null
             ? formatPercent(row.projectedPercent)
@@ -3149,7 +3150,9 @@ function StoreGoalDashboard({
       !isEntryCount(category.title) &&
       !isWebKontorCategory(category.title)
   );
-  const targetedCategories = dashboardSourceCategories.filter((category) => category.hasTarget && (category.target ?? 0) > 0);
+  const targetedCategories = dashboardSourceCategories.filter(
+    (category) => !isSatisfactionCategory(category.title) && category.hasTarget && (category.target ?? 0) > 0
+  );
   const achievedCount = targetedCategories.filter((category) => (category.projectedPercent ?? category.actualPercent ?? 0) >= 100).length;
   const closeCount = targetedCategories.filter((category) => {
     const percent = category.projectedPercent ?? category.actualPercent ?? 0;
@@ -3238,17 +3241,21 @@ function StoreGoalDashboard({
         </div>
         <DashboardCategoryInteractiveGrid>
           {dashboardCategories.map((category) => {
+            const isSatisfaction = isSatisfactionCategory(category.title);
             const actualPercent = category.actualPercent ?? 0;
             const projectedPercent = category.projectedPercent ?? actualPercent;
-            const piePercent = category.hasTarget ? Math.max(0, Math.min(100, projectedPercent)) : 100;
-            const color = !category.hasTarget
-              ? dashboardPalette.noTarget
+            const piePercent = isSatisfaction ? 100 : category.hasTarget ? Math.max(0, Math.min(100, projectedPercent)) : 100;
+            const color = isSatisfaction
+              ? category.actual >= 4.4 ? dashboardPalette.success : dashboardPalette.risk
+              : !category.hasTarget ? dashboardPalette.noTarget
               : projectedPercent >= 100
                 ? dashboardPalette.success
                 : projectedPercent >= 80
                   ? dashboardPalette.near
                   : dashboardPalette.risk;
-            const displayValue = category.hasTarget ? formatPercent(projectedPercent) : formatNumber(category.actual);
+            const displayValue = isSatisfaction
+              ? formatNumberTwoDecimals(category.actual)
+              : category.hasTarget ? formatPercent(projectedPercent) : formatNumber(category.actual);
             const isActivationSupportCritical =
               category.hasTarget &&
               normalizeCategoryKey(category.title).includes("AKTIVASYON ADET") &&
@@ -3265,7 +3272,7 @@ function StoreGoalDashboard({
                 key={`dashboard-category-${category.title}`}
               >
                 <div
-                  className="goal-dashboard-category-pie"
+                  className={`goal-dashboard-category-pie ${isSatisfaction ? "goal-dashboard-satisfaction-symbol" : ""}`}
                   style={{
                     background: isEmployeeZeroActual
                       ? "conic-gradient(#ef4444 0% 100%)"
@@ -3273,15 +3280,28 @@ function StoreGoalDashboard({
                   }}
                   role="img"
                   aria-label={
-                    category.hasTarget
+                    isSatisfaction
+                      ? `${category.title} ${formatNumberTwoDecimals(category.actual)}, ${category.actual >= 4.4 ? "iyi" : "düşük"}`
+                      : category.hasTarget
                       ? `${category.title} ay sonu hedef gidişatı ${formatPercent(projectedPercent)}`
                       : `${category.title} mevcut değeri ${formatNumber(category.actual)}`
                   }
                 >
-                  <div>{displayValue}</div>
+                  <div>
+                    {isSatisfaction ? (
+                      <>
+                        <span aria-hidden="true">{category.actual >= 4.4 ? "☺" : "☹"}</span>
+                        <strong>{displayValue}</strong>
+                      </>
+                    ) : displayValue}
+                  </div>
                 </div>
                 <strong>{category.title}</strong>
-                <span>{category.hasTarget ? `Şu an ${formatPercent(actualPercent)}` : "Hedef tanımlı değil"}</span>
+                <span>
+                  {isSatisfaction
+                    ? category.actual >= 4.4 ? "4,40 ve üzeri" : "4,40 altında"
+                    : category.hasTarget ? `Şu an ${formatPercent(actualPercent)}` : "Hedef tanımlı değil"}
+                </span>
                 {isActivationSupportCritical ? (
                   <span className="goal-dashboard-activation-warning" role="alert">
                     <span className="goal-dashboard-activation-alarm" aria-hidden="true">
@@ -3398,12 +3418,14 @@ function StoreGoalDashboard({
 
 function CompanyStoreSuccessDashboard({
   rows,
+  satisfactionRows,
   employeeRows,
   dayStats,
   canShare,
   colorBlindMode
 }: {
   rows: GoalStoreRow[];
+  satisfactionRows: GoalStoreRow[];
   employeeRows: GoalActualRow[];
   dayStats: GoalDayStats;
   canShare: boolean;
@@ -3425,6 +3447,7 @@ function CompanyStoreSuccessDashboard({
           !isServiceCategory(category.title) &&
           !isEntryCount(category.title) &&
           !isWebKontorCategory(category.title) &&
+          !isSatisfactionCategory(category.title) &&
           category.hasTarget &&
           (category.target ?? 0) > 0
       );
@@ -3439,7 +3462,11 @@ function CompanyStoreSuccessDashboard({
       };
     })
     .sort((left, right) => left.storeName.localeCompare(right.storeName, "tr"));
-  const companyDashboardCategories = buildCompanyCategorySummaries(rows, dayStats.workedDays, dayStats.totalDays).filter(
+  const companyDashboardCategories = buildCompanyCategorySummaries(
+    [...rows, ...satisfactionRows.filter((row) => isSatisfactionCategory(row.mainCategory))],
+    dayStats.workedDays,
+    dayStats.totalDays
+  ).filter(
     (category) =>
       normalizeCategoryKey(category.title) !== normalizeCategoryKey("AKSESUAR CIRO") &&
       !isServiceCategory(category.title) &&
@@ -3447,7 +3474,7 @@ function CompanyStoreSuccessDashboard({
       !isWebKontorCategory(category.title)
   );
   const companyCategories = companyDashboardCategories.filter(
-    (category) => category.hasTarget && (category.target ?? 0) > 0
+    (category) => !isSatisfactionCategory(category.title) && category.hasTarget && (category.target ?? 0) > 0
   );
   const companyAchievedCount = companyCategories.filter(
     (category) => (category.projectedPercent ?? category.actualPercent ?? 0) >= 100
@@ -3537,17 +3564,21 @@ function CompanyStoreSuccessDashboard({
         </div>
         <DashboardCategoryInteractiveGrid>
           {companyDashboardCategories.map((category) => {
+            const isSatisfaction = isSatisfactionCategory(category.title);
             const actualPercent = category.actualPercent ?? 0;
             const projectedPercent = category.projectedPercent ?? actualPercent;
-            const piePercent = category.hasTarget ? Math.max(0, Math.min(100, projectedPercent)) : 100;
-            const color = !category.hasTarget
-              ? dashboardPalette.noTarget
+            const piePercent = isSatisfaction ? 100 : category.hasTarget ? Math.max(0, Math.min(100, projectedPercent)) : 100;
+            const color = isSatisfaction
+              ? category.actual >= 4.4 ? dashboardPalette.success : dashboardPalette.risk
+              : !category.hasTarget ? dashboardPalette.noTarget
               : projectedPercent >= 100
                 ? dashboardPalette.success
                 : projectedPercent >= 80
                   ? dashboardPalette.near
                   : dashboardPalette.risk;
-            const displayValue = category.hasTarget ? formatPercent(projectedPercent) : formatNumber(category.actual);
+            const displayValue = isSatisfaction
+              ? formatNumberTwoDecimals(category.actual)
+              : category.hasTarget ? formatPercent(projectedPercent) : formatNumber(category.actual);
 
             return (
               <div
@@ -3555,19 +3586,32 @@ function CompanyStoreSuccessDashboard({
                 key={`company-dashboard-category-${category.title}`}
               >
                 <div
-                  className="goal-dashboard-category-pie"
+                  className={`goal-dashboard-category-pie ${isSatisfaction ? "goal-dashboard-satisfaction-symbol" : ""}`}
                   style={{ background: `conic-gradient(${color} 0% ${piePercent}%, #e2e8f0 ${piePercent}% 100%)` }}
                   role="img"
                   aria-label={
-                    category.hasTarget
+                    isSatisfaction
+                      ? `${category.title} firma değeri ${formatNumberTwoDecimals(category.actual)}, ${category.actual >= 4.4 ? "iyi" : "düşük"}`
+                      : category.hasTarget
                       ? `${category.title} firma ay sonu hedef gidişatı ${formatPercent(projectedPercent)}`
                       : `${category.title} firma mevcut değeri ${formatNumber(category.actual)}`
                   }
                 >
-                  <div>{displayValue}</div>
+                  <div>
+                    {isSatisfaction ? (
+                      <>
+                        <span aria-hidden="true">{category.actual >= 4.4 ? "☺" : "☹"}</span>
+                        <strong>{displayValue}</strong>
+                      </>
+                    ) : displayValue}
+                  </div>
                 </div>
                 <strong>{category.title}</strong>
-                <span>{category.hasTarget ? `Şu an ${formatPercent(actualPercent)}` : "Hedef tanımlı değil"}</span>
+                <span>
+                  {isSatisfaction
+                    ? category.actual >= 4.4 ? "4,40 ve üzeri" : "4,40 altında"
+                    : category.hasTarget ? `Şu an ${formatPercent(actualPercent)}` : "Hedef tanımlı değil"}
+                </span>
                 <DashboardCategoryHoverTable
                   title={`${category.title} · Şubelerin Hedef Gerçekleşenleri`}
                   firstColumnLabel="Şube"
@@ -4589,7 +4633,14 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
           ) : effectivePanel === "dashboard" && effectiveView === "store" ? (
             <StoreGoalDashboard
               storeName={activeStoreName}
-              categories={storeCategorySummaries}
+              categories={[
+                ...storeCategorySummaries,
+                ...buildStoreCategorySummaries(
+                  activeStoreSeparateInfoRows.filter((row) => isSatisfactionCategory(row.mainCategory)),
+                  dayStats.workedDays,
+                  dayStats.totalDays
+                )
+              ]}
               employeeRows={activeStoreEmployeeRows}
               dayStats={dayStats}
               canShare={canShareDashboard}
@@ -4598,6 +4649,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
           ) : effectivePanel === "dashboard" && effectiveView === "company" ? (
             <CompanyStoreSuccessDashboard
               rows={filteredStoreRows}
+              satisfactionRows={separateInfoStoreRows}
               employeeRows={activeDashboardEmployeeRows}
               dayStats={dayStats}
               canShare={canShareDashboard}

@@ -1,112 +1,134 @@
 import { redirect } from "next/navigation";
-import { fetchAymadaBranchStocks } from "@/lib/aymada-stock";
 import { createClient } from "@/lib/supabase/server";
-import { StockProductBrowser } from "@/components/stock/stock-product-browser";
+import { fetchStockManagementDashboard } from "@/lib/stock-management";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-function formatNumber(value: number) {
-  return value.toLocaleString("tr-TR", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  });
+type Props = { searchParams?: Promise<{ branch?: string }> };
+
+function number(value: number, digits = 0) {
+  return value.toLocaleString("tr-TR", { minimumFractionDigits: digits, maximumFractionDigits: digits });
 }
 
-function formatUpdatedAt(value: string) {
-  return new Intl.DateTimeFormat("tr-TR", {
-    dateStyle: "short",
-    timeStyle: "short",
-    timeZone: "Europe/Istanbul"
-  }).format(new Date(value));
+function currency(value: number) {
+  return value.toLocaleString("tr-TR", { style: "currency", currency: "TRY", maximumFractionDigits: 0 });
 }
 
-export default async function StockInfoPage() {
+function formatDate(value: string) {
+  return new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Istanbul" }).format(new Date(value));
+}
+
+export default async function StockManagementPage({ searchParams }: Props) {
+  const params = searchParams ? await searchParams : undefined;
+  const selectedBranch = String(params?.branch ?? "").trim();
   const supabase = await createClient();
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/giris");
 
-  if (!user) {
-    redirect("/giris");
-  }
+  const { data: profile } = await supabase.from("profiles").select("approval, role").eq("id", user.id).single();
+  if (!profile || profile.approval !== "approved") redirect("/hesabim");
+  if (!["manager", "management", "admin"].includes(profile.role)) redirect("/");
 
-  const { data: profile } = await supabase.from("profiles").select("approval").eq("id", user.id).single();
-
-  if (!profile || profile.approval !== "approved") {
-    redirect("/hesabim");
-  }
-
-  let stock = null as Awaited<ReturnType<typeof fetchAymadaBranchStocks>> | null;
+  let dashboard: Awaited<ReturnType<typeof fetchStockManagementDashboard>> | null = null;
   let error = "";
-
   try {
-    stock = await fetchAymadaBranchStocks();
-  } catch (err) {
-    error = err instanceof Error ? err.message : "Stok bilgisi su an okunamadi.";
+    dashboard = await fetchStockManagementDashboard();
+  } catch (cause) {
+    error = cause instanceof Error ? cause.message : "Stok yönetimi verileri okunamadı.";
   }
+
+  const rows = dashboard?.rows.filter((row) => !selectedBranch || row.branchName === selectedBranch) ?? [];
+  const transfers = dashboard?.transfers.filter(
+    (row) => !selectedBranch || row.fromBranch === selectedBranch || row.toBranch === selectedBranch
+  ) ?? [];
+  const alarms = dashboard?.returnAlarms.filter((row) => !selectedBranch || row.branchName === selectedBranch) ?? [];
+  const scopedTotals = {
+    currentStock: rows.reduce((sum, row) => sum + row.currentStock, 0),
+    sales30: rows.reduce((sum, row) => sum + row.sales30, 0),
+    orderQuantity: rows.reduce((sum, row) => sum + row.orderQuantity, 0),
+    transferQuantity: transfers.reduce((sum, row) => sum + row.quantity, 0),
+    returnAlarmCount: alarms.reduce((sum, row) => sum + row.stockCount, 0)
+  };
 
   return (
-    <main className="page-shell">
-      <section className="hero home-leaders-hero">
-        <div className="hero-copy">
-          <h1 className="page-title">Stok Bilgisi</h1>
-          <p className="page-subtitle">Aymada uzerinden okunan cihaz stoklari burada gorunur.</p>
+    <main className="page-shell stock-management-page">
+      <section className="stock-management-hero">
+        <div>
+          <span className="stock-management-eyebrow">30 GÜNLÜK AKILLI STOK PLANI</span>
+          <h1 className="page-title">Stok Yönetimi</h1>
+          <p>Şube satış hızı, sipariş ihtiyacı, transfer fırsatları ve yaşlanan stoklar tek ekranda.</p>
         </div>
+        <div className="stock-management-hero-badge"><strong>30</strong><span>günlük satış analizi</span></div>
       </section>
 
-      {error ? (
-        <section className="admin-card stock-alert-card">
-          <h2>Stok bilgisi acilamadi.</h2>
-          <p>{error}</p>
-          <p>Vercel ortam degiskenlerinde Aymada API bilgilerini ve servis erisimini kontrol edip sayfayi tekrar acin.</p>
-        </section>
-      ) : null}
+      {error ? <section className="admin-card stock-alert-card"><h2>Stok verisi açılamadı</h2><p>{error}</p></section> : null}
 
-      {stock ? (
+      {dashboard ? (
         <>
-          <section className="stock-total-grid" aria-label="Toplam stok ozeti">
-            <div className="stock-total-card">
-              <span>Smartphone</span>
-              <strong>{formatNumber(stock.totalSmartphone)}</strong>
-            </div>
-            <div className="stock-total-card">
-              <span>Tablet</span>
-              <strong>{formatNumber(stock.totalTablet)}</strong>
-            </div>
-            <div className="stock-total-card">
-              <span>IoT</span>
-              <strong>{formatNumber(stock.totalIot)}</strong>
-            </div>
-            <div className="stock-total-card stock-total-card-main">
-              <span>Toplam</span>
-              <strong>{formatNumber(stock.total)}</strong>
-            </div>
+          <section className="stock-management-toolbar">
+            <form method="get">
+              <label>
+                <span>Şube filtresi</span>
+                <select name="branch" defaultValue={selectedBranch}>
+                  <option value="">Tüm şubeler</option>
+                  {dashboard.branches.map((branch) => <option value={branch} key={branch}>{branch}</option>)}
+                </select>
+              </label>
+              <button type="submit">Şubeyi Göster</button>
+              {selectedBranch ? <a href="/stok-bilgisi">Filtreyi Temizle</a> : null}
+            </form>
+            <span>Son güncelleme: {formatDate(dashboard.updatedAt)}</span>
           </section>
 
-          <section className="admin-card stock-card">
-            <div className="stock-card-head">
-              <div>
-              <h2>Sube Bazli Cihaz Stoklari</h2>
-                <p>Son okuma: {formatUpdatedAt(stock.updatedAt)}</p>
+          <section className="stock-management-kpis">
+            <article><span>📦</span><div><small>Mevcut stok</small><strong>{number(scopedTotals.currentStock)}</strong></div></article>
+            <article><span>⚡</span><div><small>30 günlük satış</small><strong>{number(scopedTotals.sales30)}</strong></div></article>
+            <article className="warning"><span>🛒</span><div><small>Sipariş ihtiyacı</small><strong>{number(scopedTotals.orderQuantity)}</strong></div></article>
+            <article className="info"><span>⇄</span><div><small>Transfer fırsatı</small><strong>{number(scopedTotals.transferQuantity)}</strong></div></article>
+            <article className="danger"><span>⏳</span><div><small>İade alarmı</small><strong>{number(scopedTotals.returnAlarmCount)}</strong></div></article>
+          </section>
+
+          <section className="stock-management-grid">
+            <article className="stock-management-panel stock-management-panel-wide">
+              <header><div><span>SİPARİŞ MOTORU</span><h2>30 günlük satışa göre sipariş listesi</h2></div><b>{rows.filter((row) => row.orderQuantity > 0).length} ürün</b></header>
+              <div className="stock-management-table-wrap">
+                <table><thead><tr><th>Şube / ürün kısa adı</th><th>Stok</th><th>30 gün satış</th><th>Devir hızı</th><th>Stok günü</th><th>Sipariş</th></tr></thead>
+                  <tbody>{rows.filter((row) => row.orderQuantity > 0).slice(0, 100).map((row) => (
+                    <tr key={`${row.branchName}-${row.productCode}`}>
+                      <td><strong>{row.productShortName}</strong><small>{row.branchName} · {row.productCode}</small></td>
+                      <td>{number(row.currentStock)}</td><td>{number(row.sales30)}</td>
+                      <td><span className="stock-speed">{number(row.turnoverRate, 1)}x</span></td>
+                      <td>{row.coverageDays === null ? "Satış yok" : `${number(row.coverageDays)} gün`}</td>
+                      <td><b className="stock-order-badge">+{number(row.orderQuantity)}</b></td>
+                    </tr>
+                  ))}</tbody>
+                </table>
+                {!rows.some((row) => row.orderQuantity > 0) ? <p className="stock-management-empty">Sipariş açığı görünmüyor.</p> : null}
               </div>
-              <span>{stock.products.length} satir</span>
-            </div>
+            </article>
 
-            {stock.warning ? <p className="stock-warning">{stock.warning}</p> : null}
+            <article className="stock-management-panel">
+              <header><div><span>TRANSFER RADARI</span><h2>Şubeler arası dengeleme</h2></div><b>{transfers.length}</b></header>
+              <div className="stock-transfer-list">{transfers.slice(0, 40).map((row, index) => (
+                <div className="stock-transfer-card" key={`${row.productCode}-${row.fromBranch}-${row.toBranch}-${index}`}>
+                  <strong>{row.productName}</strong><small>{row.productCode}</small>
+                  <div><span>{row.fromBranch}</span><b>{row.quantity} adet →</b><span>{row.toBranch}</span></div>
+                </div>
+              ))}{!transfers.length ? <p className="stock-management-empty">Uygun transfer eşleşmesi yok.</p> : null}</div>
+            </article>
 
-            {stock.debug ? (
-              <details className="stock-debug">
-                <summary>Aymada gelen veri ornegi</summary>
-                <pre>{JSON.stringify(stock.debug, null, 2)}</pre>
-              </details>
-            ) : null}
-
-            {stock.products.length > 0 ? (
-              <StockProductBrowser products={stock.products} />
-            ) : (
-              <p className="stock-empty">Smartphone, tablet veya IoT stogu bulunamadi.</p>
-            )}
+            <article className="stock-management-panel stock-return-panel">
+              <header><div><span>İADE ALARMI</span><h2>Yaşlanan stoklar</h2></div><b>{alarms.length}</b></header>
+              <p className="stock-management-rule">iPhone ≥20 gün · Diğer markalar ≥30 gün</p>
+              <div className="stock-return-list">{alarms.slice(0, 50).map((row) => (
+                <div key={`${row.branchName}-${row.productCode}`}>
+                  <span className={row.brand === "Apple iPhone" ? "apple" : "other"}>{row.brand === "Apple iPhone" ? "" : "!"}</span>
+                  <p><strong>{row.productName}</strong><small>{row.branchName} · {row.stockCount} adet · {currency(row.purchaseValue)}</small></p>
+                  <b>{row.oldestStockAge} gün</b>
+                </div>
+              ))}{!alarms.length ? <p className="stock-management-empty">İade alarmı bulunmuyor.</p> : null}</div>
+            </article>
           </section>
         </>
       ) : null}

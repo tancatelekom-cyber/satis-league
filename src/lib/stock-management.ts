@@ -36,11 +36,20 @@ export type StockReturnAlarm = {
   purchaseValue: number;
 };
 
+export type StockReturnUnit = {
+  productName: string;
+  branchName: string;
+  serialNumber: string;
+  stockAge: number;
+  status: "İade alarmı" | "İade süresi geçmiş";
+};
+
 export type StockManagementDashboard = {
   rows: StockManagementRow[];
   transfers: StockTransferSuggestion[];
   returnAlarms: StockReturnAlarm[];
   expiredReturns: StockReturnAlarm[];
+  returnUnits: StockReturnUnit[];
   branches: string[];
   updatedAt: string;
   totals: {
@@ -64,6 +73,7 @@ type InventoryUnit = {
   brand: string;
   stockAge: number;
   purchasePrice: number;
+  serialNumber: string;
 };
 
 const SHEET_ID = "1ya4e8B6MkdcL4CqPaMwwxIXVIPD9CEFjN9Jtlyf70hI";
@@ -210,7 +220,8 @@ export async function fetchStockManagementDashboard(now = new Date()): Promise<S
         productShortName,
         brand,
         stockAge: Math.max(0, parseNumber(getField(row, ["Stok Yaşı (Gün)", "Stok Yasi (Gun)"]))),
-        purchasePrice: parseNumber(getField(row, ["Alış Fiyatı (KDV Dahil)", "Alis Fiyati (KDV Dahil)"]))
+        purchasePrice: parseNumber(getField(row, ["Alış Fiyatı (KDV Dahil)", "Alis Fiyati (KDV Dahil)"])),
+        serialNumber: getField(row, ["Seri Numarası", "Seri Numarasi"])
       });
     }
   });
@@ -314,6 +325,20 @@ export async function fetchStockManagementDashboard(now = new Date()): Promise<S
     })
     .sort((a, b) => a.branchName.localeCompare(b.branchName, "tr") || b.stockCount - a.stockCount || b.oldestStockAge - a.oldestStockAge);
 
+  const returnUnits: StockReturnUnit[] = inventory
+    .filter((unit) => {
+      const threshold = normalizeKey(unit.brand).includes("IPHONE") || normalizeKey(unit.brand).includes("APPLE") ? 20 : 30;
+      return unit.stockAge >= threshold;
+    })
+    .map((unit): StockReturnUnit => ({
+      productName: unit.productName,
+      branchName: unit.branchName,
+      serialNumber: unit.serialNumber,
+      stockAge: unit.stockAge,
+      status: unit.stockAge > 60 ? "İade süresi geçmiş" : "İade alarmı"
+    }))
+    .sort((a, b) => a.branchName.localeCompare(b.branchName, "tr") || b.stockAge - a.stockAge);
+
   const transfers: StockTransferSuggestion[] = [];
   const productShortNames = Array.from(new Set(rows.map((row) => normalizeKey(row.productShortName))));
   productShortNames.forEach((productKey) => {
@@ -359,6 +384,7 @@ export async function fetchStockManagementDashboard(now = new Date()): Promise<S
     transfers,
     returnAlarms,
     expiredReturns,
+    returnUnits,
     branches,
     updatedAt: now.toISOString(),
     totals: {

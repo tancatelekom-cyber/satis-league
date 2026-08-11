@@ -11,6 +11,7 @@ export type StockManagementRow = {
   coverageDays: number | null;
   oldestStockAge: number;
   returnAlarmCount: number;
+  expiredReturnCount: number;
 };
 
 export type StockTransferSuggestion = {
@@ -37,6 +38,7 @@ export type StockManagementDashboard = {
   rows: StockManagementRow[];
   transfers: StockTransferSuggestion[];
   returnAlarms: StockReturnAlarm[];
+  expiredReturns: StockReturnAlarm[];
   branches: string[];
   updatedAt: string;
   totals: {
@@ -45,6 +47,7 @@ export type StockManagementDashboard = {
     orderQuantity: number;
     transferQuantity: number;
     returnAlarmCount: number;
+    expiredReturnCount: number;
     stockValue: number;
   };
 };
@@ -247,7 +250,8 @@ export async function fetchStockManagementDashboard(now = new Date()): Promise<S
     const brand = normalizeKey(rawBrand).includes("IPHONE") || normalizeKey(rawBrand).includes("APPLE") ? "Apple iPhone" : rawBrand;
     const thresholdDays = brand === "Apple iPhone" ? 20 : 30;
     const ages = units.map((unit) => unit.stockAge);
-    const returnAlarmCount = ages.filter((age) => age >= thresholdDays).length;
+    const returnAlarmCount = ages.filter((age) => age >= thresholdDays && age <= 60).length;
+    const expiredReturnCount = ages.filter((age) => age > 60).length;
 
     return {
       branchName,
@@ -261,7 +265,8 @@ export async function fetchStockManagementDashboard(now = new Date()): Promise<S
       turnoverRate: sales30 / Math.max(currentStock, 1),
       coverageDays: dailySales > 0 ? currentStock / dailySales : null,
       oldestStockAge: ages.length ? Math.max(...ages) : 0,
-      returnAlarmCount
+      returnAlarmCount,
+      expiredReturnCount
     } satisfies StockManagementRow;
   });
 
@@ -270,7 +275,7 @@ export async function fetchStockManagementDashboard(now = new Date()): Promise<S
     .map((row) => {
       const units = inventoryMap.get(`${row.branchName}__${normalizeKey(row.productShortName)}`) ?? [];
       const thresholdDays = row.brand === "Apple iPhone" ? 20 : 30;
-      const alarmUnits = units.filter((unit) => unit.stockAge >= thresholdDays);
+      const alarmUnits = units.filter((unit) => unit.stockAge >= thresholdDays && unit.stockAge <= 60);
       return {
         branchName: row.branchName,
         productCode: row.productCode,
@@ -283,6 +288,24 @@ export async function fetchStockManagementDashboard(now = new Date()): Promise<S
       } satisfies StockReturnAlarm;
     })
     .sort((a, b) => b.oldestStockAge - a.oldestStockAge || b.stockCount - a.stockCount);
+
+  const expiredReturns = rows
+    .filter((row) => row.expiredReturnCount > 0)
+    .map((row) => {
+      const units = inventoryMap.get(`${row.branchName}__${normalizeKey(row.productShortName)}`) ?? [];
+      const expiredUnits = units.filter((unit) => unit.stockAge > 60);
+      return {
+        branchName: row.branchName,
+        productCode: row.productCode,
+        productName: row.productName,
+        brand: row.brand,
+        stockCount: expiredUnits.length,
+        oldestStockAge: expiredUnits.length ? Math.max(...expiredUnits.map((unit) => unit.stockAge)) : 0,
+        thresholdDays: 60,
+        purchaseValue: expiredUnits.reduce((sum, unit) => sum + unit.purchasePrice, 0)
+      } satisfies StockReturnAlarm;
+    })
+    .sort((a, b) => a.branchName.localeCompare(b.branchName, "tr") || b.stockCount - a.stockCount || b.oldestStockAge - a.oldestStockAge);
 
   const transfers: StockTransferSuggestion[] = [];
   const productShortNames = Array.from(new Set(rows.map((row) => normalizeKey(row.productShortName))));
@@ -324,6 +347,7 @@ export async function fetchStockManagementDashboard(now = new Date()): Promise<S
     rows,
     transfers,
     returnAlarms,
+    expiredReturns,
     branches,
     updatedAt: now.toISOString(),
     totals: {
@@ -332,6 +356,7 @@ export async function fetchStockManagementDashboard(now = new Date()): Promise<S
       orderQuantity: rows.reduce((sum, row) => sum + row.orderQuantity, 0),
       transferQuantity: transfers.reduce((sum, row) => sum + row.quantity, 0),
       returnAlarmCount: returnAlarms.reduce((sum, row) => sum + row.stockCount, 0),
+      expiredReturnCount: expiredReturns.reduce((sum, row) => sum + row.stockCount, 0),
       stockValue: inventory.reduce((sum, unit) => sum + unit.purchasePrice, 0)
     }
   };

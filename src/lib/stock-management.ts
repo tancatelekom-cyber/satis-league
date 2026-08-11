@@ -136,6 +136,17 @@ function normalizeKey(value: string | null | undefined) {
     .replace(/[\u0300-\u036f]/g, "");
 }
 
+function normalizeProductShortName(value: string | null | undefined) {
+  return normalizeText(value)
+    .replace(/ç/g, "c").replace(/Ç/g, "C")
+    .replace(/ğ/g, "g").replace(/Ğ/g, "G")
+    .replace(/ı/g, "i").replace(/İ/g, "I")
+    .replace(/ö/g, "o").replace(/Ö/g, "O")
+    .replace(/ş/g, "s").replace(/Ş/g, "S")
+    .replace(/ü/g, "u").replace(/Ü/g, "U")
+    .replace(/iphone/gi, "IPHONE");
+}
+
 function parseNumber(value: string) {
   const normalized = normalizeText(value).replace(/\./g, "").replace(",", ".").replace(/[^\d.-]/g, "");
   const parsed = Number(normalized);
@@ -207,7 +218,7 @@ export async function fetchStockManagementDashboard(now = new Date()): Promise<S
     const branchName = getField(row, ["ŞUBE", "Şube Adı", "Sube Adi"]);
     const productCode = getField(row, ["Ürün Kodu", "Urun Kodu"]);
     const productName = getField(row, ["Ürün Adı", "Urun Adi"]);
-    const productShortName = getField(row, ["ÜRÜN KISA AD", "Ürün Kısa Ad", "Urun Kisa Ad"]);
+    const productShortName = normalizeProductShortName(getField(row, ["ÜRÜN KISA AD", "Ürün Kısa Ad", "Urun Kisa Ad"]));
     const brand = getField(row, ["MARKA", "Marka"]) || detectBrand(productShortName || productName);
     const quantity = Math.max(1, Math.round(parseNumber(getField(row, ["Miktar"]))));
     if (!branchName || !productShortName) return;
@@ -234,7 +245,7 @@ export async function fetchStockManagementDashboard(now = new Date()): Promise<S
     const branchName = getField(row, ["ŞUBE", "Şube Adı", "Sube Adi"]);
     const productCode = getField(row, ["Ürün Kodu", "Urun Kodu"]);
     const productName = getField(row, ["Ürün Adı", "Urun Adi"]);
-    const productShortName = getField(row, ["ÜRÜN KISA AD", "Ürün Kısa Ad", "Urun Kisa Ad"]);
+    const productShortName = normalizeProductShortName(getField(row, ["ÜRÜN KISA AD", "Ürün Kısa Ad", "Urun Kisa Ad"]));
     if (!saleDate || saleDate < cutoff || saleDate > now || !branchName || !productShortName) return;
     const key = `${branchName}__${normalizeKey(productShortName)}`;
     sales30Map.set(key, (sales30Map.get(key) ?? 0) + Math.max(0, parseNumber(getField(row, ["Miktar"]))));

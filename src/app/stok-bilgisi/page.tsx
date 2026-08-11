@@ -86,7 +86,7 @@ export default async function StockManagementPage({ searchParams }: Props) {
           <section className="stock-management-kpis">
             <article><span>📦</span><div><small>Mevcut stok</small><strong>{number(scopedTotals.currentStock)}</strong></div></article>
             <article><span>⚡</span><div><small>30 günlük satış</small><strong>{number(scopedTotals.sales30)}</strong></div></article>
-            <article className="warning"><span>🛒</span><div><small>Sipariş ihtiyacı</small><strong>{number(scopedTotals.orderQuantity)}</strong></div></article>
+            <article className="warning"><span>🛒</span><div><small>7 günlük sipariş</small><strong>{number(scopedTotals.orderQuantity)}</strong></div></article>
             <article className="info"><span>⇄</span><div><small>Transfer fırsatı</small><strong>{number(scopedTotals.transferQuantity)}</strong></div></article>
             <article className="danger"><span>⏳</span><div><small>İade alarmı</small><strong>{number(scopedTotals.returnAlarmCount)}</strong></div></article>
             <article className="expired"><span>⌛</span><div><small>İade süresi geçmiş</small><strong>{number(scopedTotals.expiredReturnCount)}</strong></div></article>
@@ -94,7 +94,7 @@ export default async function StockManagementPage({ searchParams }: Props) {
 
           <section className="stock-management-grid">
             <article className="stock-management-panel stock-management-panel-wide">
-              <header><div><span>SİPARİŞ MOTORU</span><h2>30 günlük satışa göre sipariş listesi</h2></div><b>{rows.filter((row) => row.orderQuantity > 0).length} ürün</b></header>
+              <header><div><span>SİPARİŞ MOTORU</span><h2>Satış hızına göre 7 günlük sipariş listesi</h2></div><b>{rows.filter((row) => row.orderQuantity > 0).length} ürün</b></header>
               <div className="stock-management-table-wrap">
                 <table><thead><tr><th>Şube / ürün kısa adı</th><th>Stok</th><th>30 gün satış</th><th>Devir hızı</th><th>Stok günü</th><th>Sipariş</th></tr></thead>
                   <tbody>{rows.filter((row) => row.orderQuantity > 0).slice(0, 100).map((row) => (

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { fetchStockManagementDashboard } from "@/lib/stock-management";
+import { StockBranchFilter } from "@/components/stock-branch-filter";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -69,17 +70,9 @@ export default async function StockManagementPage({ searchParams }: Props) {
       {dashboard ? (
         <>
           <section className="stock-management-toolbar">
-            <form method="get">
-              <label>
-                <span>Şube filtresi</span>
-                <select name="branch" defaultValue={selectedBranch}>
-                  <option value="">Firma Tümü</option>
-                  {dashboard.branches.map((branch) => <option value={branch} key={branch}>{branch}</option>)}
-                </select>
-              </label>
-              <button type="submit">Şubeyi Göster</button>
-              {selectedBranch ? <a href="/stok-bilgisi">Filtreyi Temizle</a> : null}
-            </form>
+            <div className="stock-management-filter">
+              <StockBranchFilter branches={dashboard.branches} selectedBranch={selectedBranch} />
+            </div>
             <span>Son güncelleme: {formatDate(dashboard.updatedAt)}</span>
           </section>
 

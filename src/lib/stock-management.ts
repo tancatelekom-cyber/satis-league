@@ -68,6 +68,7 @@ const SHEET_ID = "1ya4e8B6MkdcL4CqPaMwwxIXVIPD9CEFjN9Jtlyf70hI";
 const STOCK_GID = "1234243583";
 const SALES_GID = "1351738878";
 const DAY_MS = 24 * 60 * 60 * 1000;
+const ORDER_COVERAGE_DAYS = 7;
 
 function buildCsvUrl(gid: string) {
   // The generic /export endpoint may return 401 from serverless runtimes even
@@ -263,7 +264,7 @@ export async function fetchStockManagementDashboard(now = new Date()): Promise<S
       brand,
       currentStock,
       sales30,
-      orderQuantity: Math.max(0, Math.ceil(sales30 - currentStock)),
+      orderQuantity: Math.max(0, Math.ceil(dailySales * ORDER_COVERAGE_DAYS - currentStock)),
       turnoverRate: sales30 / Math.max(currentStock, 1),
       coverageDays: dailySales > 0 ? currentStock / dailySales : null,
       oldestStockAge: ages.length ? Math.max(...ages) : 0,
@@ -318,7 +319,10 @@ export async function fetchStockManagementDashboard(now = new Date()): Promise<S
       .map((row) => ({ row, need: row.orderQuantity }))
       .sort((a, b) => b.need - a.need);
     const senders = productRows
-      .map((row) => ({ row, available: Math.max(0, row.currentStock - Math.ceil(row.sales30)) }))
+      .map((row) => ({
+        row,
+        available: Math.max(0, row.currentStock - Math.ceil((row.sales30 / 30) * ORDER_COVERAGE_DAYS))
+      }))
       .filter((item) => item.available > 0)
       .sort((a, b) => b.available - a.available);
 

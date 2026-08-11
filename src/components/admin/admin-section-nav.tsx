@@ -10,7 +10,8 @@ const adminGroups = [
       { href: "/admin/ayin-yildizlari", icon: "⭐", label: "Ayın Yıldızları", description: "Ana ekranda gösterilecek satış dönemini seç" },
       { href: "/admin/siralama", icon: "🏆", label: "Sıralama", description: "Lig ve liderlik ekranlarına eriş" },
       { href: "/admin/calisan-analiz", icon: "🔎", label: "Çalışan Analizi", description: "Personel performansını ayrıntılı incele" },
-      { href: "/admin/mudur-sunumu", icon: "🎯", label: "Müdür Sunumu", description: "Hedef gerçekleşen sunumunu yönet" }
+      { href: "/admin/mudur-sunumu", icon: "🎯", label: "Müdür Sunumu", description: "Hedef gerçekleşen sunumunu yönet" },
+      { href: "/admin/hedef-yuzde-yuz", icon: "%", label: "Hedef %100 Ayarı", description: "Şube ve kategori bazında hedefi tamamlandı say" }
     ]
   },
   {
@@ -32,6 +33,7 @@ const adminGroups = [
       { href: "/admin/mudur-primi", icon: "💰", label: "Müdür Primi", description: "Prim yetkilerini ve kolonları yönet" },
       { href: "/admin/eksik-evrak", icon: "📄", label: "Eksik Evrak", description: "Evrak menüsü yetkilerini yönet" },
       { href: "/admin/pos-komisyon", icon: "💳", label: "POS Komisyon", description: "Komisyon oranını tanımla ve güncelle" }
+      ,{ href: "/admin/son-gun-sayac", icon: "⏳", label: "Son Gün Sayaç", description: "Firma ve mağaza sayaçlarını yönet" }
     ]
   },
   {
@@ -61,7 +63,7 @@ export function AdminSectionNav({ currentPath }: AdminSectionNavProps) {
             <strong>Yönetim Alanları</strong>
             <small>İşlem yapmak istediğiniz bölümü seçin</small>
           </span>
-          <span className="admin-directory-count">18 bölüm</span>
+          <span className="admin-directory-count">20 bölüm</span>
         </summary>
 
         <div className="admin-directory-body">

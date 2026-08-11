@@ -6,6 +6,8 @@ export type StockManagementRow = {
   brand: string;
   currentStock: number;
   sales30: number;
+  grossNeed: number;
+  transferIncoming: number;
   orderQuantity: number;
   turnoverRate: number;
   coverageDays: number | null;
@@ -264,6 +266,8 @@ export async function fetchStockManagementDashboard(now = new Date()): Promise<S
       brand,
       currentStock,
       sales30,
+      grossNeed: Math.max(0, Math.ceil(dailySales * ORDER_COVERAGE_DAYS - currentStock)),
+      transferIncoming: 0,
       orderQuantity: Math.max(0, Math.ceil(dailySales * ORDER_COVERAGE_DAYS - currentStock)),
       turnoverRate: sales30 / Math.max(currentStock, 1),
       coverageDays: dailySales > 0 ? currentStock / dailySales : null,
@@ -339,6 +343,7 @@ export async function fetchStockManagementDashboard(now = new Date()): Promise<S
           quantity,
           receiverSales30: receiver.row.sales30
         });
+        receiver.row.transferIncoming += quantity;
         receiver.need -= quantity;
         sender.available -= quantity;
       }

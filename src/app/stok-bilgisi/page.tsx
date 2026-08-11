@@ -45,6 +45,11 @@ export default async function StockManagementPage({ searchParams }: Props) {
     (!selectedBranch || row.branchName === selectedBranch) && (!selectedProduct || row.productShortName === selectedProduct)
   ) ?? [];
   const products = Array.from(new Set((dashboard?.rows ?? []).map((row) => row.productShortName))).sort((a, b) => a.localeCompare(b, "tr"));
+  const stockBranches = selectedBranch ? [selectedBranch] : dashboard?.branches ?? [];
+  const stockProducts = selectedProduct ? [selectedProduct] : products;
+  const stockByProductBranch = new Map(
+    (dashboard?.rows ?? []).map((row) => [`${row.productShortName}__${row.branchName}`, row.currentStock])
+  );
   const transfers = dashboard?.transfers.filter(
     (row) => !selectedBranch || row.fromBranch === selectedBranch || row.toBranch === selectedBranch
   ) ?? [];
@@ -93,11 +98,18 @@ export default async function StockManagementPage({ searchParams }: Props) {
 
           {showAllStock ? (
             <section className="stock-management-panel stock-management-panel-wide">
-              <header><div><span>TÜM STOK</span><h2>Şube ve ürün kısa adına göre stok listesi</h2></div><b>{rows.length} ürün</b></header>
-              <div className="stock-management-table-wrap"><table>
-                <thead><tr><th>Ürün kısa adı</th><th>Şube</th><th>Marka</th><th>Mevcut stok</th><th>30 gün satış</th><th>En eski stok</th></tr></thead>
-                <tbody>{rows.map((row) => <tr key={`${row.branchName}-${row.productCode}`}><td><strong>{row.productShortName}</strong><small>{row.productName}</small></td><td>{row.branchName}</td><td>{row.brand}</td><td>{number(row.currentStock)}</td><td>{number(row.sales30)}</td><td>{number(row.oldestStockAge)} gün</td></tr>)}</tbody>
-              </table>{!rows.length ? <p className="stock-management-empty">Filtreye uygun stok bulunamadı.</p> : null}</div>
+              <header><div><span>TÜM STOK MATRİSİ</span><h2>Ürün ve şube bazında mevcut stoklar</h2></div><b>{stockProducts.length} ürün</b></header>
+              <div className="stock-management-table-wrap"><table className="stock-matrix-table">
+                <thead><tr><th>Ürün kısa adı</th>{stockBranches.map((branch) => <th key={branch}>{branch}</th>)}<th>Firma Toplamı</th></tr></thead>
+                <tbody>{stockProducts.map((product) => {
+                  const branchValues = stockBranches.map((branch) => stockByProductBranch.get(`${product}__${branch}`) ?? 0);
+                  return <tr key={product}><th>{product}</th>{branchValues.map((value, index) => <td className={value === 0 ? "stock-zero-cell" : undefined} key={stockBranches[index]}>{number(value)}</td>)}<td className="stock-company-total">{number(branchValues.reduce((sum, value) => sum + value, 0))}</td></tr>;
+                })}</tbody>
+                <tfoot><tr><th>Firma Dip Toplamı</th>{stockBranches.map((branch) => {
+                  const total = stockProducts.reduce((sum, product) => sum + (stockByProductBranch.get(`${product}__${branch}`) ?? 0), 0);
+                  return <th className={total === 0 ? "stock-zero-cell" : undefined} key={branch}>{number(total)}</th>;
+                })}<th>{number(stockProducts.reduce((grand, product) => grand + stockBranches.reduce((sum, branch) => sum + (stockByProductBranch.get(`${product}__${branch}`) ?? 0), 0), 0))}</th></tr></tfoot>
+              </table>{!stockProducts.length ? <p className="stock-management-empty">Filtreye uygun stok bulunamadı.</p> : null}</div>
             </section>
           ) : <section className="stock-management-grid">
             <article className="stock-management-panel stock-management-panel-wide">

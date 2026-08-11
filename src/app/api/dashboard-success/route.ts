@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { isColorBlindDashboardUser } from "@/lib/dashboard-colors";
 import { calculateCompanyDashboardSuccess, calculateStoreDashboardSuccess } from "@/lib/dashboard-success";
-import { fetchGoalDayStats, fetchGoalStoreRows } from "@/lib/goal-actuals";
+import { fetchGoalDayStats, fetchGoalStoreRowsForBranchGoalView } from "@/lib/goal-actuals";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -31,7 +31,7 @@ export async function GET() {
   }
 
   try {
-    const [rows, dayStats] = await Promise.all([fetchGoalStoreRows(), fetchGoalDayStats()]);
+    const [rows, dayStats] = await Promise.all([fetchGoalStoreRowsForBranchGoalView(), fetchGoalDayStats()]);
     const colorBlindMode = isColorBlindDashboardUser(user.id);
 
     if (profile.role === "manager") {

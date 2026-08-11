@@ -72,6 +72,7 @@ export default async function StockManagementPage({ searchParams }: Props) {
           <section className="stock-management-toolbar">
             <div className="stock-management-filter">
               <StockBranchFilter branches={dashboard.branches} selectedBranch={selectedBranch} />
+              <a href={`/stok-bilgisi/iade-excel${selectedBranch ? `?branch=${encodeURIComponent(selectedBranch)}` : ""}`}>İade Listesini Excel'e İndir</a>
             </div>
             <span>Son güncelleme: {formatDate(dashboard.updatedAt)}</span>
           </section>

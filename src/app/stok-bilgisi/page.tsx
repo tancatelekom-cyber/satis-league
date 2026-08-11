@@ -87,23 +87,23 @@ export default async function StockManagementPage({ searchParams }: Props) {
 
           <section className="stock-management-grid">
             <article className="stock-management-panel stock-management-panel-wide">
-              <header><div><span>SİPARİŞ MOTORU</span><h2>Satış hızına göre 7 günlük sipariş listesi</h2></div><b>{rows.filter((row) => row.orderQuantity > 0).length} ürün</b></header>
+              <header><div><span>İHTİYAÇ PLANI</span><h2>7 günlük ihtiyaç, transfer ve sipariş planı</h2></div><b>{rows.filter((row) => row.grossNeed > 0).length} ürün</b></header>
               <div className="stock-management-table-wrap">
-                <table><thead><tr><th>Şube / ürün kısa adı</th><th>Stok</th><th>30 gün satış</th><th>Devir hızı</th><th>Stok günü</th><th>Sipariş</th></tr></thead>
-                  <tbody>{rows.filter((row) => row.orderQuantity > 0).map((row) => (
+                <table><thead><tr><th>Şube / ürün kısa adı</th><th>Stok</th><th>30 gün satış</th><th>Toplam ihtiyaç</th><th>Transfer al</th><th>Sipariş ver</th></tr></thead>
+                  <tbody>{rows.filter((row) => row.grossNeed > 0).map((row) => (
                     <tr key={`${row.branchName}-${row.productCode}`}>
                       <td><strong>{row.productShortName}</strong><small>{row.branchName} · {row.productCode}</small></td>
                       <td>{number(row.currentStock)}</td><td>{number(row.sales30)}</td>
-                      <td><span className="stock-speed">{number(row.turnoverRate, 1)}x</span></td>
-                      <td>{row.coverageDays === null ? "Satış yok" : `${number(row.coverageDays)} gün`}</td>
+                      <td><b>{number(row.grossNeed)}</b></td>
+                      <td>{row.transferIncoming > 0 ? <span className="stock-speed">{number(row.transferIncoming)} adet</span> : "—"}</td>
                       <td><b className="stock-order-badge">+{number(row.orderQuantity)}</b></td>
                     </tr>
                   ))}</tbody>
-                  {rows.some((row) => row.orderQuantity > 0) ? (
-                    <tfoot><tr><th>Toplam sipariş talebi</th><th colSpan={4}></th><th>{number(scopedTotals.orderQuantity)} adet</th></tr></tfoot>
+                  {rows.some((row) => row.grossNeed > 0) ? (
+                    <tfoot><tr><th>Firma dış sipariş toplamı</th><th colSpan={4}></th><th>{number(scopedTotals.orderQuantity)} adet</th></tr></tfoot>
                   ) : null}
                 </table>
-                {!rows.some((row) => row.orderQuantity > 0) ? <p className="stock-management-empty">Sipariş açığı görünmüyor.</p> : null}
+                {!rows.some((row) => row.grossNeed > 0) ? <p className="stock-management-empty">Stok ihtiyacı görünmüyor.</p> : null}
               </div>
             </article>
 

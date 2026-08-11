@@ -22,6 +22,13 @@ export type GoalStoreRow = {
   includeProjection: boolean;
   companyMode: "sum" | "average";
   separateInfo: boolean;
+  fullAchievementOverride?: boolean;
+};
+
+export type GoalStoreFullAchievementOverride = {
+  storeCode: string;
+  categoryName: string;
+  periodMonth: string;
 };
 
 export type GoalDayStats = {
@@ -318,6 +325,71 @@ async function fetchGoalStoreRowsFromSheet() {
     .filter((row): row is GoalStoreRow => Boolean(row));
 }
 
+export function getIstanbulPeriodMonth(date = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Istanbul",
+    year: "numeric",
+    month: "2-digit"
+  }).formatToParts(date);
+  const year = parts.find((part) => part.type === "year")?.value;
+  const month = parts.find((part) => part.type === "month")?.value;
+  return `${year}-${month}`;
+}
+
+function normalizeOverrideKey(value: string) {
+  return normalizeText(value).toLocaleUpperCase("tr-TR");
+}
+
+export function applyGoalStoreFullAchievementOverrides(
+  rows: GoalStoreRow[],
+  overrides: GoalStoreFullAchievementOverride[]
+) {
+  const overrideKeys = new Set(
+    overrides.map((item) => `${normalizeOverrideKey(item.storeCode)}__${normalizeOverrideKey(item.categoryName)}`)
+  );
+
+  return rows.map((row) => {
+    const key = `${normalizeOverrideKey(row.storeCode)}__${normalizeOverrideKey(row.mainCategory)}`;
+    if (!overrideKeys.has(key)) return row;
+
+    return {
+      ...row,
+      target: row.actual,
+      actualCap: row.actual,
+      actualCapIsPercent: false,
+      actualCapScope: "store-and-company" as const,
+      includeProjection: true,
+      fullAchievementOverride: true
+    };
+  });
+}
+
+async function fetchGoalStoreRowsWithFullAchievementOverrides() {
+  const rows = await fetchGoalStoreRowsFromSheet();
+
+  try {
+    const { createAdminClient } = await import("@/lib/supabase/admin");
+    const periodMonth = getIstanbulPeriodMonth();
+    const { data, error } = await createAdminClient()
+      .from("goal_store_full_achievement_overrides")
+      .select("store_code, category_name, period_month")
+      .eq("period_month", `${periodMonth}-01`);
+
+    if (error || !data?.length) return rows;
+
+    return applyGoalStoreFullAchievementOverrides(
+      rows,
+      data.map((item) => ({
+        storeCode: String(item.store_code),
+        categoryName: String(item.category_name),
+        periodMonth: String(item.period_month).slice(0, 7)
+      }))
+    );
+  } catch {
+    return rows;
+  }
+}
+
 async function fetchGoalProductionRewardRowsFromSheet() {
   const response = await fetch(buildSheetUrl(undefined, PRODUCTION_REWARD_SHEET_GID), {
     cache: "no-store",
@@ -452,7 +524,11 @@ export const fetchGoalActualRows = fetchGoalActualRowsFromSheet;
 
 export const fetchGoalDayStats = fetchGoalDayStatsFromSheet;
 
+// Ham Sheet verisi: Ayın Yıldızları, sunumlar, değerlendirmeler ve diğer raporlar bunu kullanır.
 export const fetchGoalStoreRows = fetchGoalStoreRowsFromSheet;
+
+// Yalnızca Şube Hedef Gerçekleşen ekranında kullanılmalıdır.
+export const fetchGoalStoreRowsForBranchGoalView = fetchGoalStoreRowsWithFullAchievementOverrides;
 
 export const fetchGoalProductionRewardRows = fetchGoalProductionRewardRowsFromSheet;
 

@@ -70,7 +70,9 @@ const SALES_GID = "1351738878";
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 function buildCsvUrl(gid: string) {
-  return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`;
+  // The generic /export endpoint may return 401 from serverless runtimes even
+  // when the workbook can be read through Google Sheets' public query feed.
+  return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${gid}`;
 }
 
 function parseCsv(text: string) {

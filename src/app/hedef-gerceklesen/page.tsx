@@ -22,6 +22,7 @@ import {
   fetchGoalProductPointRows,
   fetchGoalProductionRewardRows,
   fetchGoalStoreRows,
+  fetchGoalStoreRowsForBranchGoalView,
   getGoalAchievementActual,
   goalActualCapApplies
 } from "@/lib/goal-actuals";
@@ -865,6 +866,7 @@ function buildStoreMetricSummary(
     ? rows.reduce((sum, row) => sum + getGoalAchievementActual(row, scope), 0)
     : totalActual;
   const hasTarget = totalTarget > 0;
+  const isFullyOverridden = rows.length > 0 && rows.every((row) => row.fullAchievementOverride);
   const showProjection = rows.every((row) => row.includeProjection);
   const projectedActual = showProjection
     ? workedDays > 0
@@ -885,18 +887,20 @@ function buildStoreMetricSummary(
       : null;
 
   return {
-    target: hasTarget ? totalTarget : null,
+    target: hasTarget || isFullyOverridden ? totalTarget : null,
     actual: scope ? achievementActual : totalActual,
     achievementActual,
-    actualPercent: hasTarget ? (achievementActual / totalTarget) * 100 : null,
-    remaining: hasTarget ? Math.max(totalTarget - achievementActual, 0) : null,
-    projectedActual: hasApplicableCap ? projectedAchievementActual : projectedActual,
+    actualPercent: isFullyOverridden ? 100 : hasTarget ? (achievementActual / totalTarget) * 100 : null,
+    remaining: isFullyOverridden ? 0 : hasTarget ? Math.max(totalTarget - achievementActual, 0) : null,
+    projectedActual: isFullyOverridden ? totalActual : hasApplicableCap ? projectedAchievementActual : projectedActual,
     projectedPercent:
-      hasTarget && showProjection && projectedAchievementActual !== null
-        ? (projectedAchievementActual / totalTarget) * 100
-        : null,
-    hasTarget,
-    showProjection
+      isFullyOverridden
+        ? 100
+        : hasTarget && showProjection && projectedAchievementActual !== null
+          ? (projectedAchievementActual / totalTarget) * 100
+          : null,
+    hasTarget: hasTarget || isFullyOverridden,
+    showProjection: showProjection || isFullyOverridden
   };
 }
 
@@ -1489,7 +1493,7 @@ function buildGoalActualCoachingText(args: {
   ].join("\n");
 }
 
-function buildCompanyRows(rows: GoalStoreRow[]): GoalStoreRow[] {
+function buildCompanyRows(rows: GoalStoreRow[], workedDays = 0, totalDays = 0): GoalStoreRow[] {
   const grouped = new Map<string, GoalStoreRow[]>();
 
   rows.forEach((row) => {
@@ -1507,6 +1511,15 @@ function buildCompanyRows(rows: GoalStoreRow[]): GoalStoreRow[] {
       first.companyMode === "average"
         ? average
         : (values: number[]) => values.reduce((sum, value) => sum + value, 0);
+    const hasProjectionOverride = group.some((row) => goalActualCapApplies(row, "company"));
+    const projectedCap = hasProjectionOverride
+      ? aggregate(
+          group.map((row) => {
+            const projected = workedDays > 0 ? (row.actual / workedDays) * totalDays : row.actual;
+            return getGoalAchievementActual(row, "company", projected);
+          })
+        )
+      : null;
 
       return {
         storeCode: "Firma",
@@ -1514,9 +1527,9 @@ function buildCompanyRows(rows: GoalStoreRow[]): GoalStoreRow[] {
         subCategory: first.subCategory,
         target: targets.length ? aggregate(targets) : null,
         actual: aggregate(actuals),
-        actualCap: first.actualCap ?? null,
-        actualCapIsPercent: first.actualCapIsPercent ?? false,
-        actualCapScope: first.actualCapScope ?? null,
+        actualCap: projectedCap ?? first.actualCap ?? null,
+        actualCapIsPercent: projectedCap !== null ? false : first.actualCapIsPercent ?? false,
+        actualCapScope: projectedCap !== null ? "company" : first.actualCapScope ?? null,
         targetIsPercent: first.targetIsPercent ?? false,
         actualIsPercent: first.actualIsPercent ?? false,
         includeProjection: first.includeProjection,
@@ -1894,7 +1907,7 @@ function CompanyInformationCurrentTable({
 }
 
 function buildCompanyCategorySummaries(rows: GoalStoreRow[], workedDays: number, totalDays: number): GoalCategorySummary[] {
-  const companyRows = buildCompanyRows(rows);
+  const companyRows = buildCompanyRows(rows, workedDays, totalDays);
   const groupedRawRows = new Map<string, GoalStoreRow[]>();
   const groupedCompanyRows = new Map<string, GoalStoreRow[]>();
 
@@ -3853,7 +3866,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
   try {
     [employeeRows, storeRows, dayStats, productionRewardRows, productPointRows, documentIssueRows, livePrimeSettings] = await Promise.all([
       fetchGoalActualRows(),
-      fetchGoalStoreRows(),
+      effectiveView === "employee" ? fetchGoalStoreRows() : fetchGoalStoreRowsForBranchGoalView(),
       fetchGoalDayStats(),
       fetchGoalProductionRewardRows(),
       fetchGoalProductPointRows(),

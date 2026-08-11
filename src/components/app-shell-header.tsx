@@ -29,7 +29,7 @@ const baseNavItems: NavItem[] = [
   { href: "/kampanyalar", label: "Gunluk Kampanyalar", mobileLabel: "Kampanya", icon: "🏆" },
   { href: "/aylik-kampanyalar", label: "Aylik Kampanyalar", mobileLabel: "Aylik", icon: "🗓️" },
   { href: "/lig", label: "Yildizlar Kulubu", mobileLabel: "Lig", icon: "⭐" },
-  { href: "/stok-bilgisi", label: "Stok Bilgisi", mobileLabel: "Stok", icon: "📦" },
+  { href: "/stok-bilgisi", label: "Stok Yönetimi", mobileLabel: "Stok", icon: "📦" },
   { href: "/hesabim", label: "Hesabim", mobileLabel: "Hesap", icon: "👤" },
   { href: "/talepler", label: "Talepler", mobileLabel: "Talepler", icon: "📨" }
 ];
@@ -142,14 +142,18 @@ export function AppShellHeader({
       ? itemsWithMissingDocs
       : itemsWithMissingDocs.filter((item) => item.href !== "/haftalik-calisma-programi");
 
+    const itemsWithStockManagement = initialDashboardRole
+      ? itemsWithWorkSchedule
+      : itemsWithWorkSchedule.filter((item) => item.href !== "/stok-bilgisi");
+
     const itemsWithPresentation = initialCanOpenEvaluationPresentation
-      ? [...itemsWithWorkSchedule, { href: "/degerlendirme-sunumu", label: "Degerlendirme Sunumu", mobileLabel: "Sunum", icon: "📈" }]
-      : itemsWithWorkSchedule;
+      ? [...itemsWithStockManagement, { href: "/degerlendirme-sunumu", label: "Degerlendirme Sunumu", mobileLabel: "Sunum", icon: "📈" }]
+      : itemsWithStockManagement;
 
     return initialIsAdmin
       ? [...itemsWithPresentation, { href: "/admin", label: "Admin Paneli", mobileLabel: "Admin", icon: "⚙️" }]
       : itemsWithPresentation;
-  }, [initialCanEvaluate, initialCanOpenEvaluationPresentation, initialCanOpenManagerPrime, initialCanOpenMissingDocs, initialCanOpenRevenueExpense, initialCanOpenWebKontor, initialCanOpenWorkSchedule, initialIsAdmin]);
+  }, [initialCanEvaluate, initialCanOpenEvaluationPresentation, initialCanOpenManagerPrime, initialCanOpenMissingDocs, initialCanOpenRevenueExpense, initialCanOpenWebKontor, initialCanOpenWorkSchedule, initialDashboardRole, initialIsAdmin]);
 
   return (
     <header className="topbar topbar-app">

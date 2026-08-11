@@ -31,7 +31,7 @@ function isDashboardCategory(title: string) {
   );
 }
 
-function aggregateCompanyRows(rows: GoalStoreRow[]) {
+function aggregateCompanyRows(rows: GoalStoreRow[], dayStats: GoalDayStats) {
   const groups = new Map<string, GoalStoreRow[]>();
 
   rows.forEach((row) => {
@@ -51,12 +51,27 @@ function aggregateCompanyRows(rows: GoalStoreRow[]) {
           ? values.reduce((sum, value) => sum + value, 0) / values.length
           : 0
         : values.reduce((sum, value) => sum + value, 0);
+    const hasApplicableCap = group.some((row) => goalActualCapApplies(row, "company"));
+    const projectedCap = hasApplicableCap
+      ? aggregate(
+          group.map((row) => {
+            const projectedActual =
+              dayStats.workedDays > 0
+                ? (row.actual / dayStats.workedDays) * dayStats.totalDays
+                : row.actual;
+            return getGoalAchievementActual(row, "company", projectedActual);
+          })
+        )
+      : null;
 
     return {
       ...first,
       storeCode: "Firma",
       target: targetValues.length ? aggregate(targetValues) : null,
-      actual: aggregate(actualValues)
+      actual: aggregate(actualValues),
+      actualCap: projectedCap ?? first.actualCap ?? null,
+      actualCapIsPercent: projectedCap !== null ? false : first.actualCapIsPercent ?? false,
+      actualCapScope: projectedCap !== null ? "company" : first.actualCapScope ?? null
     };
   });
 }
@@ -117,5 +132,5 @@ export function calculateStoreDashboardSuccess(rows: GoalStoreRow[], dayStats: G
 
 export function calculateCompanyDashboardSuccess(rows: GoalStoreRow[], dayStats: GoalDayStats) {
   const dashboardRows = rows.filter((row) => !row.separateInfo && normalizeKey(row.mainCategory) !== "TUM KATEGORILER");
-  return calculateCategorySuccess(aggregateCompanyRows(dashboardRows), dayStats, "company");
+  return calculateCategorySuccess(aggregateCompanyRows(dashboardRows, dayStats), dayStats, "company");
 }

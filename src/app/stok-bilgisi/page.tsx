@@ -6,7 +6,7 @@ import { StockBranchFilter } from "@/components/stock-branch-filter";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-type Props = { searchParams?: Promise<{ branch?: string }> };
+type Props = { searchParams?: Promise<{ branch?: string; product?: string; view?: string }> };
 
 function number(value: number, digits = 0) {
   return value.toLocaleString("tr-TR", { minimumFractionDigits: digits, maximumFractionDigits: digits });
@@ -23,6 +23,8 @@ function formatDate(value: string) {
 export default async function StockManagementPage({ searchParams }: Props) {
   const params = searchParams ? await searchParams : undefined;
   const selectedBranch = String(params?.branch ?? "").trim();
+  const selectedProduct = String(params?.product ?? "").trim();
+  const showAllStock = params?.view === "all";
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/giris");
@@ -39,7 +41,10 @@ export default async function StockManagementPage({ searchParams }: Props) {
     error = cause instanceof Error ? cause.message : "Stok yönetimi verileri okunamadı.";
   }
 
-  const rows = dashboard?.rows.filter((row) => !selectedBranch || row.branchName === selectedBranch) ?? [];
+  const rows = dashboard?.rows.filter((row) =>
+    (!selectedBranch || row.branchName === selectedBranch) && (!selectedProduct || row.productShortName === selectedProduct)
+  ) ?? [];
+  const products = Array.from(new Set((dashboard?.rows ?? []).map((row) => row.productShortName))).sort((a, b) => a.localeCompare(b, "tr"));
   const transfers = dashboard?.transfers.filter(
     (row) => !selectedBranch || row.fromBranch === selectedBranch || row.toBranch === selectedBranch
   ) ?? [];
@@ -71,7 +76,8 @@ export default async function StockManagementPage({ searchParams }: Props) {
         <>
           <section className="stock-management-toolbar">
             <div className="stock-management-filter">
-              <StockBranchFilter branches={dashboard.branches} selectedBranch={selectedBranch} />
+              <StockBranchFilter branches={dashboard.branches} selectedBranch={selectedBranch} products={products} selectedProduct={selectedProduct} view={showAllStock ? "all" : ""} />
+              <a href={showAllStock ? "/stok-bilgisi" : "/stok-bilgisi?view=all"}>{showAllStock ? "Stok Planına Dön" : "Tüm Stoğu Göster"}</a>
             </div>
             <span>Son güncelleme: {formatDate(dashboard.updatedAt)}</span>
           </section>
@@ -85,7 +91,15 @@ export default async function StockManagementPage({ searchParams }: Props) {
             <article className="expired"><span>⌛</span><div><small>İade süresi geçmiş</small><strong>{number(scopedTotals.expiredReturnCount)}</strong></div></article>
           </section>
 
-          <section className="stock-management-grid">
+          {showAllStock ? (
+            <section className="stock-management-panel stock-management-panel-wide">
+              <header><div><span>TÜM STOK</span><h2>Şube ve ürün kısa adına göre stok listesi</h2></div><b>{rows.length} ürün</b></header>
+              <div className="stock-management-table-wrap"><table>
+                <thead><tr><th>Ürün kısa adı</th><th>Şube</th><th>Marka</th><th>Mevcut stok</th><th>30 gün satış</th><th>En eski stok</th></tr></thead>
+                <tbody>{rows.map((row) => <tr key={`${row.branchName}-${row.productCode}`}><td><strong>{row.productShortName}</strong><small>{row.productName}</small></td><td>{row.branchName}</td><td>{row.brand}</td><td>{number(row.currentStock)}</td><td>{number(row.sales30)}</td><td>{number(row.oldestStockAge)} gün</td></tr>)}</tbody>
+              </table>{!rows.length ? <p className="stock-management-empty">Filtreye uygun stok bulunamadı.</p> : null}</div>
+            </section>
+          ) : <section className="stock-management-grid">
             <article className="stock-management-panel stock-management-panel-wide">
               <header><div><span>İHTİYAÇ PLANI</span><h2>7 günlük ihtiyaç, transfer ve sipariş planı</h2></div><b>{rows.filter((row) => row.grossNeed > 0).length} ürün</b></header>
               <div className="stock-management-table-wrap">
@@ -95,7 +109,7 @@ export default async function StockManagementPage({ searchParams }: Props) {
                       <td><strong>{row.productShortName}</strong><small>{row.branchName} · {row.productCode}</small></td>
                       <td>{number(row.currentStock)}</td><td>{number(row.sales30)}</td>
                       <td><b>{number(row.grossNeed)}</b></td>
-                      <td>{row.transferIncoming > 0 ? <span className="stock-speed">{number(row.transferIncoming)} adet</span> : "—"}</td>
+                      <td>{row.transferIncoming > 0 ? <details className="stock-transfer-detail"><summary>{number(row.transferIncoming)} adet</summary><div>{transfers.filter((item) => item.toBranch === row.branchName && item.productCode === row.productCode).map((item, index) => <span key={`${item.fromBranch}-${index}`}>{item.fromBranch}: <b>{item.quantity} adet</b></span>)}</div></details> : "—"}</td>
                       <td><b className="stock-order-badge">+{number(row.orderQuantity)}</b></td>
                     </tr>
                   ))}</tbody>
@@ -155,7 +169,7 @@ export default async function StockManagementPage({ searchParams }: Props) {
                 </div>
               ))}{!expiredReturns.length ? <p className="stock-management-empty">60 gün üzeri ürün bulunmuyor.</p> : null}</div>
             </article>
-          </section>
+          </section>}
         </>
       ) : null}
     </main>

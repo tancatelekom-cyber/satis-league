@@ -43,12 +43,14 @@ export default async function StockManagementPage({ searchParams }: Props) {
     (row) => !selectedBranch || row.fromBranch === selectedBranch || row.toBranch === selectedBranch
   ) ?? [];
   const alarms = dashboard?.returnAlarms.filter((row) => !selectedBranch || row.branchName === selectedBranch) ?? [];
+  const expiredReturns = dashboard?.expiredReturns.filter((row) => !selectedBranch || row.branchName === selectedBranch) ?? [];
   const scopedTotals = {
     currentStock: rows.reduce((sum, row) => sum + row.currentStock, 0),
     sales30: rows.reduce((sum, row) => sum + row.sales30, 0),
     orderQuantity: rows.reduce((sum, row) => sum + row.orderQuantity, 0),
     transferQuantity: transfers.reduce((sum, row) => sum + row.quantity, 0),
-    returnAlarmCount: alarms.reduce((sum, row) => sum + row.stockCount, 0)
+    returnAlarmCount: alarms.reduce((sum, row) => sum + row.stockCount, 0),
+    expiredReturnCount: expiredReturns.reduce((sum, row) => sum + row.stockCount, 0)
   };
 
   return (
@@ -71,7 +73,7 @@ export default async function StockManagementPage({ searchParams }: Props) {
               <label>
                 <span>Şube filtresi</span>
                 <select name="branch" defaultValue={selectedBranch}>
-                  <option value="">Tüm şubeler</option>
+                  <option value="">Firma Tümü</option>
                   {dashboard.branches.map((branch) => <option value={branch} key={branch}>{branch}</option>)}
                 </select>
               </label>
@@ -87,6 +89,7 @@ export default async function StockManagementPage({ searchParams }: Props) {
             <article className="warning"><span>🛒</span><div><small>Sipariş ihtiyacı</small><strong>{number(scopedTotals.orderQuantity)}</strong></div></article>
             <article className="info"><span>⇄</span><div><small>Transfer fırsatı</small><strong>{number(scopedTotals.transferQuantity)}</strong></div></article>
             <article className="danger"><span>⏳</span><div><small>İade alarmı</small><strong>{number(scopedTotals.returnAlarmCount)}</strong></div></article>
+            <article className="expired"><span>⌛</span><div><small>İade süresi geçmiş</small><strong>{number(scopedTotals.expiredReturnCount)}</strong></div></article>
           </section>
 
           <section className="stock-management-grid">
@@ -120,7 +123,7 @@ export default async function StockManagementPage({ searchParams }: Props) {
 
             <article className="stock-management-panel stock-return-panel">
               <header><div><span>İADE ALARMI</span><h2>Yaşlanan stoklar</h2></div><b>{alarms.length}</b></header>
-              <p className="stock-management-rule">iPhone ≥20 gün · Diğer markalar ≥30 gün</p>
+              <p className="stock-management-rule">iPhone 20–60 gün · Diğer markalar 30–60 gün</p>
               <div className="stock-return-list">{alarms.slice(0, 50).map((row) => (
                 <div key={`${row.branchName}-${row.productCode}`}>
                   <span className={row.brand === "Apple iPhone" ? "apple" : "other"}>{row.brand === "Apple iPhone" ? "" : "!"}</span>
@@ -128,6 +131,18 @@ export default async function StockManagementPage({ searchParams }: Props) {
                   <b>{row.oldestStockAge} gün</b>
                 </div>
               ))}{!alarms.length ? <p className="stock-management-empty">İade alarmı bulunmuyor.</p> : null}</div>
+            </article>
+
+            <article className="stock-management-panel stock-expired-panel">
+              <header><div><span>SÜRESİ GEÇMİŞ</span><h2>60 gün üzeri elde kalanlar</h2></div><b>{expiredReturns.reduce((sum, row) => sum + row.stockCount, 0)} adet</b></header>
+              <p className="stock-management-rule stock-expired-rule">Bu ürünler aktif iade alarmına dahil edilmez.</p>
+              <div className="stock-return-list stock-expired-list">{expiredReturns.slice(0, 100).map((row) => (
+                <div key={`${row.branchName}-${row.productCode}`}>
+                  <span>60+</span>
+                  <p><strong>{row.productName}</strong><small>{row.branchName} · {row.stockCount} adet · {currency(row.purchaseValue)}</small></p>
+                  <b>{row.oldestStockAge} gün</b>
+                </div>
+              ))}{!expiredReturns.length ? <p className="stock-management-empty">60 gün üzeri ürün bulunmuyor.</p> : null}</div>
             </article>
           </section>
         </>

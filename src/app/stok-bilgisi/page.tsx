@@ -72,16 +72,6 @@ export default async function StockManagementPage({ searchParams }: Props) {
           <section className="stock-management-toolbar">
             <div className="stock-management-filter">
               <StockBranchFilter branches={dashboard.branches} selectedBranch={selectedBranch} />
-              <a
-                className="stock-excel-button"
-                href={`/stok-bilgisi/iade-excel${selectedBranch ? `?branch=${encodeURIComponent(selectedBranch)}` : ""}`}
-                title="İade listesini Excel'e indir"
-              >
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M4 3h10a2 2 0 0 1 2 2v3h3a1 1 0 0 1 1 1v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm12 7v9h2v-9h-2ZM6.2 8l2.15 3.5L6 15h2.35l1.25-2.1 1.25 2.1h2.35l-2.35-3.5L13 8h-2.35L9.6 9.9 8.55 8H6.2Z" />
-                </svg>
-                <span>İade Excel</span>
-              </a>
             </div>
             <span>Son güncelleme: {formatDate(dashboard.updatedAt)}</span>
           </section>
@@ -128,7 +118,22 @@ export default async function StockManagementPage({ searchParams }: Props) {
             </article>
 
             <article className="stock-management-panel stock-return-panel">
-              <header><div><span>İADE ALARMI</span><h2>Yaşlanan stoklar</h2></div><b>{alarms.length}</b></header>
+              <header>
+                <div><span>İADE ALARMI</span><h2>Yaşlanan stoklar</h2></div>
+                <div className="stock-return-actions">
+                  <b>{alarms.length}</b>
+                  <a
+                    className="stock-excel-button"
+                    href={`/stok-bilgisi/iade-excel${selectedBranch ? `?branch=${encodeURIComponent(selectedBranch)}` : ""}`}
+                    title="İade listesini Excel'e indir"
+                  >
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M4 3h10a2 2 0 0 1 2 2v3h3a1 1 0 0 1 1 1v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm12 7v9h2v-9h-2ZM6.2 8l2.15 3.5L6 15h2.35l1.25-2.1 1.25 2.1h2.35l-2.35-3.5L13 8h-2.35L9.6 9.9 8.55 8H6.2Z" />
+                    </svg>
+                    <span>İade Excel</span>
+                  </a>
+                </div>
+              </header>
               <p className="stock-management-rule">iPhone 20–60 gün · Diğer markalar 30–60 gün</p>
               <div className="stock-return-list">{alarms.slice(0, 50).map((row) => (
                 <div key={`${row.branchName}-${row.productCode}`}>

@@ -97,6 +97,50 @@ create table if not exists public.leave_periods (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.employee_requests (
+  id uuid primary key default gen_random_uuid(),
+  requester_id uuid not null references public.profiles(id) on delete cascade,
+  store_id uuid references public.stores(id) on delete set null,
+  request_type text not null check (request_type in ('annual_leave', 'excuse_leave', 'advance', 'other')),
+  title text not null,
+  description text,
+  start_date date,
+  end_date date,
+  start_time time,
+  end_time time,
+  advance_amount numeric(12,2),
+  collection_method text,
+  status text not null check (status in ('manager_pending', 'suitability_pending', 'admin_pending', 'implementation_pending', 'completed', 'rejected')),
+  current_assignee_id uuid references public.profiles(id) on delete set null,
+  manager_approved_by uuid references public.profiles(id) on delete set null,
+  manager_approved_at timestamptz,
+  suitability_approved_by uuid references public.profiles(id) on delete set null,
+  suitability_approved_at timestamptz,
+  admin_approved_by uuid references public.profiles(id) on delete set null,
+  admin_approved_at timestamptz,
+  implemented_by uuid references public.profiles(id) on delete set null,
+  implemented_at timestamptz,
+  rejected_by uuid references public.profiles(id) on delete set null,
+  rejected_at timestamptz,
+  rejection_stage text check (rejection_stage in ('manager', 'suitability', 'coordinator', 'implementation')),
+  rejection_reason text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint employee_requests_date_range check (
+    start_date is null or end_date is null or end_date >= start_date
+  ),
+  constraint employee_requests_advance_amount check (
+    advance_amount is null or advance_amount > 0
+  )
+);
+
+create index if not exists employee_requests_requester_idx
+  on public.employee_requests (requester_id, created_at desc);
+create index if not exists employee_requests_store_status_idx
+  on public.employee_requests (store_id, status, created_at desc);
+create index if not exists employee_requests_assignee_idx
+  on public.employee_requests (current_assignee_id, status, created_at desc);
+
 create table if not exists public.seasons (
   id uuid primary key default gen_random_uuid(),
   name text not null,
@@ -337,6 +381,24 @@ create table if not exists public.popup_announcements (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.last_day_counters (
+  id uuid primary key default gen_random_uuid(),
+  category_name text not null,
+  scope text not null check (scope in ('company', 'store')),
+  store_id uuid references public.stores(id) on delete cascade,
+  remaining_count integer not null default 0 check (remaining_count >= 0),
+  is_active boolean not null default true,
+  show_on_home boolean not null default true,
+  completed_at timestamptz,
+  created_by uuid references public.profiles(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  check ((scope = 'company' and store_id is null) or (scope = 'store' and store_id is not null))
+);
+
+alter table public.last_day_counters
+  add column if not exists show_on_home boolean not null default true;
+
 alter table public.popup_announcements
   add column if not exists image_path text;
 
@@ -494,6 +556,18 @@ create table if not exists public.pos_commission_settings (
   updated_by uuid references public.profiles(id) on delete set null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
+);
+
+create table if not exists public.goal_store_full_achievement_overrides (
+  id uuid primary key default gen_random_uuid(),
+  period_month date not null,
+  store_code text not null,
+  category_name text not null,
+  created_by uuid references public.profiles(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (period_month, store_code, category_name),
+  check (period_month = date_trunc('month', period_month)::date)
 );
 
 create table if not exists public.manager_prime_settings (
@@ -709,13 +783,16 @@ alter table public.duel_entries enable row level security;
 alter table public.season_sales_entries enable row level security;
 alter table public.notifications enable row level security;
 alter table public.popup_announcements enable row level security;
+alter table public.last_day_counters enable row level security;
 alter table public.home_leader_settings enable row level security;
 alter table public.popup_announcement_dismissals enable row level security;
 alter table public.weekly_work_schedules enable row level security;
 alter table public.feature_menu_permissions enable row level security;
 alter table public.feature_profile_permissions enable row level security;
 alter table public.pos_commission_settings enable row level security;
+alter table public.goal_store_full_achievement_overrides enable row level security;
 alter table public.manager_prime_settings enable row level security;
+alter table public.employee_requests enable row level security;
 
 drop policy if exists "active stores are visible to everyone" on public.stores;
 create policy "active stores are visible to everyone" on public.stores
@@ -773,6 +850,15 @@ for select using (
 );
 
 drop policy if exists "users can view popup dismissals" on public.popup_announcement_dismissals;
+drop policy if exists "approved users can view last day counters" on public.last_day_counters;
+create policy "approved users can view last day counters" on public.last_day_counters
+for select using (
+  exists (
+    select 1 from public.profiles p
+    where p.id = auth.uid() and p.approval = 'approved'
+  )
+);
+
 drop policy if exists "approved users can view home leader settings" on public.home_leader_settings;
 create policy "approved users can view home leader settings" on public.home_leader_settings
 for select using (
@@ -834,3 +920,43 @@ for select using (auth.uid() is not null);
 drop policy if exists "authenticated users can view manager prime settings" on public.manager_prime_settings;
 create policy "authenticated users can view manager prime settings" on public.manager_prime_settings
 for select using (auth.uid() is not null);
+
+drop policy if exists "approved users can view goal full achievement overrides" on public.goal_store_full_achievement_overrides;
+create policy "approved users can view goal full achievement overrides"
+on public.goal_store_full_achievement_overrides for select using (
+  exists (
+    select 1 from public.profiles p
+    where p.id = auth.uid() and p.approval = 'approved'
+  )
+);
+
+drop policy if exists "request participants can view employee requests" on public.employee_requests;
+create policy "request participants can view employee requests" on public.employee_requests
+for select using (
+  requester_id = auth.uid()
+  or current_assignee_id = auth.uid()
+  or auth.uid() in (
+    'de688a42-d22a-48fa-b86f-32552bf2e1ac'::uuid,
+    '7998f539-5077-472b-ba65-a1d45533eafa'::uuid
+  )
+  or exists (
+    select 1 from public.profiles actor
+    where actor.id = auth.uid()
+      and actor.approval = 'approved'
+      and (
+        actor.role = 'admin'
+        or (
+          actor.role = 'manager'
+          and (
+            employee_requests.requester_id = actor.id
+            or exists (
+              select 1 from public.profiles requester
+              where requester.id = employee_requests.requester_id
+                and requester.role = 'employee'
+                and requester.store_id = actor.store_id
+            )
+          )
+        )
+      )
+  )
+);

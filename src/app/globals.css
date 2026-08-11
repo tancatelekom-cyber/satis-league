@@ -71,6 +71,11 @@
 .stock-transfer-card div { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center; margin-top: 11px; }
 .stock-transfer-card div span { padding: 7px; border-radius: 9px; background: #fff; color: #475569; font-size: .72rem; text-align: center; }
 .stock-transfer-card div b { color: #0f766e; font-size: .75rem; }
+.stock-transfer-detail { position: relative; }
+.stock-transfer-detail summary { display: inline-flex; cursor: pointer; list-style: none; padding: 6px 9px; border-radius: 9px; color: #0369a1; background: #e0f2fe; font-weight: 850; white-space: nowrap; }
+.stock-transfer-detail summary::-webkit-details-marker { display: none; }
+.stock-transfer-detail > div { position: absolute; z-index: 8; top: calc(100% + 5px); left: 0; display: grid; gap: 5px; min-width: 180px; padding: 10px; border: 1px solid #bae6fd; border-radius: 11px; background: #fff; box-shadow: 0 12px 28px rgba(15,23,42,.18); }
+.stock-transfer-detail > div span { font-size: .75rem; white-space: nowrap; }
 .stock-return-panel header > b { color: #b91c1c; background: #fee2e2; }
 .stock-management-rule { margin: 14px 16px 0; padding: 10px 12px; border-radius: 12px; color: #9a3412; background: #fff7ed; font-size: .76rem; font-weight: 800; }
 .stock-return-list > div { display: grid; grid-template-columns: 40px 1fr auto; gap: 10px; align-items: center; padding: 12px; border: 1px solid #fee2e2; border-radius: 15px; background: #fffafa; }

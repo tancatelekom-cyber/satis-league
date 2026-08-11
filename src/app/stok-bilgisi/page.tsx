@@ -103,12 +103,13 @@ export default async function StockManagementPage({ searchParams }: Props) {
                 <thead><tr><th>Ürün kısa adı</th>{stockBranches.map((branch) => <th key={branch}>{branch}</th>)}<th>Firma Toplamı</th></tr></thead>
                 <tbody>{stockProducts.map((product) => {
                   const branchValues = stockBranches.map((branch) => stockByProductBranch.get(`${product}__${branch}`) ?? 0);
-                  return <tr key={product}><th>{product}</th>{branchValues.map((value, index) => <td className={value === 0 ? "stock-zero-cell" : undefined} key={stockBranches[index]}>{number(value)}</td>)}<td className="stock-company-total">{number(branchValues.reduce((sum, value) => sum + value, 0))}</td></tr>;
+                  const companyTotal = dashboard.branches.reduce((sum, branch) => sum + (stockByProductBranch.get(`${product}__${branch}`) ?? 0), 0);
+                  return <tr key={product}><th>{product}</th>{branchValues.map((value, index) => <td className={value === 0 ? "stock-zero-cell" : undefined} key={stockBranches[index]}>{number(value)}</td>)}<td className="stock-company-total">{number(companyTotal)}</td></tr>;
                 })}</tbody>
                 <tfoot><tr><th>Firma Dip Toplamı</th>{stockBranches.map((branch) => {
                   const total = stockProducts.reduce((sum, product) => sum + (stockByProductBranch.get(`${product}__${branch}`) ?? 0), 0);
                   return <th className={total === 0 ? "stock-zero-cell" : undefined} key={branch}>{number(total)}</th>;
-                })}<th>{number(stockProducts.reduce((grand, product) => grand + stockBranches.reduce((sum, branch) => sum + (stockByProductBranch.get(`${product}__${branch}`) ?? 0), 0), 0))}</th></tr></tfoot>
+                })}<th>{number(stockProducts.reduce((grand, product) => grand + dashboard.branches.reduce((sum, branch) => sum + (stockByProductBranch.get(`${product}__${branch}`) ?? 0), 0), 0))}</th></tr></tfoot>
               </table>{!stockProducts.length ? <p className="stock-management-empty">Filtreye uygun stok bulunamadı.</p> : null}</div>
             </section>
           ) : <section className="stock-management-grid">

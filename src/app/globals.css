@@ -33,12 +33,13 @@
 .stock-management-toolbar button { color: #fff; background: #0f766e; }
 .stock-management-toolbar a { color: #0f766e; background: #ccfbf1; }
 .stock-management-toolbar > span { font-size: .76rem; color: #64748b; }
-.stock-management-kpis { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 13px; }
+.stock-management-kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 13px; }
 .stock-management-kpis article { display: flex; align-items: center; gap: 13px; min-height: 104px; padding: 18px; border: 1px solid #dce8ed; border-radius: 22px; background: linear-gradient(155deg,#fff,#f8fafc); box-shadow: 0 12px 28px rgba(15,23,42,.07); }
 .stock-management-kpis article > span { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 14px; font-size: 1.25rem; background: #e0f2fe; color: #0369a1; }
 .stock-management-kpis article.warning > span { background: #fef3c7; color: #b45309; }
 .stock-management-kpis article.info > span { background: #ccfbf1; color: #0f766e; }
 .stock-management-kpis article.danger > span { background: #fee2e2; color: #b91c1c; }
+.stock-management-kpis article.expired > span { background: #ede9fe; color: #6d28d9; }
 .stock-management-kpis small { display: block; color: #64748b; font-weight: 750; }
 .stock-management-kpis strong { display: block; margin-top: 3px; color: #0f172a; font-size: 1.65rem; }
 .stock-management-grid { display: grid; grid-template-columns: minmax(0,1.15fr) minmax(0,.85fr); gap: 18px; align-items: start; }
@@ -77,9 +78,16 @@
 .stock-return-list p strong { overflow: hidden; color: #0f172a; font-size: .82rem; text-overflow: ellipsis; white-space: nowrap; }
 .stock-return-list p small { margin-top: 3px; color: #94a3b8; font-size: .7rem; }
 .stock-return-list > div > b { color: #b91c1c; font-size: .78rem; white-space: nowrap; }
+.stock-expired-panel { grid-column: 1 / -1; }
+.stock-expired-panel header > b { color: #6d28d9; background: #ede9fe; }
+.stock-expired-rule { color: #5b21b6; background: #f5f3ff; }
+.stock-expired-list { grid-template-columns: repeat(2,minmax(0,1fr)); }
+.stock-expired-list > div { border-color: #ddd6fe; background: #faf8ff; }
+.stock-expired-list > div > span { color: #fff; background: #6d28d9; font-size: .68rem; }
+.stock-expired-list > div > b { color: #6d28d9; }
 .stock-management-empty { padding: 22px; color: #64748b; text-align: center; }
 @media (max-width: 1050px) { .stock-management-kpis { grid-template-columns: repeat(3,minmax(0,1fr)); } }
-@media (max-width: 760px) { .stock-management-hero { align-items: flex-start; padding: 25px 21px; } .stock-management-hero-badge { display: none; } .stock-management-toolbar { align-items: stretch; flex-direction: column; } .stock-management-toolbar form { align-items: stretch; flex-direction: column; } .stock-management-toolbar select { width: 100%; } .stock-management-kpis { grid-template-columns: repeat(2,minmax(0,1fr)); } .stock-management-kpis article { min-height: 88px; padding: 14px; } .stock-management-kpis strong { font-size: 1.35rem; } .stock-management-grid { grid-template-columns: 1fr; } }
+@media (max-width: 760px) { .stock-management-hero { align-items: flex-start; padding: 25px 21px; } .stock-management-hero-badge { display: none; } .stock-management-toolbar { align-items: stretch; flex-direction: column; } .stock-management-toolbar form { align-items: stretch; flex-direction: column; } .stock-management-toolbar select { width: 100%; } .stock-management-kpis { grid-template-columns: repeat(2,minmax(0,1fr)); } .stock-management-kpis article { min-height: 88px; padding: 14px; } .stock-management-kpis strong { font-size: 1.35rem; } .stock-management-grid { grid-template-columns: 1fr; } .stock-expired-list { grid-template-columns: 1fr; } }
 @media (max-width: 430px) { .stock-management-kpis { grid-template-columns: 1fr; } }
 
 @keyframes floatCard {

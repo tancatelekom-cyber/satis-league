@@ -50,6 +50,9 @@ export default async function StockManagementPage({ searchParams }: Props) {
   const stockByProductBranch = new Map(
     (dashboard?.rows ?? []).map((row) => [`${row.productShortName}__${row.branchName}`, row.currentStock])
   );
+  const salesByProductBranch = new Map(
+    (dashboard?.rows ?? []).map((row) => [`${row.productShortName}__${row.branchName}`, row.sales30])
+  );
   const transfers = dashboard?.transfers.filter(
     (row) => !selectedBranch || row.fromBranch === selectedBranch || row.toBranch === selectedBranch
   ) ?? [];
@@ -100,16 +103,17 @@ export default async function StockManagementPage({ searchParams }: Props) {
             <section className="stock-management-panel stock-management-panel-wide">
               <header><div><span>TÜM STOK MATRİSİ</span><h2>Ürün ve şube bazında mevcut stoklar</h2></div><b>{stockProducts.length} ürün</b></header>
               <div className="stock-management-table-wrap"><table className="stock-matrix-table">
-                <thead><tr><th>Ürün kısa adı</th>{stockBranches.map((branch) => <th key={branch}>{branch}</th>)}<th>Firma Toplamı</th></tr></thead>
+                <thead><tr><th>Ürün kısa adı</th>{stockBranches.map((branch) => <th key={branch}>{branch}</th>)}{selectedBranch ? <th>1 Haftalık Ort. Satış</th> : null}<th>Firma Toplamı</th></tr></thead>
                 <tbody>{stockProducts.map((product) => {
                   const branchValues = stockBranches.map((branch) => stockByProductBranch.get(`${product}__${branch}`) ?? 0);
                   const companyTotal = dashboard.branches.reduce((sum, branch) => sum + (stockByProductBranch.get(`${product}__${branch}`) ?? 0), 0);
-                  return <tr key={product}><th>{product}</th>{branchValues.map((value, index) => <td className={value === 0 ? "stock-zero-cell" : undefined} key={stockBranches[index]}>{number(value)}</td>)}<td className="stock-company-total">{number(companyTotal)}</td></tr>;
+                  const weeklyAverage = selectedBranch ? ((salesByProductBranch.get(`${product}__${selectedBranch}`) ?? 0) / 30) * 7 : 0;
+                  return <tr key={product}><th>{product}</th>{branchValues.map((value, index) => <td className={value === 0 ? "stock-zero-cell" : undefined} key={stockBranches[index]}>{number(value)}</td>)}{selectedBranch ? <td className="stock-weekly-average">{number(weeklyAverage, 1)}</td> : null}<td className="stock-company-total">{number(companyTotal)}</td></tr>;
                 })}</tbody>
                 <tfoot><tr><th>Firma Dip Toplamı</th>{stockBranches.map((branch) => {
                   const total = stockProducts.reduce((sum, product) => sum + (stockByProductBranch.get(`${product}__${branch}`) ?? 0), 0);
                   return <th className={total === 0 ? "stock-zero-cell" : undefined} key={branch}>{number(total)}</th>;
-                })}<th>{number(stockProducts.reduce((grand, product) => grand + dashboard.branches.reduce((sum, branch) => sum + (stockByProductBranch.get(`${product}__${branch}`) ?? 0), 0), 0))}</th></tr></tfoot>
+                })}{selectedBranch ? <th>{number(stockProducts.reduce((sum, product) => sum + ((salesByProductBranch.get(`${product}__${selectedBranch}`) ?? 0) / 30) * 7, 0), 1)}</th> : null}<th>{number(stockProducts.reduce((grand, product) => grand + dashboard.branches.reduce((sum, branch) => sum + (stockByProductBranch.get(`${product}__${branch}`) ?? 0), 0), 0))}</th></tr></tfoot>
               </table>{!stockProducts.length ? <p className="stock-management-empty">Filtreye uygun stok bulunamadı.</p> : null}</div>
             </section>
           ) : <section className="stock-management-grid">

@@ -154,10 +154,23 @@ function parseNumber(value: string) {
 }
 
 function parseDate(value: string) {
-  const match = normalizeText(value).match(/^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})(?:\s+.*)?$/);
-  if (!match) return null;
-  const date = new Date(Date.UTC(Number(match[3]), Number(match[2]) - 1, Number(match[1]), 12));
-  return Number.isNaN(date.getTime()) ? null : date;
+  const text = normalizeText(value);
+  const dayFirst = text.match(/^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})(?:\s+.*)?$/);
+  if (dayFirst) {
+    const date = new Date(Date.UTC(Number(dayFirst[3]), Number(dayFirst[2]) - 1, Number(dayFirst[1]), 12));
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+  const yearFirst = text.match(/^(\d{4})[.\/-](\d{1,2})[.\/-](\d{1,2})(?:[T\s].*)?$/);
+  if (yearFirst) {
+    const date = new Date(Date.UTC(Number(yearFirst[1]), Number(yearFirst[2]) - 1, Number(yearFirst[3]), 12));
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+  const excelSerial = Number(text.replace(",", "."));
+  if (Number.isFinite(excelSerial) && excelSerial > 20_000 && excelSerial < 100_000) {
+    return new Date(Date.UTC(1899, 11, 30) + excelSerial * DAY_MS);
+  }
+  const nativeDate = new Date(text);
+  return Number.isNaN(nativeDate.getTime()) ? null : nativeDate;
 }
 
 function toRecords(text: string): CsvRow[] {
@@ -211,7 +224,9 @@ export async function fetchStockManagementDashboard(now = new Date()): Promise<S
     fetchCsv(SALES_GID, "Satış Sheet")
   ]);
   const stockRows = toRecords(stockText).filter(isDeviceRow);
-  const salesRows = toRecords(salesText).filter(isDeviceRow);
+  // Sales sheet category/type labels are not always populated consistently.
+  // Match sales to stock using the shared short-product-name and branch fields.
+  const salesRows = toRecords(salesText);
   const inventory: InventoryUnit[] = [];
 
   stockRows.forEach((row) => {

@@ -154,7 +154,7 @@ function parseNumber(value: string) {
 }
 
 function parseDate(value: string) {
-  const match = normalizeText(value).match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+  const match = normalizeText(value).match(/^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})(?:\s+.*)?$/);
   if (!match) return null;
   const date = new Date(Date.UTC(Number(match[3]), Number(match[2]) - 1, Number(match[1]), 12));
   return Number.isNaN(date.getTime()) ? null : date;
@@ -248,7 +248,8 @@ export async function fetchStockManagementDashboard(now = new Date()): Promise<S
     const productShortName = normalizeProductShortName(getField(row, ["ÜRÜN KISA AD", "Ürün Kısa Ad", "Urun Kisa Ad"]));
     if (!saleDate || saleDate < cutoff || saleDate > now || !branchName || !productShortName) return;
     const key = `${branchName}__${normalizeKey(productShortName)}`;
-    sales30Map.set(key, (sales30Map.get(key) ?? 0) + Math.max(0, parseNumber(getField(row, ["Miktar"]))));
+    const saleQuantity = Math.abs(parseNumber(getField(row, ["Miktar"])));
+    sales30Map.set(key, (sales30Map.get(key) ?? 0) + saleQuantity);
     productNames.set(normalizeKey(productShortName), productName || productShortName);
   });
 

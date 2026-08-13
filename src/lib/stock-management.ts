@@ -51,6 +51,7 @@ export type StockManagementDashboard = {
   expiredReturns: StockReturnAlarm[];
   returnUnits: StockReturnUnit[];
   branches: string[];
+  monthlySales: MonthlyDeviceSalesRow[];
   updatedAt: string;
   totals: {
     currentStock: number;
@@ -61,6 +62,14 @@ export type StockManagementDashboard = {
     expiredReturnCount: number;
     stockValue: number;
   };
+};
+
+export type MonthlyDeviceSalesRow = {
+  branchName: string;
+  productShortName: string;
+  brand: string;
+  model: string;
+  quantity: number;
 };
 
 type CsvRow = Record<string, string>;
@@ -253,7 +262,20 @@ export async function fetchStockManagementDashboard(now = new Date()): Promise<S
   });
 
   const cutoff = new Date(now.getTime() - 30 * DAY_MS);
+  const monthParts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Istanbul",
+    year: "numeric",
+    month: "numeric",
+    day: "numeric"
+  }).formatToParts(now);
+  const currentYear = Number(monthParts.find((part) => part.type === "year")?.value ?? now.getUTCFullYear());
+  const currentMonth = Number(monthParts.find((part) => part.type === "month")?.value ?? now.getUTCMonth() + 1);
+  const currentDay = Number(monthParts.find((part) => part.type === "day")?.value ?? now.getUTCDate());
+  const monthStart = new Date(Date.UTC(currentYear, currentMonth - 1, 1));
+  const nextMonthStart = new Date(Date.UTC(currentYear, currentMonth, 1));
+  const nextDayStart = new Date(Date.UTC(currentYear, currentMonth - 1, currentDay + 1));
   const sales30Map = new Map<string, number>();
+  const monthlySalesMap = new Map<string, MonthlyDeviceSalesRow>();
   const productNames = new Map<string, string>();
   salesRows.forEach((row) => {
     const saleDate = parseDate(getField(row, ["Fatura Tarihi"]));
@@ -261,10 +283,18 @@ export async function fetchStockManagementDashboard(now = new Date()): Promise<S
     const productCode = getField(row, ["Ürün Kodu", "Urun Kodu"]);
     const productName = getField(row, ["Ürün Adı", "Urun Adi"]);
     const productShortName = normalizeProductShortName(getField(row, ["ÜRÜN KISA AD", "Ürün Kısa Ad", "Urun Kisa Ad"]));
-    if (!saleDate || saleDate < cutoff || saleDate > now || !branchName || !productShortName) return;
+    if (!saleDate || saleDate >= nextDayStart || !branchName || !productShortName) return;
     const key = `${branchName}__${normalizeKey(productShortName)}`;
     const saleQuantity = Math.abs(parseNumber(getField(row, ["Miktar"])));
-    sales30Map.set(key, (sales30Map.get(key) ?? 0) + saleQuantity);
+    if (saleDate >= cutoff) sales30Map.set(key, (sales30Map.get(key) ?? 0) + saleQuantity);
+    if (saleDate >= monthStart && saleDate < nextMonthStart) {
+      const rawBrand = getField(row, ["MARKA", "Marka"]) || detectBrand(productShortName || productName);
+      const brand = normalizeKey(rawBrand).includes("IPHONE") || normalizeKey(rawBrand).includes("APPLE") ? "Apple iPhone" : rawBrand;
+      const model = getField(row, ["MODEL", "Model", "Model Adı", "Model Adi"]) || productShortName;
+      const monthlyKey = `${key}__${normalizeKey(brand)}__${normalizeKey(model)}`;
+      const current = monthlySalesMap.get(monthlyKey);
+      monthlySalesMap.set(monthlyKey, { branchName, productShortName, brand, model, quantity: (current?.quantity ?? 0) + saleQuantity });
+    }
     productNames.set(normalizeKey(productShortName), productName || productShortName);
   });
 
@@ -406,6 +436,9 @@ export async function fetchStockManagementDashboard(now = new Date()): Promise<S
   rows.sort((a, b) => b.orderQuantity - a.orderQuantity || b.sales30 - a.sales30 || a.productName.localeCompare(b.productName, "tr"));
 
   const branches = Array.from(new Set(rows.map((row) => row.branchName))).sort((a, b) => a.localeCompare(b, "tr"));
+  const monthlySales = Array.from(monthlySalesMap.values()).sort(
+    (a, b) => a.brand.localeCompare(b.brand, "tr") || a.model.localeCompare(b.model, "tr") || a.productShortName.localeCompare(b.productShortName, "tr") || a.branchName.localeCompare(b.branchName, "tr")
+  );
   return {
     rows,
     transfers,
@@ -413,6 +446,7 @@ export async function fetchStockManagementDashboard(now = new Date()): Promise<S
     expiredReturns,
     returnUnits,
     branches,
+    monthlySales,
     updatedAt: now.toISOString(),
     totals: {
       currentStock: inventory.length,

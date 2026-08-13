@@ -16670,3 +16670,15 @@ textarea::placeholder {
 .goal-detail-card [hidden] {
   display: none !important;
 }
+
+
+.stock-monthly-sales-hero { background: radial-gradient(circle at 85% 15%, rgba(251,191,36,.28), transparent 28%), linear-gradient(135deg,#172554,#1d4ed8 55%,#0f766e); }
+.stock-monthly-toolbar { align-items: end; }
+.stock-monthly-filters { display: flex; align-items: end; gap: 10px; flex-wrap: wrap; }
+.stock-monthly-filters label { display: grid; gap: 5px; }
+.stock-monthly-filters button { min-height: 42px; color: #fff; background: #475569; }
+.stock-monthly-sales-table { min-width: 1050px !important; }
+.stock-monthly-sales-table th:nth-child(1) { min-width: 230px; }
+.stock-monthly-sales-table th:nth-child(2), .stock-monthly-sales-table th:nth-child(3) { min-width: 150px; text-align: left; }
+.stock-monthly-sales-table td:nth-child(2), .stock-monthly-sales-table td:nth-child(3) { text-align: left; font-weight: 750; }
+.stock-monthly-sales-table .stock-muted-cell { color: #94a3b8; background: #f8fafc; }

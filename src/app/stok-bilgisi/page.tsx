@@ -85,6 +85,7 @@ export default async function StockManagementPage({ searchParams }: Props) {
           <section className="stock-management-toolbar">
             <div className="stock-management-filter">
               <StockBranchFilter branches={dashboard.branches} selectedBranch={selectedBranch} products={products} selectedProduct={selectedProduct} view={showAllStock ? "all" : ""} />
+              <a href="/stok-bilgisi/aylik-satislar">Bu Ayın Cihaz Satışları</a>
               <a href={showAllStock ? "/stok-bilgisi" : "/stok-bilgisi?view=all"}>{showAllStock ? "Stok Planına Dön" : "Tüm Stoğu Göster"}</a>
             </div>
             <span>Son güncelleme: {formatDate(dashboard.updatedAt)}</span>

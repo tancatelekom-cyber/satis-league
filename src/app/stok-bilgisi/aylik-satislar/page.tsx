@@ -34,7 +34,17 @@ export default async function MonthlyStockSalesPage({ searchParams }: Props) {
   const effectiveModel = validModels.includes(selectedModel) ? selectedModel : "";
   const filteredSales = allSales.filter((row) => (!effectiveBrand || row.brand === effectiveBrand) && (!effectiveModel || row.model === effectiveModel));
   const branches = Array.from(new Set(allSales.map((row) => row.branchName))).sort((a, b) => a.localeCompare(b, "tr"));
-  const products = Array.from(new Map(filteredSales.map((row) => [`${row.brand}__${row.model}__${row.productShortName}`, row])).values());
+  const productTotals = new Map<string, number>();
+  filteredSales.forEach((row) => {
+    const key = `${row.brand}__${row.model}__${row.productShortName}`;
+    productTotals.set(key, (productTotals.get(key) ?? 0) + row.quantity);
+  });
+  const products = Array.from(new Map(filteredSales.map((row) => [`${row.brand}__${row.model}__${row.productShortName}`, row])).values())
+    .sort((a, b) => {
+      const aKey = `${a.brand}__${a.model}__${a.productShortName}`;
+      const bKey = `${b.brand}__${b.model}__${b.productShortName}`;
+      return (productTotals.get(bKey) ?? 0) - (productTotals.get(aKey) ?? 0) || a.productShortName.localeCompare(b.productShortName, "tr");
+    });
   const salesMap = new Map(filteredSales.map((row) => [`${row.brand}__${row.model}__${row.productShortName}__${row.branchName}`, row.quantity]));
   const monthLabel = new Intl.DateTimeFormat("tr-TR", { month: "long", year: "numeric", timeZone: "Europe/Istanbul" }).format(new Date());
   const grandTotal = filteredSales.reduce((sum, row) => sum + row.quantity, 0);

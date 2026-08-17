@@ -194,6 +194,12 @@ function getField(row: CsvRow, names: string[]) {
   for (const name of names) {
     if (row[name]) return row[name];
   }
+  // Sheet başlıklarında büyük/küçük harf veya Türkçe karakter farkı olsa da
+  // aynı alanı bul. Rapor dışa aktarımları başlık biçimini zaman zaman değiştiriyor.
+  const normalizedNames = new Set(names.map(normalizeKey));
+  for (const [header, value] of Object.entries(row)) {
+    if (value && normalizedNames.has(normalizeKey(header))) return value;
+  }
   return "";
 }
 
@@ -228,11 +234,23 @@ async function fetchCsv(gid: string, label: string) {
 }
 
 export async function fetchStockManagementDashboard(now = new Date()): Promise<StockManagementDashboard> {
-  const [stockText, salesText] = await Promise.all([
+  const [stockResult, salesResult] = await Promise.allSettled([
     fetchCsv(STOCK_GID, "Stok Sheet"),
     fetchCsv(SALES_GID, "Satış Sheet")
   ]);
+  if (stockResult.status === "rejected") throw stockResult.reason;
+  const stockText = stockResult.value;
+  // Satış sekmesindeki geçici bir hata mevcut stokların tamamını gizlememeli.
+  const salesText = salesResult.status === "fulfilled" ? salesResult.value : "";
   const stockRows = toRecords(stockText).filter(isDeviceRow);
+  if (!stockRows.length) {
+    const headers = (parseCsv(stockText)[0] ?? []).map(normalizeText).filter(Boolean);
+    throw new Error(
+      headers.length
+        ? `Stok Sheet okundu ancak cihaz satırı bulunamadı. Sütunlar: ${headers.join(", ")}`
+        : "Stok Sheet boş veya erişime kapalı."
+    );
+  }
   // Sales sheet category/type labels are not always populated consistently.
   // Match sales to stock using the shared short-product-name and branch fields.
   const salesRows = toRecords(salesText);

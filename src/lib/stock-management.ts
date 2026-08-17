@@ -260,7 +260,9 @@ export async function fetchStockManagementDashboard(now = new Date()): Promise<S
     const branchName = getField(row, ["ŞUBE", "Şube Adı", "Sube Adi"]);
     const productCode = getField(row, ["Ürün Kodu", "Urun Kodu"]);
     const productName = getField(row, ["Ürün Adı", "Urun Adi"]);
-    const productShortName = normalizeProductShortName(getField(row, ["ÜRÜN KISA AD", "Ürün Kısa Ad", "Urun Kisa Ad"]));
+    const productShortName = normalizeProductShortName(
+      getField(row, ["ÜRÜN KISA AD", "ÜRÜN KISA ADI", "Ürün Kısa Ad", "Ürün Kısa Adı", "Urun Kisa Ad", "Urun Kisa Adi"]) || getShortName(productName)
+    );
     const brand = getField(row, ["MARKA", "Marka"]) || detectBrand(productShortName || productName);
     const quantity = Math.max(1, Math.round(parseNumber(getField(row, ["Miktar"]))));
     if (!branchName || !productShortName) return;
@@ -300,7 +302,9 @@ export async function fetchStockManagementDashboard(now = new Date()): Promise<S
     const branchName = getField(row, ["ŞUBE", "Şube Adı", "Sube Adi"]);
     const productCode = getField(row, ["Ürün Kodu", "Urun Kodu"]);
     const productName = getField(row, ["Ürün Adı", "Urun Adi"]);
-    const productShortName = normalizeProductShortName(getField(row, ["ÜRÜN KISA AD", "Ürün Kısa Ad", "Urun Kisa Ad"]));
+    const productShortName = normalizeProductShortName(
+      getField(row, ["ÜRÜN KISA AD", "ÜRÜN KISA ADI", "Ürün Kısa Ad", "Ürün Kısa Adı", "Urun Kisa Ad", "Urun Kisa Adi"]) || getShortName(productName)
+    );
     if (!saleDate || saleDate >= nextDayStart || !branchName || !productShortName) return;
     const key = `${branchName}__${normalizeKey(productShortName)}`;
     const saleQuantity = Math.abs(parseNumber(getField(row, ["Miktar"])));

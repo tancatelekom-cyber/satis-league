@@ -33,7 +33,7 @@ export function HomeDateTime() {
   }, []);
 
   return (
-    <section className="home-date-time" aria-label="Güncel tarih ve Türkiye saati">
+    <section className="home-date-time" aria-label="Güncel tarih ve saat">
       <div className="home-date-time-copy">
         <span className="home-date-time-eyebrow">BUGÜN</span>
         <time className="home-current-date" dateTime={now?.toISOString()}>
@@ -47,7 +47,6 @@ export function HomeDateTime() {
           <time className="home-current-time" dateTime={now?.toISOString()}>
             {now ? TIME_FORMATTER.format(now) : "--:--:--"}
           </time>
-          <span className="home-clock-zone">Türkiye saati</span>
         </div>
       </div>
     </section>

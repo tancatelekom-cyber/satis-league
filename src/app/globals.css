@@ -877,8 +877,7 @@ button {
   gap: 5px;
 }
 
-.home-date-time-eyebrow,
-.home-clock-zone {
+.home-date-time-eyebrow {
   color: #bff8e6;
   font-size: 0.68rem;
   font-weight: 900;
@@ -16771,3 +16770,20 @@ textarea::placeholder {
 .stock-monthly-sales-table th:nth-child(2), .stock-monthly-sales-table th:nth-child(3) { min-width: 150px; text-align: left; }
 .stock-monthly-sales-table td:nth-child(2), .stock-monthly-sales-table td:nth-child(3) { text-align: left; font-weight: 750; }
 .stock-monthly-sales-table .stock-muted-cell { color: #94a3b8; background: #f8fafc; }
+
+
+.home-leaders-month {
+  display: block;
+  width: fit-content;
+  margin-bottom: 9px;
+  padding: 6px 10px;
+  border: 1px solid rgba(15, 118, 110, 0.2);
+  border-radius: 999px;
+  background: rgba(88, 240, 196, 0.14);
+  color: #0f766e;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+}

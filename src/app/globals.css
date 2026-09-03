@@ -850,6 +850,81 @@ button {
   padding: 18px 0 6px;
 }
 
+.home-date-time {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+  margin-top: 18px;
+  padding: 18px 22px;
+  overflow: hidden;
+  border: 1px solid rgba(88, 240, 196, 0.2);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 88% 18%, rgba(255, 209, 102, 0.17), transparent 30%),
+    linear-gradient(135deg, rgba(5, 79, 84, 0.98), rgba(7, 106, 113, 0.94));
+  box-shadow: var(--shadow);
+  color: #ffffff;
+}
+
+.home-date-time-copy,
+.home-clock-wrap,
+.home-clock-wrap > div {
+  display: grid;
+}
+
+.home-date-time-copy {
+  gap: 5px;
+}
+
+.home-date-time-eyebrow,
+.home-clock-zone {
+  color: #bff8e6;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.home-current-date {
+  font-size: clamp(1rem, 2.2vw, 1.28rem);
+  font-weight: 850;
+  line-height: 1.2;
+}
+
+.home-clock-wrap {
+  grid-template-columns: auto auto;
+  align-items: center;
+  gap: 12px;
+  min-width: max-content;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 16px;
+  background: rgba(4, 42, 48, 0.36);
+}
+
+.home-clock-wrap > div {
+  gap: 2px;
+}
+
+.home-clock-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #58f0c4;
+  box-shadow: 0 0 0 5px rgba(88, 240, 196, 0.12), 0 0 18px rgba(88, 240, 196, 0.8);
+}
+
+.home-current-time {
+  min-width: 8ch;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(1.42rem, 3vw, 1.9rem);
+  font-weight: 950;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
 .home-leaders-title {
   margin: 0;
   font-size: clamp(2rem, 4.6vw, 3.2rem) !important;
@@ -10182,6 +10257,20 @@ textarea::placeholder {
   .home-leaders-hero {
     padding-top: 20px;
     padding-bottom: 4px;
+  }
+
+  .home-date-time {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 13px;
+    margin-top: 14px;
+    padding: 16px;
+    border-radius: 18px;
+  }
+
+  .home-clock-wrap {
+    justify-content: center;
+    width: 100%;
   }
 
   .hero-grid {

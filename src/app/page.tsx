@@ -41,17 +41,17 @@ type HomeLeaderCard = {
 
 const MONTH_LABELS = [
   "Ocak",
-  "Subat",
+  "Şubat",
   "Mart",
   "Nisan",
-  "Mayis",
+  "Mayıs",
   "Haziran",
   "Temmuz",
-  "Agustos",
-  "Eylul",
+  "Ağustos",
+  "Eylül",
   "Ekim",
-  "Kasim",
-  "Aralik"
+  "Kasım",
+  "Aralık"
 ];
 
 function toDateString(date: Date) {
@@ -657,7 +657,10 @@ export default async function HomePage() {
       ) : null}
           <section className="hero home-leaders-hero">
             <div className="hero-copy">
-              <h1 className="home-leaders-title">Ayın Yıldızları</h1>
+              <h1 className="home-leaders-title">
+                <span className="home-leaders-month">{monthLabel} dönemi</span>
+                Ayın Yıldızları
+              </h1>
             </div>
           </section>
 

@@ -16,6 +16,7 @@ import { getDuelDashboardData } from "@/lib/duel/get-duel-dashboard-data";
 import { LiveCampaignCountdown } from "@/components/campaign/live-campaign-countdown";
 import { CampaignLeaderboardShareButton } from "@/components/campaign/campaign-leaderboard-share-button";
 import { formatCampaignDateTime } from "@/lib/campaign-utils";
+import { HomeDateTime } from "@/components/home-date-time";
 import { LastDayCounters } from "@/components/last-day-counters";
 import { getLastDayCounters } from "@/lib/last-day-counters";
 
@@ -512,6 +513,8 @@ export default async function HomePage() {
       {popupAnnouncements.length > 0 ? (
         <HomePopupAnnouncement announcements={popupAnnouncements} sessionKey={popupSessionKey} />
       ) : null}
+
+      <HomeDateTime />
 
       <LastDayCounters
         counters={visibleLastDayCounters}

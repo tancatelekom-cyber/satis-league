@@ -3866,7 +3866,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
   try {
     [employeeRows, storeRows, dayStats, productionRewardRows, productPointRows, documentIssueRows, livePrimeSettings] = await Promise.all([
       fetchGoalActualRows(),
-      effectiveView === "employee" ? fetchGoalStoreRows() : fetchGoalStoreRowsForBranchGoalView(),
+      effectiveView === "store" ? fetchGoalStoreRowsForBranchGoalView() : fetchGoalStoreRows(),
       fetchGoalDayStats(),
       fetchGoalProductionRewardRows(),
       fetchGoalProductPointRows(),

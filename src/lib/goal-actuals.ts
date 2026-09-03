@@ -1,3 +1,5 @@
+import { calculateAdjustedGoalTarget } from "@/lib/goal-target-adjustments";
+
 export type GoalActualRow = {
   personnelId: string;
   employeeName: string;
@@ -13,6 +15,9 @@ export type GoalStoreRow = {
   mainCategory: string;
   subCategory: string;
   target: number | null;
+  rawTarget?: number | null;
+  targetIncrease?: number;
+  targetIncreasePercent?: number;
   actual: number;
   actualCap?: number | null;
   actualCapIsPercent?: boolean;
@@ -29,6 +34,13 @@ export type GoalStoreFullAchievementOverride = {
   storeCode: string;
   categoryName: string;
   periodMonth: string;
+};
+
+export type GoalStoreTargetAdjustment = {
+  storeCode: string;
+  categoryName: string;
+  periodMonth: string;
+  increasePercent: number;
 };
 
 export type GoalDayStats = {
@@ -340,6 +352,44 @@ function normalizeOverrideKey(value: string) {
   return normalizeText(value).toLocaleUpperCase("tr-TR");
 }
 
+export function applyGoalStoreTargetAdjustments(
+  rows: GoalStoreRow[],
+  adjustments: GoalStoreTargetAdjustment[]
+) {
+  const adjustmentMap = new Map(
+    adjustments.map((item) => [
+      `${normalizeOverrideKey(item.storeCode)}__${normalizeOverrideKey(item.categoryName)}`,
+      item.increasePercent
+    ])
+  );
+
+  return rows.map((row) => {
+    const increasePercent = adjustmentMap.get(
+      `${normalizeOverrideKey(row.storeCode)}__${normalizeOverrideKey(row.mainCategory)}`
+    );
+
+    if (
+      increasePercent === undefined ||
+      increasePercent <= 0 ||
+      row.target === null ||
+      row.target <= 0 ||
+      row.targetIsPercent
+    ) {
+      return row;
+    }
+
+    const adjustedTarget = calculateAdjustedGoalTarget(row.target, increasePercent);
+
+    return {
+      ...row,
+      rawTarget: row.target,
+      target: adjustedTarget,
+      targetIncrease: adjustedTarget - row.target,
+      targetIncreasePercent: increasePercent
+    };
+  });
+}
+
 export function applyGoalStoreFullAchievementOverrides(
   rows: GoalStoreRow[],
   overrides: GoalStoreFullAchievementOverride[]
@@ -364,27 +414,51 @@ export function applyGoalStoreFullAchievementOverrides(
   });
 }
 
-async function fetchGoalStoreRowsWithFullAchievementOverrides() {
+async function fetchGoalStoreRowsWithBranchOverrides() {
   const rows = await fetchGoalStoreRowsFromSheet();
 
   try {
     const { createAdminClient } = await import("@/lib/supabase/admin");
     const periodMonth = getIstanbulPeriodMonth();
-    const { data, error } = await createAdminClient()
-      .from("goal_store_full_achievement_overrides")
-      .select("store_code, category_name, period_month")
-      .eq("period_month", `${periodMonth}-01`);
+    const admin = createAdminClient();
+    const periodDate = `${periodMonth}-01`;
+    const [targetAdjustmentsResult, fullAchievementResult] = await Promise.all([
+      admin
+        .from("goal_store_target_adjustments")
+        .select("store_code, category_name, period_month, increase_percent")
+        .eq("period_month", periodDate),
+      admin
+        .from("goal_store_full_achievement_overrides")
+        .select("store_code, category_name, period_month")
+        .eq("period_month", periodDate)
+    ]);
 
-    if (error || !data?.length) return rows;
+    let branchRows = rows;
 
-    return applyGoalStoreFullAchievementOverrides(
-      rows,
-      data.map((item) => ({
-        storeCode: String(item.store_code),
-        categoryName: String(item.category_name),
-        periodMonth: String(item.period_month).slice(0, 7)
-      }))
-    );
+    if (!targetAdjustmentsResult.error && targetAdjustmentsResult.data?.length) {
+      branchRows = applyGoalStoreTargetAdjustments(
+        branchRows,
+        targetAdjustmentsResult.data.map((item) => ({
+          storeCode: String(item.store_code),
+          categoryName: String(item.category_name),
+          periodMonth: String(item.period_month).slice(0, 7),
+          increasePercent: Number(item.increase_percent)
+        }))
+      );
+    }
+
+    if (!fullAchievementResult.error && fullAchievementResult.data?.length) {
+      branchRows = applyGoalStoreFullAchievementOverrides(
+        branchRows,
+        fullAchievementResult.data.map((item) => ({
+          storeCode: String(item.store_code),
+          categoryName: String(item.category_name),
+          periodMonth: String(item.period_month).slice(0, 7)
+        }))
+      );
+    }
+
+    return branchRows;
   } catch {
     return rows;
   }
@@ -528,7 +602,7 @@ export const fetchGoalDayStats = fetchGoalDayStatsFromSheet;
 export const fetchGoalStoreRows = fetchGoalStoreRowsFromSheet;
 
 // Yalnızca Şube Hedef Gerçekleşen ekranında kullanılmalıdır.
-export const fetchGoalStoreRowsForBranchGoalView = fetchGoalStoreRowsWithFullAchievementOverrides;
+export const fetchGoalStoreRowsForBranchGoalView = fetchGoalStoreRowsWithBranchOverrides;
 
 export const fetchGoalProductionRewardRows = fetchGoalProductionRewardRowsFromSheet;
 

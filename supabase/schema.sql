@@ -570,6 +570,20 @@ create table if not exists public.goal_store_full_achievement_overrides (
   check (period_month = date_trunc('month', period_month)::date)
 );
 
+create table if not exists public.goal_store_target_adjustments (
+  id uuid primary key default gen_random_uuid(),
+  period_month date not null,
+  store_code text not null,
+  category_name text not null,
+  increase_percent numeric(8,3) not null default 0,
+  created_by uuid references public.profiles(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (period_month, store_code, category_name),
+  check (period_month = date_trunc('month', period_month)::date),
+  check (increase_percent >= 0 and increase_percent <= 1000)
+);
+
 create table if not exists public.manager_prime_settings (
   id uuid primary key default gen_random_uuid(),
   scale_column text not null default 'A',
@@ -791,6 +805,7 @@ alter table public.feature_menu_permissions enable row level security;
 alter table public.feature_profile_permissions enable row level security;
 alter table public.pos_commission_settings enable row level security;
 alter table public.goal_store_full_achievement_overrides enable row level security;
+alter table public.goal_store_target_adjustments enable row level security;
 alter table public.manager_prime_settings enable row level security;
 alter table public.employee_requests enable row level security;
 
@@ -924,6 +939,15 @@ for select using (auth.uid() is not null);
 drop policy if exists "approved users can view goal full achievement overrides" on public.goal_store_full_achievement_overrides;
 create policy "approved users can view goal full achievement overrides"
 on public.goal_store_full_achievement_overrides for select using (
+  exists (
+    select 1 from public.profiles p
+    where p.id = auth.uid() and p.approval = 'approved'
+  )
+);
+
+drop policy if exists "approved users can view goal store target adjustments" on public.goal_store_target_adjustments;
+create policy "approved users can view goal store target adjustments"
+on public.goal_store_target_adjustments for select using (
   exists (
     select 1 from public.profiles p
     where p.id = auth.uid() and p.approval = 'approved'

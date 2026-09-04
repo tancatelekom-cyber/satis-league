@@ -11,6 +11,7 @@ const adminGroups = [
       { href: "/admin/siralama", icon: "🏆", label: "Sıralama", description: "Lig ve liderlik ekranlarına eriş" },
       { href: "/admin/calisan-analiz", icon: "🔎", label: "Çalışan Analizi", description: "Personel performansını ayrıntılı incele" },
       { href: "/admin/mudur-sunumu", icon: "🎯", label: "Müdür Sunumu", description: "Hedef gerçekleşen sunumunu yönet" },
+      { href: "/admin/hedef-artisi", icon: "↗", label: "Şube Hedef Artışı", description: "Şube ve kategori bazında artışlı hedef belirle" },
       { href: "/admin/hedef-yuzde-yuz", icon: "%", label: "Hedef %100 Ayarı", description: "Şube ve kategori bazında hedefi tamamlandı say" }
     ]
   },
@@ -63,7 +64,7 @@ export function AdminSectionNav({ currentPath }: AdminSectionNavProps) {
             <strong>Yönetim Alanları</strong>
             <small>İşlem yapmak istediğiniz bölümü seçin</small>
           </span>
-          <span className="admin-directory-count">20 bölüm</span>
+          <span className="admin-directory-count">21 bölüm</span>
         </summary>
 
         <div className="admin-directory-body">

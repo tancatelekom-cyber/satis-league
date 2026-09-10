@@ -17,6 +17,7 @@ import { LiveCampaignCountdown } from "@/components/campaign/live-campaign-count
 import { CampaignLeaderboardShareButton } from "@/components/campaign/campaign-leaderboard-share-button";
 import { formatCampaignDateTime } from "@/lib/campaign-utils";
 import { HomeDateTime } from "@/components/home-date-time";
+import { fetchGoalActualRows, type GoalActualRow } from "@/lib/goal-actuals";
 import { LastDayCounters } from "@/components/last-day-counters";
 import { getLastDayCounters } from "@/lib/last-day-counters";
 
@@ -70,6 +71,19 @@ function clampDate(value: string, min: string, max: string) {
 function buildMonthHref(seasonId: string, monthKey: string) {
   const year = monthKey.slice(0, 4);
   return `/lig?seasonId=${seasonId}&period=month&year=${year}&month=${monthKey}`;
+}
+
+function normalizeHomeGoalKey(value: string | null | undefined) {
+  return String(value ?? "")
+    .toLocaleUpperCase("tr-TR")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^A-Z0-9]+/g, " ")
+    .trim();
+}
+
+function isHomeProductionPointCategory(value: string | null | undefined) {
+  return normalizeHomeGoalKey(value).includes("URETIM PUAN");
 }
 
 function getProfileStoreName(
@@ -208,6 +222,7 @@ export default async function HomePage() {
   const admin = createAdminClient();
   const now = new Date();
   const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const currentMonthLabel = `${MONTH_LABELS[now.getMonth()]} ${now.getFullYear()}`;
   const { data: homeLeaderSettings } = await admin
     .from("home_leader_settings")
     .select("display_month")
@@ -224,10 +239,11 @@ export default async function HomePage() {
 
   const campaignDashboardPromise = getCampaignDashboardData(user.id);
   const duelDashboardPromise = getDuelDashboardData(user.id);
+  const goalActualRowsPromise = fetchGoalActualRows().catch(() => [] as GoalActualRow[]);
   const seasonDataPromise = Promise.all([
     admin
       .from("seasons")
-      .select("id, name, start_date, end_date, mode, scoring, is_active, created_at")
+      .select("id, name, start_date, end_date, mode, is_active, created_at")
       .eq("is_active", true)
       .order("created_at", { ascending: false }),
     admin
@@ -242,9 +258,10 @@ export default async function HomePage() {
       .lte("entry_date", monthEnd)
   ]);
 
-  const [campaignDashboard, duelDashboard] = await Promise.all([
+  const [campaignDashboard, duelDashboard, goalActualRows] = await Promise.all([
     campaignDashboardPromise,
-    duelDashboardPromise
+    duelDashboardPromise,
+    goalActualRowsPromise
   ]);
   const autoPopupSettingsMap =
     campaignDashboard?.profile.approval === "approved" ? await getAutoPopupSettingsMap() : new Map();
@@ -424,14 +441,20 @@ export default async function HomePage() {
   );
 
   const seasonRows = ((seasons as SeasonRecord[] | null) ?? []).filter((season) => season.is_active);
-  const employeeProfiles =
-    ((profiles as Array<{
+  const approvedProfiles =
+    (profiles as Array<{
       id: string;
       full_name: string;
       role: string;
       is_on_leave: boolean;
       store_id: string | null;
-    }> | null) ?? []).filter((profile) => profile.role === "employee" && !profile.is_on_leave);
+    }> | null) ?? [];
+  const employeeProfiles = approvedProfiles.filter(
+    (profile) => profile.role === "employee" && !profile.is_on_leave
+  );
+  const productionProfiles = approvedProfiles.filter(
+    (profile) => ["employee", "manager"].includes(profile.role) && !profile.is_on_leave
+  );
   const storeRows = (stores as Array<{ id: string; name: string }> | null) ?? [];
   const saleRows = (seasonSales as SeasonSaleRow[] | null) ?? [];
 
@@ -508,29 +531,35 @@ export default async function HomePage() {
     };
   });
 
-  const pointSeason =
-    seasonRows.find((season) => season.scoring === "points" && season.mode === "employee") ??
-    seasonRows.find((season) => season.scoring === "points") ??
-    null;
-  const pointSeasonSales = pointSeason
-    ? saleRows.filter(
-        (sale) =>
-          sale.season_id === pointSeason.id &&
-          sale.entry_date >= clampDate(monthStart, pointSeason.start_date, pointSeason.end_date) &&
-          sale.entry_date <= clampDate(monthEnd, pointSeason.start_date, pointSeason.end_date)
-      )
-    : [];
-  const pointLeader = pointSeason
-    ? employeeProfiles
-        .map((profile) => ({
-          id: profile.id,
-          label: profile.full_name,
-          score: pointSeasonSales
-            .filter((sale) => sale.target_profile_id === profile.id)
-            .reduce((sum, sale) => sum + Number(sale.score ?? 0), 0)
-        }))
-        .sort((a, b) => b.score - a.score || a.label.localeCompare(b.label, "tr"))[0] ?? null
-    : null;
+  const productionProfileById = new Map(productionProfiles.map((profile) => [profile.id, profile]));
+  const productionProfileByName = new Map(
+    productionProfiles.map((profile) => [normalizeHomeGoalKey(profile.full_name), profile])
+  );
+  const productionScoreMap = new Map<string, number>();
+
+  goalActualRows
+    .filter((row) => isHomeProductionPointCategory(row.mainCategory))
+    .forEach((row) => {
+      const profile =
+        (row.personnelId ? productionProfileById.get(row.personnelId) : null) ??
+        productionProfileByName.get(normalizeHomeGoalKey(row.employeeName));
+
+      if (!profile) return;
+
+      productionScoreMap.set(
+        profile.id,
+        (productionScoreMap.get(profile.id) ?? 0) + Number(row.actual ?? 0)
+      );
+    });
+
+  const productionChampion =
+    productionProfiles
+      .map((profile) => ({
+        id: profile.id,
+        label: profile.full_name,
+        score: productionScoreMap.get(profile.id) ?? 0
+      }))
+      .sort((a, b) => b.score - a.score || a.label.localeCompare(b.label, "tr"))[0] ?? null;
 
   return (
     <main>
@@ -681,38 +710,31 @@ export default async function HomePage() {
       ) : null}
 
           <section className="home-point-leader-section">
-            {pointSeason ? (
-              <Link
-                className="home-point-leader-card"
-                href={buildMonthHref(pointSeason.id, monthKey)}
-              >
-                <div className="home-point-leader-badge" aria-hidden="true">
-                  <span>1</span>
-                  <strong>🏆</strong>
-                </div>
-                <div className="home-point-leader-copy">
-                  <span>Personel Puan 1.si · {monthLabel}</span>
-                  <strong>
-                    {pointLeader && pointLeader.score > 0 ? pointLeader.label : "Henüz personel puanı yok"}
-                  </strong>
-                  <small>{pointSeason.name}</small>
-                </div>
-                <strong className="home-point-leader-score">
-                  {(pointLeader?.score ?? 0).toLocaleString("tr-TR")} puan
+            <Link
+              className="home-point-leader-card"
+              href={
+                productionChampion && productionChampion.score > 0
+                  ? `/hedef-gerceklesen?view=employee&employee=${encodeURIComponent(productionChampion.label)}&panel=detail`
+                  : "/hedef-gerceklesen?view=employee&panel=ranking"
+              }
+            >
+              <div className="home-point-leader-badge" aria-hidden="true">
+                <span>1</span>
+                <strong>🏆</strong>
+              </div>
+              <div className="home-point-leader-copy">
+                <span>Ayın Şampiyonu · {currentMonthLabel}</span>
+                <strong>
+                  {productionChampion && productionChampion.score > 0
+                    ? productionChampion.label
+                    : "Henüz üretim puanı yok"}
                 </strong>
-              </Link>
-            ) : (
-              <article className="home-point-leader-card home-point-leader-card-empty">
-                <div className="home-point-leader-badge" aria-hidden="true">
-                  <span>1</span>
-                  <strong>🏆</strong>
-                </div>
-                <div className="home-point-leader-copy">
-                  <span>Personel Puan 1.si · {monthLabel}</span>
-                  <strong>Aktif puan sezonu bulunamadı</strong>
-                </div>
-              </article>
-            )}
+                <small>Üretim Puanı</small>
+              </div>
+              <strong className="home-point-leader-score">
+                {(productionChampion?.score ?? 0).toLocaleString("tr-TR")} puan
+              </strong>
+            </Link>
           </section>
 
           <section className="hero home-leaders-hero">

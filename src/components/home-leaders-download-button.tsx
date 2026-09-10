@@ -277,7 +277,9 @@ export function HomeLeadersDownloadButton(props: HomeLeadersDownloadButtonProps)
         type="button"
       >
         <svg aria-hidden="true" viewBox="0 0 24 24">
-          <path d="M12 3v11m0 0 4-4m-4 4-4-4M5 16v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3" />
+          <path d="M12 3v12" />
+          <path d="m7 10 5 5 5-5" />
+          <path d="M5 20h14" />
         </svg>
       </button>
       <span aria-live="polite" className="sr-only" role="status">{status}</span>

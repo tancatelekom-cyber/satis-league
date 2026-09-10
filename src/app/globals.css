@@ -1073,6 +1073,50 @@ button {
   margin-top: 24px;
 }
 
+.home-leaders-download-wrap {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 22px;
+  margin-bottom: -12px;
+}
+
+.home-leaders-download-button {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid rgba(15, 118, 110, 0.25);
+  border-radius: 14px;
+  background: linear-gradient(135deg, #ffffff, #e6faf4);
+  box-shadow: 0 10px 24px rgba(15, 118, 110, 0.14);
+  color: #0f766e;
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.home-leaders-download-button:hover,
+.home-leaders-download-button:focus-visible {
+  transform: translateY(-2px);
+  border-color: rgba(15, 118, 110, 0.48);
+  box-shadow: 0 13px 28px rgba(15, 118, 110, 0.2);
+}
+
+.home-leaders-download-button:disabled {
+  cursor: wait;
+  opacity: 0.62;
+}
+
+.home-leaders-download-button svg {
+  width: 23px;
+  height: 23px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.2;
+}
+
 .home-point-leader-card {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
@@ -10576,6 +10620,17 @@ textarea::placeholder {
 
   .home-point-leader-section {
     margin-top: 16px;
+  }
+
+  .home-leaders-download-wrap {
+    margin-top: 16px;
+    margin-bottom: -8px;
+  }
+
+  .home-leaders-download-button {
+    width: 42px;
+    height: 42px;
+    border-radius: 13px;
   }
 
   .home-point-leader-card {

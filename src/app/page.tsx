@@ -227,7 +227,7 @@ export default async function HomePage() {
   const seasonDataPromise = Promise.all([
     admin
       .from("seasons")
-      .select("id, name, start_date, end_date, mode, is_active, created_at")
+      .select("id, name, start_date, end_date, mode, scoring, is_active, created_at")
       .eq("is_active", true)
       .order("created_at", { ascending: false }),
     admin
@@ -508,6 +508,30 @@ export default async function HomePage() {
     };
   });
 
+  const pointSeason =
+    seasonRows.find((season) => season.scoring === "points" && season.mode === "employee") ??
+    seasonRows.find((season) => season.scoring === "points") ??
+    null;
+  const pointSeasonSales = pointSeason
+    ? saleRows.filter(
+        (sale) =>
+          sale.season_id === pointSeason.id &&
+          sale.entry_date >= clampDate(monthStart, pointSeason.start_date, pointSeason.end_date) &&
+          sale.entry_date <= clampDate(monthEnd, pointSeason.start_date, pointSeason.end_date)
+      )
+    : [];
+  const pointLeader = pointSeason
+    ? employeeProfiles
+        .map((profile) => ({
+          id: profile.id,
+          label: profile.full_name,
+          score: pointSeasonSales
+            .filter((sale) => sale.target_profile_id === profile.id)
+            .reduce((sum, sale) => sum + Number(sale.score ?? 0), 0)
+        }))
+        .sort((a, b) => b.score - a.score || a.label.localeCompare(b.label, "tr"))[0] ?? null
+    : null;
+
   return (
     <main>
       {popupAnnouncements.length > 0 ? (
@@ -655,6 +679,42 @@ export default async function HomePage() {
           </article>
         </section>
       ) : null}
+
+          <section className="home-point-leader-section">
+            {pointSeason ? (
+              <Link
+                className="home-point-leader-card"
+                href={buildMonthHref(pointSeason.id, monthKey)}
+              >
+                <div className="home-point-leader-badge" aria-hidden="true">
+                  <span>1</span>
+                  <strong>🏆</strong>
+                </div>
+                <div className="home-point-leader-copy">
+                  <span>Personel Puan 1.si · {monthLabel}</span>
+                  <strong>
+                    {pointLeader && pointLeader.score > 0 ? pointLeader.label : "Henüz personel puanı yok"}
+                  </strong>
+                  <small>{pointSeason.name}</small>
+                </div>
+                <strong className="home-point-leader-score">
+                  {(pointLeader?.score ?? 0).toLocaleString("tr-TR")} puan
+                </strong>
+              </Link>
+            ) : (
+              <article className="home-point-leader-card home-point-leader-card-empty">
+                <div className="home-point-leader-badge" aria-hidden="true">
+                  <span>1</span>
+                  <strong>🏆</strong>
+                </div>
+                <div className="home-point-leader-copy">
+                  <span>Personel Puan 1.si · {monthLabel}</span>
+                  <strong>Aktif puan sezonu bulunamadı</strong>
+                </div>
+              </article>
+            )}
+          </section>
+
           <section className="hero home-leaders-hero">
             <div className="hero-copy">
               <h1 className="home-leaders-title">

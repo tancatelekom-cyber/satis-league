@@ -20,6 +20,7 @@ import { HomeDateTime } from "@/components/home-date-time";
 import { fetchGoalActualRows, type GoalActualRow } from "@/lib/goal-actuals";
 import { LastDayCounters } from "@/components/last-day-counters";
 import { getLastDayCounters } from "@/lib/last-day-counters";
+import { HomeLeadersDownloadButton } from "@/components/home-leaders-download-button";
 
 export const dynamic = "force-dynamic";
 
@@ -708,6 +709,26 @@ export default async function HomePage() {
           </article>
         </section>
       ) : null}
+
+          {viewerRole === "admin" ? (
+            <HomeLeadersDownloadButton
+              champion={{
+                name:
+                  productionChampion && productionChampion.score > 0
+                    ? productionChampion.label
+                    : "Henüz üretim puanı yok",
+                score: productionChampion?.score ?? 0,
+                monthLabel: currentMonthLabel
+              }}
+              stars={leaderCards.map((card) => ({
+                seasonName: card.seasonName,
+                winnerName: card.winnerName,
+                score: card.score,
+                monthLabel: card.monthLabel
+              }))}
+              starsMonthLabel={monthLabel}
+            />
+          ) : null}
 
           <section className="home-point-leader-section">
             <Link

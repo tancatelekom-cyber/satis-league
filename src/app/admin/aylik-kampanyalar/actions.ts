@@ -3,7 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdminAccess } from "@/lib/auth/require-admin";
-import { MONTHLY_CAMPAIGN_BUCKET } from "@/lib/monthly-campaigns";
+import {
+  MONTHLY_CAMPAIGN_BUCKET,
+  MONTHLY_CAMPAIGN_TYPES,
+  type MonthlyCampaignType
+} from "@/lib/monthly-campaigns";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const REDIRECT_PATH = "/admin/aylik-kampanyalar";
@@ -33,6 +37,31 @@ function getExtension(fileName: string, mimeType: string) {
   return "jpg";
 }
 
+function getCampaignTitle(formData: FormData) {
+  const title = String(formData.get("title") ?? "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .slice(0, 120);
+
+  if (!title) {
+    throw new Error("Lutfen kampanya adini girin.");
+  }
+
+  return title;
+}
+
+function getCampaignType(formData: FormData): MonthlyCampaignType {
+  const campaignType = String(formData.get("campaignType") ?? "")
+    .trim()
+    .toLowerCase() as MonthlyCampaignType;
+
+  if (!MONTHLY_CAMPAIGN_TYPES.includes(campaignType)) {
+    throw new Error("Lutfen kampanya alanini secin.");
+  }
+
+  return campaignType;
+}
+
 async function uploadMonthlyCampaignImage(file: File, userId: string) {
   if (!file || file.size === 0) {
     throw new Error("Lutfen bir resim secin.");
@@ -56,10 +85,7 @@ async function uploadMonthlyCampaignImage(file: File, userId: string) {
     throw new Error(`Resim yuklenemedi: ${error.message}`);
   }
 
-  return {
-    imagePath,
-    title: file.name.replace(/\.[^.]+$/, "").trim() || "Aylik Kampanya"
-  };
+  return imagePath;
 }
 
 function revalidateMonthlyCampaignPages() {
@@ -68,11 +94,12 @@ function revalidateMonthlyCampaignPages() {
   revalidatePath("/admin/aylik-kampanyalar");
 }
 
-async function getOrderedMonthlyCampaignSlides() {
+async function getOrderedMonthlyCampaignSlides(campaignType: MonthlyCampaignType) {
   const admin = createAdminClient();
   const { data, error } = await admin
     .from("monthly_campaign_slides")
     .select("id, sort_order, created_at")
+    .eq("campaign_type", campaignType)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
 
@@ -108,6 +135,8 @@ export async function uploadMonthlyCampaignSlideAction(formData: FormData) {
 
   try {
     const file = formData.get("image");
+    const title = getCampaignTitle(formData);
+    const campaignType = getCampaignType(formData);
 
     if (!(file instanceof File)) {
       throw new Error("Resim secilemedi.");
@@ -117,25 +146,27 @@ export async function uploadMonthlyCampaignSlideAction(formData: FormData) {
     const { data: lastSlide } = await admin
       .from("monthly_campaign_slides")
       .select("sort_order")
+      .eq("campaign_type", campaignType)
       .order("sort_order", { ascending: false })
       .limit(1)
       .maybeSingle();
 
-    const upload = await uploadMonthlyCampaignImage(file, user.id);
+    const imagePath = await uploadMonthlyCampaignImage(file, user.id);
     const { error } = await admin.from("monthly_campaign_slides").insert({
-      title: upload.title,
-      image_path: upload.imagePath,
+      title,
+      campaign_type: campaignType,
+      image_path: imagePath,
       sort_order: Number(lastSlide?.sort_order ?? -1) + 1,
       created_by: user.id
     });
 
     if (error) {
-      await admin.storage.from(MONTHLY_CAMPAIGN_BUCKET).remove([upload.imagePath]);
+      await admin.storage.from(MONTHLY_CAMPAIGN_BUCKET).remove([imagePath]);
       throw new Error(`Kayit olusturulamadi: ${error.message}`);
     }
 
     revalidateMonthlyCampaignPages();
-    redirectWithMessage("Aylik kampanya resmi yuklendi.");
+    redirectWithMessage("Kampanya eklendi.");
   } catch (error) {
     redirectWithMessage(error instanceof Error ? error.message : "Resim yuklenemedi.", "error");
   }
@@ -147,6 +178,8 @@ export async function replaceMonthlyCampaignSlideAction(formData: FormData) {
   try {
     const slideId = String(formData.get("slideId") ?? "").trim();
     const file = formData.get("image");
+    const title = getCampaignTitle(formData);
+    const campaignType = getCampaignType(formData);
 
     if (!slideId) {
       throw new Error("Degistirilecek gorsel bulunamadi.");
@@ -159,7 +192,7 @@ export async function replaceMonthlyCampaignSlideAction(formData: FormData) {
     const admin = createAdminClient();
     const { data: slide, error: slideError } = await admin
       .from("monthly_campaign_slides")
-      .select("id, image_path")
+      .select("id, image_path, campaign_type, sort_order")
       .eq("id", slideId)
       .single();
 
@@ -167,25 +200,47 @@ export async function replaceMonthlyCampaignSlideAction(formData: FormData) {
       throw new Error("Gorsel kaydi bulunamadi.");
     }
 
-    const upload = await uploadMonthlyCampaignImage(file, "admin");
+    const imagePath = await uploadMonthlyCampaignImage(file, "admin");
+    let sortOrder = Number(slide.sort_order ?? 0);
+
+    if (slide.campaign_type !== campaignType) {
+      const { data: lastSlide } = await admin
+        .from("monthly_campaign_slides")
+        .select("sort_order")
+        .eq("campaign_type", campaignType)
+        .order("sort_order", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      sortOrder = Number(lastSlide?.sort_order ?? -1) + 1;
+    }
+
     const { error: updateError } = await admin
       .from("monthly_campaign_slides")
       .update({
-        title: upload.title,
-        image_path: upload.imagePath,
+        title,
+        campaign_type: campaignType,
+        image_path: imagePath,
+        sort_order: sortOrder,
         updated_at: new Date().toISOString()
       })
       .eq("id", slideId);
 
     if (updateError) {
-      await admin.storage.from(MONTHLY_CAMPAIGN_BUCKET).remove([upload.imagePath]);
+      await admin.storage.from(MONTHLY_CAMPAIGN_BUCKET).remove([imagePath]);
       throw new Error(`Gorsel guncellenemedi: ${updateError.message}`);
     }
 
     await admin.storage.from(MONTHLY_CAMPAIGN_BUCKET).remove([slide.image_path]);
 
+    if (slide.campaign_type !== campaignType) {
+      const oldCampaignType = slide.campaign_type as MonthlyCampaignType;
+      const oldGroupSlides = await getOrderedMonthlyCampaignSlides(oldCampaignType);
+      await applyMonthlyCampaignSortOrder(oldGroupSlides.map((item) => item.id));
+    }
+
     revalidateMonthlyCampaignPages();
-    redirectWithMessage("Aylik kampanya gorseli degistirildi.");
+    redirectWithMessage("Kampanya guncellendi.");
   } catch (error) {
     redirectWithMessage(error instanceof Error ? error.message : "Gorsel degistirilemedi.", "error");
   }
@@ -202,7 +257,20 @@ export async function moveMonthlyCampaignSlideAction(formData: FormData) {
       throw new Error("Tasima bilgisi eksik.");
     }
 
-    const orderedSlides = await getOrderedMonthlyCampaignSlides();
+    const admin = createAdminClient();
+    const { data: currentSlide, error: slideError } = await admin
+      .from("monthly_campaign_slides")
+      .select("campaign_type")
+      .eq("id", slideId)
+      .single();
+
+    if (slideError || !currentSlide) {
+      throw new Error("Gorsel kaydi bulunamadi.");
+    }
+
+    const orderedSlides = await getOrderedMonthlyCampaignSlides(
+      currentSlide.campaign_type as MonthlyCampaignType
+    );
     const currentIndex = orderedSlides.findIndex((slide) => slide.id === slideId);
 
     if (currentIndex < 0) {
@@ -242,7 +310,7 @@ export async function deleteMonthlyCampaignSlideAction(formData: FormData) {
     const admin = createAdminClient();
     const { data: slide, error: slideError } = await admin
       .from("monthly_campaign_slides")
-      .select("id, image_path")
+      .select("id, image_path, campaign_type")
       .eq("id", slideId)
       .single();
 
@@ -257,7 +325,9 @@ export async function deleteMonthlyCampaignSlideAction(formData: FormData) {
     }
 
     await admin.storage.from(MONTHLY_CAMPAIGN_BUCKET).remove([slide.image_path]);
-    const orderedSlides = await getOrderedMonthlyCampaignSlides();
+    const orderedSlides = await getOrderedMonthlyCampaignSlides(
+      slide.campaign_type as MonthlyCampaignType
+    );
     await applyMonthlyCampaignSortOrder(orderedSlides.map((item) => item.id));
 
     revalidateMonthlyCampaignPages();

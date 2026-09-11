@@ -2,9 +2,14 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 export const MONTHLY_CAMPAIGN_BUCKET = "monthly-campaigns";
 
+export const MONTHLY_CAMPAIGN_TYPES = ["turkcell", "tanca"] as const;
+
+export type MonthlyCampaignType = (typeof MONTHLY_CAMPAIGN_TYPES)[number];
+
 export type MonthlyCampaignSlide = {
   id: string;
   title: string;
+  campaignType: MonthlyCampaignType;
   imagePath: string;
   imageUrl: string;
   isActive: boolean;
@@ -15,6 +20,7 @@ export type MonthlyCampaignSlide = {
 type MonthlyCampaignSlideRow = {
   id: string;
   title: string;
+  campaign_type: MonthlyCampaignType;
   image_path: string;
   is_active: boolean;
   sort_order: number;
@@ -28,6 +34,7 @@ function mapSlide(row: MonthlyCampaignSlideRow): MonthlyCampaignSlide {
   return {
     id: row.id,
     title: row.title,
+    campaignType: row.campaign_type,
     imagePath: row.image_path,
     imageUrl: data.publicUrl,
     isActive: row.is_active,
@@ -40,7 +47,7 @@ export async function getMonthlyCampaignSlides(options?: { includeInactive?: boo
   const admin = createAdminClient();
   let query = admin
     .from("monthly_campaign_slides")
-    .select("id, title, image_path, is_active, sort_order, created_at")
+    .select("id, title, campaign_type, image_path, is_active, sort_order, created_at")
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
 

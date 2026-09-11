@@ -1,95 +1,105 @@
 "use client";
 
 import { useState } from "react";
-import type { MonthlyCampaignSlide } from "@/lib/monthly-campaigns";
+import type { MonthlyCampaignSlide, MonthlyCampaignType } from "@/lib/monthly-campaigns";
 
 type MonthlyCampaignSliderProps = {
   slides: MonthlyCampaignSlide[];
 };
 
-export function MonthlyCampaignSlider({ slides }: MonthlyCampaignSliderProps) {
-  const [activeIndex, setActiveIndex] = useState(0);
+const CAMPAIGN_GROUPS: Array<{ type: MonthlyCampaignType; title: string }> = [
+  { type: "turkcell", title: "Turkcell Kampanyalar" },
+  { type: "tanca", title: "Tanca Kampanyalar" }
+];
 
-  if (slides.length === 0) {
-    return (
-      <section className="monthly-campaigns-empty">
-        <strong>Henuz gorsel yok</strong>
-        <p className="subtle">Admin panelinden aylik kampanya gorselleri yukleyebilirsiniz.</p>
-      </section>
-    );
-  }
+function MonthlyCampaignGroup({
+  campaignType,
+  title,
+  slides
+}: {
+  campaignType: MonthlyCampaignType;
+  title: string;
+  slides: MonthlyCampaignSlide[];
+}) {
+  const [activeSlideId, setActiveSlideId] = useState(slides[0]?.id ?? "");
+  const activeSlide = slides.find((slide) => slide.id === activeSlideId) ?? slides[0] ?? null;
 
   return (
-    <section className="monthly-campaigns-showcase">
-      <div className="monthly-campaign-slider">
-        <div
-          className="monthly-campaign-slider-track"
-          style={{ transform: `translateX(-${activeIndex * 100}%)` }}
-        >
-          {slides.map((slide) => (
-            <article key={slide.id} className="monthly-campaign-slide">
-              <div className="monthly-campaign-slide-toolbar">
-                <strong className="monthly-campaign-slide-title">{slide.title}</strong>
-                <a
-                  className="monthly-campaign-download"
-                  href={slide.imageUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  download
-                >
-                  Indir
-                </a>
-              </div>
-              <a
-                className="monthly-campaign-slide-link"
-                href={slide.imageUrl}
-                target="_blank"
-                rel="noreferrer"
-                aria-label={`${slide.title} gorselini tam boyutta ac`}
-              >
-                <img className="monthly-campaign-slide-image" src={slide.imageUrl} alt={slide.title} />
-              </a>
-            </article>
-          ))}
+    <section className={`monthly-campaign-group monthly-campaign-group-${campaignType}`}>
+      <div className="monthly-campaign-group-head">
+        <div>
+          <span>Aylık Kampanyalar</span>
+          <h2>{title}</h2>
         </div>
-
-        {slides.length > 1 ? (
-          <>
-            <button
-              className="monthly-campaign-arrow monthly-campaign-arrow-left"
-              type="button"
-              onClick={() =>
-                setActiveIndex((current) => (current === 0 ? slides.length - 1 : current - 1))
-              }
-              aria-label="Onceki gorsel"
-            >
-              {"<"}
-            </button>
-            <button
-              className="monthly-campaign-arrow monthly-campaign-arrow-right"
-              type="button"
-              onClick={() => setActiveIndex((current) => (current + 1) % slides.length)}
-              aria-label="Sonraki gorsel"
-            >
-              {">"}
-            </button>
-          </>
-        ) : null}
+        <strong>{slides.length} kampanya</strong>
       </div>
 
-      {slides.length > 1 ? (
-        <div className="monthly-campaign-dots" aria-label="Gorsel secici">
-          {slides.map((slide, index) => (
-            <button
-              key={slide.id}
-              className={`monthly-campaign-dot ${index === activeIndex ? "monthly-campaign-dot-active" : ""}`}
-              type="button"
-              onClick={() => setActiveIndex(index)}
-              aria-label={`${index + 1}. gorseli ac`}
-            />
-          ))}
+      {activeSlide ? (
+        <>
+          <div className="monthly-campaign-name-list" aria-label={`${title} kampanya seçimi`}>
+            {slides.map((slide) => (
+              <button
+                key={slide.id}
+                className={`monthly-campaign-name-button ${
+                  activeSlide.id === slide.id ? "monthly-campaign-name-button-active" : ""
+                }`}
+                type="button"
+                onClick={() => setActiveSlideId(slide.id)}
+              >
+                {slide.title}
+              </button>
+            ))}
+          </div>
+
+          <article className="monthly-campaign-selected">
+            <div className="monthly-campaign-selected-toolbar">
+              <strong>{activeSlide.title}</strong>
+              <a
+                className="monthly-campaign-download"
+                href={activeSlide.imageUrl}
+                target="_blank"
+                rel="noreferrer"
+                download
+              >
+                İndir
+              </a>
+            </div>
+            <a
+              className="monthly-campaign-selected-image-link"
+              href={activeSlide.imageUrl}
+              target="_blank"
+              rel="noreferrer"
+              aria-label={`${activeSlide.title} görselini tam boyutta aç`}
+            >
+              <img
+                className="monthly-campaign-selected-image"
+                src={activeSlide.imageUrl}
+                alt={activeSlide.title}
+              />
+            </a>
+          </article>
+        </>
+      ) : (
+        <div className="monthly-campaign-group-empty">
+          <strong>Henüz kampanya yok</strong>
+          <span>Admin panelinden bu alana kampanya eklenebilir.</span>
         </div>
-      ) : null}
+      )}
     </section>
+  );
+}
+
+export function MonthlyCampaignSlider({ slides }: MonthlyCampaignSliderProps) {
+  return (
+    <div className="monthly-campaign-groups">
+      {CAMPAIGN_GROUPS.map((group) => (
+        <MonthlyCampaignGroup
+          key={group.type}
+          campaignType={group.type}
+          title={group.title}
+          slides={slides.filter((slide) => slide.campaignType === group.type)}
+        />
+      ))}
+    </div>
   );
 }

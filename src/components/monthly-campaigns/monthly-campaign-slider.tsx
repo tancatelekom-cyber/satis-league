@@ -21,8 +21,8 @@ function MonthlyCampaignGroup({
   title: string;
   slides: MonthlyCampaignSlide[];
 }) {
-  const [activeSlideId, setActiveSlideId] = useState(slides[0]?.id ?? "");
-  const activeSlide = slides.find((slide) => slide.id === activeSlideId) ?? slides[0] ?? null;
+  const [activeSlideId, setActiveSlideId] = useState("");
+  const activeSlide = slides.find((slide) => slide.id === activeSlideId) ?? null;
 
   return (
     <section className={`monthly-campaign-group monthly-campaign-group-${campaignType}`}>
@@ -34,50 +34,53 @@ function MonthlyCampaignGroup({
         <strong>{slides.length} kampanya</strong>
       </div>
 
-      {activeSlide ? (
+      {slides.length > 0 ? (
         <>
           <div className="monthly-campaign-name-list" aria-label={`${title} kampanya seçimi`}>
             {slides.map((slide) => (
               <button
                 key={slide.id}
                 className={`monthly-campaign-name-button ${
-                  activeSlide.id === slide.id ? "monthly-campaign-name-button-active" : ""
+                  activeSlide?.id === slide.id ? "monthly-campaign-name-button-active" : ""
                 }`}
                 type="button"
                 onClick={() => setActiveSlideId(slide.id)}
+                aria-expanded={activeSlide?.id === slide.id}
               >
                 {slide.title}
               </button>
             ))}
           </div>
 
-          <article className="monthly-campaign-selected">
-            <div className="monthly-campaign-selected-toolbar">
-              <strong>{activeSlide.title}</strong>
+          {activeSlide ? (
+            <article className="monthly-campaign-selected">
+              <div className="monthly-campaign-selected-toolbar">
+                <strong>{activeSlide.title}</strong>
+                <a
+                  className="monthly-campaign-download"
+                  href={activeSlide.imageUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  download
+                >
+                  İndir
+                </a>
+              </div>
               <a
-                className="monthly-campaign-download"
+                className="monthly-campaign-selected-image-link"
                 href={activeSlide.imageUrl}
                 target="_blank"
                 rel="noreferrer"
-                download
+                aria-label={`${activeSlide.title} görselini tam boyutta aç`}
               >
-                İndir
+                <img
+                  className="monthly-campaign-selected-image"
+                  src={activeSlide.imageUrl}
+                  alt={activeSlide.title}
+                />
               </a>
-            </div>
-            <a
-              className="monthly-campaign-selected-image-link"
-              href={activeSlide.imageUrl}
-              target="_blank"
-              rel="noreferrer"
-              aria-label={`${activeSlide.title} görselini tam boyutta aç`}
-            >
-              <img
-                className="monthly-campaign-selected-image"
-                src={activeSlide.imageUrl}
-                alt={activeSlide.title}
-              />
-            </a>
-          </article>
+            </article>
+          ) : null}
         </>
       ) : (
         <div className="monthly-campaign-group-empty">

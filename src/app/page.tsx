@@ -710,26 +710,6 @@ export default async function HomePage() {
         </section>
       ) : null}
 
-          {viewerRole === "admin" ? (
-            <HomeLeadersDownloadButton
-              champion={{
-                name:
-                  productionChampion && productionChampion.score > 0
-                    ? productionChampion.label
-                    : "Henüz üretim puanı yok",
-                score: productionChampion?.score ?? 0,
-                monthLabel: currentMonthLabel
-              }}
-              stars={leaderCards.map((card) => ({
-                seasonName: card.seasonName,
-                winnerName: card.winnerName,
-                score: card.score,
-                monthLabel: card.monthLabel
-              }))}
-              starsMonthLabel={monthLabel}
-            />
-          ) : null}
-
           <section className="home-point-leader-section">
             <Link
               className="home-point-leader-card"
@@ -803,6 +783,26 @@ export default async function HomePage() {
               ))
             )}
           </section>
+          {viewerRole === "admin" ? (
+            <HomeLeadersDownloadButton
+              champion={{
+                name:
+                  productionChampion && productionChampion.score > 0
+                    ? productionChampion.label
+                    : "Henüz üretim puanı yok",
+                score: productionChampion?.score ?? 0,
+                monthLabel: currentMonthLabel
+              }}
+              stars={leaderCards.map((card) => ({
+                seasonName: card.seasonName,
+                winnerName: card.winnerName,
+                score: card.score,
+                monthLabel: card.monthLabel
+              }))}
+              starsMonthLabel={monthLabel}
+            />
+          ) : null}
+
     </main>
   );
 }

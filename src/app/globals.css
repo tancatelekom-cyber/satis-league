@@ -1076,15 +1076,15 @@ button {
 .home-leaders-download-wrap {
   display: flex;
   justify-content: flex-end;
-  margin-top: 22px;
-  margin-bottom: -12px;
+  margin-top: 18px;
+  margin-bottom: 0;
 }
 
 .home-leaders-download-button {
   display: inline-grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   padding: 0;
   border: 1px solid rgba(15, 118, 110, 0.25);
   border-radius: 14px;
@@ -1108,8 +1108,8 @@ button {
 }
 
 .home-leaders-download-button svg {
-  width: 23px;
-  height: 23px;
+  width: 26px;
+  height: 26px;
   fill: none;
   stroke: currentColor;
   stroke-linecap: round;
@@ -10623,8 +10623,8 @@ textarea::placeholder {
   }
 
   .home-leaders-download-wrap {
-    margin-top: 16px;
-    margin-bottom: -8px;
+    margin-top: 14px;
+    margin-bottom: 0;
   }
 
   .home-leaders-download-button {

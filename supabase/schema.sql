@@ -462,6 +462,7 @@ create table if not exists public.tariffs (
 create table if not exists public.monthly_campaign_slides (
   id uuid primary key default gen_random_uuid(),
   title text not null default 'Aylik Kampanya',
+  campaign_type text not null default 'turkcell' check (campaign_type in ('turkcell', 'tanca')),
   image_path text not null,
   is_active boolean not null default true,
   sort_order integer not null default 0,

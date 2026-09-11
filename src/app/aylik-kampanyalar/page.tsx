@@ -20,9 +20,9 @@ export default async function MonthlyCampaignsPage() {
 
   return (
     <main>
-      <h1 className="page-title">Aylik Kampanyalar</h1>
+      <h1 className="page-title">Aylık Kampanyalar</h1>
       <p className="page-subtitle">
-        Bu ayin gorsellerini manuel kaydirarak takip edin. Yeni kampanya afisleri burada listelenir.
+        Turkcell ve Tanca kampanyalarından birini seçerek kampanya görselini görüntüleyin.
       </p>
 
       <MonthlyCampaignSlider slides={slides} />

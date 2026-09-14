@@ -10,7 +10,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = searchParams ? await searchParams : undefined;
 
   return (
-    <main>
+    <main className="auth-login-page">
       <h1 className="page-title auth-page-title">Giris</h1>
       <p className="page-subtitle auth-page-subtitle">
         Mail adresiniz ve sifrenizle devam edin.

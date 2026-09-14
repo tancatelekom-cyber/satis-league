@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { DailyTargetGroup } from "@/lib/daily-targets";
+import { buildDailyTargetRowKey, type DailyTargetGroup, type DailyTargetViewRow } from "@/lib/daily-targets";
 
 export type DailyTargetShareStore = {
   storeName: string;
@@ -17,7 +17,7 @@ type DailyTargetShareButtonProps = {
 
 function formatNumber(value: number | null) {
   if (value === null) return "-";
-  return value.toLocaleString("tr-TR", { maximumFractionDigits: 2 });
+  return value.toLocaleString("tr-TR", { maximumFractionDigits: 20 });
 }
 
 function roundedRect(
@@ -39,6 +39,27 @@ function fitText(context: CanvasRenderingContext2D, value: string, maxWidth: num
     text = text.slice(0, -1);
   }
   return `${text}…`;
+}
+
+function drawCenteredFullText(
+  context: CanvasRenderingContext2D,
+  value: string,
+  centerX: number,
+  baselineY: number,
+  maxWidth: number,
+  maximumSize: number,
+  minimumSize: number,
+  weight = 900
+) {
+  let fontSize = maximumSize;
+  context.font = `${weight} ${fontSize}px Arial`;
+
+  while (fontSize > minimumSize && context.measureText(value).width > maxWidth) {
+    fontSize -= 1;
+    context.font = `${weight} ${fontSize}px Arial`;
+  }
+
+  context.fillText(value, centerX, baselineY);
 }
 
 function safeFilePart(value: string) {
@@ -71,7 +92,214 @@ function downloadImage(blob: Blob, fileName: string) {
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+function findStoreRow(
+  store: DailyTargetShareStore,
+  mainCategory: string,
+  subCategory: string
+): DailyTargetViewRow | null {
+  const rowKey = buildDailyTargetRowKey(mainCategory, subCategory);
+
+  for (const group of store.groups) {
+    const row = group.rows.find(
+      (item) => buildDailyTargetRowKey(item.mainCategory, item.subCategory) === rowKey
+    );
+    if (row) return row;
+  }
+
+  return null;
+}
+
+function summarizeStore(store: DailyTargetShareStore) {
+  const targetedRows = store.groups.flatMap((group) => group.rows).filter((row) => row.target !== null);
+  const achievedCount = targetedRows.filter((row) => row.achieved).length;
+
+  return {
+    achievedCount,
+    targetedCount: targetedRows.length,
+    percent: targetedRows.length ? Math.round((achievedCount / targetedRows.length) * 100) : 0
+  };
+}
+
+async function buildCompanySummaryImage({ dateLabel, stores }: DailyTargetShareButtonProps) {
+  const branchStores = stores.filter((store) => !store.isCompany);
+  const companyStore = stores.find((store) => store.isCompany) ?? null;
+  const columns = companyStore ? [...branchStores, companyStore] : branchStores;
+  const sourceGroups = companyStore?.groups ?? branchStores[0]?.groups ?? [];
+  const padding = 54;
+  const categoryWidth = 390;
+  const storeWidth = 238;
+  const headerHeight = 205;
+  const columnHeaderHeight = 105;
+  const groupHeaderHeight = 54;
+  const rowHeight = 82;
+  const summaryHeight = 100;
+  const footerHeight = 90;
+  const tableWidth = categoryWidth + columns.length * storeWidth;
+  const rowCount = sourceGroups.reduce((total, group) => total + group.rows.length, 0);
+  const height = headerHeight
+    + columnHeaderHeight
+    + sourceGroups.length * groupHeaderHeight
+    + rowCount * rowHeight
+    + summaryHeight
+    + footerHeight;
+  const width = padding * 2 + tableWidth;
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("Görsel alanı oluşturulamadı.");
+
+  const background = context.createLinearGradient(0, 0, width, height);
+  background.addColorStop(0, "#ecfdf8");
+  background.addColorStop(0.52, "#f8fbff");
+  background.addColorStop(1, "#eef4fb");
+  context.fillStyle = background;
+  context.fillRect(0, 0, width, height);
+
+  context.fillStyle = "#0f766e";
+  context.font = "900 24px Arial";
+  context.fillText("TANCA+ • GÜNLÜK TAKİP", padding, 56);
+  context.fillStyle = "#102a43";
+  context.font = "900 50px Arial";
+  context.fillText("Günlük Hedef Özeti", padding, 120);
+  context.fillStyle = "#5f738a";
+  context.font = "700 25px Arial";
+  context.fillText(`Şube bazlı özet tablo • ${dateLabel}`, padding, 164);
+
+  let y = headerHeight;
+  const tableX = padding;
+
+  context.fillStyle = "#18304d";
+  context.fillRect(tableX, y, categoryWidth, columnHeaderHeight);
+  context.fillStyle = "#ffffff";
+  context.font = "900 23px Arial";
+  context.fillText("KATEGORİ", tableX + 24, y + 60);
+
+  columns.forEach((store, index) => {
+    const x = tableX + categoryWidth + index * storeWidth;
+    context.fillStyle = store.isCompany ? "#b86612" : "#08747a";
+    context.fillRect(x, y, storeWidth, columnHeaderHeight);
+    context.strokeStyle = "rgba(255,255,255,.24)";
+    context.lineWidth = 2;
+    context.strokeRect(x, y, storeWidth, columnHeaderHeight);
+    context.fillStyle = "#ffffff";
+    context.textAlign = "center";
+    context.font = "900 22px Arial";
+    context.fillText(fitText(context, store.storeName, storeWidth - 24), x + storeWidth / 2, y + 43);
+    context.fillStyle = "rgba(255,255,255,.82)";
+    context.font = "900 20px Arial";
+    context.fillText("H / G", x + storeWidth / 2, y + 76);
+  });
+  context.textAlign = "left";
+  y += columnHeaderHeight;
+
+  sourceGroups.forEach((group) => {
+    context.fillStyle = "#dce9f0";
+    context.fillRect(tableX, y, tableWidth, groupHeaderHeight);
+    context.strokeStyle = "#c4d4df";
+    context.lineWidth = 2;
+    context.strokeRect(tableX, y, tableWidth, groupHeaderHeight);
+    context.fillStyle = "#18304d";
+    context.font = "900 21px Arial";
+    context.fillText(fitText(context, group.mainCategory, tableWidth - 48), tableX + 22, y + 35);
+    y += groupHeaderHeight;
+
+    group.rows.forEach((sourceRow, rowIndex) => {
+      const rowFill = sourceRow.entryMode === "summary"
+        ? "#fff4d8"
+        : rowIndex % 2 === 0 ? "#ffffff" : "#f7fafc";
+      context.fillStyle = rowFill;
+      context.fillRect(tableX, y, categoryWidth, rowHeight);
+      context.strokeStyle = "#d8e2ea";
+      context.lineWidth = 2;
+      context.strokeRect(tableX, y, categoryWidth, rowHeight);
+      context.fillStyle = sourceRow.entryMode === "summary" ? "#8b460b" : "#263e58";
+      context.font = `${sourceRow.entryMode === "summary" ? "900" : "800"} 21px Arial`;
+      context.fillText(fitText(context, sourceRow.subCategory, categoryWidth - 42), tableX + 22, y + 49);
+
+      columns.forEach((store, columnIndex) => {
+        const x = tableX + categoryWidth + columnIndex * storeWidth;
+        const row = findStoreRow(store, sourceRow.mainCategory, sourceRow.subCategory);
+        const target = row?.target ?? null;
+        const actual = row?.actual ?? 0;
+        const achieved = row?.achieved ?? null;
+
+        context.fillStyle = target === null
+          ? "#f1f5f9"
+          : achieved ? "#e6f8eb" : "#fff0f0";
+        if (store.isCompany) {
+          context.fillStyle = target === null
+            ? "#fff7e8"
+            : achieved ? "#dcf5e3" : "#ffe8e1";
+        }
+        context.fillRect(x, y, storeWidth, rowHeight);
+        context.strokeStyle = store.isCompany ? "#e2b978" : "#d8e2ea";
+        context.strokeRect(x, y, storeWidth, rowHeight);
+
+        context.textAlign = "center";
+        context.fillStyle = achieved === true ? "#147a39" : achieved === false ? "#c62828" : "#475569";
+        context.font = "900 25px Arial";
+        const valueText = target === null
+          ? formatNumber(actual)
+          : `${formatNumber(target)} / ${formatNumber(actual)}`;
+        drawCenteredFullText(context, valueText, x + storeWidth / 2, y + 38, storeWidth - 20, 25, 13);
+        context.font = "800 15px Arial";
+        context.fillText(
+          target === null ? "HEDEF YOK" : achieved ? "✓ TAMAM" : `K: ${formatNumber(row?.remaining ?? 0)}`,
+          x + storeWidth / 2,
+          y + 64
+        );
+      });
+      context.textAlign = "left";
+      y += rowHeight;
+    });
+  });
+
+  context.fillStyle = "#18304d";
+  context.fillRect(tableX, y, categoryWidth, summaryHeight);
+  context.fillStyle = "#ffffff";
+  context.font = "900 22px Arial";
+  context.fillText("TAMAMLANAN HEDEFLER", tableX + 22, y + 58);
+
+  columns.forEach((store, index) => {
+    const x = tableX + categoryWidth + index * storeWidth;
+    const summary = summarizeStore(store);
+    context.fillStyle = store.isCompany ? "#fff0d9" : "#e7f5f5";
+    context.fillRect(x, y, storeWidth, summaryHeight);
+    context.strokeStyle = store.isCompany ? "#e2b978" : "#c5dddd";
+    context.strokeRect(x, y, storeWidth, summaryHeight);
+    context.textAlign = "center";
+    context.fillStyle = store.isCompany ? "#9a4f08" : "#075e63";
+    context.font = "900 28px Arial";
+    context.fillText(`${summary.achievedCount}/${summary.targetedCount}`, x + storeWidth / 2, y + 43);
+    context.font = "900 18px Arial";
+    context.fillText(`%${summary.percent} TAMAMLANDI`, x + storeWidth / 2, y + 73);
+  });
+  context.textAlign = "left";
+
+  context.fillStyle = "#6f8194";
+  context.font = "700 18px Arial";
+  context.fillText("H: Hedef • G: Gerçekleşen • K: Kalan", padding, height - 38);
+  context.textAlign = "right";
+  context.fillText(
+    new Intl.DateTimeFormat("tr-TR", {
+      dateStyle: "short",
+      timeStyle: "short",
+      timeZone: "Europe/Istanbul"
+    }).format(new Date()),
+    width - padding,
+    height - 38
+  );
+  context.textAlign = "left";
+
+  return canvasToBlob(canvas);
+}
+
 async function buildDailyTargetImage({ dateLabel, mode, stores }: DailyTargetShareButtonProps) {
+  if (mode === "company") {
+    return buildCompanySummaryImage({ dateLabel, mode, stores });
+  }
+
   const width = 1320;
   const padding = 58;
   const rowHeight = 54;
@@ -110,7 +338,7 @@ async function buildDailyTargetImage({ dateLabel, mode, stores }: DailyTargetSha
   context.fillStyle = "#5f738a";
   context.font = "700 24px Arial";
   context.fillText(
-    mode === "company" ? `Tüm şubeler ve firma toplamı • ${dateLabel}` : `${stores[0]?.storeName ?? "Şube"} • ${dateLabel}`,
+    `${stores[0]?.storeName ?? "Şube"} • ${dateLabel}`,
     padding,
     169
   );

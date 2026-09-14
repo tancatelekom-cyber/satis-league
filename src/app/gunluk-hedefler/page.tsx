@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { DailyTargetAutoSaveInput } from "@/components/daily-targets/daily-target-auto-save-input";
 import { DailyTargetShareButton, type DailyTargetShareStore } from "@/components/daily-targets/daily-target-share-button";
 import { FilterSelectNav } from "@/components/ui/filter-select-nav";
 import { requireDailyTargetAccess } from "@/lib/auth/require-daily-target-access";
@@ -14,7 +15,6 @@ import {
   type DailyTargetGroup
 } from "@/lib/daily-targets";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { saveDailyTargetActualsAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -207,9 +207,7 @@ export default async function DailyTargetsPage({ searchParams }: PageProps) {
             ) : null}
           </div>
 
-          <form action={saveDailyTargetActualsAction} className="daily-target-entry-form">
-            <input name="storeId" type="hidden" value={selectedStoreView.store.id} />
-
+          <div className="daily-target-entry-form">
             <div className="daily-target-category-list">
               {selectedStoreView.groups.map((group) => {
                 const groupTargeted = group.rows.filter((row) => row.target !== null);
@@ -240,7 +238,7 @@ export default async function DailyTargetsPage({ searchParams }: PageProps) {
                           {group.rows.map((row) => (
                             <tr
                               className={`${row.entryMode === "summary" ? "daily-target-summary-row" : ""} ${row.target === null ? "daily-target-actual-only-row" : ""}`}
-                              key={`${group.mainCategory}-${row.subCategory}`}
+                              key={`${selectedStoreView.store.id}-${group.mainCategory}-${row.subCategory}`}
                             >
                               <th>
                                 <span>{row.subCategory}</span>
@@ -249,14 +247,12 @@ export default async function DailyTargetsPage({ searchParams }: PageProps) {
                               <td>{row.target === null ? <span className="daily-target-no-target">Hedef yok</span> : formatNumber(row.target)}</td>
                               <td>
                                 {canEdit && row.entryMode === "editable" && row.inputName ? (
-                                  <input
-                                    aria-label={`${row.subCategory} gerçekleşen`}
-                                    defaultValue={row.actual}
-                                    inputMode="decimal"
-                                    min="0"
-                                    name={row.inputName}
-                                    step="0.01"
-                                    type="number"
+                                  <DailyTargetAutoSaveInput
+                                    actual={row.actual}
+                                    ariaLabel={`${row.subCategory} gerçekleşen`}
+                                    mainCategory={row.mainCategory}
+                                    storeId={selectedStoreView.store.id}
+                                    subCategory={row.subCategory}
                                   />
                                 ) : (
                                   <strong>{formatNumber(row.actual)}</strong>
@@ -284,11 +280,10 @@ export default async function DailyTargetsPage({ searchParams }: PageProps) {
 
             {canEdit ? (
               <div className="daily-target-save-bar">
-                <span>Kaydettiğiniz değerler yalnızca {dateLabel} günü için geçerlidir.</span>
-                <button className="button-primary" type="submit">Günlük Gerçekleşenleri Kaydet</button>
+                <span>Değer değiştirildiğinde otomatik kaydedilir. Kayıtlar yalnızca {dateLabel} günü için geçerlidir.</span>
               </div>
             ) : null}
-          </form>
+          </div>
         </section>
       ) : !sheetError ? (
         <section className="daily-target-empty">

@@ -17767,6 +17767,38 @@ textarea::placeholder {
   outline: 3px solid rgba(15, 118, 110, .13);
 }
 
+.daily-target-auto-save-field {
+  display: grid;
+  justify-items: end;
+  gap: 5px;
+}
+
+.daily-target-auto-save-status {
+  min-height: 16px;
+  color: #64748b;
+  font-size: .68rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.daily-target-auto-save-status b {
+  margin-right: 4px;
+}
+
+.daily-target-auto-save-saving {
+  color: #a16207;
+}
+
+.daily-target-auto-save-saved {
+  color: #15803d;
+}
+
+.daily-target-auto-save-error {
+  max-width: 190px;
+  color: #dc2626;
+  white-space: normal;
+}
+
 .daily-target-summary-row th,
 .daily-target-summary-row td {
   color: #7c3f08;

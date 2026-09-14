@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { DailyTargetAutoSaveInput } from "@/components/daily-targets/daily-target-auto-save-input";
-import { DailyTargetShareButton, type DailyTargetShareStore } from "@/components/daily-targets/daily-target-share-button";
+import {
+  DailyTargetShareButton,
+  DailyTargetSharePreview,
+  type DailyTargetShareStore
+} from "@/components/daily-targets/daily-target-share-button";
 import { FilterSelectNav } from "@/components/ui/filter-select-nav";
 import { requireDailyTargetAccess } from "@/lib/auth/require-daily-target-access";
 import {
@@ -45,29 +49,6 @@ function formatNumber(value: number | null) {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2
   });
-}
-
-function buildDailyTargetTotals(groups: DailyTargetGroup[]) {
-  const rows = groups.flatMap((group) => {
-    const summaryRows = group.rows.filter((row) => row.entryMode === "summary");
-    return summaryRows.length ? summaryRows : group.rows.filter((row) => row.entryMode === "editable");
-  });
-  const targetedRows = rows.filter((row) => row.target !== null);
-  const target = targetedRows.reduce((total, row) => total + (row.target ?? 0), 0);
-  const actual = targetedRows.reduce((total, row) => total + row.actual, 0);
-  const actualOnly = rows
-    .filter((row) => row.target === null)
-    .reduce((total, row) => total + row.actual, 0);
-
-  return {
-    target,
-    actual,
-    remaining: Math.max(0, target - actual),
-    percent: target > 0 ? Math.round((actual / target) * 100) : 0,
-    achievedCount: targetedRows.filter((row) => row.achieved).length,
-    targetedCount: targetedRows.length,
-    actualOnly
-  };
 }
 
 function buildStoreHref(storeId: string) {
@@ -133,23 +114,16 @@ export default async function DailyTargetsPage({ searchParams }: PageProps) {
   const selectedStoreView = storeViews.find((item) => item.store.id === selectedStore?.id) ?? null;
   const companyGroups = buildCompanyDailyTargetGroups(storeViews.map((item) => item.groups));
   const companySummary = summarizeDailyTargetGroups(companyGroups);
-  const bottomSummaryGroups = profile.role === "manager"
-    ? selectedStoreView?.groups ?? []
-    : companyGroups;
-  const bottomSummary = buildDailyTargetTotals(bottomSummaryGroups);
-  const bottomSummaryTitle = profile.role === "manager"
-    ? `${selectedStoreView?.store.name ?? "Şube"} özeti`
-    : "Firma özeti";
   const canEdit = (profile.role === "manager" || profile.role === "admin") && !entryError && !sheetError;
   const canShare = profile.role === "manager" || profile.role === "admin";
-  const shareStores: DailyTargetShareStore[] = profile.role === "admin"
-    ? [
+  const shareStores: DailyTargetShareStore[] = profile.role === "manager"
+    ? selectedStoreView
+      ? [{ storeName: selectedStoreView.store.name, groups: selectedStoreView.groups }]
+      : []
+    : [
         ...storeViews.map((item) => ({ storeName: item.store.name, groups: item.groups })),
         { storeName: "Firma Toplamı", groups: companyGroups, isCompany: true }
-      ]
-    : selectedStoreView
-      ? [{ storeName: selectedStoreView.store.name, groups: selectedStoreView.groups }]
-      : [];
+      ];
 
   return (
     <main className="daily-target-page">
@@ -274,8 +248,8 @@ export default async function DailyTargetsPage({ searchParams }: PageProps) {
                                 <span>{row.subCategory}</span>
                                 {row.entryMode === "summary" ? <small>Alt kategorilerin otomatik toplamı</small> : null}
                               </th>
-                              <td>{row.target === null ? <span className="daily-target-no-target">Hedef yok</span> : formatNumber(row.target)}</td>
-                              <td>
+                              <td data-label="Hedef">{row.target === null ? <span className="daily-target-no-target">Hedef yok</span> : formatNumber(row.target)}</td>
+                              <td data-label="Gerçekleşen">
                                 {canEdit && row.entryMode === "editable" && row.inputName ? (
                                   <DailyTargetAutoSaveInput
                                     actual={row.actual}
@@ -288,8 +262,8 @@ export default async function DailyTargetsPage({ searchParams }: PageProps) {
                                   <strong>{formatNumber(row.actual)}</strong>
                                 )}
                               </td>
-                              <td>{row.remaining === null ? "-" : formatNumber(row.remaining)}</td>
-                              <td>
+                              <td data-label="Kalan">{row.remaining === null ? "-" : formatNumber(row.remaining)}</td>
+                              <td data-label="Durum">
                                 {row.achieved === null ? (
                                   <span className="daily-target-status daily-target-status-neutral">Kıyaslama yok</span>
                                 ) : row.achieved ? (
@@ -337,41 +311,12 @@ export default async function DailyTargetsPage({ searchParams }: PageProps) {
         </section>
       ) : null}
 
-      {bottomSummaryGroups.length ? (
-        <section className="daily-target-bottom-summary">
-          <div className="daily-target-bottom-summary-head">
-            <div>
-              <span>{profile.role === "manager" ? "KENDİ ŞUBENİZ" : "TÜM ŞUBELER"}</span>
-              <h2>{bottomSummaryTitle}</h2>
-            </div>
-            <strong>%{bottomSummary.percent}</strong>
-          </div>
-          <div className="daily-target-bottom-summary-grid">
-            <article>
-              <span>H</span>
-              <strong>{formatNumber(bottomSummary.target)}</strong>
-              <small>Toplam hedef</small>
-            </article>
-            <article>
-              <span>G</span>
-              <strong>{formatNumber(bottomSummary.actual)}</strong>
-              <small>Gerçekleşen</small>
-            </article>
-            <article>
-              <span>K</span>
-              <strong>{formatNumber(bottomSummary.remaining)}</strong>
-              <small>Kalan</small>
-            </article>
-            <article>
-              <span>✓</span>
-              <strong>{bottomSummary.achievedCount}/{bottomSummary.targetedCount}</strong>
-              <small>Tamamlanan hedef</small>
-            </article>
-          </div>
-          {bottomSummary.actualOnly > 0 ? (
-            <p>Hedefi olmayan kategorilerde gerçekleşen toplamı: <strong>{formatNumber(bottomSummary.actualOnly)}</strong></p>
-          ) : null}
-        </section>
+      {shareStores.length ? (
+        <DailyTargetSharePreview
+          dateLabel={dateLabel}
+          mode={profile.role === "manager" ? "store" : "company"}
+          stores={shareStores}
+        />
       ) : null}
     </main>
   );

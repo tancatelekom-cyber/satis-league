@@ -10472,6 +10472,87 @@ textarea::placeholder {
     padding-bottom: 12px;
   }
 
+  .auth-login-page .auth-page-title,
+  .auth-login-page .auth-page-subtitle {
+    display: none;
+  }
+
+  .auth-login-page .auth-layout-simple {
+    display: block;
+    padding-top: 12px;
+  }
+
+  .auth-login-page .auth-card {
+    padding: 14px;
+    border-radius: 18px;
+  }
+
+  .auth-login-page .auth-header {
+    margin-bottom: 10px;
+  }
+
+  .auth-login-page .auth-header .status-chip {
+    display: none;
+  }
+
+  .auth-login-page .auth-header h2 {
+    margin: 0 0 4px;
+    font-size: 1.25rem;
+    line-height: 1.1;
+  }
+
+  .auth-login-page .auth-header p {
+    margin: 0;
+    font-size: .78rem;
+    line-height: 1.3;
+  }
+
+  .auth-login-page .auth-grid.single-column {
+    gap: 9px;
+  }
+
+  .auth-login-page .field {
+    gap: 4px;
+  }
+
+  .auth-login-page .field span {
+    font-size: .8rem;
+  }
+
+  .auth-login-page .field input {
+    min-height: 42px;
+    padding: 9px 12px;
+    border-radius: 12px;
+  }
+
+  .auth-login-page .auth-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 11px;
+  }
+
+  .auth-login-page .auth-actions .button-primary,
+  .auth-login-page .auth-actions .button-secondary {
+    min-height: 42px;
+    padding: 9px 10px;
+    border-radius: 12px;
+    font-size: .78rem;
+    text-align: center;
+  }
+
+  .auth-login-page .auth-footer-links {
+    justify-content: center;
+    margin-top: 8px;
+    font-size: .78rem;
+  }
+
+  .auth-login-page .message-box {
+    margin: 8px 0;
+    padding: 9px 11px;
+    font-size: .76rem;
+  }
+
   .web-kontor-page {
     gap: 16px;
     padding-top: 10px;
@@ -17494,6 +17575,96 @@ textarea::placeholder {
 .daily-target-workspace,
 .daily-target-company-overview,
 .daily-target-share-panel,
+.daily-target-bottom-summary {
+  overflow: hidden;
+  border: 1px solid #b9d7d5;
+  border-radius: 24px;
+  background: linear-gradient(145deg, #ffffff, #eefaf8);
+  box-shadow: 0 16px 34px rgba(15, 118, 110, .09);
+}
+
+.daily-target-bottom-summary-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 20px 22px;
+  color: #fff;
+  background: linear-gradient(135deg, #075e63, #0f8b82);
+}
+
+.daily-target-bottom-summary-head span {
+  color: #a7f3d0;
+  font-size: .7rem;
+  font-weight: 950;
+  letter-spacing: .13em;
+}
+
+.daily-target-bottom-summary-head h2 {
+  margin: 4px 0 0;
+  color: #fff;
+  font-size: 1.22rem;
+}
+
+.daily-target-bottom-summary-head > strong {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.daily-target-bottom-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  padding: 18px;
+}
+
+.daily-target-bottom-summary-grid article {
+  display: grid;
+  grid-template-columns: 38px 1fr;
+  align-items: center;
+  gap: 2px 11px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid #d7e6e7;
+  border-radius: 17px;
+  background: rgba(255, 255, 255, .88);
+}
+
+.daily-target-bottom-summary-grid article > span {
+  grid-row: 1 / 3;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  color: #fff;
+  background: #0f766e;
+  font-weight: 950;
+}
+
+.daily-target-bottom-summary-grid article > strong {
+  color: #102a43;
+  font-size: clamp(.9rem, 1.5vw, 1.2rem);
+  overflow-wrap: anywhere;
+}
+
+.daily-target-bottom-summary-grid article > small {
+  color: #64748b;
+  font-size: .7rem;
+  font-weight: 750;
+}
+
+.daily-target-bottom-summary > p {
+  margin: 0;
+  padding: 0 20px 18px;
+  color: #64748b;
+  font-size: .76rem;
+}
+
+.daily-target-bottom-summary > p strong {
+  color: #5b21b6;
+}
+
 .daily-target-empty {
   border: 1px solid #dce8ed;
   border-radius: 24px;
@@ -17972,5 +18143,30 @@ textarea::placeholder {
 
   .daily-target-category-list {
     padding: 12px;
+  }
+  .daily-target-bottom-summary-head {
+    align-items: flex-start;
+    padding: 17px;
+  }
+
+  .daily-target-bottom-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+    padding: 12px;
+  }
+
+  .daily-target-bottom-summary-grid article {
+    grid-template-columns: 32px 1fr;
+    gap: 2px 8px;
+    padding: 11px;
+  }
+
+  .daily-target-bottom-summary-grid article > span {
+    width: 32px;
+    height: 32px;
+  }
+
+  .daily-target-bottom-summary-grid article > strong {
+    font-size: .98rem;
   }
 }

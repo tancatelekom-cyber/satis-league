@@ -18,6 +18,7 @@ type NavItem = {
 const baseNavItems: NavItem[] = [
   { href: "/", label: "Ana Sayfa", icon: "🏠" },
   { href: "/hedef-gerceklesen", label: "Hedef Gerceklesen", mobileLabel: "Hedef", icon: "🎯" },
+  { href: "/gunluk-hedefler", label: "Günlük Hedefler", mobileLabel: "Günlük", icon: "📅" },
   { href: "/magaza-muduru-primi", label: "Magaza Muduru Primi", mobileLabel: "Mudur Prim", icon: "💰" },
   { href: "/gelir-gider", label: "Gelir Gider", mobileLabel: "Gelir", icon: "📊" },
   { href: "/web-kontor", label: "Web Kontor", mobileLabel: "Kontor", icon: "🌐" },
@@ -144,7 +145,7 @@ export function AppShellHeader({
 
     const itemsWithStockManagement = initialDashboardRole
       ? itemsWithWorkSchedule
-      : itemsWithWorkSchedule.filter((item) => item.href !== "/stok-bilgisi");
+      : itemsWithWorkSchedule.filter((item) => !["/stok-bilgisi", "/gunluk-hedefler"].includes(item.href));
 
     const itemsWithPresentation = initialCanOpenEvaluationPresentation
       ? [...itemsWithStockManagement, { href: "/degerlendirme-sunumu", label: "Degerlendirme Sunumu", mobileLabel: "Sunum", icon: "📈" }]

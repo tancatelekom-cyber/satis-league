@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { buildDailyTargetRowKey, type DailyTargetGroup, type DailyTargetViewRow } from "@/lib/daily-targets";
 
 export type DailyTargetShareStore = {
@@ -429,6 +429,68 @@ async function buildDailyTargetImage({ dateLabel, mode, stores }: DailyTargetSha
   context.textAlign = "left";
 
   return canvasToBlob(canvas);
+}
+
+export function DailyTargetSharePreview(props: DailyTargetShareButtonProps) {
+  const { dateLabel, mode, stores } = props;
+  const [imageUrl, setImageUrl] = useState("");
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    let objectUrl = "";
+    setImageUrl("");
+    setError("");
+
+    void buildDailyTargetImage({ dateLabel, mode, stores }).then((blob) => {
+      objectUrl = URL.createObjectURL(blob);
+      if (active) {
+        setImageUrl(objectUrl);
+      } else {
+        URL.revokeObjectURL(objectUrl);
+      }
+    }).catch((previewError) => {
+      if (active) {
+        setError(previewError instanceof Error ? previewError.message : "Özet görseli hazırlanamadı.");
+      }
+    });
+
+    return () => {
+      active = false;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [dateLabel, mode, stores]);
+
+  return (
+    <section className="daily-target-share-preview">
+      <div className="daily-target-share-preview-head">
+        <div>
+          <span>WHATSAPP ÖZET GÖRSELİ</span>
+          <h2>{mode === "company" ? "Firma özeti" : `${stores[0]?.storeName ?? "Şube"} özeti`}</h2>
+        </div>
+        <small>Görsele dokunarak tam boy açabilirsiniz.</small>
+      </div>
+      {imageUrl ? (
+        <a
+          className={`daily-target-share-preview-image ${mode === "company" ? "daily-target-share-preview-company" : ""}`}
+          href={imageUrl}
+          rel="noreferrer"
+          target="_blank"
+        >
+          {/* Canvas tarafından üretilen geçici önizleme olduğu için normal img kullanılıyor. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            alt={mode === "company" ? "Firma günlük hedef WhatsApp özet görseli" : "Şube günlük hedef WhatsApp özet görseli"}
+            src={imageUrl}
+          />
+        </a>
+      ) : error ? (
+        <div className="message-box error-box">{error}</div>
+      ) : (
+        <div className="daily-target-share-preview-loading">Özet görseli hazırlanıyor…</div>
+      )}
+    </section>
+  );
 }
 
 export function DailyTargetShareButton(props: DailyTargetShareButtonProps) {

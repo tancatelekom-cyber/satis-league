@@ -34,6 +34,96 @@ function parseActual(value: FormDataEntryValue | null) {
   return Math.round(parsed * 100) / 100;
 }
 
+export type DailyTargetAutoSaveInput = {
+  storeId: string;
+  mainCategory: string;
+  subCategory: string;
+  actual: string;
+};
+
+export type DailyTargetAutoSaveResult = {
+  ok: boolean;
+  message: string;
+};
+
+export async function saveDailyTargetActualAction(
+  input: DailyTargetAutoSaveInput
+): Promise<DailyTargetAutoSaveResult> {
+  const { profile } = await requireDailyTargetAccess();
+
+  if (profile.role === "management") {
+    return { ok: false, message: "Yönetici rolü yalnızca görüntüleme yapabilir." };
+  }
+
+  const requestedStoreId = String(input.storeId ?? "").trim();
+  const storeId = profile.role === "manager" ? profile.store_id ?? "" : requestedStoreId;
+  if (!storeId) {
+    return { ok: false, message: "Satış girişi yapılacak şube bulunamadı." };
+  }
+
+  const actual = parseActual(String(input.actual ?? ""));
+  if (actual === null) {
+    return { ok: false, message: "Sıfır veya daha büyük geçerli bir değer girin." };
+  }
+
+  const admin = createAdminClient();
+  const { data: store } = await admin
+    .from("stores")
+    .select("id, name, is_active")
+    .eq("id", storeId)
+    .eq("is_active", true)
+    .single();
+
+  if (!store || (profile.role === "manager" && store.id !== profile.store_id)) {
+    return { ok: false, message: "Bu şube için satış girişi yetkiniz yok." };
+  }
+
+  let definitions: Awaited<ReturnType<typeof fetchDailyTargetDefinitions>>;
+  try {
+    definitions = await fetchDailyTargetDefinitions();
+  } catch (error) {
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : "Günlük hedef Sheet'i okunamadı."
+    };
+  }
+
+  const branchKey = normalizeDailyTargetKey(store.name);
+  const mainCategoryKey = normalizeDailyTargetKey(input.mainCategory);
+  const subCategoryKey = normalizeDailyTargetKey(input.subCategory);
+  const definition = definitions.find(
+    (row) => row.entryMode === "editable"
+      && normalizeDailyTargetKey(row.branchName) === branchKey
+      && normalizeDailyTargetKey(row.mainCategory) === mainCategoryKey
+      && normalizeDailyTargetKey(row.subCategory) === subCategoryKey
+  );
+
+  if (!definition) {
+    return { ok: false, message: "Bu kategori için giriş yetkisi bulunamadı." };
+  }
+
+  const entryDate = getIstanbulDateKey();
+  const { error } = await admin.from("daily_target_entries").upsert({
+    entry_date: entryDate,
+    store_id: storeId,
+    main_category: definition.mainCategory,
+    sub_category: definition.subCategory,
+    actual,
+    entered_by: profile.id,
+    updated_at: new Date().toISOString()
+  }, { onConflict: "entry_date,store_id,main_category,sub_category" });
+
+  if (error) {
+    const setupHint = error.code === "42P01" || error.message.toLowerCase().includes("daily_target_entries")
+      ? " Önce günlük hedefler Supabase SQL kodunu çalıştırın."
+      : "";
+    return { ok: false, message: `Kaydedilemedi: ${error.message}.${setupHint}` };
+  }
+
+  revalidatePath(PAGE_PATH);
+  return { ok: true, message: "Kaydedildi" };
+}
+
 export async function saveDailyTargetActualsAction(formData: FormData) {
   const { profile } = await requireDailyTargetAccess();
   const requestedStoreId = String(formData.get("storeId") ?? "").trim();

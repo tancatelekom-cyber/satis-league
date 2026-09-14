@@ -47,6 +47,29 @@ function formatNumber(value: number | null) {
   });
 }
 
+function buildDailyTargetTotals(groups: DailyTargetGroup[]) {
+  const rows = groups.flatMap((group) => {
+    const summaryRows = group.rows.filter((row) => row.entryMode === "summary");
+    return summaryRows.length ? summaryRows : group.rows.filter((row) => row.entryMode === "editable");
+  });
+  const targetedRows = rows.filter((row) => row.target !== null);
+  const target = targetedRows.reduce((total, row) => total + (row.target ?? 0), 0);
+  const actual = targetedRows.reduce((total, row) => total + row.actual, 0);
+  const actualOnly = rows
+    .filter((row) => row.target === null)
+    .reduce((total, row) => total + row.actual, 0);
+
+  return {
+    target,
+    actual,
+    remaining: Math.max(0, target - actual),
+    percent: target > 0 ? Math.round((actual / target) * 100) : 0,
+    achievedCount: targetedRows.filter((row) => row.achieved).length,
+    targetedCount: targetedRows.length,
+    actualOnly
+  };
+}
+
 function buildStoreHref(storeId: string) {
   return `/gunluk-hedefler?store=${encodeURIComponent(storeId)}`;
 }
@@ -110,6 +133,13 @@ export default async function DailyTargetsPage({ searchParams }: PageProps) {
   const selectedStoreView = storeViews.find((item) => item.store.id === selectedStore?.id) ?? null;
   const companyGroups = buildCompanyDailyTargetGroups(storeViews.map((item) => item.groups));
   const companySummary = summarizeDailyTargetGroups(companyGroups);
+  const bottomSummaryGroups = profile.role === "manager"
+    ? selectedStoreView?.groups ?? []
+    : companyGroups;
+  const bottomSummary = buildDailyTargetTotals(bottomSummaryGroups);
+  const bottomSummaryTitle = profile.role === "manager"
+    ? `${selectedStoreView?.store.name ?? "Şube"} özeti`
+    : "Firma özeti";
   const canEdit = (profile.role === "manager" || profile.role === "admin") && !entryError && !sheetError;
   const canShare = profile.role === "manager" || profile.role === "admin";
   const shareStores: DailyTargetShareStore[] = profile.role === "admin"
@@ -304,6 +334,43 @@ export default async function DailyTargetsPage({ searchParams }: PageProps) {
             mode={profile.role === "admin" ? "company" : "store"}
             stores={shareStores}
           />
+        </section>
+      ) : null}
+
+      {bottomSummaryGroups.length ? (
+        <section className="daily-target-bottom-summary">
+          <div className="daily-target-bottom-summary-head">
+            <div>
+              <span>{profile.role === "manager" ? "KENDİ ŞUBENİZ" : "TÜM ŞUBELER"}</span>
+              <h2>{bottomSummaryTitle}</h2>
+            </div>
+            <strong>%{bottomSummary.percent}</strong>
+          </div>
+          <div className="daily-target-bottom-summary-grid">
+            <article>
+              <span>H</span>
+              <strong>{formatNumber(bottomSummary.target)}</strong>
+              <small>Toplam hedef</small>
+            </article>
+            <article>
+              <span>G</span>
+              <strong>{formatNumber(bottomSummary.actual)}</strong>
+              <small>Gerçekleşen</small>
+            </article>
+            <article>
+              <span>K</span>
+              <strong>{formatNumber(bottomSummary.remaining)}</strong>
+              <small>Kalan</small>
+            </article>
+            <article>
+              <span>✓</span>
+              <strong>{bottomSummary.achievedCount}/{bottomSummary.targetedCount}</strong>
+              <small>Tamamlanan hedef</small>
+            </article>
+          </div>
+          {bottomSummary.actualOnly > 0 ? (
+            <p>Hedefi olmayan kategorilerde gerçekleşen toplamı: <strong>{formatNumber(bottomSummary.actualOnly)}</strong></p>
+          ) : null}
         </section>
       ) : null}
     </main>

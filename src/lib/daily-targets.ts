@@ -89,10 +89,14 @@ function parseOptionalNumber(value: string) {
   const text = normalizeText(value);
   if (!text) return null;
 
-  const normalized = text.includes(",")
-    ? text.replace(/\./g, "").replace(",", ".")
-    : text;
-  const parsed = Number(normalized.replace(/[^\d.-]/g, ""));
+  const numericText = text.replace(/[^\d,.-]/g, "");
+  const usesTurkishThousands = /^-?\d{1,3}(?:\.\d{3})+$/.test(numericText);
+  const normalized = numericText.includes(",")
+    ? numericText.replace(/\./g, "").replace(",", ".")
+    : usesTurkishThousands
+      ? numericText.replace(/\./g, "")
+      : numericText;
+  const parsed = Number(normalized);
   return Number.isFinite(parsed) ? parsed : null;
 }
 

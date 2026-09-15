@@ -17,7 +17,10 @@ type DailyTargetShareButtonProps = {
 
 function formatNumber(value: number | null) {
   if (value === null) return "-";
-  return value.toLocaleString("tr-TR", { maximumFractionDigits: 20 });
+  return value.toLocaleString("tr-TR", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2
+  });
 }
 
 function roundedRect(
@@ -300,14 +303,14 @@ async function buildDailyTargetImage({ dateLabel, mode, stores }: DailyTargetSha
     return buildCompanySummaryImage({ dateLabel, mode, stores });
   }
 
-  const width = 1320;
-  const padding = 58;
-  const rowHeight = 54;
-  const categoryHeight = 47;
-  const storeHeaderHeight = 82;
-  const storeGap = 30;
-  const headerHeight = 210;
-  const footerHeight = 92;
+  const width = 900;
+  const padding = 34;
+  const rowHeight = 72;
+  const categoryHeight = 58;
+  const storeHeaderHeight = 94;
+  const storeGap = 24;
+  const headerHeight = 190;
+  const footerHeight = 78;
   const contentHeight = stores.reduce(
     (total, store) => total + storeHeaderHeight + storeGap + store.groups.reduce(
       (groupTotal, group) => groupTotal + categoryHeight + group.rows.length * rowHeight,
@@ -330,25 +333,25 @@ async function buildDailyTargetImage({ dateLabel, mode, stores }: DailyTargetSha
   context.fillRect(0, 0, width, height);
 
   context.fillStyle = "#0f766e";
-  context.font = "900 23px Arial";
-  context.fillText("TANCA+ • GÜNLÜK TAKİP", padding, 58);
+  context.font = "900 24px Arial";
+  context.fillText("TANCA+ • GÜNLÜK TAKİP", padding, 48);
   context.fillStyle = "#102a43";
-  context.font = "900 49px Arial";
-  context.fillText("Günlük Hedef Gerçekleşen", padding, 124);
+  context.font = "900 43px Arial";
+  context.fillText("Günlük Hedef Gerçekleşen", padding, 105);
   context.fillStyle = "#5f738a";
   context.font = "700 24px Arial";
   context.fillText(
     `${stores[0]?.storeName ?? "Şube"} • ${dateLabel}`,
     padding,
-    169
+    151
   );
 
   let y = headerHeight;
-  const labelX = padding + 24;
-  const targetX = 760;
-  const actualX = 930;
-  const remainingX = 1090;
-  const statusX = width - padding - 24;
+  const labelX = padding + 20;
+  const targetX = 535;
+  const actualX = 655;
+  const remainingX = 770;
+  const statusX = width - padding - 18;
 
   for (const store of stores) {
     const storeGradient = context.createLinearGradient(padding, y, width - padding, y + storeHeaderHeight);
@@ -358,26 +361,26 @@ async function buildDailyTargetImage({ dateLabel, mode, stores }: DailyTargetSha
     context.fillStyle = storeGradient;
     context.fill();
     context.fillStyle = "rgba(255,255,255,.76)";
-    context.font = "800 17px Arial";
-    context.fillText(store.isCompany ? "FİRMA GENELİ" : "ŞUBE", labelX, y + 28);
+    context.font = "800 19px Arial";
+    context.fillText(store.isCompany ? "FİRMA GENELİ" : "ŞUBE", labelX, y + 31);
     context.fillStyle = "#ffffff";
-    context.font = "900 30px Arial";
-    context.fillText(store.storeName, labelX, y + 62);
+    context.font = "900 35px Arial";
+    context.fillText(store.storeName, labelX, y + 71);
     y += storeHeaderHeight;
 
     for (const group of store.groups) {
       context.fillStyle = "#dce9f0";
       context.fillRect(padding, y, width - padding * 2, categoryHeight);
       context.fillStyle = "#18304d";
-      context.font = "900 20px Arial";
-      context.fillText(fitText(context, group.mainCategory, 570), labelX, y + 30);
+      context.font = "900 24px Arial";
+      context.fillText(fitText(context, group.mainCategory, 425), labelX, y + 38);
       context.textAlign = "right";
       context.fillStyle = "#60738c";
-      context.font = "800 15px Arial";
-      context.fillText("HEDEF", targetX, y + 29);
-      context.fillText("GERÇEKLEŞEN", actualX, y + 29);
-      context.fillText("KALAN", remainingX, y + 29);
-      context.fillText("DURUM", statusX, y + 29);
+      context.font = "900 20px Arial";
+      context.fillText("H", targetX, y + 37);
+      context.fillText("G", actualX, y + 37);
+      context.fillText("K", remainingX, y + 37);
+      context.fillText("DURUM", statusX, y + 37);
       context.textAlign = "left";
       y += categoryHeight;
 
@@ -387,23 +390,23 @@ async function buildDailyTargetImage({ dateLabel, mode, stores }: DailyTargetSha
           : index % 2 === 0 ? "#ffffff" : "#f7fafc";
         context.fillRect(padding, y, width - padding * 2, rowHeight);
         context.fillStyle = row.entryMode === "summary" ? "#8b460b" : "#263e58";
-        context.font = `${row.entryMode === "summary" ? "900" : "750"} 18px Arial`;
-        context.fillText(fitText(context, row.subCategory, 570), labelX, y + 34);
+        context.font = `${row.entryMode === "summary" ? "900" : "800"} 24px Arial`;
+        context.fillText(fitText(context, row.subCategory, 425), labelX, y + 45);
         context.textAlign = "right";
         context.fillStyle = "#304760";
-        context.font = "800 18px Arial";
-        context.fillText(formatNumber(row.target), targetX, y + 34);
-        context.fillText(formatNumber(row.actual), actualX, y + 34);
-        context.fillText(formatNumber(row.remaining), remainingX, y + 34);
+        context.font = "900 25px Arial";
+        context.fillText(formatNumber(row.target), targetX, y + 45);
+        context.fillText(formatNumber(row.actual), actualX, y + 45);
+        context.fillText(formatNumber(row.remaining), remainingX, y + 45);
 
         if (row.achieved === null) {
           context.fillStyle = "#64748b";
-          context.font = "800 15px Arial";
-          context.fillText("Kıyas yok", statusX, y + 33);
+          context.font = "800 16px Arial";
+          context.fillText("Kıyas yok", statusX, y + 44);
         } else {
           context.fillStyle = row.achieved ? "#15803d" : "#dc2626";
-          context.font = "900 23px Arial";
-          context.fillText(row.achieved ? "✓" : "✕", statusX, y + 35);
+          context.font = "900 32px Arial";
+          context.fillText(row.achieved ? "✓" : "✕", statusX, y + 49);
         }
         context.textAlign = "left";
         y += rowHeight;
@@ -415,7 +418,7 @@ async function buildDailyTargetImage({ dateLabel, mode, stores }: DailyTargetSha
 
   context.fillStyle = "#6f8194";
   context.font = "700 18px Arial";
-  context.fillText("TANCA+ günlük hedef özeti", padding, height - 40);
+  context.fillText("H: Hedef • G: Gerçekleşen • K: Kalan", padding, height - 31);
   context.textAlign = "right";
   context.fillText(
     new Intl.DateTimeFormat("tr-TR", {
@@ -424,7 +427,7 @@ async function buildDailyTargetImage({ dateLabel, mode, stores }: DailyTargetSha
       timeZone: "Europe/Istanbul"
     }).format(new Date()),
     width - padding,
-    height - 40
+    height - 31
   );
   context.textAlign = "left";
 

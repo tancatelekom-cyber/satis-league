@@ -51,12 +51,12 @@ const columns: Column[] = [receipt(5), staff(9), description('İŞLEM / ÜRÜN',
 export function buildCashReports(row: CashRow, categories: CashCategory[]): CashReport[] {
   const groups = standard.map(slot => {
     const ids = new Set(categories.filter(c => normalize(c.name) === slot.match).map(c => c.id));
-    return { ...slot, entries: row.entries.filter(e => ids.has(e.category_id) || normalize(e.category_name || '') === slot.match) };
+    return { ...slot, entries: row.entries.filter(e => ids.has(e.category_id) || !categories.some(c=>c.id===e.category_id) && normalize(e.category_name || '') === slot.match) };
   });
   const assigned = new Set(groups.flatMap(g => g.entries));
   const extraNames = new Map<string,string>();
   categories.filter(c => c.is_active && !standard.some(s => normalize(c.name) === s.match)).forEach(c => extraNames.set(c.id,c.name));
-  row.entries.filter(e => !assigned.has(e)).forEach(e => extraNames.set(e.category_id,e.category_name || categories.find(c => c.id === e.category_id)?.name || 'Diğer işlemler'));
+  row.entries.filter(e => !assigned.has(e)).forEach(e => extraNames.set(e.category_id,categories.find(c => c.id === e.category_id)?.name || e.category_name || 'Diğer işlemler'));
   const extras = [...extraNames].map(([id,name]) => ({name,entries:row.entries.filter(e => e.category_id === id)}));
   const pages = 1;
   const reports: CashReport[] = [];

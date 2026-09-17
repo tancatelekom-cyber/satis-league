@@ -3,6 +3,7 @@ import { AuthGate } from "@/components/auth/auth-gate";
 import { AppShellHeader } from "@/components/app-shell-header";
 import { PwaRegister } from "@/components/pwa-register";
 import { getResolvedFeatureAccessForProfile } from "@/lib/feature-menu-permissions";
+import { canAccessCash } from "@/lib/auth/require-cash-access";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { UserRole } from "@/lib/types";
@@ -50,6 +51,7 @@ export default async function RootLayout({
   let canOpenRevenueExpense = false;
   let canOpenWebKontor = false;
   let canOpenMissingDocs = false;
+  let canOpenCash = false;
   let dashboardRole: "manager" | "management" | "admin" | null = null;
   let pendingRequestCount = 0;
 
@@ -107,6 +109,7 @@ export default async function RootLayout({
         canOpenWebKontor = resolvedFeatureAccess.allowed;
         const resolvedMissingDocsAccess = await getResolvedFeatureAccessForProfile("eksik-evrak", user.id, profile.role);
         canOpenMissingDocs = resolvedMissingDocsAccess.allowed;
+        canOpenCash = await canAccessCash(user.id, profile.role);
       }
     }
   } catch {
@@ -118,6 +121,7 @@ export default async function RootLayout({
     canOpenRevenueExpense = false;
     canOpenWebKontor = false;
     canOpenMissingDocs = false;
+    canOpenCash = false;
     dashboardRole = null;
     pendingRequestCount = 0;
   }
@@ -148,6 +152,7 @@ export default async function RootLayout({
             initialCanOpenRevenueExpense={canOpenRevenueExpense}
             initialCanOpenWebKontor={canOpenWebKontor}
             initialCanOpenMissingDocs={canOpenMissingDocs}
+            initialCanOpenCash={canOpenCash}
             initialDashboardRole={dashboardRole}
             initialPendingRequestCount={pendingRequestCount}
           />

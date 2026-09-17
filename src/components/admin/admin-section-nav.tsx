@@ -31,6 +31,7 @@ const adminGroups = [
     icon: "⚙️",
     links: [
       { href: "/admin/gelir-gider", icon: "💹", label: "Gelir Gider", description: "Menü erişim yetkilerini yönet" },
+      { href: "/admin/kasa-takip", icon: "🧾", label: "Kasa Takip", description: "Kasa erişim izinlerini ve kategorileri yönet" },
       { href: "/admin/web-kontor", icon: "🌐", label: "Web Kontör", description: "Menü yetkisini ve görünürlüğünü yönet" },
       { href: "/admin/mudur-primi", icon: "💰", label: "Müdür Primi", description: "Prim yetkilerini ve kolonları yönet" },
       { href: "/admin/eksik-evrak", icon: "📄", label: "Eksik Evrak", description: "Evrak menüsü yetkilerini yönet" },

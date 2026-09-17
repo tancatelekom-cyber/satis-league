@@ -125,7 +125,7 @@ export default async function DailyTargetsPage({ searchParams }: PageProps) {
         { storeName: "Firma Toplamı", groups: companyGroups, isCompany: true }
       ];
   const targetOnlyShareStores: DailyTargetShareStore[] = profile.role === "admin"
-    ? storeViews.map((item) => ({ storeName: item.store.name, groups: item.groups }))
+    ? shareStores
     : [];
 
   return (

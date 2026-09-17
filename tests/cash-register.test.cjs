@@ -127,3 +127,18 @@ test('QR income and expense payments never alter cash or POS and remain visible 
  const xlsx=buildXlsxBuffer([{name:report.name,rows:[],report}]).toString('utf8');
  assert.ok(xlsx.includes('QR ÖDEME'));
 });
+
+test('category payment settings cover all types and preserve legacy defaults',()=>{
+ const {categoryPayments}=load('src/lib/cash-register.ts');
+ assert.deepEqual(categoryPayments({allowed_payments:['qr']}),['qr']);
+ assert.deepEqual(categoryPayments({allowed_payments:['cash','card','qr','assignment','installment','free']}),['cash','card','qr','assignment','installment','free']);
+ assert.ok(!categoryPayments({allow_assignment:false,allow_installment:false}).includes('assignment'));
+ assert.ok(categoryPayments({allow_assignment:true}).includes('assignment'));
+});
+test('renamed categories do not duplicate transactions in the report',()=>{
+ const categories=[{id:'renamed',name:'Yeni cihaz adı',is_active:true}];
+ const entries=[{category_id:'renamed',category_name:'Cihaz',receipt:'unique',description:'Telefon',payment:'qr',amount:100}];
+ const report=buildCashReports({...reportRow,entries},categories)[0];
+ assert.equal(report.cells.filter(c=>c.value==='unique').length,1);
+ assert.ok(report.cells.some(c=>c.value==='YENİ CİHAZ ADI'));
+});

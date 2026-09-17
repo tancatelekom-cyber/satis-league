@@ -4,7 +4,7 @@ export type CashDay = {
   bank_deposit: number; counted: number; note: string; revision: number;
   invoice_cash: number; web_cash: number; receipt_start: string; entries: CashEntry[];
 };
-export type CashCategory = { id: string; name: string; kind: 'income' | 'expense' | 'neutral'; is_active: boolean; allow_assignment: boolean; allow_installment: boolean };
+export type CashCategory = { id: string; name: string; kind: 'income' | 'expense' | 'neutral'; is_active: boolean; allow_assignment: boolean; allow_installment: boolean; allowed_payments?: CashEntry['payment'][] };
 export type CashEntry = { category_id: string; category_name?: string; kind?: string; receipt: string; staff: string; staff_name?: string; description: string; cash: number; card: number; payment: 'cash' | 'card' | 'assignment' | 'installment' | 'qr' | 'free'; amount: number };
 export type CashRow = CashDay & { name: string; saved: boolean; hasPrior: boolean; previousClosing: number | null };
 export function previousCashDate(date: string) {
@@ -43,4 +43,9 @@ export function calculateCashSummary(opening: number, invoice: number, web: numb
   const cash = cents(invoice) + cents(web) + cents(income);
   const expected = cents(opening) + cash - cents(expense);
   return { cash: cash / 100, expected: expected / 100, difference: (cents(counted) - expected) / 100, closing: cents(counted) / 100 };
+}
+
+export const cashPaymentLabels = {cash:'Nakit',card:'Kredi kartı',qr:'QR ödeme',assignment:'Temlikli satış',installment:'Sepete taksit',free:'Ücretsiz / İşlem'} as const;
+export function categoryPayments(category: CashCategory): CashEntry['payment'][] {
+  return category.allowed_payments ?? (Object.keys(cashPaymentLabels) as CashEntry['payment'][]).filter(p=>p!=='assignment'&&p!=='installment'||p==='assignment'&&category.allow_assignment||p==='installment'&&category.allow_installment);
 }

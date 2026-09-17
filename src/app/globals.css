@@ -17974,6 +17974,14 @@ textarea::placeholder {
   gap: 6px;
 }
 
+.daily-target-share-actions {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .daily-target-share-button {
   display: inline-flex;
   align-items: center;
@@ -17994,6 +18002,11 @@ textarea::placeholder {
 .daily-target-share-button:disabled {
   cursor: wait;
   opacity: .65;
+}
+
+.daily-target-share-button-targets {
+  background: linear-gradient(135deg, #1d4ed8, #2563eb);
+  box-shadow: 0 9px 20px rgba(37, 99, 235, .22);
 }
 
 .daily-target-share-status {
@@ -18102,6 +18115,11 @@ textarea::placeholder {
   .daily-target-company-score,
   .daily-target-share-wrap {
     justify-items: start;
+  }
+
+  .daily-target-share-actions {
+    display: grid;
+    width: 100%;
   }
 
   .daily-target-workspace-head .filter-select-shell,

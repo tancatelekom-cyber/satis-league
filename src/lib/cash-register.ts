@@ -36,3 +36,10 @@ export function cashMoney(value: number) { return value.toLocaleString('tr-TR', 
 export function cashTotals(rows: CashRow[]) {
   return rows.reduce((sum, row) => ({ opening: sum.opening + Number(row.opening), closing: sum.closing + Number(row.closing), cash: sum.cash + Number(row.cash_in), expenses: sum.expenses + Number(row.expenses), deposit: sum.deposit + Number(row.bank_deposit) }), { opening: 0, closing: 0, cash: 0, expenses: 0, deposit: 0 });
 }
+
+export function calculateCashSummary(opening: number, invoice: number, web: number, income: number, expense: number, counted: number) {
+  const cents = (value: number) => Math.round(Number(value) * 100);
+  const cash = cents(invoice) + cents(web) + cents(income);
+  const expected = cents(opening) + cash - cents(expense);
+  return { cash: cash / 100, expected: expected / 100, difference: (cents(counted) - expected) / 100, closing: cents(counted) / 100 };
+}

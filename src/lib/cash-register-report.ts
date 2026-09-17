@@ -1,4 +1,4 @@
-import { cashOpeningDifference, type CashCategory, type CashEntry, type CashRow } from './cash-register';
+import { cashOpeningDifference, calculateCashSummary, type CashCategory, type CashEntry, type CashRow } from './cash-register';
 
 export type ReportStyle = 'title' | 'note' | 'section' | 'header' | 'body' | 'money' | 'input' | 'total' | 'warning';
 export type ReportCell = { row: number; col: number; span: number; value: string | number; style: ReportStyle };
@@ -90,28 +90,37 @@ export function buildCashReports(row: CashRow, categories: CashCategory[]): Cash
   for(let page=0;page<pages;page++) {
     const {report,add}=create(`${row.name}${pages>1?` ${page+1}`:''}`,`Sayfa ${page+1}/${pages}`);
     groups.forEach(g=>section(add,g.name,g.row,g.col,g.columns,g.entries.slice(page*g.capacity,(page+1)*g.capacity),g.capacity));
-    const expected=Number(row.opening)+Number(row.invoice_cash)+Number(row.web_cash)+Number(row.cash_in)-Number(row.expenses);
+    const calculated=calculateCashSummary(row.opening,row.invoice_cash,row.web_cash,row.cash_in,row.expenses,row.counted);
+    const expected=calculated.expected;
     add(25,37,16,'KASA ÖZETİ · GÜN TOPLAMI','section');
     const summary: [string,number|string,ReportStyle][] = [
       ['FATURA NAKİT TAHSİLAT (+)',Number(row.invoice_cash),'input'],['WEB NAKİT TAHSİLAT (+)',Number(row.web_cash),'input'],
-      ['TOPLAM NAKİT GELİR (+)',Number(row.cash_in),'money'],['POS KK SATIŞLARI (NÖTR)',Number(row.card_in),'money'],
+      ['TOPLAM NAKİT TAHSİLAT',calculated.cash,'money'],['POS KK SATIŞLARI (NÖTR)',Number(row.card_in),'money'],
       ['GİDER / NAKİT (−)',Number(row.expenses),'money'],['KALAN TUTAR',expected,'total'],
       ['KASADA OLAN',row.saved?Number(row.counted):'','input'],['KASA FARKI',row.saved?Number(row.counted)-expected:'','warning'],
-      ['BANKAYA AYRILAN',Number(row.bank_deposit),'input'],['DEVİR',Number(row.closing),'total']
+      ...(Number(row.bank_deposit) ? [['ÖNCEDEN BANKAYA AYRILAN',Number(row.bank_deposit),'input'] as [string,number,ReportStyle]] : []),['DEVİR',Number(row.closing),'total']
     ];
     summary.forEach(([label,value,style],i)=>{add(26+i,37,11,label,'body');add(26+i,48,5,value,style);});
     add(38,0,53,'NAKİT: Yalnızca kasaya giren tutarı yazın. Temlikli ve sepete taksit satışlar nakit kasayı ve POS toplamını etkilemez.','note');
     add(39,0,53,'Fatura ve web tahsilatları özete ayrıca girilir; aynı tahsilatı satış bölümlerinde tekrar saymayın.','note');
-    add(40,0,53,'Kalan tutar = açılış + fatura + web + nakit satışlar − nakit gider. Kasa farkı = sayılan − beklenen. Devir = sayılan − bankaya ayrılan.','note');
-    add(41,0,53,'Bankaya ayrılan tutarı gider satırında tekrar göstermeyin. Çok sayfalı raporlarda kasa özeti tüm günün toplamıdır.','note');
+    add(40,0,53,'Kalan tutar = açılış + fatura + web + nakit satışlar − nakit gider. Kasa farkı = sayılan − beklenen. Devir = elle sayılan para.','note');
+    add(41,0,53,'Bankaya yatırılan tutar Gider kategorisine nakit işlem olarak girilir. Çok sayfalı raporlarda kasa özeti tüm günün toplamıdır.','note');
     if(row.note) add(42,0,53,`Gün notu: ${row.note}`,'note');
     reports.push(report);
   }
-  for(const extra of extras) for(let page=0;page<Math.max(1,Math.ceil(extra.entries.length/30));page++) {
-    const {report,add}=create(`${row.name} ${extra.name} ${page+1}`,`${extra.name} · Ek sayfa ${page+1}`);
-    section(add,extra.name.toLocaleUpperCase('tr-TR'),5,0,[receipt(5),staff(9),description('İŞLEM / ÜRÜN',23),...(['cash','card','assignment','installment'] as const).map(field=>({...money(field),span:4}))],extra.entries.slice(page*30,(page+1)*30),30);
-    add(38,0,53,'Bu sayfanın işlemleri ana formdaki günlük kasa özetine dahildir. Temlikli ve sepete taksit kasayı etkilemez.','note');
-    reports.push(report);
+  // Include every custom category in the main form, even before its first sale.
+  // The image and first Excel worksheet must contain the same complete category list.
+  const main = reports[0];
+  let nextRow = main.heights.length + 1;
+  const addExtra: ReturnType<typeof create>['add'] = (r, col, span, value, style) => {
+    while(main.heights.length <= r) main.heights.push(24);
+    main.cells.push({row:r,col,span,value,style});
+    main.heights[r] = Math.max(main.heights[r], reportLines(value,span*32,reportStyles[style].size).length*(reportStyles[style].size+3)+10);
+  };
+  for(const extra of extras) {
+    const capacity = Math.max(3,extra.entries.length);
+    section(addExtra,extra.name.toLocaleUpperCase('tr-TR'),nextRow,0,[receipt(5),staff(9),description('İŞLEM / ÜRÜN',23),...(['cash','card','assignment','installment'] as const).map(field=>({...money(field),span:4}))],extra.entries,capacity);
+    nextRow += capacity + 3;
   }
   return reports;
 }

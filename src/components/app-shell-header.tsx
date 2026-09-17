@@ -49,6 +49,7 @@ type AppShellHeaderProps = {
   initialCanOpenRevenueExpense?: boolean;
   initialCanOpenWebKontor?: boolean;
   initialCanOpenMissingDocs?: boolean;
+  initialCanOpenCash?: boolean;
   initialDashboardRole?: "manager" | "management" | "admin" | null;
   initialPendingRequestCount?: number;
 };
@@ -70,6 +71,7 @@ export function AppShellHeader({
   initialCanOpenRevenueExpense = false,
   initialCanOpenWebKontor = false,
   initialCanOpenMissingDocs = false,
+  initialCanOpenCash = false,
   initialDashboardRole = null,
   initialPendingRequestCount = 0
 }: AppShellHeaderProps) {
@@ -151,10 +153,11 @@ export function AppShellHeader({
       ? [...itemsWithStockManagement, { href: "/degerlendirme-sunumu", label: "Degerlendirme Sunumu", mobileLabel: "Sunum", icon: "📈" }]
       : itemsWithStockManagement;
 
+    const itemsWithCash = initialCanOpenCash ? [...itemsWithPresentation, { href: "/kasa-takip", label: "Kasa Takip", mobileLabel: "Kasa", icon: "🧾" }] : itemsWithPresentation;
     return initialIsAdmin
-      ? [...itemsWithPresentation, { href: "/admin", label: "Admin Paneli", mobileLabel: "Admin", icon: "⚙️" }]
-      : itemsWithPresentation;
-  }, [initialCanEvaluate, initialCanOpenEvaluationPresentation, initialCanOpenManagerPrime, initialCanOpenMissingDocs, initialCanOpenRevenueExpense, initialCanOpenWebKontor, initialCanOpenWorkSchedule, initialDashboardRole, initialIsAdmin]);
+      ? [...itemsWithCash, { href: "/admin", label: "Admin Paneli", mobileLabel: "Admin", icon: "⚙️" }]
+      : itemsWithCash;
+  }, [initialCanOpenCash, initialCanEvaluate, initialCanOpenEvaluationPresentation, initialCanOpenManagerPrime, initialCanOpenMissingDocs, initialCanOpenRevenueExpense, initialCanOpenWebKontor, initialCanOpenWorkSchedule, initialDashboardRole, initialIsAdmin]);
 
   return (
     <header className="topbar topbar-app">

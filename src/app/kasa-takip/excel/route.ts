@@ -1,9 +1,15 @@
 import { getCashData } from '@/lib/cash-register-data';
 import { buildXlsxBuffer } from '@/lib/export/xlsx';
+import { buildCashReports } from '@/lib/cash-register-report';
+import { createClient } from '@/lib/supabase/server';
+import type { CashCategory } from '@/lib/cash-register';
 export const dynamic = 'force-dynamic';
 export async function GET(request: Request) {
   const params = new URL(request.url).searchParams;
   const { rows, date } = await getCashData(params.get('date') || undefined, params.get('store') || undefined);
+  const db = await createClient();
+  const { data: categories, error } = await db.from('cash_register_categories').select('*').order('name');
+  if(error) return new Response('Kasa kategorileri okunamadı.',{status:503});
   const labels = { cash: 'Nakit', card: 'Kredi kartı', assignment: 'Temlikli', installment: 'Sepete taksit', free: 'Ücretsiz / İşlem' };
   const summary: (string | number)[][] = [['Şube','Tarih','Durum','Açılış','Fatura nakit','Web nakit','İşlem nakit','POS kredi kartı','Nakit gider','Beklenen kasa','Sayılan kasa','Kasa farkı','Bankaya ayrılan','Devir','Temlikli','Sepete taksit']];
   for (const r of rows) {
@@ -14,6 +20,7 @@ export async function GET(request: Request) {
   const details: (string | number)[][] = [['Şube','Tarih','Kategori','Fiş / Fatura no','Personel','İşlem / Ürün','Tahsilat tipi','Tutar','Nakit','Kredi kartı']];
   rows.forEach(r => r.entries.forEach(e => details.push([r.name,date,e.category_name || '',e.receipt,e.staff_name || '',e.description,labels[e.payment],Number(e.amount),Number(e.cash),Number(e.card)])));
   const notes: (string | number)[][] = [['Şube','Tarih','Fiş başlangıcı','Gün notu'],...rows.map(r => [r.name,date,r.receipt_start,r.note])];
-  const buffer = buildXlsxBuffer([{name:'Kasa Özeti',rows:summary},{name:'İşlem Detayları',rows:details},{name:'Gün Notları',rows:notes}]);
+  const forms = rows.flatMap(row => buildCashReports(row,(categories || []) as CashCategory[])).map(report=>({name:report.name,rows:[],report}));
+  const buffer = buildXlsxBuffer([...forms,...(rows.length>1?[{name:'Tüm Şubeler Özeti',rows:summary}]:[]),{name:'İşlem Detayları',rows:details},{name:'Gün Notları',rows:notes}]);
   return new Response(new Uint8Array(buffer),{headers:{'Content-Type':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','Content-Disposition':`attachment; filename="kasa-${date}.xlsx"`,'Cache-Control':'private, no-store'}});
 }

@@ -2,8 +2,12 @@ import Link from 'next/link';
 import { requireAdminAccess } from '@/lib/auth/require-admin';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { AdminSectionNav } from '@/components/admin/admin-section-nav';
-import { addCashCategory, toggleCashCategory, updateCashPermission } from './actions';
+import { addCashCategory, updateCashCategory, toggleCashCategory, updateCashPermission } from './actions';
 import '../../kasa-takip/cash.css';
+import { cashPaymentLabels, categoryPayments, type CashCategory } from '@/lib/cash-register';
+
+function PaymentChoices({selected}: {selected: string[]}) { return <fieldset className="cash-payment-choices"><legend>İzin verilen tahsilat tipleri</legend>{Object.entries(cashPaymentLabels).map(([value,label])=><label className="cash-check" key={value}><input type="checkbox" name="payments" value={value} defaultChecked={selected.includes(value)}/>{label}</label>)}</fieldset>; }
+
 
 export default async function CashAdmin({ searchParams }: { searchParams: Promise<{ error?: string; message?: string }> }) {
   await requireAdminAccess();
@@ -19,11 +23,11 @@ export default async function CashAdmin({ searchParams }: { searchParams: Promis
     {(params.error || params.message) && <p role="status">{params.error || params.message}</p>}
     {(people.error || permissions.error || categories.error) && <p role="alert">Veriler okunamadı. Kasa SQL migration dosyasının uygulandığını kontrol edin.</p>}
     <section className="cash-panel"><h2>Kategoriler</h2><p>Kaldırılan kategoriler eski kayıtlarda korunur. Nötr kategoriler kasa toplamlarını etkilemez.</p>
-      <form action={addCashCategory} className="cash-toolbar"><label>Kategori adı<input name="name" required maxLength={100} /></label><label>Tür<select name="kind"><option value="income">Gelir (+)</option><option value="expense">Gider (−)</option><option value="neutral">Nötr / İşlem adedi</option></select></label><label className="cash-check"><input type="checkbox" name="assignment"/>Temlikli satış</label><label className="cash-check"><input type="checkbox" name="installment"/>Sepete taksit</label><button>Kategori ekle</button></form>
-      <div className="cash-category-list">{categories.data?.map(c => <form action={toggleCashCategory} key={c.id}><input type="hidden" name="id" value={c.id}/><input type="hidden" name="active" value={String(!c.is_active)}/><span><strong>{c.name}</strong> · {c.kind === 'income' ? 'Gelir' : c.kind === 'expense' ? 'Gider' : 'Nötr'} · {c.is_active ? 'Aktif' : 'Kaldırılmış'}</span><button>{c.is_active ? 'Kaldır' : 'Yeniden aç'}</button></form>)}</div>
+      <form action={addCashCategory} className="cash-toolbar"><label>Kategori adı<input name="name" required maxLength={100} /></label><label>Tür<select name="kind"><option value="income">Gelir (+)</option><option value="expense">Gider (−)</option><option value="neutral">Nötr / İşlem adedi</option></select></label><PaymentChoices selected={['cash','card','qr','free']}/><button>Kategori ekle</button></form>
+      <div className="cash-category-list">{categories.data?.map(c => <article className="cash-category-card" key={c.id}><form action={toggleCashCategory}><input type="hidden" name="id" value={c.id}/><input type="hidden" name="active" value={String(!c.is_active)}/><span><strong>{c.name}</strong> · {c.kind === 'income' ? 'Gelir' : c.kind === 'expense' ? 'Gider' : 'Nötr'} · {c.is_active ? 'Aktif' : 'Kaldırılmış'}</span><button>{c.is_active ? 'Kaldır' : 'Yeniden aç'}</button></form><details><summary>Düzenle</summary><form action={updateCashCategory}><input type="hidden" name="id" value={c.id}/><label>Kategori adı<input name="name" required maxLength={100} defaultValue={c.name}/></label><label>Tür<select name="kind" defaultValue={c.kind}><option value="income">Gelir (+)</option><option value="expense">Gider (−)</option><option value="neutral">Nötr / İşlem adedi</option></select></label><PaymentChoices selected={categoryPayments(c as CashCategory)}/><button>Değişiklikleri kaydet</button></form></details></article>)}</div>
     </section>
     <section className="cash-panel"><h2>Kişi bazlı erişim</h2><p>Adminler her zaman erişebilir. İzin verilen yönetim kullanıcıları tüm şubeleri, diğer kişiler yalnızca kendi şubelerini görür.</p>
-      <div className="cash-category-list">{people.data?.map(p => <form key={p.id} action={updateCashPermission}><input type="hidden" name="profileId" value={p.id}/><span><strong>{p.full_name}</strong> · {p.role === 'admin' ? 'Admin' : p.role === 'management' ? 'Yönetim' : p.role === 'manager' ? 'Mağaza müdürü' : 'Personel'}</span>{p.role === 'admin' ? <span>Her zaman açık</span> : <><label className="cash-check"><input type="checkbox" name="allowed" defaultChecked={permissions.data?.some(x => x.profile_id === p.id && x.is_allowed)}/>Erişim açık</label><button>Kaydet</button></>}</form>)}</div>
+      <div className="cash-category-list">{people.data?.map(p => <form key={p.id} action={updateCashPermission}><input type="hidden" name="profileId" value={p.id}/><span><strong>{p.full_name}</strong> · {p.role === 'admin' ? 'Admin' : p.role === 'management' ? 'Yönetim' : p.role === 'manager' ? 'Mağaza müdürü' : 'Personel'}</span>{p.role === 'admin' ? <span className="cash-badge">Yetki açık · Admin</span> : <><span className="cash-badge">{permissions.data?.some(x => x.profile_id === p.id && x.is_allowed) ? 'Yetki açık' : 'Yetki kapalı'}</span><label className="cash-check"><input type="checkbox" name="allowed" defaultChecked={permissions.data?.some(x => x.profile_id === p.id && x.is_allowed)}/>Erişim açık</label><button>Kaydet</button></>}</form>)}</div>
     </section>
   </main>;
 }

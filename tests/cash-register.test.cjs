@@ -36,7 +36,8 @@ test('overflow transactions and custom categories remain in continuation forms',
   const entries=Array.from({length:8},(_,i)=>({category_id:'device',category_name:'Cihaz',receipt:'receipt-'+i,staff_name:'Ömer',description:'Telefon',payment:'assignment',amount:45000}));
   entries.push({category_id:'custom',category_name:'Yeni Kategori',receipt:'custom-1',staff_name:'Sude',description:'Özel işlem',payment:'installment',amount:2000});
   const reports=buildCashReports({...reportRow,entries},[]);
-  assert.equal(reports.length,3);
+  assert.equal(reports.length,2);
+  assert.ok(reports[0].cells.some(c=>c.value==='custom-1'));
   const values=reports.flatMap(r=>r.cells.map(c=>c.value));
   for(const e of entries) assert.equal(values.filter(v=>v===e.receipt).length,1);
   assert.ok(values.includes('Yeni Kategori'.toLocaleUpperCase('tr-TR')));
@@ -81,4 +82,21 @@ test('Excel is a real XLSX zip; user text cannot become formulas', () => {
   assert.ok(!entries['xl/worksheets/sheet1.xml'].includes('<f>'));
   assert.ok(entries['xl/worksheets/sheet1.xml'].includes('<v>123.45</v>'));
   assert.ok(entries['xl/worksheets/sheet1.xml'].includes('A&amp;B &lt;şube&gt;'));
+});
+
+ test('new empty admin categories appear on the first image and Excel form',()=>{
+  const reports=buildCashReports(reportRow,[{id:'new',name:'Yeni Hizmet',kind:'income',is_active:true}]);
+  assert.ok(reports[0].cells.some(c=>c.value==='YENİ HİZMET'));
+  const output=buildXlsxBuffer([{name:reports[0].name,rows:[],report:reports[0]}]).toString('utf8');
+  assert.ok(output.includes('YENİ HİZMET'));
+  assert.ok(reports[0].heights.every(h=>Number.isFinite(h)&&h>0));
+ });
+
+test('invoice and web cash change expected cash but carryover remains physically counted money',()=>{
+ const {calculateCashSummary}=load('src/lib/cash-register.ts');
+ assert.deepEqual(calculateCashSummary(100,20,30,50,10,180),{cash:100,expected:190,difference:-10,closing:180});
+ assert.equal(calculateCashSummary(0,0.1,0.2,0,0,0.3).difference,0);
+ const report=buildCashReports({...reportRow,invoice_cash:20,web_cash:30},[])[0];
+ const label=report.cells.find(c=>c.value==='TOPLAM NAKİT TAHSİLAT');
+ assert.equal(report.cells.find(c=>c.row===label.row&&c.col===48).value,450);
 });

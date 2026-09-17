@@ -1,9 +1,11 @@
+import { reportStyles, reportLines, type CashReport, type ReportStyle } from '../cash-register-report';
 type WorksheetCellStyle = "success" | "danger";
 type WorksheetCell = string | number | { value: string | number; style: WorksheetCellStyle };
 
-type WorksheetDefinition = {
+export type WorksheetDefinition = {
   name: string;
   rows: WorksheetCell[][];
+  report?: CashReport;
 };
 
 const INVALID_SHEET_CHARS = /[:\\/?*\[\]]/g;
@@ -48,6 +50,22 @@ function getColumnName(index: number) {
   }
 
   return label;
+}
+
+const formStyleKeys = Object.keys(reportStyles) as ReportStyle[];
+function buildFormSheetXml(report: CashReport) {
+  const merges: string[] = [];
+  const rows = report.heights.map((height,index) => {
+    const cells = report.cells.filter(c => c.row === index).map(cell => {
+      const first = `${getColumnName(cell.col)}${index+1}`;
+      if(cell.span>1) merges.push(`${first}:${getColumnName(cell.col+cell.span-1)}${index+1}`);
+      const style = 4+formStyleKeys.indexOf(cell.style);
+      const value = typeof cell.value === 'number' ? `<v>${cell.value}</v>` : `<is><t xml:space="preserve">${escapeXml(reportLines(cell.value,cell.span*report.columnWidth,reportStyles[cell.style].size).join('\n'))}</t></is>`;
+      return `<c r="${first}" s="${style}"${typeof cell.value === 'number' ? '' : ' t="inlineStr"'}>${value}</c>` + Array.from({length:cell.span-1},(_,i)=>`<c r="${getColumnName(cell.col+i+1)}${index+1}" s="${style}"/>`).join('');
+    }).join('');
+    return `<row r="${index+1}" ht="${height*0.75}" customHeight="1">${cells}</row>`;
+  }).join('');
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetPr><pageSetUpPr fitToPage="1"/></sheetPr><dimension ref="A1:${getColumnName(report.columns-1)}${report.heights.length}"/><sheetViews><sheetView workbookViewId="0" showGridLines="0" zoomScale="70"/></sheetViews><sheetFormatPr defaultRowHeight="18"/><cols><col min="1" max="${report.columns}" width="${(report.columnWidth-5)/7}" customWidth="1"/></cols><sheetData>${rows}</sheetData><mergeCells count="${merges.length}">${merges.map(ref=>`<mergeCell ref="${ref}"/>`).join('')}</mergeCells><printOptions horizontalCentered="1"/><pageMargins left="0.2" right="0.2" top="0.25" bottom="0.25" header="0.1" footer="0.1"/><pageSetup paperSize="8" orientation="landscape" fitToWidth="1" fitToHeight="0"/></worksheet>`;
 }
 
 function buildSheetXml(rows: WorksheetDefinition["rows"]) {
@@ -115,9 +133,12 @@ function buildWorkbookRelsXml(sheetCount: number) {
 }
 
 function buildStylesXml() {
+  const formFonts = formStyleKeys.map(key => { const s=reportStyles[key];return `<font>${s.bold?'<b/>':''}<sz val="${s.size*0.75}"/><color rgb="FF${s.color.slice(1)}"/><name val="Arial"/></font>`; }).join('');
+  const formFills = formStyleKeys.map(key => `<fill><patternFill patternType="solid"><fgColor rgb="FF${reportStyles[key].fill.slice(1)}"/><bgColor indexed="64"/></patternFill></fill>`).join('');
+  const formXfs = formStyleKeys.map((key,i) => {const s=reportStyles[key];return `<xf numFmtId="${['money','input','total','warning'].includes(key)?4:0}" fontId="${4+i}" fillId="${3+i}" borderId="${s.border?1:0}" xfId="0" applyAlignment="1" applyFont="1" applyFill="1" applyBorder="1" applyNumberFormat="1"><alignment horizontal="${s.align}" vertical="center" wrapText="1"/></xf>`;}).join('');
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-  <fonts count="4">
+  <fonts count="${4+formStyleKeys.length}">
     <font>
       <sz val="11"/>
       <color rgb="FF111827"/>
@@ -143,8 +164,9 @@ function buildStylesXml() {
       <name val="Calibri"/>
       <family val="2"/>
     </font>
+    ${formFonts}
   </fonts>
-  <fills count="3">
+  <fills count="${3+formStyleKeys.length}">
     <fill><patternFill patternType="none"/></fill>
     <fill><patternFill patternType="gray125"/></fill>
     <fill>
@@ -153,18 +175,21 @@ function buildStylesXml() {
         <bgColor indexed="64"/>
       </patternFill>
     </fill>
+    ${formFills}
   </fills>
-  <borders count="1">
+  <borders count="2">
     <border><left/><right/><top/><bottom/><diagonal/></border>
+    <border><left style="thin"><color rgb="FF89929C"/></left><right style="thin"><color rgb="FF89929C"/></right><top style="thin"><color rgb="FF89929C"/></top><bottom style="thin"><color rgb="FF89929C"/></bottom><diagonal/></border>
   </borders>
   <cellStyleXfs count="1">
     <xf numFmtId="0" fontId="0" fillId="0" borderId="0"/>
   </cellStyleXfs>
-  <cellXfs count="4">
+  <cellXfs count="${4+formStyleKeys.length}">
     <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
     <xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/>
     <xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/>
     <xf numFmtId="0" fontId="3" fillId="0" borderId="0" xfId="0" applyFont="1"/>
+    ${formXfs}
   </cellXfs>
   <cellStyles count="1">
     <cellStyle name="Normal" xfId="0" builtinId="0"/>
@@ -339,7 +364,8 @@ export function buildXlsxBuffer(worksheets: WorksheetDefinition[]) {
   const usedNames = new Set<string>();
   const normalizedWorksheets = worksheets.map((worksheet) => ({
     name: normalizeSheetName(worksheet.name, usedNames),
-    rows: worksheet.rows
+    rows: worksheet.rows,
+    report: worksheet.report
   }));
   const nowIso = new Date().toISOString();
   const entries: ZipEntry[] = [
@@ -373,7 +399,7 @@ export function buildXlsxBuffer(worksheets: WorksheetDefinition[]) {
     },
     ...normalizedWorksheets.map((worksheet, index) => ({
       name: `xl/worksheets/sheet${index + 1}.xml`,
-      data: Buffer.from(buildSheetXml(worksheet.rows), "utf8")
+      data: Buffer.from(worksheet.report ? buildFormSheetXml(worksheet.report) : buildSheetXml(worksheet.rows), "utf8")
     }))
   ];
 

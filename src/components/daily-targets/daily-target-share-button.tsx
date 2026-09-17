@@ -300,10 +300,12 @@ async function buildCompanySummaryImage({ dateLabel, stores }: DailyTargetShareB
 
 async function buildTargetsOnlyImage({ dateLabel, stores }: DailyTargetShareButtonProps) {
   const branchStores = stores.filter((store) => !store.isCompany);
-  const baseGroups = branchStores[0]?.groups ?? [];
+  const companyStore = stores.find((store) => store.isCompany) ?? null;
+  const columns = companyStore ? [...branchStores, companyStore] : branchStores;
+  const baseGroups = companyStore?.groups ?? branchStores[0]?.groups ?? [];
   const sourceGroups = baseGroups.map((group) => ({
     ...group,
-    rows: group.rows.filter((sourceRow) => branchStores.some((store) => (
+    rows: group.rows.filter((sourceRow) => columns.some((store) => (
       (findStoreRow(store, sourceRow.mainCategory, sourceRow.subCategory)?.target ?? null) !== null
     )))
   })).filter((group) => group.rows.length > 0);
@@ -315,7 +317,7 @@ async function buildTargetsOnlyImage({ dateLabel, stores }: DailyTargetShareButt
   const groupHeaderHeight = 54;
   const rowHeight = 82;
   const footerHeight = 90;
-  const tableWidth = categoryWidth + branchStores.length * storeWidth;
+  const tableWidth = categoryWidth + columns.length * storeWidth;
   const rowCount = sourceGroups.reduce((total, group) => total + group.rows.length, 0);
   const height = headerHeight
     + columnHeaderHeight
@@ -355,9 +357,9 @@ async function buildTargetsOnlyImage({ dateLabel, stores }: DailyTargetShareButt
   context.font = "900 23px Arial";
   context.fillText("KATEGORİ", tableX + 24, y + 60);
 
-  branchStores.forEach((store, index) => {
+  columns.forEach((store, index) => {
     const x = tableX + categoryWidth + index * storeWidth;
-    context.fillStyle = "#1d4ed8";
+    context.fillStyle = store.isCompany ? "#b86612" : "#1d4ed8";
     context.fillRect(x, y, storeWidth, columnHeaderHeight);
     context.strokeStyle = "rgba(255,255,255,.24)";
     context.lineWidth = 2;
@@ -397,19 +399,21 @@ async function buildTargetsOnlyImage({ dateLabel, stores }: DailyTargetShareButt
       context.font = `${sourceRow.entryMode === "summary" ? "900" : "800"} 21px Arial`;
       context.fillText(fitText(context, sourceRow.subCategory, categoryWidth - 42), tableX + 22, y + 49);
 
-      branchStores.forEach((store, columnIndex) => {
+      columns.forEach((store, columnIndex) => {
         const x = tableX + categoryWidth + columnIndex * storeWidth;
         const row = findStoreRow(store, sourceRow.mainCategory, sourceRow.subCategory);
         const target = row?.target ?? null;
 
-        context.fillStyle = sourceRow.entryMode === "summary"
-          ? "#fff8e8"
-          : rowIndex % 2 === 0 ? "#f8fbff" : "#f1f6fb";
+        context.fillStyle = store.isCompany
+          ? sourceRow.entryMode === "summary" ? "#fff0d9" : "#fff7e8"
+          : sourceRow.entryMode === "summary"
+            ? "#fff8e8"
+            : rowIndex % 2 === 0 ? "#f8fbff" : "#f1f6fb";
         context.fillRect(x, y, storeWidth, rowHeight);
-        context.strokeStyle = "#d8e2ea";
+        context.strokeStyle = store.isCompany ? "#e2b978" : "#d8e2ea";
         context.strokeRect(x, y, storeWidth, rowHeight);
         context.textAlign = "center";
-        context.fillStyle = target === null ? "#94a3b8" : "#18304d";
+        context.fillStyle = target === null ? "#94a3b8" : store.isCompany ? "#9a4f08" : "#18304d";
         drawCenteredFullText(
           context,
           formatNumber(target),
@@ -427,7 +431,7 @@ async function buildTargetsOnlyImage({ dateLabel, stores }: DailyTargetShareButt
 
   context.fillStyle = "#6f8194";
   context.font = "700 18px Arial";
-  context.fillText("Yalnızca şube hedefleri • Gerçekleşen değerleri dahil değildir.", padding, height - 38);
+  context.fillText("Şube ve firma toplam hedefleri • Gerçekleşen değerleri dahil değildir.", padding, height - 38);
   context.textAlign = "right";
   context.fillText(
     new Intl.DateTimeFormat("tr-TR", {

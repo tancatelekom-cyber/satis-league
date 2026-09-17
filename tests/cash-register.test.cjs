@@ -36,7 +36,7 @@ test('overflow transactions and custom categories remain in continuation forms',
   const entries=Array.from({length:8},(_,i)=>({category_id:'device',category_name:'Cihaz',receipt:'receipt-'+i,staff_name:'Ömer',description:'Telefon',payment:'assignment',amount:45000}));
   entries.push({category_id:'custom',category_name:'Yeni Kategori',receipt:'custom-1',staff_name:'Sude',description:'Özel işlem',payment:'installment',amount:2000});
   const reports=buildCashReports({...reportRow,entries},[]);
-  assert.equal(reports.length,2);
+  assert.equal(reports.length,1);
   assert.ok(reports[0].cells.some(c=>c.value==='custom-1'));
   const values=reports.flatMap(r=>r.cells.map(c=>c.value));
   for(const e of entries) assert.equal(values.filter(v=>v===e.receipt).length,1);
@@ -98,5 +98,21 @@ test('invoice and web cash change expected cash but carryover remains physically
  assert.equal(calculateCashSummary(0,0.1,0.2,0,0,0.3).difference,0);
  const report=buildCashReports({...reportRow,invoice_cash:20,web_cash:30},[])[0];
  const label=report.cells.find(c=>c.value==='TOPLAM NAKİT TAHSİLAT');
- assert.equal(report.cells.find(c=>c.row===label.row&&c.col===48).value,450);
+ assert.equal(report.cells.find(c=>c.row===label.row&&c.col===40).value,450);
+});
+
+test('all category tables use exact entry counts and precede the final summary',()=>{
+ const categories=[{id:'device',name:'Cihaz',is_active:true},{id:'new',name:'Yeni Hizmet',is_active:true}];
+ const entries=Array.from({length:37},(_,i)=>({category_id:'device',category_name:'Cihaz',receipt:'r'+i,staff_name:'Ali',description:'Telefon',payment:'cash',amount:100}));
+ entries.push({...entries[0],category_id:'new',category_name:'Yeni Hizmet',receipt:'new-1'});
+ const report=buildCashReports({...reportRow,entries},categories)[0];
+ const summary=report.cells.find(c=>c.value==='KASA ÖZETİ · GÜN TOPLAMI');
+ const sections=report.cells.filter(c=>c.style==='section'&&c!==summary);
+ assert.ok(sections.every(c=>c.row<summary.row&&c.col===0&&c.span===53));
+ const bodyRows=new Set(report.cells.filter(c=>c.row<summary.row&&c.style==='body').map(c=>c.row));
+ assert.equal(bodyRows.size,entries.length);
+ for(const e of entries) assert.equal(report.cells.filter(c=>c.value===e.receipt).length,1);
+ const occupied=new Set();
+ for(const c of report.cells) for(let x=c.col;x<c.col+c.span;x++) {const key=c.row+':'+x;assert.ok(!occupied.has(key));occupied.add(key);}
+ assert.ok(report.heights.every(h=>Number.isFinite(h)&&h>0));
 });

@@ -11,7 +11,7 @@ export type DailyTargetShareStore = {
 
 type DailyTargetShareButtonProps = {
   dateLabel: string;
-  mode: "store" | "company";
+  mode: "store" | "company" | "targets";
   stores: DailyTargetShareStore[];
 };
 
@@ -298,7 +298,156 @@ async function buildCompanySummaryImage({ dateLabel, stores }: DailyTargetShareB
   return canvasToBlob(canvas);
 }
 
+async function buildTargetsOnlyImage({ dateLabel, stores }: DailyTargetShareButtonProps) {
+  const branchStores = stores.filter((store) => !store.isCompany);
+  const baseGroups = branchStores[0]?.groups ?? [];
+  const sourceGroups = baseGroups.map((group) => ({
+    ...group,
+    rows: group.rows.filter((sourceRow) => branchStores.some((store) => (
+      (findStoreRow(store, sourceRow.mainCategory, sourceRow.subCategory)?.target ?? null) !== null
+    )))
+  })).filter((group) => group.rows.length > 0);
+  const padding = 54;
+  const categoryWidth = 390;
+  const storeWidth = 238;
+  const headerHeight = 205;
+  const columnHeaderHeight = 105;
+  const groupHeaderHeight = 54;
+  const rowHeight = 82;
+  const footerHeight = 90;
+  const tableWidth = categoryWidth + branchStores.length * storeWidth;
+  const rowCount = sourceGroups.reduce((total, group) => total + group.rows.length, 0);
+  const height = headerHeight
+    + columnHeaderHeight
+    + sourceGroups.length * groupHeaderHeight
+    + rowCount * rowHeight
+    + footerHeight;
+  const width = padding * 2 + tableWidth;
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("Görsel alanı oluşturulamadı.");
+
+  const background = context.createLinearGradient(0, 0, width, height);
+  background.addColorStop(0, "#eff6ff");
+  background.addColorStop(0.52, "#f8fbff");
+  background.addColorStop(1, "#eef4fb");
+  context.fillStyle = background;
+  context.fillRect(0, 0, width, height);
+
+  context.fillStyle = "#1d4ed8";
+  context.font = "900 24px Arial";
+  context.fillText("TANCA+ • GÜNLÜK TAKİP", padding, 56);
+  context.fillStyle = "#102a43";
+  context.font = "900 50px Arial";
+  context.fillText("Günlük Şube Hedefleri", padding, 120);
+  context.fillStyle = "#5f738a";
+  context.font = "700 25px Arial";
+  context.fillText(`Yalnızca hedefler • ${dateLabel}`, padding, 164);
+
+  let y = headerHeight;
+  const tableX = padding;
+
+  context.fillStyle = "#18304d";
+  context.fillRect(tableX, y, categoryWidth, columnHeaderHeight);
+  context.fillStyle = "#ffffff";
+  context.font = "900 23px Arial";
+  context.fillText("KATEGORİ", tableX + 24, y + 60);
+
+  branchStores.forEach((store, index) => {
+    const x = tableX + categoryWidth + index * storeWidth;
+    context.fillStyle = "#1d4ed8";
+    context.fillRect(x, y, storeWidth, columnHeaderHeight);
+    context.strokeStyle = "rgba(255,255,255,.24)";
+    context.lineWidth = 2;
+    context.strokeRect(x, y, storeWidth, columnHeaderHeight);
+    context.fillStyle = "#ffffff";
+    context.textAlign = "center";
+    context.font = "900 22px Arial";
+    context.fillText(fitText(context, store.storeName, storeWidth - 24), x + storeWidth / 2, y + 43);
+    context.fillStyle = "rgba(255,255,255,.82)";
+    context.font = "900 20px Arial";
+    context.fillText("HEDEF", x + storeWidth / 2, y + 76);
+  });
+  context.textAlign = "left";
+  y += columnHeaderHeight;
+
+  sourceGroups.forEach((group) => {
+    context.fillStyle = "#dce9f0";
+    context.fillRect(tableX, y, tableWidth, groupHeaderHeight);
+    context.strokeStyle = "#c4d4df";
+    context.lineWidth = 2;
+    context.strokeRect(tableX, y, tableWidth, groupHeaderHeight);
+    context.fillStyle = "#18304d";
+    context.font = "900 21px Arial";
+    context.fillText(fitText(context, group.mainCategory, tableWidth - 48), tableX + 22, y + 35);
+    y += groupHeaderHeight;
+
+    group.rows.forEach((sourceRow, rowIndex) => {
+      const rowFill = sourceRow.entryMode === "summary"
+        ? "#fff4d8"
+        : rowIndex % 2 === 0 ? "#ffffff" : "#f7fafc";
+      context.fillStyle = rowFill;
+      context.fillRect(tableX, y, categoryWidth, rowHeight);
+      context.strokeStyle = "#d8e2ea";
+      context.lineWidth = 2;
+      context.strokeRect(tableX, y, categoryWidth, rowHeight);
+      context.fillStyle = sourceRow.entryMode === "summary" ? "#8b460b" : "#263e58";
+      context.font = `${sourceRow.entryMode === "summary" ? "900" : "800"} 21px Arial`;
+      context.fillText(fitText(context, sourceRow.subCategory, categoryWidth - 42), tableX + 22, y + 49);
+
+      branchStores.forEach((store, columnIndex) => {
+        const x = tableX + categoryWidth + columnIndex * storeWidth;
+        const row = findStoreRow(store, sourceRow.mainCategory, sourceRow.subCategory);
+        const target = row?.target ?? null;
+
+        context.fillStyle = sourceRow.entryMode === "summary"
+          ? "#fff8e8"
+          : rowIndex % 2 === 0 ? "#f8fbff" : "#f1f6fb";
+        context.fillRect(x, y, storeWidth, rowHeight);
+        context.strokeStyle = "#d8e2ea";
+        context.strokeRect(x, y, storeWidth, rowHeight);
+        context.textAlign = "center";
+        context.fillStyle = target === null ? "#94a3b8" : "#18304d";
+        drawCenteredFullText(
+          context,
+          formatNumber(target),
+          x + storeWidth / 2,
+          y + 51,
+          storeWidth - 26,
+          28,
+          15
+        );
+      });
+      context.textAlign = "left";
+      y += rowHeight;
+    });
+  });
+
+  context.fillStyle = "#6f8194";
+  context.font = "700 18px Arial";
+  context.fillText("Yalnızca şube hedefleri • Gerçekleşen değerleri dahil değildir.", padding, height - 38);
+  context.textAlign = "right";
+  context.fillText(
+    new Intl.DateTimeFormat("tr-TR", {
+      dateStyle: "short",
+      timeStyle: "short",
+      timeZone: "Europe/Istanbul"
+    }).format(new Date()),
+    width - padding,
+    height - 38
+  );
+  context.textAlign = "left";
+
+  return canvasToBlob(canvas);
+}
+
 async function buildDailyTargetImage({ dateLabel, mode, stores }: DailyTargetShareButtonProps) {
+  if (mode === "targets") {
+    return buildTargetsOnlyImage({ dateLabel, mode, stores });
+  }
+
   if (mode === "company") {
     return buildCompanySummaryImage({ dateLabel, mode, stores });
   }
@@ -506,12 +655,17 @@ export function DailyTargetShareButton(props: DailyTargetShareButtonProps) {
 
     try {
       const blob = await buildDailyTargetImage(props);
-      const scope = props.mode === "company" ? "firma" : safeFilePart(props.stores[0]?.storeName ?? "sube");
+      const targetsOnly = props.mode === "targets";
+      const scope = targetsOnly
+        ? "sube-hedefleri"
+        : props.mode === "company" ? "firma" : safeFilePart(props.stores[0]?.storeName ?? "sube");
       const file = new File([blob], `gunluk-hedefler-${scope}.png`, { type: "image/png" });
       const shareData = {
         files: [file],
-        title: "Günlük Hedef Gerçekleşen",
-        text: `${props.dateLabel} günlük hedef gerçekleşen tablosu`
+        title: targetsOnly ? "Günlük Şube Hedefleri" : "Günlük Hedef Gerçekleşen",
+        text: targetsOnly
+          ? `${props.dateLabel} günlük şube hedefleri`
+          : `${props.dateLabel} günlük hedef gerçekleşen tablosu`
       };
 
       if (navigator.share && (!navigator.canShare || navigator.canShare(shareData))) {
@@ -520,7 +674,9 @@ export function DailyTargetShareButton(props: DailyTargetShareButtonProps) {
       } else {
         downloadImage(blob, file.name);
         window.open(
-          `https://wa.me/?text=${encodeURIComponent(`${props.dateLabel} günlük hedef gerçekleşen görseli hazırlandı.`)}`,
+          `https://wa.me/?text=${encodeURIComponent(targetsOnly
+            ? `${props.dateLabel} günlük şube hedefleri görseli hazırlandı.`
+            : `${props.dateLabel} günlük hedef gerçekleşen görseli hazırlandı.`)}`,
           "_blank",
           "noopener,noreferrer"
         );
@@ -533,11 +689,20 @@ export function DailyTargetShareButton(props: DailyTargetShareButtonProps) {
     }
   }
 
+  const targetsOnly = props.mode === "targets";
+
   return (
     <div className="daily-target-share-wrap">
-      <button className="daily-target-share-button" disabled={preparing} onClick={share} type="button">
+      <button
+        className={`daily-target-share-button${targetsOnly ? " daily-target-share-button-targets" : ""}`}
+        disabled={preparing}
+        onClick={share}
+        type="button"
+      >
         <span aria-hidden="true">↗</span>
-        {preparing ? "Görsel hazırlanıyor…" : "WhatsApp’ta Resim Paylaş"}
+        {preparing
+          ? "Görsel hazırlanıyor…"
+          : targetsOnly ? "Sadece Hedefleri Paylaş" : "WhatsApp’ta Resim Paylaş"}
       </button>
       {status ? <span aria-live="polite" className="daily-target-share-status">{status}</span> : null}
     </div>

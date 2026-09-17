@@ -124,6 +124,9 @@ export default async function DailyTargetsPage({ searchParams }: PageProps) {
         ...storeViews.map((item) => ({ storeName: item.store.name, groups: item.groups })),
         { storeName: "Firma Toplamı", groups: companyGroups, isCompany: true }
       ];
+  const targetOnlyShareStores: DailyTargetShareStore[] = profile.role === "admin"
+    ? storeViews.map((item) => ({ storeName: item.store.name, groups: item.groups }))
+    : [];
 
   return (
     <main className="daily-target-page">
@@ -301,13 +304,24 @@ export default async function DailyTargetsPage({ searchParams }: PageProps) {
           <div>
             <span>GÖRSEL PAYLAŞIM</span>
             <h2>{profile.role === "admin" ? "Tüm şubeler ve firma toplamı" : `${selectedStore?.name ?? "Şube"} günlük tablosu`}</h2>
-            <p>Buton tabloyu PNG resmine dönüştürür ve WhatsApp paylaşım ekranını açar.</p>
+            <p>{profile.role === "admin"
+              ? "Hedef-gerçekleşen özetini veya yalnızca şube hedeflerini PNG olarak paylaşabilirsiniz."
+              : "Buton tabloyu PNG resmine dönüştürür ve WhatsApp paylaşım ekranını açar."}</p>
           </div>
-          <DailyTargetShareButton
-            dateLabel={dateLabel}
-            mode={profile.role === "admin" ? "company" : "store"}
-            stores={shareStores}
-          />
+          <div className="daily-target-share-actions">
+            <DailyTargetShareButton
+              dateLabel={dateLabel}
+              mode={profile.role === "admin" ? "company" : "store"}
+              stores={shareStores}
+            />
+            {profile.role === "admin" && targetOnlyShareStores.length ? (
+              <DailyTargetShareButton
+                dateLabel={dateLabel}
+                mode="targets"
+                stores={targetOnlyShareStores}
+              />
+            ) : null}
+          </div>
         </section>
       ) : null}
 

@@ -54,7 +54,7 @@ const entry = (payment,amount,kind='income') => ({category_id:'1',payment,amount
 test('temlikli and installment never change cash, expenses or POS', () => {
   const normal = [entry('cash',1500),entry('card',760),entry('cash',200,'expense')];
   const result = calculateCashEntries([...normal,entry('assignment',45000),entry('installment',12000)],[]);
-  assert.deepEqual(result,{income:1500,expense:200,card:760,assignment:45000,installment:12000,qr:0});
+  assert.deepEqual(result,{income:1500,expense:200,card:760,assignment:45000,installment:12000,qr:0,transfer:0});
 });
 test('neutral and free transactions do not count as cash; removed category snapshot remains usable', () => {
   const result = calculateCashEntries([entry('cash',500,'neutral'),entry('free',200),entry('cash',40,'expense')],[]);
@@ -119,7 +119,7 @@ test('all category tables use exact entry counts and precede the final summary',
 
 test('QR income and expense payments never alter cash or POS and remain visible in exports',()=>{
  const result=calculateCashEntries([entry('cash',100),entry('qr',250),entry('qr',40,'expense')],[]);
- assert.deepEqual(result,{income:100,expense:0,card:0,assignment:0,installment:0,qr:290});
+ assert.deepEqual(result,{income:100,expense:0,card:0,assignment:0,installment:0,qr:290,transfer:0});
  const report=buildCashReports({...reportRow,entries:[{...entry('qr',250),category_name:'QR Test',receipt:'qr-1',staff_name:'Ali',description:'Ödeme'}]},[])[0];
  const receipt=report.cells.find(c=>c.value==='qr-1');
  const header=report.cells.find(c=>c.row===receipt.row-1&&c.value==='QR ÖDEME');
@@ -141,4 +141,14 @@ test('renamed categories do not duplicate transactions in the report',()=>{
  const report=buildCashReports({...reportRow,entries},categories)[0];
  assert.equal(report.cells.filter(c=>c.value==='unique').length,1);
  assert.ok(report.cells.some(c=>c.value==='YENİ CİHAZ ADI'));
+});
+
+test('bank transfer is separate from physical cash and appears in the form and Excel',()=>{
+ const result=calculateCashEntries([entry('cash',100),entry('transfer',250),entry('transfer',40,'expense')],[]);
+ assert.equal(result.income,100);assert.equal(result.expense,0);assert.equal(result.card,0);assert.equal(result.transfer,290);
+ const row={...reportRow,entries:[{...entry('transfer',250),category_name:'Transfer',receipt:'bank-1',description:'Havale'}]};
+ const report=buildCashReports(row,[])[0];const receipt=report.cells.find(c=>c.value==='bank-1');
+ const header=report.cells.find(c=>c.row===receipt.row-1&&c.value==='HAVALE');
+ assert.equal(report.cells.find(c=>c.row===receipt.row&&c.col===header.col).value,250);
+ assert.ok(buildXlsxBuffer([{name:report.name,rows:[],report}]).toString('utf8').includes('HAVALE'));
 });

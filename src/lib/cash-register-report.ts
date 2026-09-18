@@ -29,10 +29,10 @@ export function reportLines(value: string | number, width: number, size: number)
     lines.push(line); return lines;
   });
 }
-type Column = { label: string; span: number; field: 'receipt' | 'staff' | 'description' | 'cash' | 'card' | 'assignment' | 'installment' | 'qr' };
+type Column = { label: string; span: number; field: 'receipt' | 'staff' | 'description' | 'cash' | 'card' | 'assignment' | 'installment' | 'qr' | 'transfer' };
 const receipt = (span = 2): Column => ({ label: 'FİŞ NO', span, field: 'receipt' });
 const staff = (span = 2): Column => ({ label: 'PERSONEL', span, field: 'staff' });
-const money = (field: 'cash' | 'card' | 'assignment' | 'installment' | 'qr'): Column => ({ label: { cash: 'NAKİT', card: 'KK', assignment: 'TEMLİKLİ', installment: 'SEPETE TAKSİT', qr: 'QR ÖDEME' }[field], span: 2, field });
+const money = (field: 'cash' | 'card' | 'assignment' | 'installment' | 'qr' | 'transfer'): Column => ({ label: { cash: 'NAKİT', card: 'KK', assignment: 'TEMLİKLİ', installment: 'SEPETE TAKSİT', qr: 'QR ÖDEME', transfer: 'HAVALE' }[field], span: 2, field });
 const description = (label: string, span = 3): Column => ({ label, span, field: 'description' });
 const normalize = (name: string) => name.toLocaleLowerCase('tr-TR').replace(/ı/g,'i').replace(/ö/g,'o').replace(/ü/g,'u').replace(/ş/g,'s').replace(/ğ/g,'g').replace(/ç/g,'c');
 const standard = [
@@ -44,8 +44,8 @@ const standard = [
   { name: 'AKSESUAR, TEKNİK SERVİS, HİZMET BEDELİ', match: 'aksesuar, teknik servis, hizmet bedeli' },
   { name: 'GİDER', match: 'gider' }
 ];
-const columns: Column[] = [receipt(5), staff(9), description('İŞLEM / ÜRÜN',19),
-  ...(['cash','card','assignment','installment','qr'] as const).map(field=>({...money(field),span:4}))];
+const columns: Column[] = [receipt(5), staff(9), description('İŞLEM / ÜRÜN',15),
+  ...(['cash','card','assignment','installment','qr','transfer'] as const).map(field=>({...money(field),span:4}))];
 
 /** Shared printable grid for both the PNG and Excel exports. No accounting writes. */
 export function buildCashReports(row: CashRow, categories: CashCategory[]): CashReport[] {
@@ -88,7 +88,7 @@ export function buildCashReports(row: CashRow, categories: CashCategory[]): Cash
   function section(add: ReturnType<typeof create>['add'], name: string, r: number, col: number, columns: Column[], entries: CashEntry[], capacity: number) {
     add(r,col,columns.reduce((s,c)=>s+c.span,0),name,'section');
     let c=col; columns.forEach(column => {add(r+1,c,column.span,column.label,'header');c+=column.span;});
-    for(let i=0;i<capacity;i++) {c=col;columns.forEach(column=>{add(r+2+i,c,column.span,entryValue(entries[i],column.field),['cash','card','assignment','installment','qr'].includes(column.field)?'money':'body');c+=column.span;});}
+    for(let i=0;i<capacity;i++) {c=col;columns.forEach(column=>{add(r+2+i,c,column.span,entryValue(entries[i],column.field),['cash','card','assignment','installment','qr','transfer'].includes(column.field)?'money':'body');c+=column.span;});}
   }
   for(let page=0;page<pages;page++) {
     const {report,add}=create(`${row.name}${pages>1?` ${page+1}`:''}`,`Sayfa ${page+1}/${pages}`);
@@ -105,13 +105,14 @@ export function buildCashReports(row: CashRow, categories: CashCategory[]): Cash
       ['FATURA NAKİT TAHSİLAT (+)',Number(row.invoice_cash),'input'],['WEB NAKİT TAHSİLAT (+)',Number(row.web_cash),'input'],
       ['TOPLAM NAKİT TAHSİLAT',calculated.cash,'money'],['POS KK SATIŞLARI (NÖTR)',Number(row.card_in),'money'],
       ['QR ÖDEME (NÖTR)',row.entries.filter(e=>e.payment==='qr').reduce((sum,e)=>sum+Number(e.amount),0),'money'],
+      ['HAVALE (NÖTR)',row.entries.filter(e=>e.payment==='transfer').reduce((sum,e)=>sum+Number(e.amount),0),'money'],
       ['GİDER / NAKİT (−)',Number(row.expenses),'money'],['KALAN TUTAR',expected,'total'],
       ['KASADA OLAN',row.saved?Number(row.counted):'','input'],['KASA FARKI',row.saved?Number(row.counted)-expected:'','warning'],
       ...(Number(row.bank_deposit) ? [['ÖNCEDEN BANKAYA AYRILAN',Number(row.bank_deposit),'input'] as [string,number,ReportStyle]] : []),['DEVİR',Number(row.closing),'total']
     ];
     summary.forEach(([label,value,style],i)=>{add(summaryRow+1+i,0,40,label,'body');add(summaryRow+1+i,40,13,value,style);});
     const notesRow = summaryRow + summary.length + 2;
-    add(notesRow,0,53,'NAKİT: Yalnızca kasaya giren tutarı yazın. QR ödeme, temlikli ve sepete taksit satışlar nakit kasayı ve POS toplamını etkilemez.','note');
+    add(notesRow,0,53,'NAKİT: Yalnızca kasaya giren tutarı yazın. Havale, QR ödeme, temlikli ve sepete taksit satışlar nakit kasayı ve POS toplamını etkilemez.','note');
     add(notesRow+1,0,53,'Fatura ve web tahsilatları özete ayrıca girilir; aynı tahsilatı satış bölümlerinde tekrar saymayın.','note');
     add(notesRow+2,0,53,'Kalan tutar = açılış + fatura + web + nakit satışlar − nakit gider. Kasa farkı = sayılan − beklenen. Devir = elle sayılan para.','note');
     add(notesRow+3,0,53,'Bankaya yatırılan tutar Gider kategorisine nakit işlem olarak girilir. Çok sayfalı raporlarda kasa özeti tüm günün toplamıdır.','note');

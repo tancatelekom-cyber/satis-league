@@ -5,7 +5,7 @@ export type CashDay = {
   invoice_cash: number; web_cash: number; receipt_start: string; entries: CashEntry[];
 };
 export type CashCategory = { id: string; name: string; kind: 'income' | 'expense' | 'neutral'; is_active: boolean; allow_assignment: boolean; allow_installment: boolean; allowed_payments?: CashEntry['payment'][] };
-export type CashEntry = { category_id: string; category_name?: string; kind?: string; receipt: string; staff: string; staff_name?: string; description: string; cash: number; card: number; payment: 'cash' | 'card' | 'assignment' | 'installment' | 'qr' | 'free'; amount: number };
+export type CashEntry = { category_id: string; category_name?: string; kind?: string; receipt: string; staff: string; staff_name?: string; description: string; cash: number; card: number; payment: 'cash' | 'card' | 'assignment' | 'installment' | 'qr' | 'transfer' | 'free'; amount: number };
 export type CashRow = CashDay & { name: string; saved: boolean; hasPrior: boolean; previousClosing: number | null };
 export function previousCashDate(date: string) {
   const previous = new Date(`${date}T12:00:00Z`);
@@ -17,7 +17,7 @@ export function cashOpeningDifference(opening: number, previousClosing: number |
 }
 export function cashToday(now = new Date()) { return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Istanbul', year: 'numeric', month: '2-digit', day: '2-digit' }).format(now); }
 export function calculateCashEntries(entries: CashEntry[], categories: CashCategory[]) {
-  const cents = { income: 0, expense: 0, card: 0, assignment: 0, installment: 0, qr: 0 };
+  const cents = { income: 0, expense: 0, card: 0, assignment: 0, installment: 0, qr: 0, transfer: 0 };
   for (const entry of entries) {
     const kind = categories.find(c => c.id === entry.category_id)?.kind || entry.kind;
     const value = Math.round(Number(entry.amount) * 100);
@@ -27,8 +27,9 @@ export function calculateCashEntries(entries: CashEntry[], categories: CashCateg
     if (entry.payment === 'assignment') cents.assignment += value;
     if (entry.payment === 'installment') cents.installment += value;
     if (entry.payment === 'qr') cents.qr += value;
+    if (entry.payment === 'transfer') cents.transfer += value;
   }
-  return { income: cents.income / 100, expense: cents.expense / 100, card: cents.card / 100, assignment: cents.assignment / 100, installment: cents.installment / 100, qr: cents.qr / 100 };
+  return { income: cents.income / 100, expense: cents.expense / 100, card: cents.card / 100, assignment: cents.assignment / 100, installment: cents.installment / 100, qr: cents.qr / 100, transfer: cents.transfer / 100 };
 }
 export function validCashDate(value: string) {
   return /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value)) && new Date(value).toISOString().slice(0,10) === value;
@@ -45,7 +46,7 @@ export function calculateCashSummary(opening: number, invoice: number, web: numb
   return { cash: cash / 100, expected: expected / 100, difference: (cents(counted) - expected) / 100, closing: cents(counted) / 100 };
 }
 
-export const cashPaymentLabels = {cash:'Nakit',card:'Kredi kartı',qr:'QR ödeme',assignment:'Temlikli satış',installment:'Sepete taksit',free:'Ücretsiz / İşlem'} as const;
+export const cashPaymentLabels = {cash:'Nakit',card:'Kredi kartı',qr:'QR ödeme',transfer:'Havale',assignment:'Temlikli satış',installment:'Sepete taksit',free:'Ücretsiz / İşlem'} as const;
 export function categoryPayments(category: CashCategory): CashEntry['payment'][] {
   return category.allowed_payments ?? (Object.keys(cashPaymentLabels) as CashEntry['payment'][]).filter(p=>p!=='assignment'&&p!=='installment'||p==='assignment'&&category.allow_assignment||p==='installment'&&category.allow_installment);
 }

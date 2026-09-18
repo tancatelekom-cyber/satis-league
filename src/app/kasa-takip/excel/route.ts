@@ -10,13 +10,13 @@ export async function GET(request: Request) {
   const db = await createClient();
   const { data: categories, error } = await db.from('cash_register_categories').select('*').order('name');
   if(error) return new Response('Kasa kategorileri okunamadı.',{status:503});
-  const labels = { cash: 'Nakit', card: 'Kredi kartı', assignment: 'Temlikli', installment: 'Sepete taksit', qr: 'QR ödeme', free: 'Ücretsiz / İşlem' };
-  const summary: (string | number)[][] = [['Şube','Tarih','Durum','Açılış','Fatura nakit','Web nakit','İşlem nakit','POS kredi kartı','Nakit gider','Beklenen kasa','Sayılan kasa','Kasa farkı','Bankaya ayrılan','Devir','Temlikli','Sepete taksit','QR ödeme']];
+  const labels = { cash: 'Nakit', card: 'Kredi kartı', assignment: 'Temlikli', installment: 'Sepete taksit', qr: 'QR ödeme', transfer: 'Havale', free: 'Ücretsiz / İşlem' };
+  const summary: (string | number)[][] = [['Şube','Tarih','Durum','Açılış','Fatura nakit','Web nakit','İşlem nakit','POS kredi kartı','Nakit gider','Beklenen kasa','Sayılan kasa','Kasa farkı','Bankaya ayrılan','Devir','Temlikli','Sepete taksit','QR ödeme','Havale']];
   for (const r of rows) {
     const expected = Number(r.opening)+Number(r.invoice_cash)+Number(r.web_cash)+Number(r.cash_in)-Number(r.expenses);
-    summary.push([r.name,date,r.saved ? 'Kaydedildi' : 'Giriş yapılmadı',Number(r.opening),Number(r.invoice_cash),Number(r.web_cash),Number(r.cash_in),Number(r.card_in),Number(r.expenses),expected,Number(r.counted),r.saved ? Number(r.counted)-expected : 0,Number(r.bank_deposit),Number(r.closing),r.entries.filter(e => e.payment === 'assignment').reduce((s,e) => s+Number(e.amount),0),r.entries.filter(e => e.payment === 'installment').reduce((s,e) => s+Number(e.amount),0),r.entries.filter(e => e.payment === 'qr').reduce((s,e) => s+Number(e.amount),0)]);
+    summary.push([r.name,date,r.saved ? 'Kaydedildi' : 'Giriş yapılmadı',Number(r.opening),Number(r.invoice_cash),Number(r.web_cash),Number(r.cash_in),Number(r.card_in),Number(r.expenses),expected,Number(r.counted),r.saved ? Number(r.counted)-expected : 0,Number(r.bank_deposit),Number(r.closing),r.entries.filter(e => e.payment === 'assignment').reduce((s,e) => s+Number(e.amount),0),r.entries.filter(e => e.payment === 'installment').reduce((s,e) => s+Number(e.amount),0),r.entries.filter(e => e.payment === 'qr').reduce((s,e) => s+Number(e.amount),0),r.entries.filter(e => e.payment === 'transfer').reduce((s,e) => s+Number(e.amount),0)]);
   }
-  summary.push(['TOPLAM',date,'',...Array.from({length:14},(_,i) => summary.slice(1).reduce((sum,r) => sum+Number(r[i+3]),0))]);
+  summary.push(['TOPLAM',date,'',...Array.from({length:15},(_,i) => summary.slice(1).reduce((sum,r) => sum+Number(r[i+3]),0))]);
   const details: (string | number)[][] = [['Şube','Tarih','Kategori','Fiş / Fatura no','Personel','İşlem / Ürün','Tahsilat tipi','Tutar','Nakit','Kredi kartı']];
   rows.forEach(r => r.entries.forEach(e => details.push([r.name,date,e.category_name || '',e.receipt,e.staff_name || '',e.description,labels[e.payment],Number(e.amount),Number(e.cash),Number(e.card)])));
   const notes: (string | number)[][] = [['Şube','Tarih','Fiş başlangıcı','Gün notu'],...rows.map(r => [r.name,date,r.receipt_start,r.note])];

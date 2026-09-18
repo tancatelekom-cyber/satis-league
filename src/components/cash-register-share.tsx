@@ -12,7 +12,7 @@ export function CashRegisterShare({ rows, date, categories }: { rows: CashRow[];
   const dialog=useRef<HTMLDialogElement>(null);
   const reports=useMemo(()=>rows.flatMap(row=>buildCashReports(row,categories)),[rows,categories]);
   const totals=cashTotals(rows);
-  const text=[`TANCA+ Kasa Özeti · ${date}`,...rows.map(r=>`${r.name}${r.saved?'':' (Giriş yapılmadı)'}: Açılış ${cashMoney(Number(r.opening))} · Nakit giriş ${cashMoney(Number(r.cash_in)+Number(r.invoice_cash)+Number(r.web_cash))} · Gider ${cashMoney(Number(r.expenses))} · Devir ${cashMoney(Number(r.closing))}`),`Toplam devir: ${cashMoney(totals.closing)}`].join('\n');
+  const text=[`TANCA+ Kasa Özeti · ${date}`,...rows.map(r=>`${r.name}${r.saved?'':' (Giriş yapılmadı)'}: Açılış ${cashMoney(Number(r.opening))} · Nakit giriş ${cashMoney(Number(r.cash_in)+Number(r.invoice_cash)+Number(r.web_cash))} · Havale ${cashMoney(r.entries.filter(e=>e.payment==='transfer').reduce((sum,e)=>sum+Number(e.amount),0))} · Gider ${cashMoney(Number(r.expenses))} · Devir ${cashMoney(Number(r.closing))}`),`Toplam devir: ${cashMoney(totals.closing)}`].join('\n');
   useEffect(()=>{
     if(!open) return;
     let cancelled=false;let url='';

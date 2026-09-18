@@ -100,7 +100,7 @@ export function buildCashReports(row: CashRow, categories: CashCategory[]): Cash
     const summaryRow = nextRow;
     const calculated=calculateCashSummary(row.opening,row.invoice_cash,row.web_cash,row.cash_in,row.expenses,row.counted);
     const expected=calculated.expected;
-    add(summaryRow,0,53,'KASA ÖZETİ · GÜN TOPLAMI','section');
+    add(summaryRow,0,15,'KASA ÖZETİ · GÜN TOPLAMI','section');
     const summary: [string,number|string,ReportStyle][] = [
       ['FATURA NAKİT TAHSİLAT (+)',Number(row.invoice_cash),'input'],['WEB NAKİT TAHSİLAT (+)',Number(row.web_cash),'input'],
       ['TOPLAM NAKİT TAHSİLAT',calculated.cash,'money'],['POS KK SATIŞLARI (NÖTR)',Number(row.card_in),'money'],
@@ -110,7 +110,7 @@ export function buildCashReports(row: CashRow, categories: CashCategory[]): Cash
       ['KASADA OLAN',row.saved?Number(row.counted):'','input'],['KASA FARKI',row.saved?Number(row.counted)-expected:'','warning'],
       ...(Number(row.bank_deposit) ? [['ÖNCEDEN BANKAYA AYRILAN',Number(row.bank_deposit),'input'] as [string,number,ReportStyle]] : []),['DEVİR',Number(row.closing),'total']
     ];
-    summary.forEach(([label,value,style],i)=>{add(summaryRow+1+i,0,40,label,'body');add(summaryRow+1+i,40,13,value,style);});
+    summary.forEach(([label,value,style],i)=>{add(summaryRow+1+i,0,10,label,'body');add(summaryRow+1+i,10,5,value,style);});
     const notesRow = summaryRow + summary.length + 2;
     add(notesRow,0,53,'NAKİT: Yalnızca kasaya giren tutarı yazın. Havale, QR ödeme, temlikli ve sepete taksit satışlar nakit kasayı ve POS toplamını etkilemez.','note');
     add(notesRow+1,0,53,'Fatura ve web tahsilatları özete ayrıca girilir; aynı tahsilatı satış bölümlerinde tekrar saymayın.','note');

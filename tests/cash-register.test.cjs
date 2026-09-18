@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const ts = require('typescript');
 const path = require('node:path');
 function load(file) {
-  const js = ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText;
+  const js = ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020,esModuleInterop:true}}).outputText;
   const module = {exports:{}};new Function('module','exports','require',js)(module,module.exports,name=>name.startsWith('.')?load(path.resolve(path.dirname(file),name+'.ts')):require(name));return module.exports;
 }
 const { calculateCashEntries, cashToday, validCashDate, cashOpeningDifference, previousCashDate } = load('src/lib/cash-register.ts');
@@ -151,4 +151,15 @@ test('bank transfer is separate from physical cash and appears in the form and E
  const header=report.cells.find(c=>c.row===receipt.row-1&&c.value==='HAVALE');
  assert.equal(report.cells.find(c=>c.row===receipt.row&&c.col===header.col).value,250);
  assert.ok(buildXlsxBuffer([{name:report.name,rows:[],report}]).toString('utf8').includes('HAVALE'));
+});
+
+
+test('PDF export embeds fonts and paginates long category tables',async()=>{
+  const {buildCashPdf}=load('src/lib/cash-register-pdf.ts');
+  const entries=Array.from({length:100},(_,i)=>({category_id:'new',category_name:'Yeni Kategori',receipt:String(i),staff_name:'Ömer Şahin',description:'Ödeme',payment:'transfer',amount:250}));
+  const pdf=await buildCashPdf(buildCashReports({...reportRow,entries},[]));
+  assert.equal(pdf.subarray(0,5).toString(),'%PDF-');
+  const raw=pdf.toString('latin1');
+  assert.ok((raw.match(/\/Type \/Page\b/g)||[]).length>1);
+  assert.ok(raw.includes('/FontFile2'));
 });

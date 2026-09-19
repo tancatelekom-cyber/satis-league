@@ -50,3 +50,7 @@ export const cashPaymentLabels = {cash:'Nakit',card:'Kredi kartı',qr:'QR ödeme
 export function categoryPayments(category: CashCategory): CashEntry['payment'][] {
   return category.allowed_payments ?? (Object.keys(cashPaymentLabels) as CashEntry['payment'][]).filter(p=>p!=='assignment'&&p!=='installment'||p==='assignment'&&category.allow_assignment||p==='installment'&&category.allow_installment);
 }
+
+export function canEditCashDate(date: string, canEditHistory: boolean, today = cashToday()) {
+  return validCashDate(date) && date <= today && (date === today || canEditHistory);
+}

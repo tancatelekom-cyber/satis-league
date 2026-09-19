@@ -163,3 +163,16 @@ test('PDF export embeds fonts and paginates long category tables',async()=>{
   assert.ok((raw.match(/\/Type \/Page\b/g)||[]).length>1);
   assert.ok(raw.includes('/FontFile2'));
 });
+
+
+test('historical cash editing requires explicit permission and never allows future or invalid dates',()=>{
+  const {canEditCashDate}=load('src/lib/cash-register.ts');
+  for(const allowed of [false,true]) {
+    assert.equal(canEditCashDate('2026-09-19',allowed,'2026-09-19'),true);
+    assert.equal(canEditCashDate('2026-09-20',allowed,'2026-09-19'),false);
+    assert.equal(canEditCashDate('2026-02-30',allowed,'2026-09-19'),false);
+    assert.equal(canEditCashDate('',allowed,'2026-09-19'),false);
+  }
+  assert.equal(canEditCashDate('2026-09-18',false,'2026-09-19'),false);
+  assert.equal(canEditCashDate('2026-09-18',true,'2026-09-19'),true);
+});

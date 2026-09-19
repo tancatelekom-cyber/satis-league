@@ -98,7 +98,7 @@ test('invoice and web cash change expected cash but carryover remains physically
  assert.equal(calculateCashSummary(0,0.1,0.2,0,0,0.3).difference,0);
  const report=buildCashReports({...reportRow,invoice_cash:20,web_cash:30},[])[0];
  const label=report.cells.find(c=>c.value==='TOPLAM NAKİT TAHSİLAT');
- assert.equal(report.cells.find(c=>c.row===label.row&&c.col===40).value,450);
+ assert.equal(report.cells.find(c=>c.row===label.row&&c.col===label.col+label.span).value,450);
 });
 
 test('all category tables use exact entry counts and precede the final summary',()=>{

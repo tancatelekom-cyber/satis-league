@@ -2,11 +2,11 @@
 import { revalidatePath } from 'next/cache';
 import { requireCashAccess } from '@/lib/auth/require-cash-access';
 import { createClient } from '@/lib/supabase/server';
-import { cashToday, type CashEntry } from '@/lib/cash-register';
+import { canEditCashDate, type CashEntry } from '@/lib/cash-register';
 
 export async function saveCashDay(input: { storeId: string; date: string; revision: number; opening: number; invoice: number; web: number; counted: number; receipt: string; note: string; entries: CashEntry[] }) {
-  const { profile, allStores } = await requireCashAccess();
-  if (input.date !== cashToday()) return { error: 'Yalnızca bugünün kaydı değiştirilebilir.' };
+  const { profile, allStores, canEditHistory } = await requireCashAccess();
+  if (!canEditCashDate(input.date, canEditHistory)) return { error: 'Bu tarihte işlem yapma yetkiniz yok. Gelecek tarihli kayıt girilemez.' };
   if (!allStores && input.storeId !== profile.store_id) return { error: 'Bu şubeye erişiminiz yok.' };
   if (![input.opening, input.invoice, input.web, input.counted].every(n => Number.isFinite(n) && n >= 0 && n <= 999999999999.99)) return { error: 'Tutarları kontrol edin.' };
   if (input.entries.length > 500 || input.note.length > 2000 || input.receipt.length > 100 || input.entries.some(e => !e.staff || e.receipt.length > 100 || e.description.length > 250 || ![e.cash,e.card].every(n => Number.isFinite(n) && n >= 0 && n <= 999999999999.99))) return { error: 'Personel seçimini ve satır tutarlarını kontrol edin.' };

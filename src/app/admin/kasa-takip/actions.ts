@@ -7,7 +7,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 
 export async function updateCashPermission(form: FormData) {
   await requireAdminAccess();
-  const { error } = await createAdminClient().from('feature_profile_permissions').upsert({ feature_key: 'kasa-takip', profile_id: String(form.get('profileId')), is_allowed: form.get('allowed') === 'on', updated_at: new Date().toISOString() }, { onConflict: 'feature_key,profile_id' });
+  const { error } = await createAdminClient().from('feature_profile_permissions').upsert({ feature_key: 'kasa-takip', profile_id: String(form.get('profileId')), is_allowed: form.get('allowed') === 'on', can_edit_cash_history: form.get('history') === 'on', updated_at: new Date().toISOString() }, { onConflict: 'feature_key,profile_id' });
   if (error) redirect('/admin/kasa-takip?error=' + encodeURIComponent('Yetki kaydedilemedi.'));
   revalidatePath('/', 'layout');
   redirect('/admin/kasa-takip?message=' + encodeURIComponent('Yetki güncellendi.'));

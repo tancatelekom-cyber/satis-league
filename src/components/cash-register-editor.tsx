@@ -7,6 +7,16 @@ import { cashToday, cashMoney, cashPaymentLabels, categoryPayments, calculateCas
 
 export function CashRegisterEditor({ row, categories, people, editable, suggestions = {} }: { row: CashRow; categories: CashCategory[]; people: { id: string; full_name: string; role: string }[]; editable: boolean; suggestions?: Record<string,string[]> }) {
   const router = useRouter();
+  const dockRef = useRef<HTMLElement>(null);
+  useEffect(()=>{
+    const dock=dockRef.current;
+    if(!dock) return;
+    const measure=()=>dock.parentElement?.style.setProperty('--cash-dock-height',`${dock.getBoundingClientRect().height}px`);
+    measure();
+    const observer=new ResizeObserver(measure);
+    observer.observe(dock);
+    return ()=>observer.disconnect();
+  },[]);
   const categoryPanels = useRef(new Map<string,HTMLElement>());
   const [revision,setRevision] = useState(row.revision);
   const [entries, setEntries] = useState<CashEntry[]>(row.entries);
@@ -62,7 +72,7 @@ export function CashRegisterEditor({ row, categories, people, editable, suggesti
     <section className="cash-panel"><h2>Kasa özeti</h2><div className="cash-input-grid">{[['Fatura nakit tahsilat',invoice,setInvoice],['Web nakit tahsilat',web,setWeb],['Kasada sayılan',counted,setCounted]].map(([label,value,setter]) => <label key={String(label)}>{String(label)} (₺)<CashMoneyInput value={value as number} disabled={locked} onValueChange={amount => {(setter as (value: number) => void)(amount);setDirty(true);}}/></label>)}</div><p className="cash-notice">Fatura ve web nakit tahsilatları toplam nakit tahsilata ve beklenen kasaya eklenir. Yarına devir, elle girilen kasada sayılan tutardır. Bankaya yatırılan tutarı Gider kategorisine nakit işlem olarak girin. Kart, havale, QR ödeme, temlikli ve sepete taksit nakit kasayı etkilemez.</p>
       <dl className="cash-summary">{totals.map(([label,value]) => <div key={label}><dt>{label}</dt><dd>{cashMoney(value)}</dd></div>)}</dl><label>Gün notu<textarea value={note} maxLength={2000} disabled={locked} onChange={e => {setNote(e.target.value);setDirty(true);}}/></label>
     </section>
-    <nav className="cash-category-dock" aria-label="Kategoriye git ve satır ekle">{categories.filter(c=>c.is_active).map(category=><button key={category.id} type="button" disabled={pending} onClick={()=>{if(editable) addRow(category,true);else categoryPanels.current.get(category.id)?.scrollIntoView({behavior:'smooth',block:'start'});}}>{editable ? '+ ' : ''}{category.name}</button>)}</nav>
+    <nav ref={dockRef} className="cash-category-dock" aria-label="Kategoriye git ve satır ekle">{categories.filter(c=>c.is_active).map(category=><button key={category.id} type="button" disabled={pending} onClick={()=>{if(editable) addRow(category,true);else categoryPanels.current.get(category.id)?.scrollIntoView({behavior:'smooth',block:'start'});}}>{editable ? '+ ' : ''}{category.name}</button>)}</nav>
     <div className="cash-savebar"><span role="status">{(dirty && !pending && message === 'Kasa kaydedildi.' ? '' : message) || (dirty ? 'Kaydedilmemiş değişiklikler var. Kasayı kaydet düğmesine basın.' : 'Raporlar kaydedilen verileri içerir.')}</span>{!locked && <button type="submit">Kasayı kaydet</button>}{pending && <button disabled>Kaydediliyor…</button>}</div>
   </form>;
 }

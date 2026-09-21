@@ -55,6 +55,6 @@ export function canEditCashDate(date: string, canEditHistory: boolean, today = c
   return validCashDate(date) && date <= today && (date === today || canEditHistory);
 }
 
-export function sortCashCategories<T extends {name:string;sort_order?:number}>(categories:T[]):T[] {
-  return [...categories].sort((a,b)=>(a.sort_order ?? 2147483647)-(b.sort_order ?? 2147483647)||a.name.localeCompare(b.name,'tr'));
+export function sortCashCategories<T extends {id?:string;name:string;sort_order?:number}>(categories:T[]):T[] {
+  return [...categories].sort((a,b)=>(a.sort_order ?? 2147483647)-(b.sort_order ?? 2147483647)||(a.sort_order!==undefined && b.sort_order!==undefined ? (a.id || '').localeCompare(b.id || '') : a.name.localeCompare(b.name,'tr')));
 }

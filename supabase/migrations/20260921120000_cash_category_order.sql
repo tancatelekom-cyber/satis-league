@@ -15,7 +15,7 @@ declare ids uuid[]; current_position integer; target_position integer; other_id 
 begin
   if direction is null or direction not in (-1,1) then raise exception 'Geçersiz yön'; end if;
   perform pg_advisory_xact_lock(20260921,120000);
-  select array_agg(id order by sort_order,name,id) into ids from public.cash_register_categories;
+  select array_agg(id order by sort_order,id) into ids from public.cash_register_categories;
   current_position:=array_position(ids,category_id);
   if current_position is null then raise exception 'Kategori bulunamadı'; end if;
   target_position:=current_position+direction;

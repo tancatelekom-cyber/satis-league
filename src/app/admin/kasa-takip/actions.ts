@@ -38,3 +38,14 @@ export async function toggleCashCategory(form: FormData) {
 
 export async function addCashCategory(form: FormData) { await saveCategory(form,false); }
 export async function updateCashCategory(form: FormData) { await saveCategory(form,true); }
+
+export async function moveCashCategory(form:FormData) {
+  await requireAdminAccess();
+  const direction=Number(form.get('direction'));
+  if(direction!==-1 && direction!==1) redirect('/admin/kasa-takip?error=Geçersiz+yön');
+  const {error}=await createAdminClient().rpc('move_cash_category',{category_id:String(form.get('id')),direction});
+  if(error) redirect('/admin/kasa-takip?error='+encodeURIComponent('Sıralama kaydedilemedi. Kategori sıralama SQL güncellemesini uygulayın.'));
+  revalidatePath('/kasa-takip');
+  revalidatePath('/admin/kasa-takip');
+  redirect('/admin/kasa-takip?message=Kategori+sırası+güncellendi');
+}

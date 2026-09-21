@@ -10,13 +10,17 @@ pdfMake.setLocalAccessPolicy(file => Object.values(fonts).includes(path.resolve(
 
 export function buildCashPdf(reports: CashReport[]): Promise<Buffer> {
   const content = reports.flatMap((report, index) => {
+    const reportDate = report.cells.find(cell => cell.row === 2 && cell.col === 30)?.value ?? '';
+    const branchLabel = `ŞUBE: ${report.name} · ${reportDate}`;
     const body: Record<string, unknown>[][] = report.heights.map(() => Array.from({length: report.columns}, () => ({text:'',border:[false,false,false,false]})));
     const summaryRow = report.cells.find(cell => cell.value === 'KASA ÖZETİ · GÜN TOPLAMI')?.row ?? Infinity;
     for (const cell of report.cells) {
       const compactSummary = cell.row >= summaryRow && cell.style !== 'note';
       const style = reportStyles[cell.style];
       body[cell.row][cell.col] = {
-        text: typeof cell.value === 'number' ? cell.value.toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2}) : cell.row === 1 ? cell.value.replace(/ · Sayfa \d+\/\d+/, '') : cell.value,
+        text: cell.style === 'title' ? `${branchLabel}\n${cell.value}`
+          : cell.style === 'section' ? `${cell.value} · ${branchLabel}`
+          : typeof cell.value === 'number' ? cell.value.toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2}) : cell.row === 1 ? cell.value.replace(/ · Sayfa \d+\/\d+/, '') : cell.value,
         colSpan: cell.span, fillColor: style.fill, color: style.color, bold: style.bold,
         alignment: compactSummary && cell.style !== 'section' ? (cell.col === 0 ? 'right' : 'left') : style.align, fontSize: compactSummary ? 10 : Math.max(7, style.size * 0.7),
         border: [style.border,style.border,style.border,style.border]

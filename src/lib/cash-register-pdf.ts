@@ -9,7 +9,7 @@ pdfMake.setUrlAccessPolicy(() => false);
 pdfMake.setLocalAccessPolicy(file => Object.values(fonts).includes(path.resolve(file)));
 
 export function buildCashPdf(reports: CashReport[]): Promise<Buffer> {
-  const content = reports.map((report, index) => {
+  const content = reports.flatMap((report, index) => {
     const body: Record<string, unknown>[][] = report.heights.map(() => Array.from({length: report.columns}, () => ({text:'',border:[false,false,false,false]})));
     const summaryRow = report.cells.find(cell => cell.value === 'KASA ÖZETİ · GÜN TOPLAMI')?.row ?? Infinity;
     for (const cell of report.cells) {
@@ -23,13 +23,27 @@ export function buildCashPdf(reports: CashReport[]): Promise<Buffer> {
       };
       for(let offset=1;offset<cell.span;offset++) body[cell.row][cell.col+offset]={};
     }
-    return {
-      ...(index ? {pageBreak:'before'} : {}),
-      table: {widths:Array(report.columns).fill('*'),body,dontBreakRows:true},
-      layout: {hLineWidth:()=>0.4,vLineWidth:()=>0.4,hLineColor:()=>'#929ca5',vLineColor:()=>'#929ca5',paddingLeft:()=>2,paddingRight:()=>2,paddingTop:()=>3,paddingBottom:()=>3}
-    };
+    const starts = [0, ...report.cells.filter(cell => cell.style === 'section').map(cell => cell.row)];
+    return starts.map((start, block) => {
+      let end = starts[block + 1] ?? body.length;
+      // Keep spacing outside the category so a trailing blank row cannot force a page break.
+      while (end > start && !report.cells.some(cell => cell.row === end - 1)) end--;
+      const category = start > 0 && start < summaryRow;
+      return {
+        id: `cash-block-${index}-${block}`,
+        ...(index && block === 0 ? {pageBreak:'before'} : {}),
+        margin: [0, 0, 0, 8],
+        table: {widths:Array(report.columns).fill('*'),body:body.slice(start,end),dontBreakRows:true,
+          ...(category ? {headerRows:2,keepWithHeaderRows:end-start>2 ? 1 : 0} : {})},
+        layout: {hLineWidth:()=>0.4,vLineWidth:()=>0.4,hLineColor:()=>'#929ca5',vLineColor:()=>'#929ca5',paddingLeft:()=>2,paddingRight:()=>2,paddingTop:()=>3,paddingBottom:()=>3}
+      };
+    });
   });
   return pdfMake.createPdf({pageSize:'A3',pageOrientation:'landscape',pageMargins:[24,24,24,28],defaultStyle:{font:'Roboto',fontSize:8},content,
-    footer:(page:number,pages:number)=>({text:`${page} / ${pages}`,alignment:'right',fontSize:8,margin:[24,0,24,0]})
+    footer:(page:number,pages:number)=>({text:`${page} / ${pages}`,alignment:'right',fontSize:8,margin:[24,0,24,0]}),
+    // Use actual laid-out heights, including wrapped text. Oversized categories may
+    // continue after moving to a fresh page; their two header rows repeat there.
+    pageBreakBefore:(node:{id?:string;pageNumbers:number[];startPosition?:{top:number}})=>
+      Boolean(node.id?.startsWith('cash-block-') && node.pageNumbers.length>1 && (node.startPosition?.top ?? 24)>25)
   }).getBuffer();
 }

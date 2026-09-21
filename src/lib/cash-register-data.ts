@@ -25,3 +25,18 @@ export async function getCashData(requestedDate?: string, requestedStore?: strin
   }
   return { ...access, date, stores: stores || [], rows };
 }
+
+/** RLS and the selected branch constrain the history used for suggestions. */
+export async function getCashDescriptionSuggestions(storeId:string,date:string) {
+  const db=await createClient();
+  const {data}=await db.from('cash_register_days').select('entries').eq('store_id',storeId).lte('entry_date',date).order('entry_date',{ascending:false}).limit(180);
+  const groups:Record<string,string[]>={};
+  for(const day of data || []) for(const entry of Array.isArray(day.entries) ? day.entries : []) {
+    if(typeof entry?.category_id!=='string' || typeof entry?.description!=='string') continue;
+    const description=entry.description.trim();
+    if(!description) continue;
+    const options=groups[entry.category_id] ||= [];
+    if(options.length<100 && !options.some(value=>value.toLocaleLowerCase('tr-TR')===description.toLocaleLowerCase('tr-TR'))) options.push(description);
+  }
+  return groups;
+}

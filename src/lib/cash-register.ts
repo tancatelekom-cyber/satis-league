@@ -4,7 +4,7 @@ export type CashDay = {
   bank_deposit: number; counted: number; note: string; revision: number;
   invoice_cash: number; web_cash: number; receipt_start: string; entries: CashEntry[];
 };
-export type CashCategory = { id: string; name: string; kind: 'income' | 'expense' | 'neutral'; is_active: boolean; allow_assignment: boolean; allow_installment: boolean; allowed_payments?: CashEntry['payment'][] };
+export type CashCategory = { sort_order?: number; id: string; name: string; kind: 'income' | 'expense' | 'neutral'; is_active: boolean; allow_assignment: boolean; allow_installment: boolean; allowed_payments?: CashEntry['payment'][] };
 export type CashEntry = { category_id: string; category_name?: string; kind?: string; receipt: string; staff: string; staff_name?: string; description: string; cash: number; card: number; payment: 'cash' | 'card' | 'assignment' | 'installment' | 'qr' | 'transfer' | 'free'; amount: number };
 export type CashRow = CashDay & { name: string; saved: boolean; hasPrior: boolean; previousClosing: number | null };
 export function previousCashDate(date: string) {
@@ -53,4 +53,8 @@ export function categoryPayments(category: CashCategory): CashEntry['payment'][]
 
 export function canEditCashDate(date: string, canEditHistory: boolean, today = cashToday()) {
   return validCashDate(date) && date <= today && (date === today || canEditHistory);
+}
+
+export function sortCashCategories<T extends {name:string;sort_order?:number}>(categories:T[]):T[] {
+  return [...categories].sort((a,b)=>(a.sort_order ?? 2147483647)-(b.sort_order ?? 2147483647)||a.name.localeCompare(b.name,'tr'));
 }

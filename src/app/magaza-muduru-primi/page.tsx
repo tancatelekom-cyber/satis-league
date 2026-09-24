@@ -325,7 +325,7 @@ export default async function ManagerPrimePage({ searchParams }: PageProps) {
           <article className="campaign-summary-card">
             <span>Rekontratlama Tempo</span>
             <strong>{formatPercent(summary.metrics.recontract.actualTempo)}</strong>
-            <p>%100 ve uzerinde adet basi 10 TL. Mevcut prim: {formatCurrency(summary.currentRecontractReward)}</p>
+            <p>Skalaya gore sabit kazanim. Mevcut prim: {formatCurrency(summary.currentRecontractReward)}</p>
           </article>
           <article className="campaign-summary-card">
             <span>Ay Sonu Rekontratlama</span>
@@ -350,7 +350,7 @@ export default async function ManagerPrimePage({ searchParams }: PageProps) {
           <div>
             <h2 className="goal-panel-title">Prim Dagilim Detayi</h2>
             <p className="goal-panel-subtitle">
-              Rekontratlama carpani kullanilmaz. Rekontratlama %100 ve uzerindeyse adet basi 10 TL, diger prim kalemleri kendi skalalariyla bagimsiz hesaplanir.
+              Rekontratlama primi, gerceklesme oraninin ulastigi skalaya karsilik gelen sabit kazanimdir. Her prim kalemi kendi skalasiyla bagimsiz hesaplanir.
             </p>
           </div>
         </div>
@@ -373,7 +373,6 @@ export default async function ManagerPrimePage({ searchParams }: PageProps) {
             <tbody>
               {summary.rows.map((row) => {
                 const rateRow = row.key === "accessory" || row.key === "service";
-                const recontractRow = row.key === "recontract";
 
                 return (
                   <tr key={`manager-prime-${row.key}`}>
@@ -385,16 +384,12 @@ export default async function ManagerPrimePage({ searchParams }: PageProps) {
                     <td>
                       {rateRow
                         ? formatPercent(row.currentBaseValue, 0)
-                        : recontractRow
-                          ? `${formatCurrency(row.currentBaseValue)}/adet`
-                          : formatCurrency(row.currentBaseValue)}
+                        : formatCurrency(row.currentBaseValue)}
                     </td>
                     <td>
                       {rateRow
                         ? formatPercent(row.projectedBaseValue, 0)
-                        : recontractRow
-                          ? `${formatCurrency(row.projectedBaseValue)}/adet`
-                          : formatCurrency(row.projectedBaseValue)}
+                        : formatCurrency(row.projectedBaseValue)}
                     </td>
                     <td>{formatCurrency(row.currentReward)}</td>
                     <td>{formatCurrency(row.projectedReward)}</td>

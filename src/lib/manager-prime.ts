@@ -431,13 +431,10 @@ export async function buildManagerPrimeSummary(managerName: string, storeName: s
     service: buildMetric("service", managerRows, dayStats, "HIZMET")
   } satisfies Record<ManagerPrimeMetricKey, ManagerPrimeMetric>;
 
-  const recontractUnitReward = 10;
-  const currentRecontractQualified = metrics.recontract.actualTempo >= 100;
-  const projectedRecontractQualified = metrics.recontract.projectedTempo >= 100;
-  const currentRecontractReward = currentRecontractQualified ? metrics.recontract.actual * recontractUnitReward : 0;
-  const projectedRecontractReward = projectedRecontractQualified
-    ? metrics.recontract.projected * recontractUnitReward
-    : 0;
+  const currentRecontractScale = findScaleRow(sheetRows, metrics.recontract.actualTempo);
+  const projectedRecontractScale = findScaleRow(sheetRows, metrics.recontract.projectedTempo);
+  const currentRecontractReward = currentRecontractScale?.recontractReward ?? 0;
+  const projectedRecontractReward = projectedRecontractScale?.recontractReward ?? 0;
 
   const coreKeys: ManagerPrimeMetricKey[] = ["production", "activation", "terminal", "sol"];
   const rows: ManagerPrimeBreakdownRow[] = [
@@ -446,10 +443,10 @@ export async function buildManagerPrimeSummary(managerName: string, storeName: s
       label: metrics.recontract.label,
       actualTempo: metrics.recontract.actualTempo,
       projectedTempo: metrics.recontract.projectedTempo,
-      currentScaleLabel: currentRecontractQualified ? "%100 ve uzeri" : "%100 alti",
-      projectedScaleLabel: projectedRecontractQualified ? "%100 ve uzeri" : "%100 alti",
-      currentBaseValue: currentRecontractQualified ? recontractUnitReward : 0,
-      projectedBaseValue: projectedRecontractQualified ? recontractUnitReward : 0,
+      currentScaleLabel: buildScaleLabel(currentRecontractScale?.thresholdPercent ?? 0),
+      projectedScaleLabel: buildScaleLabel(projectedRecontractScale?.thresholdPercent ?? 0),
+      currentBaseValue: currentRecontractReward,
+      projectedBaseValue: projectedRecontractReward,
       currentReward: currentRecontractReward,
       projectedReward: projectedRecontractReward
     }
@@ -545,18 +542,21 @@ export async function buildManagerPrimeSummary(managerName: string, storeName: s
   const remainingDays = Math.max(0, dayStats.remainingDays);
 
   if (remainingDays > 0) {
-    if (
-      metrics.recontract.target &&
-      metrics.recontract.target > 0 &&
-      metrics.recontract.projectedTempo < 100
-    ) {
-      const additionalRequiredTotal = Math.max(0, metrics.recontract.target - metrics.recontract.actual);
-      if (additionalRequiredTotal > 0) {
+    if (metrics.recontract.target && metrics.recontract.target > 0) {
+      const nextRecontractScale = sheetRows.find(
+        (row) => row.thresholdPercent > metrics.recontract.projectedTempo &&
+          row.recontractReward > projectedRecontractReward
+      );
+      const requiredTotal = nextRecontractScale
+        ? (metrics.recontract.target * nextRecontractScale.thresholdPercent) / 100
+        : 0;
+      const additionalRequiredTotal = Math.max(0, requiredTotal - metrics.recontract.actual);
+      if (nextRecontractScale && additionalRequiredTotal > 0) {
         opportunities.push({
           key: "recontract",
           label: metrics.recontract.label,
-          nextScaleLabel: "%100",
-          estimatedIncrease: metrics.recontract.target * recontractUnitReward,
+          nextScaleLabel: buildScaleLabel(nextRecontractScale.thresholdPercent),
+          estimatedIncrease: nextRecontractScale.recontractReward - projectedRecontractReward,
           dailyRequired: additionalRequiredTotal / remainingDays,
           additionalRequiredTotal
         });

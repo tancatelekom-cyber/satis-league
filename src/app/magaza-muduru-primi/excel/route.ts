@@ -191,7 +191,7 @@ export async function GET(request: Request) {
     ["Ay Sonu Prim Ongorusu", formatCurrency(summary.projectedPrimeTotal)],
     ["Rekontratlama Tempo", formatPercent(summary.metrics.recontract.actualTempo)],
     ["Ay Sonu Rekontratlama", formatPercent(summary.metrics.recontract.projectedTempo)],
-    ["Rekontratlama Primi (%100 ve uzeri, adet basi 10 TL)", formatCurrency(summary.currentRecontractReward)],
+    ["Rekontratlama Primi (skalaya gore sabit kazanim)", formatCurrency(summary.currentRecontractReward)],
     ["Ay Sonu Rekontratlama Primi", formatCurrency(summary.projectedRecontractReward)],
     ["Aksesuar Primi", formatCurrency(summary.currentAccessoryReward)],
     ["Ay Sonu Aksesuar", formatCurrency(summary.projectedAccessoryReward)],
@@ -212,7 +212,6 @@ export async function GET(request: Request) {
 
   summary.rows.forEach((row) => {
     const rateRow = row.key === "accessory" || row.key === "service";
-    const recontractRow = row.key === "recontract";
     rows.push([
       row.label,
       formatPercent(row.actualTempo),
@@ -221,14 +220,10 @@ export async function GET(request: Request) {
       row.projectedScaleLabel,
       rateRow
         ? formatPercent(row.currentBaseValue, 0)
-        : recontractRow
-          ? `${formatCurrency(row.currentBaseValue)}/adet`
-          : formatCurrency(row.currentBaseValue),
+        : formatCurrency(row.currentBaseValue),
       rateRow
         ? formatPercent(row.projectedBaseValue, 0)
-        : recontractRow
-          ? `${formatCurrency(row.projectedBaseValue)}/adet`
-          : formatCurrency(row.projectedBaseValue),
+        : formatCurrency(row.projectedBaseValue),
       formatCurrency(row.currentReward),
       formatCurrency(row.projectedReward)
     ]);

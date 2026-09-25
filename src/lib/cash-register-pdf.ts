@@ -8,6 +8,10 @@ pdfMake.addFonts({ Roboto: fonts });
 pdfMake.setUrlAccessPolicy(() => false);
 pdfMake.setLocalAccessPolicy(file => Object.values(fonts).includes(path.resolve(file)));
 
+// fontkit is PDFKit's font engine; use the same glyph advances as the PDF renderer.
+const fontMetrics = (require('fontkit') as {openSync:(file:string)=>{unitsPerEm:number;layout:(value:string)=>{glyphs:{advanceWidth:number}[]}}}).openSync(fonts.normal);
+const staffText = (value:string|number) => String(value).replace(/\s+/g,' ').trim();
+const staffWidth = (value:string) => fontMetrics.layout(value).glyphs.reduce((sum,glyph)=>sum+glyph.advanceWidth,0)/fontMetrics.unitsPerEm*10.5;
 const topMargin = 132;
 const availableWidth = 841.89 - 48; // A3 portrait, 24pt side margins.
 const layout = {hLineWidth:()=>0.4,vLineWidth:()=>0.4,hLineColor:()=>'#a5b2bd',vLineColor:()=>'#a5b2bd',paddingLeft:()=>4,paddingRight:()=>4,paddingTop:()=>4,paddingBottom:()=>4};
@@ -36,16 +40,16 @@ export function buildCashPdf(reports: CashReport[]): Promise<Buffer> {
       }
       // Size real columns from their text, rather than stretching a 53-column Excel grid.
       const widths=headers.map((header,column)=>{
-        const max=column===1?115:column===2?190:column===0?65:86;
+        const max=column===1?240:column===2?190:column===0?65:86;
         const min=column===1?65:column===2?80:column===0?36:48;
         const lengths=[text(header.value),...rows.map(row=>text(row[column]?.value ?? ''))].map(value=>Math.max(...value.split('\n').map(line=>line.length))*5.3);
-        return Math.max(min,Math.min(max,Math.max(...lengths)));
+        return column===1 ? Math.min(240,Math.max(65,...rows.map(row=>staffWidth(staffText(row[1]?.value ?? ''))+6))) : Math.max(min,Math.min(max,Math.max(...lengths)));
       });
       const budget=availableWidth-headers.length*8-(headers.length+1)*0.4;
-      const scale=Math.min(1,budget/widths.reduce((sum,width)=>sum+width,0));
+      const scale=Math.min(1,(budget-widths[1])/widths.reduce((sum,width,index)=>sum+(index===1?0:width),0));
       blocks.push({id:`cash-block-${index}-${block}`,margin:[0,0,0,12],
-        table:{widths:widths.map(width=>width*scale),headerRows:2,keepWithHeaderRows:rows.length?1:0,dontBreakRows:true,
-          body:[[{...pdfCell(section),fontSize:11,colSpan:headers.length},...headers.slice(1).map(()=>({}))],headers.map(pdfCell),...rows.map(row=>row.map(pdfCell))]},layout});
+        table:{widths:widths.map((width,index)=>index===1?width:width*scale),headerRows:2,keepWithHeaderRows:rows.length?1:0,dontBreakRows:true,
+          body:[[{...pdfCell(section),fontSize:11,colSpan:headers.length},...headers.slice(1).map(()=>({}))],headers.map(pdfCell),...rows.map(row=>row.map((cell,column)=>column===1 ? {...pdfCell(cell),text:staffText(cell.value),noWrap:true,fontSize:Math.min(10.5,10.5*(widths[1]-2)/Math.max(1,staffWidth(staffText(cell.value))))} : pdfCell(cell)))]},layout});
     }
     const summary=report.cells.filter(c=>c.row>summaryRow&&c.style!=='note');
     const summaryRows=[...new Set(summary.map(c=>c.row))].map(row=>cellsAt(row).map((cell,index)=>({...pdfCell(cell),alignment:index===0?'right':'left'})));

@@ -9,16 +9,23 @@ pdfMake.setUrlAccessPolicy(() => false);
 pdfMake.setLocalAccessPolicy(file => Object.values(fonts).includes(path.resolve(file)));
 
 // fontkit is PDFKit's font engine; use the same glyph advances as the PDF renderer.
-const fontMetrics = (require('fontkit') as {openSync:(file:string)=>{unitsPerEm:number;layout:(value:string)=>{glyphs:{advanceWidth:number}[]}}}).openSync(fonts.normal);
-const staffText = (value:string|number) => String(value).replace(/\s+/g,' ').trim();
-const staffWidth = (value:string) => fontMetrics.layout(value).glyphs.reduce((sum,glyph)=>sum+glyph.advanceWidth,0)/fontMetrics.unitsPerEm*10.5;
+const fontkit = require('fontkit') as {openSync:(file:string)=>{unitsPerEm:number;layout:(value:string)=>{glyphs:{advanceWidth:number}[]}}};
+const fontMetrics = {normal:fontkit.openSync(fonts.normal),bold:fontkit.openSync(fonts.bold)};
+const oneLine = (value:string|number) => text(value).replace(/\s+/g,' ').trim();
+function fitText(value:string|number,width:number,size=10.5,bold=false) {
+  const label=oneLine(value);
+  const font=bold?fontMetrics.bold:fontMetrics.normal;
+  const measured=font.layout(label).glyphs.reduce((sum,glyph)=>sum+glyph.advanceWidth,0)/font.unitsPerEm*size;
+  return {text:label,noWrap:true,bold,fontSize:Math.min(size,size*Math.max(1,width-3)/Math.max(1,measured))};
+}
+const staffWidth = (value:string) => fontMetrics.normal.layout(value).glyphs.reduce((sum,glyph)=>sum+glyph.advanceWidth,0)/fontMetrics.normal.unitsPerEm*10.5;
 const topMargin = 132;
 const availableWidth = 841.89 - 48; // A3 portrait, 24pt side margins.
 const layout = {hLineWidth:()=>0.4,vLineWidth:()=>0.4,hLineColor:()=>'#a5b2bd',vLineColor:()=>'#a5b2bd',paddingLeft:()=>4,paddingRight:()=>4,paddingTop:()=>4,paddingBottom:()=>4};
 const text = (value:string|number) => typeof value === 'number' ? value.toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2}) : value;
-function pdfCell(cell:ReportCell) {
+function pdfCell(cell:ReportCell,width:number) {
   const style=reportStyles[cell.style];
-  return {text:text(cell.value),fillColor:style.fill,color:style.color,bold:style.bold,alignment:style.align,fontSize:cell.style==='header'?9.5:10.5};
+  return {...fitText(cell.value,width,cell.style==='header'?9.5:10.5,style.bold),fillColor:style.fill,color:style.color,alignment:style.align};
 }
 
 export function buildCashPdf(reports: CashReport[]): Promise<Buffer> {
@@ -43,29 +50,31 @@ export function buildCashPdf(reports: CashReport[]): Promise<Buffer> {
         const max=column===1?240:column===2?190:column===0?65:86;
         const min=column===1?65:column===2?80:column===0?36:48;
         const lengths=[text(header.value),...rows.map(row=>text(row[column]?.value ?? ''))].map(value=>Math.max(...value.split('\n').map(line=>line.length))*5.3);
-        return column===1 ? Math.min(240,Math.max(65,...rows.map(row=>staffWidth(staffText(row[1]?.value ?? ''))+6))) : Math.max(min,Math.min(max,Math.max(...lengths)));
+        return column===1 ? Math.min(240,Math.max(65,...rows.map(row=>staffWidth(oneLine(row[1]?.value ?? ''))+6))) : Math.max(min,Math.min(max,Math.max(...lengths)));
       });
       const budget=availableWidth-headers.length*8-(headers.length+1)*0.4;
       const scale=Math.min(1,(budget-widths[1])/widths.reduce((sum,width,index)=>sum+(index===1?0:width),0));
+      const fittedWidths=widths.map((width,index)=>index===1?width:width*scale);
+      const sectionWidth=fittedWidths.reduce((sum,width)=>sum+width,0);
       blocks.push({id:`cash-block-${index}-${block}`,margin:[0,0,0,12],
-        table:{widths:widths.map((width,index)=>index===1?width:width*scale),headerRows:2,keepWithHeaderRows:rows.length?1:0,dontBreakRows:true,
-          body:[[{...pdfCell(section),fontSize:11,colSpan:headers.length},...headers.slice(1).map(()=>({}))],headers.map(pdfCell),...rows.map(row=>row.map((cell,column)=>column===1 ? {...pdfCell(cell),text:staffText(cell.value),noWrap:true,fontSize:Math.min(10.5,10.5*(widths[1]-2)/Math.max(1,staffWidth(staffText(cell.value))))} : pdfCell(cell)))]},layout});
+        table:{widths:fittedWidths,headerRows:2,keepWithHeaderRows:rows.length?1:0,dontBreakRows:true,
+          body:[[{...pdfCell(section,sectionWidth),colSpan:headers.length},...headers.slice(1).map(()=>({}))],headers.map((cell,column)=>pdfCell(cell,fittedWidths[column])),...rows.map(row=>row.map((cell,column)=>pdfCell(cell,fittedWidths[column])))]},layout});
     }
     const summary=report.cells.filter(c=>c.row>summaryRow&&c.style!=='note');
-    const summaryRows=[...new Set(summary.map(c=>c.row))].map(row=>cellsAt(row).map((cell,index)=>({...pdfCell(cell),alignment:index===0?'right':'left'})));
+    const summaryRows=[...new Set(summary.map(c=>c.row))].map(row=>cellsAt(row).map((cell,index)=>({...pdfCell(cell,index===0?195:90),alignment:index===0?'right':'left'})));
     blocks.push({id:`cash-block-${index}-summary`,margin:[0,0,0,12],table:{widths:[195,90],dontBreakRows:true,
-      body:[[{text:'KASA ÖZETİ · GÜN TOPLAMI',colSpan:2,bold:true,fontSize:11,fillColor:'#dbe3eb'},{}],...summaryRows]},layout});
-    blocks.push({stack:report.cells.filter(c=>c.row>summaryRow&&c.style==='note').map(c=>({text:text(c.value),fontSize:9,color:'#526777',margin:[0,0,0,4]}))});
+      body:[[{...fitText('KASA ÖZETİ · GÜN TOPLAMI',285,11,true),colSpan:2,fillColor:'#dbe3eb'},{}],...summaryRows]},layout});
+    blocks.push({stack:report.cells.filter(c=>c.row>summaryRow&&c.style==='note').map(c=>({...fitText(c.value,availableWidth,9),color:'#526777',margin:[0,0,0,4]}))});
     const warning=report.cells.find(c=>c.row===3&&c.style==='warning');
     return {section:blocks,pageSize:'A3',pageOrientation:'portrait',pageMargins:[24,topMargin,24,28],header:()=>({margin:[24,20,24,0],stack:[
-      {text:`ŞUBE: ${report.name} · ${valueAt(2,30)}`,bold:true,fontSize:14,color:'#123849'},
-      {text:'GÜNLÜK KASA TAKİP VE GİRİŞ FORMU',bold:true,fontSize:13,margin:[0,2,0,6]},
-      {text:text(valueAt(1,0)).replace(/ · Sayfa \d+\/\d+/,''),fontSize:9,color:'#526777',margin:[0,0,0,6]},
+      {...fitText(`ŞUBE: ${report.name} · ${valueAt(2,30)}`,availableWidth,14,true),color:'#123849'},
+      {...fitText('GÜNLÜK KASA TAKİP VE GİRİŞ FORMU',availableWidth,13,true),margin:[0,2,0,6]},
+      {...fitText(text(valueAt(1,0)).replace(/ · Sayfa \d+\/\d+/,''),availableWidth,9),color:'#526777',margin:[0,0,0,6]},
       {table:{widths:['auto',90,'auto',65,'auto',75],body:[[
-        {text:'KASA BAŞLANGIÇ (DEVİR)',fontSize:9},{text:text(valueAt(2,7)),bold:true,alignment:'right',fillColor:'#fff2cc'},
-        {text:'FİŞ BAŞLANGIÇ',fontSize:9},{text:text(valueAt(2,21)),fillColor:'#fff2cc'},
-        {text:'TARİH',fontSize:9},{text:text(valueAt(2,30)),fillColor:'#fff2cc'}]]},layout,fontSize:10},
-      ...(warning?[{text:text(warning.value),fontSize:10,bold:true,color:'#b91c1c',margin:[0,5,0,0]}]:[])
+        {...fitText('KASA BAŞLANGIÇ (DEVİR)',140,9)},{...fitText(valueAt(2,7),90,10,true),alignment:'right',fillColor:'#fff2cc'},
+        {...fitText('FİŞ BAŞLANGIÇ',95,9)},{...fitText(valueAt(2,21),65,10),fillColor:'#fff2cc'},
+        {...fitText('TARİH',40,9)},{...fitText(valueAt(2,30),75,10),fillColor:'#fff2cc'}]]},layout,fontSize:10},
+      ...(warning?[{...fitText(warning.value,availableWidth,10,true),color:'#b91c1c',margin:[0,5,0,0]}]:[])
     ]})};
   });
   return pdfMake.createPdf({pageSize:'A3',pageOrientation:'portrait',pageMargins:[24,topMargin,24,28],defaultStyle:{font:'Roboto',fontSize:10.5},content,

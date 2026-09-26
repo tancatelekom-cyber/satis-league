@@ -4006,17 +4006,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
 
   const employeeSummaries = Array.from(employeeMap.entries())
     .map(([, rows]) => buildEmployeeSummary(rows, dayStats.workedDays, dayStats.totalDays))
-    .sort((a, b) => {
-      if (a.hasTarget && b.hasTarget) {
-        return (b.projectedPercent ?? 0) - (a.projectedPercent ?? 0) || b.totalActual - a.totalActual;
-      }
-
-      if (a.hasTarget !== b.hasTarget) {
-        return a.hasTarget ? -1 : 1;
-      }
-
-      return b.projectedActual - a.projectedActual || b.totalActual - a.totalActual;
-    });
+    .sort((a, b) => b.totalActual - a.totalActual || a.name.localeCompare(b.name, "tr"));
 
   const employeeLivePrimeRankingSummaries = Array.from(employeeLivePrimeMap.entries())
     .map(([, rows]) => buildEmployeeSummary(rows, dayStats.workedDays, dayStats.totalDays))
@@ -4680,7 +4670,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                 <article className="campaign-section-card goal-ranking-card">
                   <div className="goal-section-head">
                     <h2>{effectiveView === "store" ? "Magaza Siralamasi" : "Firma Siralamasi"}</h2>
-                    <span>{effectiveCategory || "Kategori yok"}</span>
+                    <span>{effectiveCategory || "Kategori yok"}{effectiveView === "employee" ? " · Gerçekleşen değere göre" : ""}</span>
                   </div>
 
                   <div className="goal-ranking-list">
@@ -4714,8 +4704,9 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                                   }`}
                             </span>
                           </div>
-                          <strong className="goal-ranking-score">
-                            {summary.hasTarget && summary.actualPercent !== null
+                          <strong className="goal-ranking-score" style={effectiveView === "employee" ? {display:"grid",gap:3,textAlign:"right",fontSize:"clamp(1.25rem, 2.5vw, 1.75rem)",fontWeight:900,fontVariantNumeric:"tabular-nums",padding:"8px 12px",borderRadius:10,background:"#123c4b",border:"1px solid #ffe07d66"} : undefined}>
+                            {effectiveView === "employee" && <small style={{fontSize:"0.65rem",fontWeight:600,color:"#fff",letterSpacing:"0.04em"}}>GERÇEKLEŞEN DEĞER</small>}
+                            {effectiveView === "employee" ? formatNumber(summary.actual) : summary.hasTarget && summary.actualPercent !== null
                               ? formatPercent(summary.actualPercent)
                               : formatNumber(summary.actual)}
                           </strong>

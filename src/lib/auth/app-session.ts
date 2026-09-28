@@ -1,5 +1,5 @@
 export const APP_SESSION_COOKIE = "tanca_session";
-export const APP_SESSION_DURATION_SECONDS = 60 * 60;
+export const APP_SESSION_DURATION_SECONDS = 14 * 60 * 60;
 export const APP_SESSION_DURATION_MS = APP_SESSION_DURATION_SECONDS * 1000;
 
 export function createAppSessionValue(now = Date.now()) {

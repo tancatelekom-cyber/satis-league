@@ -18266,3 +18266,26 @@ textarea::placeholder {
     animation: none;
   }
 }
+
+
+/* Stronger alternating emphasis, with readable text in both phases. */
+.goal-employee-production-reward-panel .goal-product-point-details > .goal-product-point-summary {
+  animation-duration: 1.6s;
+  animation-timing-function: steps(1, end);
+}
+.goal-employee-production-reward-panel .goal-product-point-summary strong,
+.goal-employee-production-reward-panel .goal-product-point-summary span {
+  color: inherit;
+}
+@keyframes goal-product-point-pulse {
+  0%, 100% {
+    background-color: #123c4b;
+    color: #ffffff;
+    box-shadow: inset 0 0 0 0 #f5ca54;
+  }
+  50% {
+    background-color: #ffe16b;
+    color: #10203b;
+    box-shadow: inset 0 0 0 3px #f5ca54;
+  }
+}

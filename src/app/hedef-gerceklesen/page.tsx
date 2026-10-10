@@ -4077,6 +4077,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
 
   const activeEmployeeName = effectiveEmployee || employeeNames[0] || employeeSummaries[0]?.name || "";
   const activeStoreName = effectiveStore || storeSummaries[0]?.name || "";
+  let storeQueryProfileIds: string[] = [];
   let storeLoginGapNotes: StoreLoginGapNote[] = [];
   let companyLoginGapNotes: CompanyLoginGapNote[] = [];
 
@@ -4095,6 +4096,8 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
           .order("full_name", { ascending: true });
 
         const profiles = (profilesResult.data ?? []) as Array<{ id: string; full_name: string }>;
+        // Include staff and managers even when they have no personnel goal rows.
+        storeQueryProfileIds = profiles.map((person) => person.id).filter(Boolean);
 
         if (profiles.length) {
           const authUsers: Array<{ id: string; last_sign_in_at?: string | null }> = [];
@@ -5131,7 +5134,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                 {effectiveView === "store" ? (
                   <PersonnelQueryPanel
                     scope="store"
-                    personnelIds={Array.from(new Set(activeStoreEmployeeRows.map((row) => row.personnelId).filter(Boolean)))}
+                    personnelIds={Array.from(new Set([...storeQueryProfileIds, ...activeStoreEmployeeRows.map((row) => row.personnelId)].filter(Boolean)))}
                     workedDays={dayStats.workedDays}
                   />
                 ) : null}

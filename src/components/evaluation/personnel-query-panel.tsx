@@ -29,7 +29,7 @@ export async function PersonnelQueryPanel({ personnelIds, workedDays, scope = "e
   const groups = [{ title: "Terminal", metrics: terminal }, { title: "Superonline", metrics: superonline }];
   return <section className={styles.panel} aria-label={scope === "store" ? "Mağaza sorgu ve satış dönüşümü" : "Personel sorgu ve satış dönüşümü"}>
     <h3>{scope === "store" ? "Mağaza Sorgu ve Satış Dönüşümü" : "Sorgu ve Satış Dönüşümü"}</h3>
-    {scope === "store" ? <p>Mağaza personellerinin sorgu ve satış adetleri toplanır. Oranlar toplam adetler üzerinden hesaplanır.</p> : null}
+    {scope === "store" ? <p>Mağaza personelleri ve müdürlerinin sorgu ve satış adetleri toplanır. Oranlar toplam adetler üzerinden hesaplanır.</p> : null}
     <p>Günlük ortalama = toplam sorgu / hedef ekranındaki geçen gün ({number(workedDays)} gün). {workedDays > 0 ? "" : "Geçen gün bilgisi olmadığı için günlük ortalama hesaplanamıyor."}</p>
     <div className={styles.grid}>{groups.map(({ title, metrics }) =>
       <article key={title} className={styles.card}><h4>{title}</h4><dl>{metrics.map(([label, value]) =>

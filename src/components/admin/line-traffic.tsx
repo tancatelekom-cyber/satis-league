@@ -52,7 +52,7 @@ export function LineTraffic() {
     <p>Bu işlem cihazınızın aktif internet bağlantısından 200 MB veri indirir. Mobil hattınızda trafik oluşturmak için Wi-Fi’yi kapatıp o hattın mobil verisini kullanın.</p>
     <p>Veri dosya olarak kaydedilmez. Bağlantı ek yükleri nedeniyle operatörün ölçtüğü kullanım biraz daha yüksek olabilir.</p>
     <progress aria-label="İndirilen veri" max={TOTAL} value={Math.min(received, TOTAL)} style={{ width: "100%", height: 22 }} />
-    <p>{(received / 1_000_000).toLocaleString("tr-TR", { maximumFractionDigits: 1 })} / 200 MB — %{Math.min(100, received / TOTAL * 100).toLocaleString("tr-TR", { maximumFractionDigits: 1 })}</p>
+    <p>Gerçek indirilen: <strong>{(received / 1_000_000).toLocaleString("tr-TR", { maximumFractionDigits: 6 })} MB</strong> / 200 MB — %{(Math.floor(Math.min(100, received / TOTAL * 100) * 10) / 10).toLocaleString("tr-TR", { maximumFractionDigits: 1 })}<br />{received.toLocaleString("tr-TR")} bayt alındı (1 MB = 1.000.000 bayt).</p>
     <p role="status" aria-live="polite">{message}</p>
     <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
       <button type="button" className="button-primary" onClick={start} disabled={running}>{running ? "İndiriliyor…" : "200 MB Data Çek"}</button>

@@ -1,3 +1,4 @@
+import { PersonnelQueryPanel } from "@/components/evaluation/personnel-query-panel";
 import { Fragment, type CSSProperties } from "react";
 import { redirect } from "next/navigation";
 import { CopyCoachingButton } from "@/components/evaluation/copy-coaching-button";
@@ -5635,6 +5636,13 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                       </table>
                     </div>
                   </div>
+                ) : null}
+
+                {effectiveView === "employee" && activeEmployeeName ? (
+                  <PersonnelQueryPanel
+                    personnelIds={Array.from(new Set(activeEmployeeRows.map((row) => row.personnelId).filter(Boolean)))}
+                    workedDays={dayStats.workedDays}
+                  />
                 ) : null}
 
                 {effectiveView === "store" && detailCategorySummaries.length ? (

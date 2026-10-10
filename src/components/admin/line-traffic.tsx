@@ -23,7 +23,7 @@ export function LineTraffic() {
     try {
       for (let i = 0; i < TOTAL / CHUNK; i++) {
         const response = await fetch("/api/admin/hat-trafik", { method: "POST", cache: "no-store", signal: abort.signal });
-        if (!response.ok) throw new Error(response.status === 401 || response.status === 403 ? "Admin oturumunuzu kontrol edip tekrar deneyin." : "İndirme başarısız oldu. Tekrar başlatabilirsiniz.");
+        if (!response.ok) throw new Error(response.status === 401 || response.status === 403 ? "Oturumunuzu ve trafik oluşturma yetkinizi kontrol edip tekrar deneyin." : "İndirme başarısız oldu. Tekrar başlatabilirsiniz.");
         if (!response.headers.get("content-type")?.includes("application/octet-stream") || !response.body) throw new Error("Geçerli veri alınamadı.");
         const reader = response.body.getReader();
         let chunkBytes = 0;

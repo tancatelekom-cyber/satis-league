@@ -154,9 +154,12 @@ export function AppShellHeader({
       : itemsWithStockManagement;
 
     const itemsWithCash = initialCanOpenCash ? [...itemsWithPresentation, { href: "/kasa-takip", label: "Kasa Takip", mobileLabel: "Kasa", icon: "🧾" }] : itemsWithPresentation;
-    return initialIsAdmin
-      ? [...itemsWithCash, { href: "/admin", label: "Admin Paneli", mobileLabel: "Admin", icon: "⚙️" }]
+    const itemsWithTraffic = initialDashboardRole || initialIsAdmin
+      ? [...itemsWithCash, { href: "/hat-trafik", label: "Hat Trafik Oluşturma", mobileLabel: "Hat Trafik", icon: "📶" }]
       : itemsWithCash;
+    return initialIsAdmin
+      ? [...itemsWithTraffic, { href: "/admin", label: "Admin Paneli", mobileLabel: "Admin", icon: "⚙️" }]
+      : itemsWithTraffic;
   }, [initialCanOpenCash, initialCanEvaluate, initialCanOpenEvaluationPresentation, initialCanOpenManagerPrime, initialCanOpenMissingDocs, initialCanOpenRevenueExpense, initialCanOpenWebKontor, initialCanOpenWorkSchedule, initialDashboardRole, initialIsAdmin]);
 
   return (

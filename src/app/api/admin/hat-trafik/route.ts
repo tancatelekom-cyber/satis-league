@@ -9,8 +9,8 @@ export async function POST() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return Response.json({ message: "Oturum açmanız gerekiyor." }, { status: 401 });
   const { data: profile } = await supabase.from("profiles").select("role, approval").eq("id", user.id).single();
-  if (profile?.role !== "admin" || profile.approval !== "approved") {
-    return Response.json({ message: "Admin yetkisi gerekiyor." }, { status: 403 });
+  if (!profile || !["admin", "management", "manager"].includes(profile.role) || profile.approval !== "approved") {
+    return Response.json({ message: "Bu işlem için yönetici veya mağaza müdürü yetkisi gerekiyor." }, { status: 403 });
   }
   // Fresh random bytes prevent compression from reducing the requested traffic.
   const bytes = new Uint8Array(randomBytes(2_000_000));

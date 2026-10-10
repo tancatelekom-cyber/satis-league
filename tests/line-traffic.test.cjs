@@ -13,7 +13,7 @@ async function request(user, profile) {
  }});
  return mod.exports.POST();
 }
-test('traffic requires an approved admin',async()=>{
+test('traffic rejects unauthenticated and unauthorized users',async()=>{
  assert.equal((await request(null,null)).status,401);
  assert.equal((await request({id:'x'},{role:'employee',approval:'approved'})).status,403);
  assert.equal((await request({id:'x'},{role:'admin',approval:'pending'})).status,403);
@@ -26,4 +26,14 @@ test('admin receives a fresh non-cacheable 2 MB block',async()=>{
  const bytes=new Uint8Array(await res.arrayBuffer());
  assert.equal(bytes.byteLength,2000000);
  assert.ok(new Set(bytes.slice(0,4096)).size>200);
+});
+
+test('approved managers and management can download, unapproved roles cannot',async()=>{
+ for(const role of ['manager','management']) {
+  const res=await request({id:'x'},{role,approval:'approved'});
+  assert.equal(res.status,200);
+  assert.equal((await res.arrayBuffer()).byteLength,2000000);
+  assert.equal((await request({id:'x'},{role,approval:'pending'})).status,403);
+ }
+ assert.equal((await request({id:'x'},null)).status,403);
 });

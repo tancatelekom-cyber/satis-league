@@ -4077,6 +4077,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
 
   const activeEmployeeName = effectiveEmployee || employeeNames[0] || employeeSummaries[0]?.name || "";
   const activeStoreName = effectiveStore || storeSummaries[0]?.name || "";
+  let companyQueryProfileIds: string[] = [];
   let storeQueryProfileIds: string[] = [];
   let storeLoginGapNotes: StoreLoginGapNote[] = [];
   let companyLoginGapNotes: CompanyLoginGapNote[] = [];
@@ -4167,6 +4168,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
         full_name: string;
         store: Array<{ name: string }> | { name: string } | null;
       }>;
+      companyQueryProfileIds = profiles.map((person) => person.id).filter(Boolean);
 
       if (profiles.length) {
         const authUsers: Array<{ id: string; last_sign_in_at?: string | null }> = [];
@@ -5152,6 +5154,14 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                       <p className="subtle">Bu magazada hedef tanimli kalem bulunamadi.</p>
                     )}
                   </div>
+                ) : null}
+
+                {effectiveView === "company" ? (
+                  <PersonnelQueryPanel
+                    scope="company"
+                    personnelIds={Array.from(new Set([...companyQueryProfileIds, ...activeDashboardEmployeeRows.map((row) => row.personnelId)].filter(Boolean)))}
+                    workedDays={dayStats.workedDays}
+                  />
                 ) : null}
 
                 {effectiveView === "company" && visibleTrendStoreCodes.length && companyDailyNeedSummaryRows.length ? (

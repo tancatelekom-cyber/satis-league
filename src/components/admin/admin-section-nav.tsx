@@ -30,6 +30,7 @@ const adminGroups = [
     title: "Operasyon ve Yetkiler",
     icon: "⚙️",
     links: [
+      { href: "/admin/hat-trafik", icon: "📶", label: "Hat Trafik Oluşturma", description: "Aktif bağlantı üzerinden 200 MB veri indir" },
       { href: "/admin/gelir-gider", icon: "💹", label: "Gelir Gider", description: "Menü erişim yetkilerini yönet" },
       { href: "/admin/kasa-takip", icon: "🧾", label: "Kasa Takip", description: "Kasa erişim izinlerini ve kategorileri yönet" },
       { href: "/admin/web-kontor", icon: "🌐", label: "Web Kontör", description: "Menü yetkisini ve görünürlüğünü yönet" },
@@ -66,7 +67,7 @@ export function AdminSectionNav({ currentPath }: AdminSectionNavProps) {
             <strong>Yönetim Alanları</strong>
             <small>İşlem yapmak istediğiniz bölümü seçin</small>
           </span>
-          <span className="admin-directory-count">22 bölüm</span>
+          <span className="admin-directory-count">{adminGroups.reduce((total, group) => total + group.links.length, 0)} bölüm</span>
         </summary>
 
         <div className="admin-directory-body">

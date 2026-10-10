@@ -4,13 +4,13 @@ import styles from "./personnel-query-panel.module.css";
 const number = (value: number | null) => value === null ? "—" : value.toLocaleString("tr-TR", { maximumFractionDigits: 2 });
 const percent = (value: number | null) => value === null ? "—" : value.toLocaleString("tr-TR", { style: "percent", maximumFractionDigits: 1 });
 
-export async function PersonnelQueryPanel({ personnelIds, workedDays }: { personnelIds: string[]; workedDays: number }) {
+export async function PersonnelQueryPanel({ personnelIds, workedDays, scope = "employee" }: { personnelIds: string[]; workedDays: number; scope?: "employee" | "store" }) {
   let totals;
   try { totals = await fetchPersonnelQueryTotals(personnelIds); }
   catch {
     return <section className={styles.panel}><h3>Sorgu ve Satış Dönüşümü</h3><p role="status">Sorgu verileri şu anda okunamıyor. Lütfen daha sonra tekrar deneyin.</p></section>;
   }
-  if (!totals) return <section className={styles.panel}><h3>Sorgu ve Satış Dönüşümü</h3><p>Bu personelin ID’siyle eşleşen sorgu kaydı bulunamadı.</p></section>;
+  if (!totals) return <section className={styles.panel}><h3>Sorgu ve Satış Dönüşümü</h3><p>{scope === "store" ? "Bu mağazanın personelleriyle eşleşen sorgu kaydı bulunamadı." : "Bu personelin ID’siyle eşleşen sorgu kaydı bulunamadı."}</p></section>;
   const terminal = [
     ["Toplam sorgu", number(totals.terminalQueries)],
     ["Günlük ortalama sorgu", number(queryRatio(totals.terminalQueries, workedDays))],
@@ -27,8 +27,9 @@ export async function PersonnelQueryPanel({ personnelIds, workedDays }: { person
     ["Satışa dönüşüm oranı (L/K)", percent(queryRatio(totals.superonlineSales, totals.superonlineQueries))]
   ];
   const groups = [{ title: "Terminal", metrics: terminal }, { title: "Superonline", metrics: superonline }];
-  return <section className={styles.panel} aria-label="Personel sorgu ve satış dönüşümü">
-    <h3>Sorgu ve Satış Dönüşümü</h3>
+  return <section className={styles.panel} aria-label={scope === "store" ? "Mağaza sorgu ve satış dönüşümü" : "Personel sorgu ve satış dönüşümü"}>
+    <h3>{scope === "store" ? "Mağaza Sorgu ve Satış Dönüşümü" : "Sorgu ve Satış Dönüşümü"}</h3>
+    {scope === "store" ? <p>Mağaza personellerinin sorgu ve satış adetleri toplanır. Oranlar toplam adetler üzerinden hesaplanır.</p> : null}
     <p>Günlük ortalama = toplam sorgu / hedef ekranındaki geçen gün ({number(workedDays)} gün). {workedDays > 0 ? "" : "Geçen gün bilgisi olmadığı için günlük ortalama hesaplanamıyor."}</p>
     <div className={styles.grid}>{groups.map(({ title, metrics }) =>
       <article key={title} className={styles.card}><h4>{title}</h4><dl>{metrics.map(([label, value]) =>

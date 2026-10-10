@@ -5129,6 +5129,14 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                 )}
 
                 {effectiveView === "store" ? (
+                  <PersonnelQueryPanel
+                    scope="store"
+                    personnelIds={Array.from(new Set(activeStoreEmployeeRows.map((row) => row.personnelId).filter(Boolean)))}
+                    workedDays={dayStats.workedDays}
+                  />
+                ) : null}
+
+                {effectiveView === "store" ? (
                   <div className="goal-company-trend-panel">
                     <div className="goal-live-prime-head">
                       <h3>Gunluk Ihtiyaclar</h3>

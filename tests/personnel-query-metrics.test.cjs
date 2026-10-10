@@ -35,3 +35,14 @@ test('zero counts remain zero, zero denominators are unavailable and malformed d
   assert.throws(() => parse('<html>Sign in</html>', ['A']));
   assert.equal(parse(header + '\n' + row('A', ['1.234', 0, 0, 0, 0]), ['A']).terminalQueries, 1234);
 });
+
+test('store totals include selected personnel once and calculate weighted conversion', () => {
+  const csv = [header, row('A', [10, 7, 2, 9, 3]), row('B', [90, 60, 9, 1, 1]), row('OTHER', [999, 999, 999, 999, 999])].join('\n');
+  const totals = parse(csv, ['A', 'B', 'A']);
+  assert.equal(totals.terminalQueries, 100);
+  assert.equal(totals.terminalSales, 11);
+  assert.equal(totals.scoredCustomers, 67);
+  assert.equal(queryRatio(totals.terminalSales, totals.terminalQueries), 0.11);
+  assert.equal(queryRatio(totals.superonlineSales, totals.superonlineQueries), 0.4);
+  assert.equal(queryRatio(totals.terminalQueries, 5), 20);
+});

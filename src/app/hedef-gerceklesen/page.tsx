@@ -4632,6 +4632,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
           ) : null}
 
           {effectivePanel === "dashboard" && effectiveView === "employee" ? (
+            <>
             <StoreGoalDashboard
               storeName={activeEmployeeName}
               categories={employeeCategorySummaries}
@@ -4640,6 +4641,11 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
               colorBlindMode={colorBlindDashboardMode}
               dashboardScope="employee"
             />
+            <PersonnelQueryPanel
+              personnelIds={Array.from(new Set(activeEmployeeRows.map((row) => row.personnelId).filter(Boolean)))}
+              workedDays={dayStats.workedDays}
+            />
+            </>
           ) : effectivePanel === "dashboard" && effectiveView === "store" ? (
             <StoreGoalDashboard
               storeName={activeStoreName}
@@ -5101,6 +5107,11 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                       remainingDays={dayStats.remainingDays}
                       productionRewardRows={productionRewardRows}
                       productPointRows={productPointRows}
+                    />
+
+                    <PersonnelQueryPanel
+                      personnelIds={Array.from(new Set(activeEmployeeRows.map((row) => row.personnelId).filter(Boolean)))}
+                      workedDays={dayStats.workedDays}
                     />
 
                     {employeeDailyNeedSummaryRows.length ? (
@@ -5636,13 +5647,6 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                       </table>
                     </div>
                   </div>
-                ) : null}
-
-                {effectiveView === "employee" && activeEmployeeName ? (
-                  <PersonnelQueryPanel
-                    personnelIds={Array.from(new Set(activeEmployeeRows.map((row) => row.personnelId).filter(Boolean)))}
-                    workedDays={dayStats.workedDays}
-                  />
                 ) : null}
 
                 {effectiveView === "store" && detailCategorySummaries.length ? (

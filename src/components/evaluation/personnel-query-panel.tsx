@@ -15,16 +15,16 @@ export async function PersonnelQueryPanel({ personnelIds, workedDays, scope = "e
     ["Toplam sorgu", number(totals.terminalQueries)],
     ["Günlük ortalama sorgu", number(queryRatio(totals.terminalQueries, workedDays))],
     ["Puan çıkan müşteri", number(totals.scoredCustomers)],
-    ["Puan çıkma oranı (F/E)", percent(queryRatio(totals.scoredCustomers, totals.terminalQueries))],
+    ["Puan çıkma oranı (D/C)", percent(queryRatio(totals.scoredCustomers, totals.terminalQueries))],
     ["Puan çıkan müşteriye satış", number(totals.terminalSales)],
-    ["Satış oranı (H/F)", percent(queryRatio(totals.terminalSales, totals.scoredCustomers))],
-    ["Sorgudan satışa dönüşüm (H/E)", percent(queryRatio(totals.terminalSales, totals.terminalQueries))]
+    ["Satış oranı (F/D)", percent(queryRatio(totals.terminalSales, totals.scoredCustomers))],
+    ["Sorgudan satışa dönüşüm (F/C)", percent(queryRatio(totals.terminalSales, totals.terminalQueries))]
   ];
   const superonline = [
     ["Toplam adres sorgusu", number(totals.superonlineQueries)],
     ["Günlük ortalama sorgu", number(queryRatio(totals.superonlineQueries, workedDays))],
     ["Gerçekleşen satış", number(totals.superonlineSales)],
-    ["Satışa dönüşüm oranı (L/K)", percent(queryRatio(totals.superonlineSales, totals.superonlineQueries))]
+    ["Satışa dönüşüm oranı (J/I)", percent(queryRatio(totals.superonlineSales, totals.superonlineQueries))]
   ];
   const groups = [{ title: "Terminal", metrics: terminal }, { title: "Superonline", metrics: superonline }];
   return <section className={styles.panel} aria-label={scope === "store" ? "Mağaza sorgu ve satış dönüşümü" : "Personel sorgu ve satış dönüşümü"}>

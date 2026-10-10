@@ -37,18 +37,18 @@ function count(value: string | undefined): number {
 export function parsePersonnelQueryTotals(csv: string, personnelIds: string[]): PersonnelQueryTotals | null {
   const ids = new Set(personnelIds.map(id => id.trim().toLowerCase()).filter(id => id && !id.startsWith("#")));
   const rows = parseCsv(csv);
-  if (!rows.some(row => row[4]?.trim() === "Sorgu Adet" && row[10]?.trim() === "Adres Sorgu")) {
+  if (!rows.some(row => row[2]?.trim() === "Sorgu Adet" && row[8]?.trim() === "Adres Sorgu")) {
     throw new Error("Sorgu tablosunun sütunları doğrulanamadı.");
   }
-  const matching = rows.filter(row => ids.has((row[19] ?? "").trim().toLowerCase()));
+  const matching = rows.filter(row => ids.has((row[11] ?? "").trim().toLowerCase()));
   if (!matching.length) return null;
   const totals: PersonnelQueryTotals = { terminalQueries: 0, scoredCustomers: 0, terminalSales: 0, superonlineQueries: 0, superonlineSales: 0 };
   for (const row of matching) {
-    totals.terminalQueries += count(row[4]);
-    totals.scoredCustomers += count(row[5]);
-    totals.terminalSales += count(row[7]);
-    totals.superonlineQueries += count(row[10]);
-    totals.superonlineSales += count(row[11]);
+    totals.terminalQueries += count(row[2]);
+    totals.scoredCustomers += count(row[3]);
+    totals.terminalSales += count(row[5]);
+    totals.superonlineQueries += count(row[8]);
+    totals.superonlineSales += count(row[9]);
   }
   return totals;
 }

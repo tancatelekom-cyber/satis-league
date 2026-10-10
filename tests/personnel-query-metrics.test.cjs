@@ -10,14 +10,14 @@ const mod = { exports: {} };
 vm.runInNewContext(source, { module: mod, exports: mod.exports });
 const { parsePersonnelQueryTotals: parse, queryRatio } = mod.exports;
 const row = (id, counts) => {
-  const cells = Array(20).fill('');
-  cells[3] = '"Adı\nSoyadı"';
-  [4, 5, 7, 10, 11].forEach((col, i) => cells[col] = counts[i]);
-  cells[19] = id;
+  const cells = Array(12).fill('');
+  cells[1] = '"Adı\nSoyadı"';
+  [2, 3, 5, 8, 9].forEach((col, i) => cells[col] = counts[i]);
+  cells[11] = id;
   return cells.join(',');
 };
-const header = ',,,,Sorgu Adet,,,,,,Adres Sorgu';
-test('matches T by ID, skips headings, handles quoted newlines and aggregates counts before rates', () => {
+const header = ',,Sorgu Adet,,,,,,Adres Sorgu';
+test('matches L by ID, skips headings, handles quoted newlines and aggregates counts before rates', () => {
   const csv = [',,,,Sorgu&Satış', header, row('A', [10, 7, 2, 9, 3]), row('a', [20, 10, 1, 1, 0]), row('B', [999, 999, 999, 999, 999])].join('\r\n');
   const result = parse(csv, [' a ', 'A']);
   assert.deepEqual(JSON.parse(JSON.stringify(result)), { terminalQueries: 30, scoredCustomers: 17, terminalSales: 3, superonlineQueries: 10, superonlineSales: 3 });

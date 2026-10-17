@@ -1,22 +1,20 @@
-# Gelir-gider veritabanı geçişi
+# Gelir-gider: satırdan otomatik kayıt
 
-## Kurulum
-1. Uygulamanın bağlı olduğu Supabase projesinde SQL Editor üzerinden `supabase/migrations/20261017120000_revenue_expense.sql` dosyasını bir kez çalıştırın. Önce veritabanı migration'ını, ardından uygulamayı yayınlayın. Ana schema.sql dosyasını tekrar çalıştırmayın.
-2. Mevcut hesabınızla uygulamaya giriş yapın. Onaylı yönetim/admin rolü ve Gelir Gider menü izni gerekir; aynı kontrol veritabanı RLS kurallarında da uygulanır.
-3. Gelir Gider → Eski Google Sheets kayıtlarını aktar bölümündeki düğmeye basın. Aktarım tek transaction içinde gerçekleşir. Başarısızlıkta hiçbir kayıt yazılmaz. Başarılı aktarım yalnızca bir kez yapılabilir; tekrarlanan/eşzamanlı çağrılar kayıt çoğaltmaz. Kaynak Sheet değiştirilmez.
-4. Google Sheets toplamlarıyla aktarılan mağaza/dönem toplamlarını karşılaştırın. Bundan sonra yeni kayıtlar ve düzeltmeler uygulamadan yapılır; raporlar sadece veritabanını okur.
+## Güncel kurulum
+Önce temel migration `20261017120000_revenue_expense.sql`, ardından `20261017150000_revenue_expense_autosave.sql` uygulanır. Temel migration daha önce uygulandı; yalnızca yeni dosya çalıştırılmalıdır. Yeni SQL mevcut kayıtları silmez, tabloyu yeniden oluşturmaz. Doğal kayıt anahtarına tekillik, profil bazlı okuma ve iki kullanıcıyla sınırlı RPC yazma yetkisi ekler.
+
+## Yetkiler
+- Duygu Bozgeyik (`7998f539-5077-472b-ba65-a1d45533eafa`) ve Yavuz Yılmaz (`9d481c04-49b3-48de-8559-3e11185338bc`) veri girebilir.
+- Görüntüleme yalnızca Admin → Gelir Gider ekranında izin verilen onaylı profillere açıktır. Rol varsayılanı erişim vermez. İki giriş kullanıcısına migration başlangıçta görüntüleme izni verir.
+- Diğer izinli profiller raporları görür; giriş bileşeni gönderilmez ve yazma çağrıları reddedilir.
+- Doğrudan istemci INSERT/UPDATE/DELETE izinleri kaldırılır. Kayıtlar yetkili RPC üzerinden değişir. İçe aktarım ve silme arayüzü kaldırılmıştır.
 
 ## Kullanım
-Mağaza, gelir/gider türü, kategori, yıl, ay ve tutarı girip Kayıt ekle düğmesine basın. Tutar örneği: `1250,50` veya `1250.50`; binlik ayırıcı kullanmayın. Kayıtları görüntüle/düzelt bölümünde arama ve sayfalama vardır. Eşzamanlı düzenlemede eski sürümün kaydı ezmesi engellenir. Kaydı ekleyen/düzenleyen kullanıcı ve tarihler tutulur. Kayıt listesinde Düzenle ve Sil işlemleri vardır. Silme, kullanıcı onayından sonra sunucuda onaylı yönetim/admin ve menü erişimi denetlenerek yapılır. Tarayıcıya doğrudan veritabanı silme yetkisi verilmez. Silme işlemi kayıt sürümünü kontrol eder; değiştirilmiş kaydı silmez. Silinen kayıt raporlardan çıkar ve kalıcı olarak kaldırılır. Bu özellik için ek SQL gerekmez.
+Dönem, gelir/gider türü, kategori ve mağaza seçilir. Mevcut dönem kayıtları tutar kutularında görünür. Yeni dönemde mevcut kategoriler için boş kutular açılır. Boş satırlar girilmeden veritabanına kaydedilmez. Yeni kategori, tür seçildikten sonra eklenebilir; ilk tutarla kalıcılaşır.
 
-## Doğrulama
-`node --test tests/revenue-expense.test.cjs`
-`npx tsc --noEmit --incremental false`
+Tutarı değiştirip yazmayı bırakınca 800 ms sonra veya alanı terk edince otomatik kaydedilir. Her satır kayıt durumunu gösterir. Başarısız kayıt ekranda korunur; yeniden denenebilir veya değişiklik geri alınabilir. Kaydedilmemiş değer varken filtreler kilitlenir ve sayfayı kapatma uyarısı verilir. Tutarı kaldırmak için 0 girilir; Düzenle/Sil düğmeleri yoktur.
 
-Canlı doğrulama: yetkisiz hesapla okuma/yazmanın reddedildiğini, yetkili hesapla ekleme/düzeltmeyi, iki oturumla eşzamanlı düzenlemeyi ve aktarımı ikinci kez çalıştırmanın kayıt sayısını değiştirmediğini kontrol edin.
+Aynı satır iki oturumda değişirse önceki sürüm sessizce ezilmez; yenileme uyarısı gösterilir. Yeni satır oluşturma yarışında transaction kilidi ve tekillik indeksi çoğalmayı engeller.
 
-## Aktarım ön kontrolü
-17 Ekim 2026 kontrolünde Google Sheets kaynağından 4 mağazaya ait 1.104 kayıt okundu. Boş tutarlar ve muhasebe tireleri sıfır kabul edilir; hesaplanmış tutarların ondalık hassasiyeti veritabanında korunur. Bu kontrol aktarım yapmaz. Canlı tabloların kurulması ve aktarımın çalıştırılması ayrıca gereklidir.
-
-## Canlı aktarım sonucu
-17 Ekim 2026 tarihinde migration sonrasında 1.104 kayıt Supabase'e aktarıldı. Mağaza, tür, kategori, yıl, ay ve tutar alanları kaynakla satır bazında (tekrarlanan satırlar dahil) birebir doğrulandı. Aktarım işaretçisi kaydedildi. Tarihsel kayıtlar servis anahtarıyla aktarıldığından created_by/updated_by alanları başlangıçta boştur; uygulamadan yapılacak sonraki düzenlemelerde düzenleyen kullanıcı tutulur. Anonim tablo okuması 42501 hatasıyla reddedildi.
+## Aktarım ve kontrol
+17 Ekim 2026'da 4 mağazadan 1.104 eski kayıt taşındı ve kaynakla birebir doğrulandı. Yeni migration bu kayıtlara dokunmaz. Onaylı profil ve iki kullanıcı kontrolü, tutar doğrulama ve eski sürüm çatışması `node --test tests/revenue-expense.test.cjs tests/revenue-expense-autosave.test.cjs` ile kontrol edilir.

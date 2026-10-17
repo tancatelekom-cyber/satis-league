@@ -241,7 +241,7 @@ export async function getResolvedFeatureAccessForProfile(
   const overrideMode = resolveFeatureProfilePermissionMode(profilePermissions, profileId, featureKey);
 
   return {
-    allowed: canRoleAccessFeatureWithOverride(permission, role, overrideMode),
+    allowed: featureKey === "gelir-gider" ? overrideMode === "allow" : canRoleAccessFeatureWithOverride(permission, role, overrideMode),
     permission,
     overrideMode
   };

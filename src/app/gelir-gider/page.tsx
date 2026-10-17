@@ -1,3 +1,4 @@
+import { isRevenueExpenseEditor } from "@/lib/revenue-expense-permissions";
 import { RevenueExpenseEditor } from "./editor";
 import type { CSSProperties } from "react";
 
@@ -292,9 +293,7 @@ export default async function RevenueExpensePage({ searchParams }: PageProps) {
     redirect("/");
   }
 
-  if (!["management", "admin"].includes(safeProfile.role)) {
-    redirect("/");
-  }
+
 
   let rows: RevenueExpenseRow[];
   try { rows = await fetchRevenueExpenseRows(); }
@@ -429,7 +428,7 @@ export default async function RevenueExpensePage({ searchParams }: PageProps) {
 
   return (
     <main className="web-kontor-page">
-      <RevenueExpenseEditor rows={rows} stores={[...new Set([...(storeOptions ?? []).map((store) => String(store.name)), ...rows.map((row) => row.storeName)])]} />
+      {isRevenueExpenseEditor(user.id) && <RevenueExpenseEditor rows={rows} stores={[...new Set([...(storeOptions ?? []).map((store) => String(store.name)), ...rows.map((row) => row.storeName)])]} />}
 
       <h1 className="page-title">Gelir Gider Analizi</h1>
       <p className="page-subtitle" style={{ color: "#3d5875" }}>

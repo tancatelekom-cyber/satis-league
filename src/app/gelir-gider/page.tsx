@@ -1,11 +1,11 @@
+import { RevenueExpenseEditor } from "./editor";
 import type { CSSProperties } from "react";
-import { cookies } from "next/headers";
+
 import { redirect } from "next/navigation";
 import { FilterSelectNav } from "@/components/ui/filter-select-nav";
 import { requireUser } from "@/lib/auth/require-user";
 import { getResolvedFeatureAccessForProfile } from "@/lib/feature-menu-permissions";
 import {
-  fetchRevenueExpensePassword,
   fetchRevenueExpenseRows,
   getRevenueExpenseMonthLabel,
   sameRevenueExpenseStore,
@@ -13,9 +13,6 @@ import {
 } from "@/lib/revenue-expense";
 import { createClient } from "@/lib/supabase/server";
 import type { UserRole } from "@/lib/types";
-import { RevenueExpenseAccessWatcher } from "./access-watcher";
-import { unlockRevenueExpensePage } from "./actions";
-import { REVENUE_EXPENSE_ACCESS_COOKIE } from "./constants";
 
 type PageProps = {
   searchParams?: Promise<{
@@ -299,46 +296,10 @@ export default async function RevenueExpensePage({ searchParams }: PageProps) {
     redirect("/");
   }
 
-  const expectedPassword = await fetchRevenueExpensePassword();
-  const cookieStore = await cookies();
-  const storedPassword = cookieStore.get(REVENUE_EXPENSE_ACCESS_COOKIE)?.value?.trim() ?? "";
-  const requiresPassword = Boolean(expectedPassword);
-  const passwordError = String(params?.hata ?? "").trim() === "sifre";
-
-  if (requiresPassword && storedPassword !== expectedPassword) {
-    return (
-      <main className="web-kontor-page">
-        <h1 className="page-title">Gelir Gider Analizi</h1>
-        <p className="page-subtitle">
-          Bu sayfa icin Sheet uzerinde tanimli sifre gereklidir. Devam etmek icin gecerli sifreyi girin.
-        </p>
-
-        <section className="guide-card game-brief-card manager-prime-password-card">
-          <form action={unlockRevenueExpensePage} className="admin-form manager-prime-password-form">
-            <label className="field manager-prime-password-field">
-              <span>Sayfa Sifresi</span>
-              <input
-                type="password"
-                name="password"
-                placeholder="Sifreyi girin"
-                autoComplete="current-password"
-                autoFocus
-                required
-              />
-            </label>
-
-            {passwordError ? <p className="manager-prime-password-error">Girilen sifre hatali. Lutfen tekrar deneyin.</p> : null}
-
-            <button type="submit" className="button-primary manager-prime-password-button">
-              Sayfayi Ac
-            </button>
-          </form>
-        </section>
-      </main>
-    );
-  }
-
-  const rows = await fetchRevenueExpenseRows();
+  let rows: RevenueExpenseRow[];
+  try { rows = await fetchRevenueExpenseRows(); }
+  catch { return <main className="web-kontor-page"><h1>Gelir Gider</h1><p role="alert">Veritabanına ulaşılamadı. Gelir-gider veritabanı kurulumunu kontrol edip tekrar deneyin.</p></main>; }
+  const { data: storeOptions } = await supabase.from("stores").select("name").order("name");
   const years = [...new Set(rows.map((row) => row.year))].sort((left, right) => right - left);
   const stores = [...new Set(rows.map((row) => row.storeName))].sort((left, right) => left.localeCompare(right, "tr"));
 
@@ -468,7 +429,7 @@ export default async function RevenueExpensePage({ searchParams }: PageProps) {
 
   return (
     <main className="web-kontor-page">
-      <RevenueExpenseAccessWatcher />
+      <RevenueExpenseEditor rows={rows} stores={[...new Set([...(storeOptions ?? []).map((store) => String(store.name)), ...rows.map((row) => row.storeName)])]} />
 
       <h1 className="page-title">Gelir Gider Analizi</h1>
       <p className="page-subtitle" style={{ color: "#3d5875" }}>

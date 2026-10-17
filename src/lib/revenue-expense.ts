@@ -1,6 +1,8 @@
 export type RevenueExpenseKind = "gelir" | "gider";
 
 export type RevenueExpenseRow = {
+  id?: string;
+  updatedAt?: string;
   storeName: string;
   kind: RevenueExpenseKind;
   category: string;
@@ -182,27 +184,32 @@ export function sameRevenueExpenseStore(left: string, right: string) {
   return normalizeIdentifier(left) === normalizeIdentifier(right);
 }
 
-export async function fetchRevenueExpensePassword() {
+
+
+export async function fetchLegacyRevenueExpenseRows() {
   const rows = await fetchRevenueExpenseSheetRows();
-  const firstRow = rows[0] ?? [];
-  return normalizeText(firstRow[9] ?? "");
+
+  return parseLegacyRevenueExpenseRows(rows);
 }
 
-export async function fetchRevenueExpenseRows() {
-  const rows = await fetchRevenueExpenseSheetRows();
-
+export function parseLegacyRevenueExpenseRows(rows: string[][]) {
   return rows
     .slice(1)
-    .map((row): RevenueExpenseRow | null => {
+    .map((row, index): RevenueExpenseRow | null => {
+      if (row.slice(0, 6).every(value => !value.trim())) return null;
       const storeName = normalizeText(row[0] ?? "");
       const kind = normalizeKind(row[1] ?? "");
       const category = normalizeText(row[2] ?? "");
       const year = parseLocalizedNumber(row[3] ?? "");
       const month = parseMonthNumber(row[4] ?? "");
-      const amount = parseLocalizedNumber(row[5] ?? "");
+      const rawAmount = String(row[5] === "-" ? "0" : row[5] ?? "").replace(/TL|₺/gi, "").replace(/\s/g, "") || "0";
+      if (!/^-?(?:\d+|\d{1,3}(?:\.\d{3})+)(?:,\d+)?$/.test(rawAmount)) {
+        throw new Error("Google Sheets satır " + (index + 2) + ": geçersiz tutar. Aktarım durduruldu.");
+      }
+      const amount = parseLocalizedNumber(rawAmount);
 
-      if (!storeName || !kind || !category || !year || !month) {
-        return null;
+      if (!storeName || !kind || !category || !Number.isInteger(year) || year < 2000 || year > 2100 || !Number.isInteger(month) || month < 1 || month > 12) {
+        throw new Error("Google Sheets satır " + (index + 2) + ": eksik veya geçersiz veri. Aktarım durduruldu.");
       }
 
       const monthLabel = getRevenueExpenseMonthLabel(month);
@@ -231,4 +238,22 @@ export async function fetchRevenueExpenseRows() {
 
       return left.storeName.localeCompare(right.storeName, "tr");
     });
+}
+
+export async function fetchRevenueExpenseRows(): Promise<RevenueExpenseRow[]> {
+  const { requireRevenueExpenseAccess } = await import("@/lib/auth/require-revenue-expense-access");
+  const { supabase } = await requireRevenueExpenseAccess();
+  const result: RevenueExpenseRow[] = [];
+  for (let offset = 0; ; offset += 1000) {
+    const { data, error } = await supabase.from("revenue_expense_entries").select("*").order("id").range(offset, offset + 999);
+    if (error) throw new Error("Gelir-gider verileri okunamadı. Veritabanı kurulumunu kontrol edin.");
+    for (const row of data ?? []) {
+      const monthLabel = getRevenueExpenseMonthLabel(row.month);
+      result.push({ id: row.id, updatedAt: row.updated_at, storeName: row.store_name, kind: row.kind, category: row.category,
+        year: row.year, month: row.month, amount: Number(row.amount), monthLabel,
+        periodKey: row.year + "-" + String(row.month).padStart(2, "0"), periodLabel: monthLabel + " " + row.year });
+    }
+    if (!data || data.length < 1000) break;
+  }
+  return result;
 }

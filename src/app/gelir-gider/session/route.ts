@@ -1,14 +1,10 @@
 import { NextResponse } from "next/server";
-import { REVENUE_EXPENSE_ACCESS_COOKIE } from "../constants";
 
+// Older open tabs still call this endpoint when they close. Retire their Sheet cookie.
 export async function POST() {
   const response = NextResponse.json({ ok: true });
-  response.cookies.set(REVENUE_EXPENSE_ACCESS_COOKIE, "", {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: true,
-    path: "/",
-    maxAge: 0
+  response.cookies.set("revenue-expense-access", "", {
+    httpOnly: true, sameSite: "lax", secure: true, path: "/", maxAge: 0
   });
   return response;
 }

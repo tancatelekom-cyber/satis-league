@@ -2,7 +2,7 @@
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { RevenueExpenseRow } from "@/lib/revenue-expense";
-import { saveRevenueExpense, importRevenueExpense } from "./actions";
+import { saveRevenueExpense, importRevenueExpense, deleteRevenueExpense } from "./actions";
 
 export function RevenueExpenseEditor({ rows, stores }: { rows: RevenueExpenseRow[]; stores: string[] }) {
   const router = useRouter();
@@ -16,9 +16,9 @@ export function RevenueExpenseEditor({ rows, stores }: { rows: RevenueExpenseRow
   const today = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Istanbul" }).format(new Date());
   const fieldStyle = { display: "grid", gap: 6 };
   return <section className="guide-card" style={{ padding: 20, marginBottom: 24 }}>
-    <h2>Gelir / gider kaydı</h2>
-    <p>Kayıtlar veritabanında saklanır. Düzeltmek istediğiniz kaydı aşağıdaki listeden seçebilirsiniz.</p>
-    <form key={editing?.id ?? "new"} onSubmit={event => {
+    <h2>{editing ? "Gelir / gider kaydını düzenle" : "Yeni gelir / gider kaydı"}</h2>
+    <p>Kayıtlar veritabanında saklanır. Aşağıdaki listeden kayıtları düzenleyebilir veya silebilirsiniz.</p>
+    <form id="revenue-entry-form" key={editing?.id ?? "new"} onSubmit={event => {
       event.preventDefault();
       const form = event.currentTarget;
       const data = new FormData(form);
@@ -47,10 +47,18 @@ export function RevenueExpenseEditor({ rows, stores }: { rows: RevenueExpenseRow
       </fieldset>
     </form>
     <p role="status" aria-live="polite">{message}</p>
-    <details><summary>Kayıtları görüntüle / düzelt ({rows.length})</summary>
+    <details open><summary>Kayıtları düzenle / sil ({rows.length})</summary>
       <label style={fieldStyle}>Kayıtlarda ara<input value={search} onChange={event => {setSearch(event.target.value); setPage(0);}} placeholder="Mağaza, kategori veya dönem" /></label>
       <div style={{ overflowX: "auto" }}><table style={{ width: "100%" }}><thead><tr><th>Mağaza</th><th>Dönem</th><th>Tür</th><th>Kategori</th><th>Tutar</th><th>İşlem</th></tr></thead><tbody>
-        {visible.slice(page * 25, page * 25 + 25).map(row => <tr key={row.id}><td>{row.storeName}</td><td>{row.periodLabel}</td><td>{row.kind}</td><td>{row.category}</td><td>{row.amount.toLocaleString("tr-TR", {minimumFractionDigits:2})} TL</td><td><button disabled={pending} onClick={() => {setEditing(row); requestId.current = null; setMessage("");}}>Düzenle</button></td></tr>)}
+        {visible.slice(page * 25, page * 25 + 25).map(row => <tr key={row.id}><td>{row.storeName}</td><td>{row.periodLabel}</td><td>{row.kind}</td><td>{row.category}</td><td>{row.amount.toLocaleString("tr-TR", {minimumFractionDigits:2})} TL</td><td><button disabled={pending} onClick={() => {setEditing(row); requestId.current = null; setMessage(""); document.getElementById("revenue-entry-form")?.scrollIntoView({behavior:"smooth", block:"start"});}}>Düzenle</button> <button type="button" disabled={pending} style={{color:"#b91c1c"}} onClick={() => {
+          if (!window.confirm(row.storeName + " · " + row.periodLabel + " · " + row.category + " · " + row.amount.toLocaleString("tr-TR") + " TL\nBu kayıt kalıcı olarak silinecek. Onaylıyor musunuz?")) return;
+          startTransition(async () => {
+            try {
+              const result = await deleteRevenueExpense(row.id ?? "", row.updatedAt ?? ""); setMessage(result.message);
+              if (result.ok) { if (editing?.id === row.id) {setEditing(null); requestId.current = null;} setPage(0); router.refresh(); }
+            } catch {setMessage("Silme işlemi tamamlanamadı. Oturumunuzu ve bağlantınızı kontrol edin.");}
+          });
+        }}>Sil</button></td></tr>)}
         {!visible.length && <tr><td colSpan={6}>Kayıt bulunamadı.</td></tr>}
       </tbody></table></div>
       <button disabled={page === 0} onClick={() => setPage(page-1)}>Önceki</button> <span>{page+1} / {Math.max(1,Math.ceil(visible.length/25))}</span> <button disabled={(page+1)*25 >= visible.length} onClick={() => setPage(page+1)}>Sonraki</button>

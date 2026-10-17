@@ -7,7 +7,7 @@
 4. Google Sheets toplamlarıyla aktarılan mağaza/dönem toplamlarını karşılaştırın. Bundan sonra yeni kayıtlar ve düzeltmeler uygulamadan yapılır; raporlar sadece veritabanını okur.
 
 ## Kullanım
-Mağaza, gelir/gider türü, kategori, yıl, ay ve tutarı girip Kayıt ekle düğmesine basın. Tutar örneği: `1250,50` veya `1250.50`; binlik ayırıcı kullanmayın. Kayıtları görüntüle/düzelt bölümünde arama ve sayfalama vardır. Eşzamanlı düzenlemede eski sürümün kaydı ezmesi engellenir. Kaydı ekleyen/düzenleyen kullanıcı ve tarihler tutulur. Silme yetkisi verilmez.
+Mağaza, gelir/gider türü, kategori, yıl, ay ve tutarı girip Kayıt ekle düğmesine basın. Tutar örneği: `1250,50` veya `1250.50`; binlik ayırıcı kullanmayın. Kayıtları görüntüle/düzelt bölümünde arama ve sayfalama vardır. Eşzamanlı düzenlemede eski sürümün kaydı ezmesi engellenir. Kaydı ekleyen/düzenleyen kullanıcı ve tarihler tutulur. Kayıt listesinde Düzenle ve Sil işlemleri vardır. Silme, kullanıcı onayından sonra sunucuda onaylı yönetim/admin ve menü erişimi denetlenerek yapılır. Tarayıcıya doğrudan veritabanı silme yetkisi verilmez. Silme işlemi kayıt sürümünü kontrol eder; değiştirilmiş kaydı silmez. Silinen kayıt raporlardan çıkar ve kalıcı olarak kaldırılır. Bu özellik için ek SQL gerekmez.
 
 ## Doğrulama
 `node --test tests/revenue-expense.test.cjs`

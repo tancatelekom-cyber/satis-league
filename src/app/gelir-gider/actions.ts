@@ -1,4 +1,5 @@
 "use server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { requireRevenueExpenseAccess } from "@/lib/auth/require-revenue-expense-access";
 import { validateRevenueExpense } from "@/lib/revenue-expense-validation";
@@ -35,4 +36,22 @@ export async function importRevenueExpense() {
     revalidatePath("/gelir-gider");
     return { ok: true, message: `${rows.length} eski kayıt veritabanına aktarıldı.` };
   } catch (error) { return { ok: false, message: error instanceof Error ? error.message : "Aktarım başarısız." }; }
+}
+
+export async function deleteRevenueExpense(id: string, updatedAt: string) {
+  await requireRevenueExpenseAccess();
+  try {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id) || !updatedAt || !Number.isFinite(Date.parse(updatedAt))) {
+      throw new Error("Geçersiz kayıt. Sayfayı yenileyin.");
+    }
+    // Direct database deletion remains unavailable to browsers. The server checks
+    // the approved management/admin account and feature permission above first.
+    const admin = createAdminClient();
+    const { data, error } = await admin.from("revenue_expense_entries").delete()
+      .eq("id", id).eq("updated_at", updatedAt).select("id");
+    if (error) throw new Error("Kayıt silinemedi. Lütfen tekrar deneyin.");
+    if (!data?.length) throw new Error("Kayıt değiştirilmiş veya zaten silinmiş. Sayfayı yenileyin.");
+    revalidatePath("/gelir-gider");
+    return { ok: true, message: "Kayıt silindi. Rapor toplamları güncellendi." };
+  } catch (error) { return { ok: false, message: error instanceof Error ? error.message : "Silme işlemi tamamlanamadı." }; }
 }

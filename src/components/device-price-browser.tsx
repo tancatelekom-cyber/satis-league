@@ -1,5 +1,6 @@
 "use client";
 import {useState} from "react";
+import styles from "./device-price-browser.module.css";
 import type {DevicePriceRow} from "@/lib/device-price-list";
 import {filterDevicePrices,groupDevicePrices} from "@/lib/device-price-search";
 import {PressCopyField} from "@/components/ui/press-copy-field";
@@ -15,9 +16,9 @@ export function DevicePriceBrowser({rows,canViewCost,initialCategory="",initialB
  return <>
  <section className="guide-card game-brief-card">
  <div className="league-filter-grid">
- <label className="league-filter-item"><span className="league-filter-label">Kategori</span><select aria-label="Cihaz kategori seçimi" value={category} onChange={e=>{setCategory(e.target.value);setBrand("");setProduct("");setQuery("");}}><option value="">Tüm Kategoriler</option>{options(rows.map(r=>r.category)).map(c=><option key={c}>{c}</option>)}</select></label>
- <label className="league-filter-item"><span className="league-filter-label">Marka</span><select aria-label="Cihaz marka seçimi" value={brand} onChange={e=>{setBrand(e.target.value);setProduct("");setQuery("");}}><option value="">Tüm Markalar</option>{brands.map(b=><option key={b}>{b}</option>)}</select></label>
- <label className="league-filter-item league-filter-item-wide"><span className="league-filter-label">Ürün</span><select aria-label="Cihaz ürün seçimi" value={product} onChange={e=>{setProduct(e.target.value);setQuery("");}}><option value="">Tüm Ürünler</option>{products.map(p=><option key={p}>{p}</option>)}</select></label>
+ <label className="league-filter-item"><span className="league-filter-label">Kategori</span><select className={styles.filterSelect} aria-label="Cihaz kategori seçimi" value={category} onChange={e=>{setCategory(e.target.value);setBrand("");setProduct("");setQuery("");}}><option value="">Tüm Kategoriler</option>{options(rows.map(r=>r.category)).map(c=><option key={c}>{c}</option>)}</select></label>
+ <label className="league-filter-item"><span className="league-filter-label">Marka</span><select className={styles.filterSelect} aria-label="Cihaz marka seçimi" value={brand} onChange={e=>{setBrand(e.target.value);setProduct("");setQuery("");}}><option value="">Tüm Markalar</option>{brands.map(b=><option key={b}>{b}</option>)}</select></label>
+ <label className="league-filter-item league-filter-item-wide"><span className="league-filter-label">Ürün</span><select className={styles.filterSelect} aria-label="Cihaz ürün seçimi" value={product} onChange={e=>{setProduct(e.target.value);setQuery("");}}><option value="">Tüm Ürünler</option>{products.map(p=><option key={p}>{p}</option>)}</select></label>
  </div>
  <label style={{display:"grid",gap:8,marginTop:18}}><span className="league-filter-label">Serbest arama</span><input type="search" value={query} placeholder="Ürün adı, marka veya kategori içeren metin yazın…" onChange={e=>{setQuery(e.target.value);setCategory("");setBrand("");setProduct("");}} style={{width:"100%",padding:"12px 14px",borderRadius:10,border:"1px solid #94a3b8",background:"#fff",color:"#0f172a"}} /></label>
  {error&&<p role="alert">Cihaz listesi okunamadı: {error}</p>}

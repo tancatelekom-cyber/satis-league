@@ -1,0 +1,8 @@
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),ts=require('typescript');
+const mod={exports:{}};new Function('module','exports','require',ts.transpileModule(fs.readFileSync('src/lib/device-price-search.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText)(mod,mod.exports,require);
+const {filterDevicePrices,groupDevicePrices}=mod.exports;
+const base={id:'1',category:'Telefon',brand:'Marka',productName:'IŞIK Pro 256 GB',installmentCount:0,monthlyInstallment:0,contractCashPrice:20000,dealerBonus:100,totalPayable:20000};
+const rows=[base,{...base,id:'2',installmentCount:12,monthlyInstallment:2000,totalPayable:24000},{...base,id:'3',installmentCount:3,monthlyInstallment:7000,totalPayable:21000},{...base,id:'4',productName:'Başka Ürün',category:'Tablet'}];
+test('free search contains Turkish-insensitive text and supersedes other filters',()=>{assert.equal(filterDevicePrices(rows,{query:'isik pro',category:'Tablet',brand:'other',product:'other'}).length,3);assert.equal(filterDevicePrices(rows,{query:'256',category:'',brand:'',product:''}).length,3);});
+test('category works without brand selection, no match yields empty',()=>{assert.equal(filterDevicePrices(rows,{query:'',category:'Tablet',brand:'',product:''}).length,1);assert.equal(filterDevicePrices(rows,{query:'not found',category:'',brand:'',product:''}).length,0);});
+test('one product groups all installments and shows PK rather than installment total',()=>{const group=groupDevicePrices(rows).find(g=>g.product.productName===base.productName);assert.equal(group.price,20000);assert.deepEqual(group.installments.map(r=>r.installmentCount),[3,12]);assert.equal(groupDevicePrices(rows).length,2);});

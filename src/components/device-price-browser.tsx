@@ -23,13 +23,13 @@ export function DevicePriceBrowser({rows,canViewCost,initialCategory="",initialB
  {error&&<p role="alert">Cihaz listesi okunamadı: {error}</p>}
  <p role="status">{groups.length} ürün bulundu. Taksit detayları için ürüne tıklayın.</p>
  </section>
- <section key={filterKey} className="device-cards" aria-label="Ürünler ve PK fiyatları">
+ <section key={filterKey} style={{display:"grid",marginTop:18,gap:12,minWidth:0}} aria-label="Ürünler ve PK fiyatları">
  {!groups.length&&<div className="device-empty">Aramanıza veya seçiminize uygun ürün bulunamadı.</div>}
  {groups.map(group=><details key={group.key} className="device-card" style={{display:"block"}}>
  <summary style={{cursor:"pointer",padding:8}}><span style={{display:"inline-flex",justifyContent:"space-between",alignItems:"center",gap:16,width:"95%",flexWrap:"wrap"}}><strong>{group.product.productName}</strong><strong>PK: {money(group.price)}</strong></span></summary>
  <p className="device-card-meta">{group.product.brand} · {group.product.category}</p>
  {canViewCost&&group.cash&&<PressCopyField className="device-cash-row" value={money(group.price)} copyText={`${group.product.productName}\nPK: ${money(group.price)}\nBayi Prim Tutarı: ${money(group.cash.dealerBonus)}\nCihaz 0 Noktası: ${money(Math.max((group.price??0)-group.cash.dealerBonus,0))}`}><span>Bayi Prim Tutarı: {money(group.cash.dealerBonus)}</span><span>Cihaz 0 Noktası: {money(Math.max((group.price??0)-group.cash.dealerBonus,0))}</span></PressCopyField>}
- {group.installments.length?<div style={{overflowX:"auto"}}><table className="season-entry-table device-price-table" style={{width:"100%"}}><thead><tr><th>Taksit</th><th>Aylık Tutar</th><th>Toplam</th>{canViewCost&&<th>Bayi Primi</th>}</tr></thead><tbody>{group.installments.map(row=><tr key={row.id}><td>{row.installmentCount} ay</td><td>{money(row.monthlyInstallment)}</td><td>{money(row.totalPayable)}</td>{canViewCost&&<td>{money(row.dealerBonus)}</td>}</tr>)}</tbody></table></div>:<p>Bu ürün için taksit bilgisi bulunmuyor.</p>}
+ {group.installments.length?<div style={{overflowX:"auto"}}><table className="season-entry-table" style={{width:"100%"}}><thead><tr><th>Taksit</th><th>Aylık Tutar</th><th>Toplam</th>{canViewCost&&<th>Bayi Primi</th>}</tr></thead><tbody>{group.installments.map(row=><tr key={row.id}><td>{row.installmentCount} ay</td><td>{money(row.monthlyInstallment)}</td><td>{money(row.totalPayable)}</td>{canViewCost&&<td>{money(row.dealerBonus)}</td>}</tr>)}</tbody></table></div>:<p>Bu ürün için taksit bilgisi bulunmuyor.</p>}
  </details>)}
  </section></>;
 }

@@ -55,7 +55,7 @@ function csvRows(text: string) {
 
 export function parseKvkSource(text: string, source: typeof KVK_SOURCES[number]): KvkData {
   const rows = csvRows(text);
-  const minColumns = source.key === "statement" ? 5 : source.key === "assignment" ? 13 : 34;
+  const minColumns = source.key === "statement" ? 5 : source.key === "assignment" ? 16 : 34;
   if (!rows.some(row => row.length >= minColumns)) throw new Error("Beklenen sütunlar bulunamadı.");
   const result: KvkData = { entries: [], updatedAt: null, errors: [] };
   rows.forEach((row, index) => {
@@ -70,7 +70,7 @@ export function parseKvkSource(text: string, source: typeof KVK_SOURCES[number])
     const kind: KvkKind | null = source.key === "assignment" ? "Temlik primi" : source.key === "advance" ? "Ön ödeme" : normalized.includes("iade") ? "İade" : normalized.includes("havale") ? "Havale" : null;
     if (!kind) return;
     // Allow heading rows, but never silently discard a dated or monetary transaction.
-    const rawAmount = source.key === "statement" ? row[4] : row[source.key === "assignment" ? 9 : 33];
+    const rawAmount = source.key === "statement" ? row[4] : row[source.key === "assignment" ? 15 : 33];
     const amount = parseKvkMoney(rawAmount ?? "");
     const debt = source.key === "statement" ? parseKvkMoney(row[3] ?? "") : 0;
     if (!date && index === 0 && !/\d/.test(rawDate) && (amount === null || !rawAmount?.trim())) return;

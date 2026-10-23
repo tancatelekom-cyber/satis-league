@@ -14,7 +14,7 @@ test('money is in cents, Turkish grouping and signs are preserved',()=>{
 });
 test('inclusive period, net credits, ignored purchases and latest approval independent of period',()=>{
  const a=parse(csv([['Tarih','Açıklama','','Borç','Alacak'],['01.10.2026','HAVALE','',0,'100,10'],['23.10.2026','İADE','',10,60],['23.10.2026','Cihaz faturası','',999,0],['30.09.2026','Havale','',0,999]]),sources[0]);
- const b=parse(csv([row(13,{5:'Onay tarihi',9:'Prim',12:'Tarih'}),row(13,{5:'24.10.2026',9:'20,20',12:'15.10.2026'}),row(13,{5:'01.11.2026',9:999,12:'01.11.2026'})]),sources[1]);
+ const b=parse(csv([row(16,{5:'Onay tarihi',9:'Temlik fiyatı',15:'Prim',12:'Tarih'}),row(16,{5:'24.10.2026',9:'9876,54',15:'20,20',12:'15.10.2026'}),row(16,{5:'01.11.2026',9:12345,15:999,12:'01.11.2026'})]),sources[1]);
  const c=parse(csv([row(34,{12:'Tarih',33:'Ön ödeme'}),row(34,{12:'23.10.2026',33:'200,30'})]),sources[2]);
  const data={entries:[...a.entries,...b.entries,...c.entries],errors:[...a.errors,...b.errors,...c.errors],updatedAt:b.updatedAt};
  assert.equal(data.errors.length,0);assert.equal(data.updatedAt,'2026-11-01');

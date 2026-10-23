@@ -4,7 +4,7 @@ export const KVK_SOURCES = [
   { key: "assignment", label: "KVK temlik", gid: "418893837" },
   { key: "advance", label: "TRC temlik", gid: "581678954" }
 ] as const;
-export type KvkKind = "Havale" | "İade" | "Temlik primi" | "Ön ödeme";
+export type KvkKind = "Havale" | "İade" | "Temlik primi" | "Ön ödeme" | "Hazırkart ve ek giderler";
 export type KvkEntry = { date: string; description: string; kind: KvkKind; cents: number; row: number; gid: string };
 export type KvkData = { entries: KvkEntry[]; updatedAt: string | null; errors: string[] };
 
@@ -67,7 +67,7 @@ export function parseKvkSource(text: string, source: typeof KVK_SOURCES[number])
     if (approval && (!result.updatedAt || approval > result.updatedAt)) result.updatedAt = approval;
     const description = source.key === "statement" ? (row[1] ?? "").trim() : source.label;
     const normalized = description.toLocaleLowerCase("tr-TR");
-    const kind: KvkKind | null = source.key === "assignment" ? "Temlik primi" : source.key === "advance" ? "Ön ödeme" : normalized.includes("iade") ? "İade" : normalized.includes("havale") ? "Havale" : null;
+    const kind: KvkKind | null = source.key === "assignment" ? "Temlik primi" : source.key === "advance" ? "Ön ödeme" : normalized.includes("ons") ? "Hazırkart ve ek giderler" : normalized.includes("iade") ? "İade" : normalized.includes("havale") ? "Havale" : null;
     if (!kind) return;
     // Allow heading rows, but never silently discard a dated or monetary transaction.
     const rawAmount = source.key === "statement" ? row[4] : row[source.key === "assignment" ? 15 : 33];
@@ -77,7 +77,7 @@ export function parseKvkSource(text: string, source: typeof KVK_SOURCES[number])
     if (!date || amount === null || debt === null || (source.key === "assignment" && approvalRaw && !approval)) {
       result.errors.push(`${source.label}, satır ${index + 1}: tarih veya tutar okunamadı.`); return;
     }
-    result.entries.push({ date, description, kind, cents: amount - debt, row: index + 1, gid: source.gid });
+    result.entries.push({ date, description, kind, cents: kind === "Hazırkart ve ek giderler" ? debt - amount : amount - debt, row: index + 1, gid: source.gid });
   });
   return result;
 }
@@ -85,10 +85,11 @@ export function parseKvkSource(text: string, source: typeof KVK_SOURCES[number])
 export function summarizeKvk(data: KvkData, start: string, end: string) {
   if (!parseKvkDate(start) || !parseKvkDate(end) || start > end) throw new Error("Geçerli bir başlangıç ve bitiş tarihi seçin.");
   const entries = data.entries.filter(row => row.date >= start && row.date <= end).sort((a, b) => b.date.localeCompare(a.date));
-  const totals: Record<KvkKind, number> = { Havale: 0, İade: 0, "Temlik primi": 0, "Ön ödeme": 0 };
+  const totals: Record<KvkKind, number> = { Havale: 0, İade: 0, "Temlik primi": 0, "Ön ödeme": 0, "Hazırkart ve ek giderler": 0 };
   for (const row of entries) totals[row.kind] += row.cents;
   const matched = totals.Havale + totals.İade + totals["Temlik primi"];
-  return { entries, totals, matched, difference: matched - totals["Ön ödeme"] };
+  const expenses = totals["Ön ödeme"] + totals["Hazırkart ve ek giderler"];
+  return { entries, totals, matched, expenses, difference: matched - expenses };
 }
 
 export async function fetchKvkData(): Promise<KvkData> {

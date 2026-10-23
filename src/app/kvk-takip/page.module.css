@@ -10,7 +10,7 @@
 .filters label { display: grid; gap: 8px; font-weight: 600; }
 .filters input { background: #fff; color: #193451; border: 1px solid #b7c9da; padding: 10px; border-radius: 8px; color-scheme: light; }
 .filters button { background: #086c65; color: #fff; border: 0; border-radius: 9px; padding: 12px 20px; cursor: pointer; }
-.cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-top: 20px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-top: 20px; }
 .cards article { border: 1px solid #d6e1ec; border-radius: 14px; padding: 20px; background: #fff; }
 .cards strong, .comparison strong { display: block; font-size: 23px; margin: 12px 0; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
 .cards small { color: #526980; }

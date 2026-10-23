@@ -23,7 +23,7 @@ export default async function KvkTrackingPage({ searchParams }: { searchParams?:
   const pageCount = Math.max(1, Math.ceil((summary?.entries.length ?? 0) / 100));
   const page = Math.min(pageCount, Math.max(1, Number.parseInt(params?.page ?? "1", 10) || 1));
   return <main className={styles.page}>
-    <header className={styles.hero}><span>FİNANS TAKİBİ</span><h1>KVK Takip</h1><p>Temlik primleri, iadeler ve havalelerin TRC ön ödemeleriyle karşılaştırması.</p>
+    <header className={styles.hero}><span>FİNANS TAKİBİ</span><h1>KVK Takip</h1><p>Temlik primleri, iadeler ve havalelerin ön ödemeler, hazırkart ve ek giderlerle karşılaştırması.</p>
       <strong>KVK güncelleme tarihi: {data?.updatedAt ? dateLabel(data.updatedAt) : "Doğrulanamadı"}</strong>
       <small>En yeni onay tarihi · Seçili tarih aralığından bağımsız</small>
     </header>
@@ -38,8 +38,8 @@ export default async function KvkTrackingPage({ searchParams }: { searchParams?:
       <section className={styles.cards}>{Object.entries(summary.totals).map(([label, amount]) => <article key={label}><span>{label}</span><strong>{money(amount)}</strong><small>{summary.entries.filter(row => row.kind === label).length} işlem</small></article>)}</section>
       <section className={styles.comparison}>
         <div><span>Temlik primi + iade + havale</span><strong>{money(summary.matched)}</strong></div>
-        <div><span>TRC ön ödeme toplamı</span><strong>{money(summary.totals["Ön ödeme"])}</strong></div>
-        <div><span>Fark (KVK toplamı − ön ödemeler)</span><strong>{money(summary.difference)}</strong><p>{summary.difference === 0 ? (summary.entries.length ? "Seçili dönemin toplamları eşit." : "Seçili dönemde işlem bulunamadı.") : summary.difference > 0 ? "KVK toplamı ön ödemelerden fazla." : "Ön ödemeler KVK toplamından fazla."}</p></div>
+        <div><span>Ön ödemeler + hazırkart ve ek giderler</span><strong>{money(summary.expenses)}</strong></div>
+        <div><span>Fark (KVK toplamı − ön ödemeler ve giderler)</span><strong>{money(summary.difference)}</strong><p>{summary.difference === 0 ? (summary.entries.length ? "Seçili dönemin toplamları eşit." : "Seçili dönemde işlem bulunamadı.") : summary.difference > 0 ? "KVK toplamı ön ödemeler ve giderlerden fazla." : "Ön ödemeler ve giderler KVK toplamından fazla."}</p></div>
       </section>
       {data?.updatedAt && end > data.updatedAt ? <p className={styles.notice}>Seçili bitiş tarihi son KVK onay tarihinden ileride. Sonraki günlere ait mahsuplar henüz işlenmemiş olabilir.</p> : null}
       <section className={styles.details}><h2>İşlem dökümü</h2><p>{dateLabel(start)} – {dateLabel(end)} · {summary.entries.length} işlem · Sayfa {page}/{pageCount}</p>

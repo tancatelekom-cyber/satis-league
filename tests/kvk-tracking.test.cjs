@@ -32,3 +32,13 @@ test('only approved admin and management can view KVK',()=>{
  for(const role of ['manager','employee','unknown'])assert.equal(canViewKvk(role,'approved'),false);
  assert.equal(canViewKvk('admin','pending'),false);
 });
+
+test('ONS costs use debt minus credit and are added to the right side once',()=>{
+ const d=parse(csv([['Tarih','Açıklama','','Borç','Alacak'],['01.10.2026','FATURA /ONS','',100,0],['02.10.2026','ons iade','',0,20],['03.10.2026','Havale','',0,200],['30.09.2026','ONS','',999,0]]),sources[0]);
+ assert.equal(d.errors.length,0);
+ const result=sum(d,'2026-10-01','2026-10-23');
+ assert.equal(result.totals['Hazırkart ve ek giderler'],8000);
+ assert.equal(result.totals['İade'],0);
+ assert.equal(result.expenses,8000);
+ assert.equal(result.difference,12000);
+});

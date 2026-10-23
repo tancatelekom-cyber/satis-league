@@ -60,7 +60,7 @@ export function parseKvkSource(text: string, source: typeof KVK_SOURCES[number])
   const result: KvkData = { entries: [], updatedAt: null, errors: [] };
   rows.forEach((row, index) => {
     if (!row.some(cell => cell.trim())) return;
-    const rawDate = row[source.key === "statement" ? 0 : 12] ?? "";
+    const rawDate = row[source.key === "statement" ? 0 : source.key === "assignment" ? 8 : 12] ?? "";
     const date = parseKvkDate(rawDate);
     const approvalRaw = source.key === "assignment" ? (row[5] ?? "").trim() : "";
     const approval = parseKvkDate(approvalRaw);

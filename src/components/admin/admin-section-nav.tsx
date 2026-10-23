@@ -30,6 +30,7 @@ const adminGroups = [
     title: "Operasyon ve Yetkiler",
     icon: "⚙️",
     links: [
+      { href: "/kvk-takip", icon: "📋", label: "KVK Takip", description: "Temlik, iade ve havaleleri ön ödemelerle karşılaştır" },
       { href: "/admin/hat-trafik", icon: "📶", label: "Hat Trafik Oluşturma", description: "Aktif bağlantı üzerinden 200 MB veri indir" },
       { href: "/admin/gelir-gider", icon: "💹", label: "Gelir Gider", description: "Menü erişim yetkilerini yönet" },
       { href: "/admin/kasa-takip", icon: "🧾", label: "Kasa Takip", description: "Kasa erişim izinlerini ve kategorileri yönet" },

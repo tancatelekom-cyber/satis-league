@@ -1,0 +1,31 @@
+.page { max-width: 1280px; margin: auto; padding: 24px 16px 48px; color: #193451; }
+.hero { background: #102d4b; color: #fff; border-radius: 20px; padding: 28px; }
+.hero h1 { color: #fff; margin: 8px 0; font-size: 32px; }
+.hero p { color: #d6e5f4; }
+.hero > span { font-size: 12px; letter-spacing: .15em; color: #80e4d4; }
+.hero strong, .hero small { display: block; margin-top: 12px; }
+.hero small { color: #b9cee1; }
+.filters, .details, .notes, .comparison { background: #fff; border: 1px solid #d6e1ec; border-radius: 16px; padding: 20px; margin-top: 18px; }
+.filters { display: flex; gap: 16px; align-items: end; flex-wrap: wrap; }
+.filters label { display: grid; gap: 8px; font-weight: 600; }
+.filters input { background: #fff; color: #193451; border: 1px solid #b7c9da; padding: 10px; border-radius: 8px; color-scheme: light; }
+.filters button { background: #086c65; color: #fff; border: 0; border-radius: 9px; padding: 12px 20px; cursor: pointer; }
+.cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-top: 20px; }
+.cards article { border: 1px solid #d6e1ec; border-radius: 14px; padding: 20px; background: #fff; }
+.cards strong, .comparison strong { display: block; font-size: 23px; margin: 12px 0; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.cards small { color: #526980; }
+.comparison { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 20px; background: #eaf5f2; }
+.comparison p { font-size: 13px; }
+.error { padding: 20px; border-radius: 14px; background: #fff1ef; color: #8f2525; margin-top: 20px; }
+.notice { padding: 16px; border-radius: 12px; background: #fff4d5; color: #744f0d; }
+.details h2, .notes h2, .error h2 { color: inherit; text-shadow: none; font-size: 20px; }
+.tableWrap { overflow: auto; }
+.tableWrap table { border-collapse: collapse; width: 100%; min-width: 660px; color: #193451; }
+.tableWrap th { text-align: left; background: #edf3f8; }
+.tableWrap td, .tableWrap th { padding: 12px; border-bottom: 1px solid #dce6ef; }
+.tableWrap td:nth-child(4) { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.page a { color: #006b70; text-decoration: underline; }
+.pagination, .notes > div { display: flex; gap: 24px; flex-wrap: wrap; margin-top: 16px; }
+.notes p { color: #496078; line-height: 1.7; }
+@media(max-width: 760px) { .cards { grid-template-columns: repeat(2,minmax(0,1fr)); } .comparison { grid-template-columns: 1fr; } .hero { padding: 20px; } .cards strong { font-size: 19px; } }
+@media(max-width: 420px) { .cards { grid-template-columns: 1fr; } }

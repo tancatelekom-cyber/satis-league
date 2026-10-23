@@ -94,7 +94,7 @@ export function summarizeKvk(data: KvkData, start: string, end: string) {
 export async function fetchKvkData(): Promise<KvkData> {
   const parts = await Promise.all(KVK_SOURCES.map(async source => {
     try {
-      const res = await fetch(`https://docs.google.com/spreadsheets/d/${KVK_SHEET_ID}/export?format=csv&gid=${source.gid}`, {
+      const res = await fetch(`https://docs.google.com/spreadsheets/d/${KVK_SHEET_ID}/gviz/tq?tqx=out:csv&gid=${source.gid}`, {
         cache: "no-store", signal: AbortSignal.timeout(20000)
       });
       if (!res.ok) throw new Error(`Kaynağa erişilemiyor (HTTP ${res.status}).`);

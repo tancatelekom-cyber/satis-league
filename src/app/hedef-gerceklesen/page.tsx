@@ -5317,7 +5317,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                   </div>
                 ) : null}
 
-                {detailCategorySummaries.length && effectiveView === "employee" ? (
+                {isCurrentMonth && detailCategorySummaries.length && effectiveView === "employee" ? (
                   <div className="evaluation-card">
                     <div className="evaluation-card-head">
                       <strong>{detailCardTitle}</strong>

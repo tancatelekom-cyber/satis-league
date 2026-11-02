@@ -20,17 +20,25 @@ export function parseGoalPeriod(value: string): string | null {
 }
 
 export function goalPeriodMatches(period: string | null | undefined, selection: string) {
-  return Boolean(period && (selection.length === 4 ? period.startsWith(`${selection}-`) : period === selection));
+  if (!period) return false;
+  const quarter = selection.match(/^(\d{4})-Q([1-4])$/);
+  if (quarter) return period.startsWith(`${quarter[1]}-`) && Math.ceil(Number(period.slice(5, 7)) / 3) === Number(quarter[2]);
+  return selection.length === 4 ? period.startsWith(`${selection}-`) : period === selection;
 }
 
 export function resolveGoalReportPeriod(requested: string, current: string, available: string[]) {
-  if (/^(\d{4}|\d{4}-(0[1-9]|1[0-2]))$/.test(requested)) return requested;
+  if (/^(\d{4}|\d{4}-(0[1-9]|1[0-2]|Q[1-4]))$/.test(requested)) return requested;
   const months = [...new Set(available)].sort().reverse();
   return months.includes(current) ? current : months.find(month => month <= current) ?? months[0] ?? current;
 }
 
 export function goalPeriodLabel(period: string) {
   if (period.length === 4) return `${period} · Yıllık`;
+  const quarter = period.match(/^(\d{4})-Q([1-4])$/);
+  if (quarter) {
+    const ranges = ["Ocak–Mart", "Nisan–Haziran", "Temmuz–Eylül", "Ekim–Aralık"];
+    return `${quarter[1]} · Q${quarter[2]} (${ranges[Number(quarter[2]) - 1]})`;
+  }
   return new Intl.DateTimeFormat("tr-TR", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${period}-01T00:00:00Z`));
 }
 

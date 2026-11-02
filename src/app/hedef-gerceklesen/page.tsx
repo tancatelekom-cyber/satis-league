@@ -3899,13 +3899,14 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
   period = resolveGoalReportPeriod(requestedPeriod, currentPeriod, sourceMonths);
   const isCurrentMonth = period === currentPeriod;
   const isYear = period.length === 4;
+  const isQuarter = /^\d{4}-Q[1-4]$/.test(period);
   const hasPeriodData = sourceMonths.some(month => goalPeriodMatches(month, period));
   const latestSourceMonth = sourceMonths[0];
-  const availableMonths = [...new Set([currentPeriod, ...(isYear ? [] : [period]), ...sourceMonths])].sort().reverse();
+  const availableMonths = [...new Set([currentPeriod, ...(isYear || isQuarter ? [] : [period]), ...sourceMonths])].sort().reverse();
   const availableYears = [...new Set([period.slice(0, 4), ...availableMonths.map(month => month.slice(0, 4))])].sort().reverse();
   employeeRows = employeeRows.filter(row => goalPeriodMatches(row.periodMonth, period));
   storeRows = storeRows.filter(row => goalPeriodMatches(row.periodMonth, period));
-  if (isYear) {
+  if (isYear || isQuarter) {
     employeeRows = aggregateGoalPersonnelYear(employeeRows);
     storeRows = aggregateGoalStoreYear(storeRows);
   }
@@ -4573,17 +4574,19 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
           </section> : null}
 
           <details className="goal-period-filters">
-            <summary>Filtreler · {goalPeriodLabel(period)}</summary>
+            <summary>Dönem · {goalPeriodLabel(period)}</summary>
             <div className="league-filter-grid goal-filter-grid">
               <div className="league-filter-item">
-                <span className="league-filter-label">Aylık / Yıllık dönem</span>
-                <FilterSelectNav ariaLabel="Rapor dönemi" value={buildPeriodHref(effectiveView, { period, employee: selectedEmployee, store: selectedStore, category: selectedCategory, panel: effectivePanel, openDashboard: canOpenDashboard })} options={[
-                  ...availableYears.map(value => ({ label: goalPeriodLabel(value), value })),
+                <span className="league-filter-label">Aylık / Çeyreklik / Yıllık dönem</span>
+                <FilterSelectNav ariaLabel="Rapor dönemi" value={buildPeriodHref(effectiveView, { period, employee: activeEmployeeName || selectedEmployee, store: activeStoreName || selectedStore, category: selectedCategory, panel: effectivePanel, openDashboard: canOpenDashboard })} options={[
+                  ...availableYears.flatMap(year => [year, ...[1, 2, 3, 4].map(quarter => `${year}-Q${quarter}`)]).map(value => ({ label: goalPeriodLabel(value), value })),
                   ...availableMonths.map(value => ({ label: goalPeriodLabel(value), value }))
-                ].map(option => ({ ...option, value: buildPeriodHref(effectiveView, { period: option.value, employee: selectedEmployee, store: selectedStore, category: selectedCategory, panel: effectivePanel, openDashboard: canOpenDashboard }) }))}
+                ].map(option => ({ ...option, value: buildPeriodHref(effectiveView, { period: option.value, employee: activeEmployeeName || selectedEmployee, store: activeStoreName || selectedStore, category: selectedCategory, panel: effectivePanel, openDashboard: canOpenDashboard }) }))}
                   />
               </div>
             </div>
+          </details>
+
           {effectiveView === "company" ? (
             effectivePanel === "detail" ? (
               <GoalSuccessDashboardLink
@@ -4690,8 +4693,6 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
               )}
             </section>
           ) : null}
-
-          </details>
 
           {effectivePanel === "dashboard" && effectiveView === "employee" ? (
             <>

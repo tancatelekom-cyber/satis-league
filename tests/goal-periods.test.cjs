@@ -62,3 +62,24 @@ test('explicit monthly and yearly choices are preserved even without matching da
   assert.equal(periods.resolveGoalReportPeriod('2026-11', '2026-11', ['2026-10']), '2026-11');
   assert.equal(periods.resolveGoalReportPeriod('2025', '2026-11', ['2026-10']), '2025');
 });
+
+test('quarters match only their three calendar months in the selected year', () => {
+  for (let quarter = 1; quarter <= 4; quarter++) {
+    const selection = `2026-Q${quarter}`;
+    assert.equal(periods.resolveGoalReportPeriod(selection, '2026-11', []), selection);
+    assert.match(periods.goalPeriodLabel(selection), new RegExp(`Q${quarter}`));
+    for (let month = 1; month <= 12; month++) {
+      assert.equal(periods.goalPeriodMatches(`2026-${String(month).padStart(2, '0')}`, selection), Math.ceil(month / 3) === quarter);
+      assert.equal(periods.goalPeriodMatches(`2025-${String(month).padStart(2, '0')}`, selection), false);
+    }
+  }
+  assert.equal(periods.goalPeriodMatches(null, '2026-Q4'), false);
+  assert.equal(periods.resolveGoalReportPeriod('2026-Q5', '2026-11', []), '2026-11');
+});
+test('quarter totals include matching monthly rows only', async () => {
+  const rows = await goals.fetchGoalStoreRows('2026-Q4');
+  const summary = periods.aggregateGoalStoreYear(rows)[0];
+  assert.equal(summary.target, 300);
+  assert.equal(summary.actual, 120);
+  assert.equal((await goals.fetchGoalStoreRows('2026-Q3')).length, 0);
+});

@@ -1,4 +1,4 @@
-import { aggregateGoalPersonnelYear, aggregateGoalStoreYear, goalPeriodMatches, goalPeriodLabel } from "@/lib/goal-periods";
+import { aggregateGoalPersonnelYear, aggregateGoalStoreYear, goalPeriodMatches, goalPeriodLabel, resolveGoalReportPeriod } from "@/lib/goal-periods";
 import { Fragment, type CSSProperties } from "react";
 import { PersonnelQueryPanel } from "@/components/evaluation/personnel-query-panel";
 import { redirect } from "next/navigation";
@@ -3800,9 +3800,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
   const params = searchParams ? await searchParams : undefined;
   const currentPeriod = getIstanbulPeriodMonth();
   const requestedPeriod = String(params?.period ?? "");
-  const period = /^(\d{4}|\d{4}-(0[1-9]|1[0-2]))$/.test(requestedPeriod) ? requestedPeriod : currentPeriod;
-  const isCurrentMonth = period === currentPeriod;
-  const isYear = period.length === 4;
+  let period = resolveGoalReportPeriod(requestedPeriod, currentPeriod, []);
   const buildHref = (view: string, options?: Parameters<typeof buildPeriodHref>[1]) => buildPeriodHref(view, { ...options, period });
   const selectedView = String(params?.view ?? "").trim();
   const selectedEmployee = String(params?.employee ?? "").trim();
@@ -3896,7 +3894,14 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
     sheetError = message;
   }
 
-  const availableMonths = [...new Set([currentPeriod, ...(isYear ? [] : [period]), ...employeeRows.map(row => row.periodMonth), ...storeRows.map(row => row.periodMonth)].filter((value): value is string => Boolean(value)))].sort().reverse();
+  const sourceRows = effectiveView === "employee" ? employeeRows : storeRows;
+  const sourceMonths = [...new Set(sourceRows.map(row => row.periodMonth).filter((value): value is string => Boolean(value)))].sort().reverse();
+  period = resolveGoalReportPeriod(requestedPeriod, currentPeriod, sourceMonths);
+  const isCurrentMonth = period === currentPeriod;
+  const isYear = period.length === 4;
+  const hasPeriodData = sourceMonths.some(month => goalPeriodMatches(month, period));
+  const latestSourceMonth = sourceMonths[0];
+  const availableMonths = [...new Set([currentPeriod, ...(isYear ? [] : [period]), ...sourceMonths])].sort().reverse();
   const availableYears = [...new Set([period.slice(0, 4), ...availableMonths.map(month => month.slice(0, 4))])].sort().reverse();
   employeeRows = employeeRows.filter(row => goalPeriodMatches(row.periodMonth, period));
   storeRows = storeRows.filter(row => goalPeriodMatches(row.periodMonth, period));
@@ -4499,6 +4504,13 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
   return (
       <main className={`goal-page ${isCurrentMonth ? "" : "goal-historical-period"}`}>
         <h1 className="page-title">Hedef Gerceklesen</h1>
+
+        {!sheetError && !hasPeriodData ? (
+          <section className="guide-card" role="status">
+            <strong>{goalPeriodLabel(period)} için {effectiveView === "employee" ? "personel" : "mağaza/firma"} verisi bulunmuyor.</strong>
+            {latestSourceMonth ? <p>Kaynakta bulunan son dönem: <a href={buildPeriodHref(effectiveView, { period: latestSourceMonth, store: selectedStore, employee: selectedEmployee, panel: effectivePanel, openDashboard: canOpenDashboard })}>{goalPeriodLabel(latestSourceMonth)} — verileri göster</a></p> : null}
+          </section>
+        ) : null}
 
         <section className="goal-control-shell">
         <div className="goal-tab-row">

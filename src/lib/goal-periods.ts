@@ -23,6 +23,12 @@ export function goalPeriodMatches(period: string | null | undefined, selection: 
   return Boolean(period && (selection.length === 4 ? period.startsWith(`${selection}-`) : period === selection));
 }
 
+export function resolveGoalReportPeriod(requested: string, current: string, available: string[]) {
+  if (/^(\d{4}|\d{4}-(0[1-9]|1[0-2]))$/.test(requested)) return requested;
+  const months = [...new Set(available)].sort().reverse();
+  return months.includes(current) ? current : months.find(month => month <= current) ?? months[0] ?? current;
+}
+
 export function goalPeriodLabel(period: string) {
   if (period.length === 4) return `${period} · Yıllık`;
   return new Intl.DateTimeFormat("tr-TR", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${period}-01T00:00:00Z`));

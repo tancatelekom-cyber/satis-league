@@ -52,3 +52,13 @@ test('annual achievement preserves each monthly cap', () => {
   assert.equal(goals.getGoalAchievementActual(annual, 'company'), 150);
   assert.equal(goals.getGoalAchievementActual(annual, 'store'), 250);
 });
+
+test('opening report selects latest available month when current month has no store data', () => {
+  assert.equal(periods.resolveGoalReportPeriod('', '2026-11', ['2026-10']), '2026-10');
+  assert.equal(periods.resolveGoalReportPeriod('', '2026-11', ['2026-10', '2026-11']), '2026-11');
+  assert.equal(periods.resolveGoalReportPeriod('', '2026-11', []), '2026-11');
+});
+test('explicit monthly and yearly choices are preserved even without matching data', () => {
+  assert.equal(periods.resolveGoalReportPeriod('2026-11', '2026-11', ['2026-10']), '2026-11');
+  assert.equal(periods.resolveGoalReportPeriod('2025', '2026-11', ['2026-10']), '2025');
+});

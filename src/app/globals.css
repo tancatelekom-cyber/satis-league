@@ -18289,3 +18289,17 @@ textarea::placeholder {
     box-shadow: inset 0 0 0 3px #f5ca54;
   }
 }
+
+/* Period filters remain compact until explicitly expanded. */
+.goal-period-filters { margin: 12px 0; border: 1px solid #d7dfeb; border-radius: 12px; background: #fff; }
+.goal-period-filters > summary { cursor: pointer; padding: 12px 16px; font-weight: 700; color: #152846; }
+.goal-period-filters > summary:focus-visible { outline: 2px solid #2874d0; outline-offset: 2px; }
+.goal-period-filters > .goal-filter-grid { padding: 12px 16px; }
+.goal-period-filters > .goal-filter-card { margin: 0; }
+
+.goal-historical-period .goal-employee-table-head,
+.goal-historical-period .goal-employee-table-row { grid-template-columns: minmax(150px, 2fr) repeat(4, minmax(65px, 1fr)); }
+.goal-historical-period .goal-employee-table-head > :nth-child(n+6),
+.goal-historical-period .goal-employee-table-row > :nth-child(n+6),
+.goal-historical-period .goal-dashboard-hover-table tr > :nth-child(n+6),
+.goal-historical-period .goal-production-reward-table tr > :nth-child(5) { display: none; }

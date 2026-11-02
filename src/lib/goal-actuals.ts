@@ -1,6 +1,8 @@
+import { parseGoalPeriod, goalPeriodMatches } from "./goal-periods";
 import { calculateAdjustedGoalTarget } from "@/lib/goal-target-adjustments";
 
 export type GoalActualRow = {
+  periodMonth?: string | null;
   personnelId: string;
   employeeName: string;
   storeName: string;
@@ -11,10 +13,12 @@ export type GoalActualRow = {
 };
 
 export type GoalStoreRow = {
+  periodMonth?: string | null;
   storeCode: string;
   mainCategory: string;
   subCategory: string;
   target: number | null;
+  annualAchievementActual?: { store: number; company: number };
   rawTarget?: number | null;
   targetIncrease?: number;
   targetIncreasePercent?: number;
@@ -181,6 +185,7 @@ export function getGoalAchievementActual(
   scope: "store" | "company",
   actual = row.actual
 ) {
+  if (row.annualAchievementActual) return row.annualAchievementActual[scope];
   if (!goalActualCapApplies(row, scope)) {
     return actual;
   }
@@ -199,7 +204,7 @@ export function getGoalAchievementActual(
   return capValue !== null && capValue > 0 ? Math.min(actual, capValue) : actual;
 }
 
-async function fetchGoalActualRowsFromSheet() {
+async function fetchGoalActualRowsFromSheet(period = getIstanbulPeriodMonth()) {
   const response = await fetch(buildSheetUrl(PRS_SHEET_NAME, PRS_SHEET_GID), {
     cache: "no-store",
     next: { revalidate: 0 },
@@ -234,6 +239,7 @@ async function fetchGoalActualRowsFromSheet() {
       const actual = parseLocalizedNumber(actualRaw);
 
       return {
+        periodMonth: normalizeText(row[7] ?? "") ? parseGoalPeriod(row[7]) : getIstanbulPeriodMonth(),
         personnelId,
         employeeName,
         storeName,
@@ -243,7 +249,8 @@ async function fetchGoalActualRowsFromSheet() {
         actual
       };
     })
-    .filter((row): row is GoalActualRow => Boolean(row));
+    .filter((row): row is GoalActualRow => Boolean(row))
+    .filter(row => period === "all" || goalPeriodMatches(row.periodMonth, period));
 }
 
 async function fetchGoalDayStatsFromSheet() {
@@ -270,7 +277,7 @@ async function fetchGoalDayStatsFromSheet() {
   } satisfies GoalDayStats;
 }
 
-async function fetchGoalStoreRowsFromSheet() {
+async function fetchGoalStoreRowsFromSheet(period = getIstanbulPeriodMonth()) {
   const response = await fetch(buildSheetUrl(undefined, STORE_SHEET_GID), {
     cache: "no-store",
     next: { revalidate: 0 },
@@ -319,6 +326,7 @@ async function fetchGoalStoreRowsFromSheet() {
           : null;
 
       return {
+        periodMonth: normalizeText(row[10] ?? "") ? parseGoalPeriod(row[10]) : getIstanbulPeriodMonth(),
         storeCode,
         mainCategory: mainCategory || "Genel",
         subCategory,
@@ -334,7 +342,8 @@ async function fetchGoalStoreRowsFromSheet() {
         separateInfo: separateInfoFlag === "E"
       };
     })
-    .filter((row): row is GoalStoreRow => Boolean(row));
+    .filter((row): row is GoalStoreRow => Boolean(row))
+    .filter(row => period === "all" || goalPeriodMatches(row.periodMonth, period));
 }
 
 export function getIstanbulPeriodMonth(date = new Date()) {
@@ -358,14 +367,14 @@ export function applyGoalStoreTargetAdjustments(
 ) {
   const adjustmentMap = new Map(
     adjustments.map((item) => [
-      `${normalizeOverrideKey(item.storeCode)}__${normalizeOverrideKey(item.categoryName)}`,
+      `${item.periodMonth}__${normalizeOverrideKey(item.storeCode)}__${normalizeOverrideKey(item.categoryName)}`,
       item.increasePercent
     ])
   );
 
   return rows.map((row) => {
     const increasePercent = adjustmentMap.get(
-      `${normalizeOverrideKey(row.storeCode)}__${normalizeOverrideKey(row.mainCategory)}`
+      `${row.periodMonth ?? getIstanbulPeriodMonth()}__${normalizeOverrideKey(row.storeCode)}__${normalizeOverrideKey(row.mainCategory)}`
     );
 
     if (
@@ -395,11 +404,11 @@ export function applyGoalStoreFullAchievementOverrides(
   overrides: GoalStoreFullAchievementOverride[]
 ) {
   const overrideKeys = new Set(
-    overrides.map((item) => `${normalizeOverrideKey(item.storeCode)}__${normalizeOverrideKey(item.categoryName)}`)
+    overrides.map((item) => `${item.periodMonth}__${normalizeOverrideKey(item.storeCode)}__${normalizeOverrideKey(item.categoryName)}`)
   );
 
   return rows.map((row) => {
-    const key = `${normalizeOverrideKey(row.storeCode)}__${normalizeOverrideKey(row.mainCategory)}`;
+    const key = `${row.periodMonth ?? getIstanbulPeriodMonth()}__${normalizeOverrideKey(row.storeCode)}__${normalizeOverrideKey(row.mainCategory)}`;
     if (!overrideKeys.has(key)) return row;
 
     return {
@@ -414,23 +423,23 @@ export function applyGoalStoreFullAchievementOverrides(
   });
 }
 
-async function fetchGoalStoreRowsWithBranchOverrides() {
-  const rows = await fetchGoalStoreRowsFromSheet();
+async function fetchGoalStoreRowsWithBranchOverrides(period = getIstanbulPeriodMonth()) {
+  const rows = await fetchGoalStoreRowsFromSheet(period);
 
   try {
     const { createAdminClient } = await import("@/lib/supabase/admin");
-    const periodMonth = getIstanbulPeriodMonth();
+    const periodDates = [...new Set(rows.map(row => row.periodMonth).filter(Boolean))].map(month => `${month}-01`);
     const admin = createAdminClient();
-    const periodDate = `${periodMonth}-01`;
+    if (!periodDates.length) return rows;
     const [targetAdjustmentsResult, fullAchievementResult] = await Promise.all([
       admin
         .from("goal_store_target_adjustments")
         .select("store_code, category_name, period_month, increase_percent")
-        .eq("period_month", periodDate),
+        .in("period_month", periodDates),
       admin
         .from("goal_store_full_achievement_overrides")
         .select("store_code, category_name, period_month")
-        .eq("period_month", periodDate)
+        .in("period_month", periodDates)
     ]);
 
     let branchRows = rows;

@@ -1,5 +1,6 @@
-import { PersonnelQueryPanel } from "@/components/evaluation/personnel-query-panel";
+import { aggregateGoalPersonnelYear, aggregateGoalStoreYear, goalPeriodMatches, goalPeriodLabel } from "@/lib/goal-periods";
 import { Fragment, type CSSProperties } from "react";
+import { PersonnelQueryPanel } from "@/components/evaluation/personnel-query-panel";
 import { redirect } from "next/navigation";
 import { CopyCoachingButton } from "@/components/evaluation/copy-coaching-button";
 import { CompanyDailyNeedsTable } from "@/components/evaluation/company-daily-needs-table";
@@ -25,6 +26,7 @@ import {
   fetchGoalStoreRows,
   fetchGoalStoreRowsForBranchGoalView,
   getGoalAchievementActual,
+  getIstanbulPeriodMonth,
   goalActualCapApplies
 } from "@/lib/goal-actuals";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -33,6 +35,7 @@ import { UserRole } from "@/lib/types";
 
 type GoalActualPageProps = {
   searchParams?: Promise<{
+    period?: string;
     category?: string;
     employee?: string;
     openDashboard?: string;
@@ -658,9 +661,10 @@ function getMetricPillStyle(kind: "default" | "status-good" | "status-bad" = "de
   };
 }
 
-function buildHref(
+function buildPeriodHref(
   view: string,
   options?: {
+    period?: string;
     employee?: string;
     store?: string;
     category?: string;
@@ -670,6 +674,7 @@ function buildHref(
 ) {
   const params = new URLSearchParams();
   params.set("view", view);
+  if (options?.period) params.set("period", options.period);
   if (options?.employee) params.set("employee", options.employee);
   if (options?.store) params.set("store", options.store);
   if (options?.category) params.set("category", options.category);
@@ -3141,6 +3146,7 @@ function StoreGoalDashboard({
   storeName,
   categories,
   employeeRows = [],
+  period,
   dayStats,
   canShare,
   colorBlindMode,
@@ -3149,11 +3155,13 @@ function StoreGoalDashboard({
   storeName: string;
   categories: GoalCategorySummary[];
   employeeRows?: GoalActualRow[];
+  period: string;
   dayStats: GoalDayStats;
   canShare: boolean;
   colorBlindMode: boolean;
   dashboardScope?: "store" | "employee";
 }) {
+  const buildHref = (view: string, options?: Parameters<typeof buildPeriodHref>[1]) => buildPeriodHref(view, { ...options, period });
   const isEmployeeDashboard = dashboardScope === "employee";
   const dashboardSubject = storeName || (isEmployeeDashboard ? "Personel" : "Mağaza");
   const dashboardPalette = getDashboardPalette(colorBlindMode);
@@ -3199,8 +3207,8 @@ function StoreGoalDashboard({
           <p>Hedef, gerçekleşen ve ay sonu gidişatının tek sayfalık görsel analizi.</p>
         </div>
         <div className="goal-dashboard-period">
-          <span>Çalışılan Gün</span>
-          <strong>{formatNumber(dayStats.workedDays)} / {formatNumber(dayStats.totalDays)}</strong>
+          <span>{period === getIstanbulPeriodMonth() ? "Çalışılan Gün" : "Dönem"}</span>
+          <strong>{period === getIstanbulPeriodMonth() ? `${formatNumber(dayStats.workedDays)} / ${formatNumber(dayStats.totalDays)}` : goalPeriodLabel(period)}</strong>
         </div>
       </div>
 
@@ -3436,6 +3444,7 @@ function CompanyStoreSuccessDashboard({
   rows,
   satisfactionRows,
   employeeRows,
+  period,
   dayStats,
   canShare,
   colorBlindMode
@@ -3443,10 +3452,12 @@ function CompanyStoreSuccessDashboard({
   rows: GoalStoreRow[];
   satisfactionRows: GoalStoreRow[];
   employeeRows: GoalActualRow[];
+  period: string;
   dayStats: GoalDayStats;
   canShare: boolean;
   colorBlindMode: boolean;
 }) {
+  const buildHref = (view: string, options?: Parameters<typeof buildPeriodHref>[1]) => buildPeriodHref(view, { ...options, period });
   const dashboardPalette = getDashboardPalette(colorBlindMode);
   const storeMap = new Map<string, GoalStoreRow[]>();
   rows.forEach((row) => {
@@ -3787,6 +3798,12 @@ function CompanyStoreSuccessDashboard({
 
 export default async function GoalActualPage({ searchParams }: GoalActualPageProps) {
   const params = searchParams ? await searchParams : undefined;
+  const currentPeriod = getIstanbulPeriodMonth();
+  const requestedPeriod = String(params?.period ?? "");
+  const period = /^(\d{4}|\d{4}-(0[1-9]|1[0-2]))$/.test(requestedPeriod) ? requestedPeriod : currentPeriod;
+  const isCurrentMonth = period === currentPeriod;
+  const isYear = period.length === 4;
+  const buildHref = (view: string, options?: Parameters<typeof buildPeriodHref>[1]) => buildPeriodHref(view, { ...options, period });
   const selectedView = String(params?.view ?? "").trim();
   const selectedEmployee = String(params?.employee ?? "").trim();
   const selectedStore = String(params?.store ?? "").trim();
@@ -3866,8 +3883,8 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
 
   try {
     [employeeRows, storeRows, dayStats, productionRewardRows, productPointRows, documentIssueRows, livePrimeSettings] = await Promise.all([
-      fetchGoalActualRows(),
-      effectiveView === "store" ? fetchGoalStoreRowsForBranchGoalView() : fetchGoalStoreRows(),
+      fetchGoalActualRows("all"),
+      effectiveView === "store" ? fetchGoalStoreRowsForBranchGoalView("all") : fetchGoalStoreRows("all"),
       fetchGoalDayStats(),
       fetchGoalProductionRewardRows(),
       fetchGoalProductPointRows(),
@@ -3877,6 +3894,20 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
   } catch (error) {
     const message = error instanceof Error ? error.message : "Google Sheet verisi okunamadi.";
     sheetError = message;
+  }
+
+  const availableMonths = [...new Set([currentPeriod, ...(isYear ? [] : [period]), ...employeeRows.map(row => row.periodMonth), ...storeRows.map(row => row.periodMonth)].filter((value): value is string => Boolean(value)))].sort().reverse();
+  const availableYears = [...new Set([period.slice(0, 4), ...availableMonths.map(month => month.slice(0, 4))])].sort().reverse();
+  employeeRows = employeeRows.filter(row => goalPeriodMatches(row.periodMonth, period));
+  storeRows = storeRows.filter(row => goalPeriodMatches(row.periodMonth, period));
+  if (isYear) {
+    employeeRows = aggregateGoalPersonnelYear(employeeRows);
+    storeRows = aggregateGoalStoreYear(storeRows);
+  }
+  if (!isCurrentMonth) {
+    // Historical/year reports show recorded actuals without extrapolating today's pace.
+    dayStats = { workedDays: 1, totalDays: 1, remainingDays: 0 };
+    storeRows = storeRows.map(row => ({ ...row, includeProjection: false }));
   }
 
   // Keep historical Sheet rows, but show only currently approved users in dashboard rankings.
@@ -3906,7 +3937,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
   }
 
   const isActiveDashboardEmployee = (row: GoalActualRow) =>
-    activeDashboardEmployeeIds === null || activeDashboardEmployeeNames === null
+    !isCurrentMonth || activeDashboardEmployeeIds === null || activeDashboardEmployeeNames === null
       ? true
       : Boolean(
           (row.personnelId && activeDashboardEmployeeIds.has(row.personnelId)) ||
@@ -4466,7 +4497,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
   const keepDashboardOpen = navigationPanel === "dashboard";
 
   return (
-      <main className="goal-page">
+      <main className={`goal-page ${isCurrentMonth ? "" : "goal-historical-period"}`}>
         <h1 className="page-title">Hedef Gerceklesen</h1>
 
         <section className="goal-control-shell">
@@ -4514,7 +4545,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
         </section>
         ) : (
         <>
-          <section className="goal-summary-strip">
+          {isCurrentMonth ? <section className="goal-summary-strip">
             <article className="goal-summary-card">
               <span>Calisilan Gun</span>
               <strong>{formatNumber(dayStats.workedDays)}</strong>
@@ -4527,8 +4558,20 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
               <span>Toplam Gun</span>
               <strong>{formatNumber(dayStats.totalDays)}</strong>
             </article>
-          </section>
+          </section> : null}
 
+          <details className="goal-period-filters">
+            <summary>Filtreler · {goalPeriodLabel(period)}</summary>
+            <div className="league-filter-grid goal-filter-grid">
+              <div className="league-filter-item">
+                <span className="league-filter-label">Aylık / Yıllık dönem</span>
+                <FilterSelectNav ariaLabel="Rapor dönemi" value={buildPeriodHref(effectiveView, { period, employee: selectedEmployee, store: selectedStore, category: selectedCategory, panel: effectivePanel, openDashboard: canOpenDashboard })} options={[
+                  ...availableYears.map(value => ({ label: goalPeriodLabel(value), value })),
+                  ...availableMonths.map(value => ({ label: goalPeriodLabel(value), value }))
+                ].map(option => ({ ...option, value: buildPeriodHref(effectiveView, { period: option.value, employee: selectedEmployee, store: selectedStore, category: selectedCategory, panel: effectivePanel, openDashboard: canOpenDashboard }) }))}
+                  />
+              </div>
+            </div>
           {effectiveView === "company" ? (
             effectivePanel === "detail" ? (
               <GoalSuccessDashboardLink
@@ -4636,20 +4679,23 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
             </section>
           ) : null}
 
+          </details>
+
           {effectivePanel === "dashboard" && effectiveView === "employee" ? (
             <>
             <StoreGoalDashboard
               storeName={activeEmployeeName}
               categories={employeeCategorySummaries}
+              period={period}
               dayStats={dayStats}
               canShare={canShareDashboard}
               colorBlindMode={colorBlindDashboardMode}
               dashboardScope="employee"
             />
-            <PersonnelQueryPanel
+            {isCurrentMonth ? <PersonnelQueryPanel
               personnelIds={Array.from(new Set(activeEmployeeRows.map((row) => row.personnelId).filter(Boolean)))}
               workedDays={dayStats.workedDays}
-            />
+            /> : null}
             </>
           ) : effectivePanel === "dashboard" && effectiveView === "store" ? (
             <StoreGoalDashboard
@@ -4663,6 +4709,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                 )
               ]}
               employeeRows={activeStoreEmployeeRows}
+              period={period}
               dayStats={dayStats}
               canShare={canShareDashboard}
               colorBlindMode={colorBlindDashboardMode}
@@ -4672,6 +4719,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
               rows={filteredStoreRows}
               satisfactionRows={separateInfoStoreRows}
               employeeRows={activeDashboardEmployeeRows}
+              period={period}
               dayStats={dayStats}
               canShare={canShareDashboard}
               colorBlindMode={colorBlindDashboardMode}
@@ -5114,12 +5162,12 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                       productPointRows={productPointRows}
                     />
 
-                    <PersonnelQueryPanel
+                    {isCurrentMonth ? <PersonnelQueryPanel
                       personnelIds={Array.from(new Set(activeEmployeeRows.map((row) => row.personnelId).filter(Boolean)))}
                       workedDays={dayStats.workedDays}
-                    />
+                    /> : null}
 
-                    {employeeDailyNeedSummaryRows.length ? (
+                    {isCurrentMonth && employeeDailyNeedSummaryRows.length ? (
                       <div className="goal-company-trend-panel goal-employee-daily-needs-panel">
                         <div className="goal-live-prime-head">
                           <h3>Personel Gunluk Ihtiyaclari</h3>
@@ -5133,7 +5181,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                   <p className="subtle">Bu filtreye uygun calisan verisi bulunamadi.</p>
                 )}
 
-                {effectiveView === "store" ? (
+                {isCurrentMonth && effectiveView === "store" ? (
                   <PersonnelQueryPanel
                     scope="store"
                     personnelIds={Array.from(new Set([...storeQueryProfileIds, ...activeStoreEmployeeRows.map((row) => row.personnelId)].filter(Boolean)))}
@@ -5141,7 +5189,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                   />
                 ) : null}
 
-                {effectiveView === "store" ? (
+                {isCurrentMonth && effectiveView === "store" ? (
                   <div className="goal-company-trend-panel">
                     <div className="goal-live-prime-head">
                       <h3>Gunluk Ihtiyaclar</h3>
@@ -5156,7 +5204,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                   </div>
                 ) : null}
 
-                {effectiveView === "company" ? (
+                {isCurrentMonth && effectiveView === "company" ? (
                   <PersonnelQueryPanel
                     scope="company"
                     personnelIds={Array.from(new Set([...companyQueryProfileIds, ...activeDashboardEmployeeRows.map((row) => row.personnelId)].filter(Boolean)))}
@@ -5164,7 +5212,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                   />
                 ) : null}
 
-                {effectiveView === "company" && visibleTrendStoreCodes.length && companyDailyNeedSummaryRows.length ? (
+                {isCurrentMonth && effectiveView === "company" && visibleTrendStoreCodes.length && companyDailyNeedSummaryRows.length ? (
                   <div className="goal-company-trend-panel" data-company-filter-table>
                     <div className="goal-live-prime-head">
                       <h3>Gunluk Ihtiyaclar</h3>
@@ -5479,7 +5527,7 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                   </div>
                 ) : null}
 
-                {effectiveView === "employee" ? (
+                {isCurrentMonth && effectiveView === "employee" ? (
                   <div className="goal-company-trend-panel">
                     <div className="goal-live-prime-head">
                       <h3>Sube Gunluk Ihtiyaclari</h3>

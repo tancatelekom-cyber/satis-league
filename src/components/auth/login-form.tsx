@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { withAuthTimeout } from "@/lib/auth/with-auth-timeout";
 import { FormEvent, useState } from "react";
 import { createClient } from "@/lib/supabase/browser";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
@@ -27,40 +28,45 @@ export function LoginForm({ message }: LoginFormProps) {
     const formData = new FormData(event.currentTarget);
     const email = String(formData.get("email") ?? "").trim();
     const password = String(formData.get("password") ?? "");
-    const supabase = createClient();
+    try {
+      const supabase = createClient();
 
-    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
+      const { data: signInData, error: signInError } = await withAuthTimeout(supabase.auth.signInWithPassword({
+        email,
+        password
+      }));
 
-    if (signInError) {
-      setError(signInError.message);
+      if (signInError) {
+        setError(signInError.message);
+        setSubmitting(false);
+        return;
+      }
+
+      const accessToken = signInData.session?.access_token ?? "";
+
+      const confirmResponse = await withAuthTimeout(fetch("/api/auth/confirm-session", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          accessToken
+        })
+      }));
+
+      if (!confirmResponse.ok) {
+        setError("Oturum acildi ama uygulama guvenlik kontrolu tamamlanamadi. Tekrar deneyin.");
+        await withAuthTimeout(supabase.auth.signOut());
+        setSubmitting(false);
+        return;
+      }
+
+      window.location.assign("/");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Giriş tamamlanamadı. Bağlantınızı kontrol edip tekrar deneyin.");
       setSubmitting(false);
-      return;
     }
-
-    const accessToken = signInData.session?.access_token ?? "";
-
-    const confirmResponse = await fetch("/api/auth/confirm-session", {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        accessToken
-      })
-    });
-
-    if (!confirmResponse.ok) {
-      setError("Oturum acildi ama uygulama guvenlik kontrolu tamamlanamadi. Tekrar deneyin.");
-      await supabase.auth.signOut();
-      setSubmitting(false);
-      return;
-    }
-
-    window.location.assign("/");
   }
 
   return (

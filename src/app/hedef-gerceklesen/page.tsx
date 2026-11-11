@@ -4688,6 +4688,9 @@ export default async function GoalActualPage({ searchParams }: GoalActualPagePro
                     >
                       Siralama
                     </a>
+                    <a className="goal-mode-button" href={`/hedef-gerceklesen/gunluk-performanslar?employee=${encodeURIComponent(activeEmployeeName)}`}>
+                      Günlük Performanslar
+                    </a>
                   </div>
                 </>
               )}

@@ -1,3 +1,4 @@
+import { createAdminClient } from "@/lib/supabase/admin";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/require-user";
@@ -20,6 +21,22 @@ export default async function DailyPerformancePage({ searchParams }: { searchPar
     const [daily, targets] = await Promise.all([fetchDailyPerformance(), fetchGoalActualRows(period).catch(() => { targetWarning = 'Aylık hedefler okunamadı. Adet grafikleri gösteriliyor; yüzde grafikleri hedefler geldiğinde açılacak.'; return []; })]);
     rows = attachPerformanceTargets(daily.filter(row => canViewAll || row.personnelId === user.id), targets);
   } catch { error = 'Günlük performans verisi şu anda alınamıyor. Sayfayı yenileyerek tekrar deneyin.'; }
+  if (rows.length) {
+    try {
+      const start = new Date(`${period}-01T00:00:00Z`);
+      start.setUTCDate(start.getUTCDate() - 6);
+      const { data, error: scheduleError } = await createAdminClient().from('weekly_work_schedules')
+        .select('profile_id,week_start,day_of_week').eq('status', 'leave')
+        .in('profile_id', [...new Set(rows.map(row => row.personnelId))])
+        .gte('week_start', start.toISOString().slice(0,10)).lt('week_start', new Date(Date.UTC(Number(period.slice(0,4)), Number(period.slice(5)), 1)).toISOString().slice(0,10));
+      if (scheduleError) throw scheduleError;
+      rows = rows.map(row => ({ ...row, leaveDays: (data ?? []).filter(entry => entry.profile_id === row.personnelId).flatMap(entry => {
+        const date = new Date(`${entry.week_start}T00:00:00Z`);
+        date.setUTCDate(date.getUTCDate() + Number(entry.day_of_week));
+        return date.toISOString().startsWith(period) ? [date.getUTCDate()] : [];
+      }) }));
+    } catch { targetWarning += ' Çalışma programı okunamadı; haftada bir gün izin varsayımı kullanılıyor.'; }
+  }
   const today = Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Istanbul', day: 'numeric' }).format(new Date()));
   const daysInMonth = new Date(Number(period.slice(0,4)), Number(period.slice(5)), 0).getDate();
   return <main className="goal-page">

@@ -140,6 +140,7 @@ export default async function DevicePriceListPage({ searchParams }: DevicePriceL
         >
           Nakit Depo
         </a>
+        <a className="goal-mode-button" href="/cihaz-fiyat-listesi/zincir-market">Zincir Market Karşılaştırması</a>
       </div>
 
       {!isTemlikliMode ? (

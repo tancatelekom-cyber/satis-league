@@ -47,6 +47,7 @@ export function MarketComparison({ phones }: { phones: ComparisonPhone[] }) {
       const difference = price !== null && data.pk !== null ? price - data.pk : null;
       return <article className={styles.card} key={result.id}><h2>{result.name}</h2>
         <strong>{price !== null ? money(price) : result.status === "unavailable" ? "Satış fiyatı / stok yok" : result.status === "unmatched" ? "Tam eşleşme bulunamadı" : "Fiyat alınamadı"}</strong>
+        {result.errorMessage ? <p role="status">{result.errorMessage}</p> : null}
         {result.offer ? <><p>{result.offer.title}</p><small>Satıcı: {result.offer.seller ?? "Arama sonucunda belirtilmedi"}</small><small>Stok: {result.offer.available === true ? "Var" : result.offer.available === false ? "Satışa uygun değil" : "Doğrulanmadı"}</small></> : null}
         {difference !== null ? <p className={difference >= 0 ? styles.good : styles.expensive}>{difference === 0 ? "PK fiyatımızla aynı" : difference > 0 ? `PK fiyatımız ${money(difference)} daha düşük` : `PK fiyatımız ${money(-difference)} daha yüksek`}</p> : null}
         <a target="_blank" rel="noreferrer" href={result.offer?.url ?? result.searchUrl}>{result.offer ? "Ürünü incele ↗" : "Mağazada ara ↗"}</a>

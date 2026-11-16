@@ -5,7 +5,7 @@ export const RETAILERS = [
 ] as const;
 export type Retailer = typeof RETAILERS[number];
 export type MarketOffer = { title: string; url: string; price: number | null; available: boolean | null; seller: string | null };
-export type MarketResult = { id: string; name: string; status: "ok" | "unavailable" | "unmatched" | "error"; checkedAt: string; searchUrl: string; offer: MarketOffer | null };
+export type MarketResult = { id: string; name: string; status: "ok" | "unavailable" | "unmatched" | "error"; checkedAt: string; searchUrl: string; offer: MarketOffer | null; errorMessage?: string };
 export const normalizePhone = (text: string) => text.toLocaleLowerCase("tr-TR").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ı/g, "i").replace(/[^a-z0-9]+/g, " ").trim();
 export const isSmartphoneCategory = (category: string) => normalizePhone(category) === "akilli telefon";
 
@@ -79,17 +79,47 @@ export function marketSearchUrl(retailer: Retailer, query: string) {
   return retailer.id === "mediamarkt" ? `${retailer.origin}/tr/search.html?query=${encodeURIComponent(query)}` : retailer.id === "vatan" ? `${retailer.origin}/arama/${encodeURIComponent(query)}/` : `${retailer.origin}/pasaj/search?qx=${encodeURIComponent(query)}`;
 }
 
+class MarketFetchError extends Error {
+  constructor(message: string, readonly retryable = false) { super(message); }
+}
+
+async function readMarketHtml(url: string) {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const response = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(attempt === 0 ? 15000 : 8000), headers: { accept: "text/html", "accept-language": "tr-TR,tr;q=0.9" } });
+      if (!response.ok) {
+        await response.body?.cancel();
+        throw new MarketFetchError(response.status === 403 || response.status === 401
+          ? `Mağaza, uygulama sunucusundan gelen isteği kabul etmedi (HTTP ${response.status}).`
+          : response.status === 429 ? "Mağaza istek sınırına ulaşıldı (HTTP 429). Bir süre sonra tekrar deneyin."
+          : `Mağaza yanıtı alınamadı (HTTP ${response.status}).`, response.status >= 500);
+      }
+      const html = await response.text();
+      // Product pages may contain captcha script references without being challenge pages.
+      const title = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? "";
+      if (/access denied|just a moment|verify you are human|captcha|robot check/i.test(title)) {
+        throw new MarketFetchError("Mağaza otomatik erişim doğrulaması istiyor; fiyat doğrulanamadı.");
+      }
+      return html;
+    } catch (error) {
+      const retryable = !(error instanceof MarketFetchError) || error.retryable;
+      if (attempt === 0 && retryable) continue;
+      if (error instanceof MarketFetchError) throw error;
+      if (error instanceof Error && ["TimeoutError", "AbortError"].includes(error.name)) throw new MarketFetchError("Mağaza bağlantısı zaman aşımına uğradı; iki denemede de fiyat alınamadı.");
+      throw new MarketFetchError("Uygulama sunucusu mağazaya bağlanamadı; iki denemede de bağlantı kurulamadı.");
+    }
+  }
+  throw new MarketFetchError("Mağazaya bağlanılamadı.");
+}
+
 export async function fetchMarketPrice(retailer: Retailer, product: string, brand: string): Promise<MarketResult> {
   const query = [...new Set(identity(`${brand} ${product}`).tokens.filter(token => !["apple", "egyg", "ram"].includes(token)))].join(" ");
   const searchUrl = marketSearchUrl(retailer, query);
   const base = { id: retailer.id, name: retailer.name, checkedAt: new Date().toISOString(), searchUrl };
   try {
-    const response = await fetch(searchUrl, { cache: "no-store", signal: AbortSignal.timeout(15000), headers: { accept: "text/html", "accept-language": "tr-TR,tr;q=0.9" } });
-    if (!response.ok) throw new Error("Unavailable");
-    const html = await response.text();
-    if (/captcha|access denied|verify you are human/i.test(html.slice(0, 10000))) throw new Error("Unavailable");
+    const html = await readMarketHtml(searchUrl);
     const candidates = parseMarketOffers(html, retailer).filter(offer => matchesPhone(product, brand, offer.title));
     const priced = candidates.filter(offer => offer.price !== null && offer.available !== false).sort((a, b) => a.price! - b.price!);
     return { ...base, checkedAt: new Date().toISOString(), status: priced.length ? "ok" : candidates.length ? "unavailable" : "unmatched", offer: priced[0] ?? candidates[0] ?? null };
-  } catch { return { ...base, status: "error", offer: null }; }
+  } catch (error) { return { ...base, checkedAt: new Date().toISOString(), status: "error", offer: null, errorMessage: error instanceof MarketFetchError ? error.message : "Fiyat verisi okunamadı." }; }
 }

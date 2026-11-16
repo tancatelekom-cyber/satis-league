@@ -17,3 +17,15 @@ test('Vatan listing uses price from the same product block and decodes Turkish e
  const html='<div class="product-list product-list--list-page"><a class="product-list-link" href="https://www.vatanbilgisayar.com/iphone.html"><div class="product-list__product-name"><h3>iPhone 15 128GB Siyah</h3></div><span class="product-list__price">45.999</span></a></div>';
  const offer=parseMarketOffers(html,RETAILERS[1])[0];assert.equal(offer.price,45999);assert.equal(offer.available,null);
 });
+
+function withFetch(fetcher){const m={exports:{}};vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/lib/market-comparison.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{module:m,exports:m.exports,URL,AbortSignal,fetch:fetcher});return m.exports;}
+test('a captcha script on a normal product page does not suppress valid prices',async()=>{
+ const html='<title>Telefon sonuçları</title><script src="/captcha.js"></script><script type="application/ld+json">'+JSON.stringify({'@type':'Product',name:'iPhone 18 Pro 512GB',url:'https://www.mediamarkt.com.tr/tr/product/phone.html',offers:{price:154999,priceCurrency:'TRY'}})+'</script>';
+ const lib=withFetch(async()=>new Response(html));const result=await lib.fetchMarketPrice(lib.RETAILERS[0],'IPHONE 18 PRO 512GB','APPLE');assert.equal(result.status,'ok');assert.equal(result.offer.price,154999);
+});
+test('temporary server errors are retried, access rejection is explicit and not retried',async()=>{
+ let calls=0;const transient=withFetch(async()=>{calls++;return new Response('',{status:503})});
+ const failed=await transient.fetchMarketPrice(transient.RETAILERS[0],'IPHONE 18 PRO 512GB','APPLE');assert.equal(calls,2);assert.match(failed.errorMessage,/HTTP 503/);
+ calls=0;const denied=withFetch(async()=>{calls++;return new Response('',{status:403})});
+ const result=await denied.fetchMarketPrice(denied.RETAILERS[1],'IPHONE 18 PRO 512GB','APPLE');assert.equal(calls,1);assert.equal(result.status,'error');assert.match(result.errorMessage,/HTTP 403/);assert.equal(result.offer,null);
+});

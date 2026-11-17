@@ -6,7 +6,7 @@ import { StockBranchFilter } from "@/components/stock-branch-filter";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-type Props = { searchParams?: Promise<{ branch?: string; product?: string; view?: string }> };
+type Props = { searchParams?: Promise<{ category?: string; branch?: string; product?: string; view?: string }> };
 
 function number(value: number, digits = 0) {
   return value.toLocaleString("tr-TR", { minimumFractionDigits: digits, maximumFractionDigits: digits });
@@ -22,6 +22,12 @@ function formatDate(value: string) {
 
 export default async function StockManagementPage({ searchParams }: Props) {
   const params = searchParams ? await searchParams : undefined;
+  const selectedCategory = String(params?.category ?? "").trim();
+  const scopeQuery = new URLSearchParams();
+  if (selectedCategory) scopeQuery.set("category", selectedCategory);
+  if (params?.branch) scopeQuery.set("branch", params.branch);
+  const viewQuery = new URLSearchParams(scopeQuery);
+  if (params?.view !== "all") viewQuery.set("view", "all");
   const selectedBranch = String(params?.branch ?? "").trim();
   const selectedProduct = String(params?.product ?? "").trim();
   const showAllStock = params?.view === "all";
@@ -36,7 +42,7 @@ export default async function StockManagementPage({ searchParams }: Props) {
   let dashboard: Awaited<ReturnType<typeof fetchStockManagementDashboard>> | null = null;
   let error = "";
   try {
-    dashboard = await fetchStockManagementDashboard();
+    dashboard = await fetchStockManagementDashboard(new Date(), selectedCategory);
   } catch (cause) {
     error = cause instanceof Error ? cause.message : "Stok yönetimi verileri okunamadı.";
   }
@@ -84,9 +90,9 @@ export default async function StockManagementPage({ searchParams }: Props) {
         <>
           <section className="stock-management-toolbar">
             <div className="stock-management-filter">
-              <StockBranchFilter branches={dashboard.branches} selectedBranch={selectedBranch} products={products} selectedProduct={selectedProduct} view={showAllStock ? "all" : ""} />
-              <a href="/stok-bilgisi/aylik-satislar">Bu Ayın Cihaz Satışları</a>
-              <a href={showAllStock ? "/stok-bilgisi" : "/stok-bilgisi?view=all"}>{showAllStock ? "Stok Planına Dön" : "Tüm Stoğu Göster"}</a>
+              <StockBranchFilter categories={dashboard.categories} selectedCategory={selectedCategory} branches={dashboard.branches} selectedBranch={selectedBranch} products={products} selectedProduct={selectedProduct} view={showAllStock ? "all" : ""} />
+              <a href={`/stok-bilgisi/aylik-satislar?${new URLSearchParams(selectedCategory ? { category: selectedCategory } : {})}`}>Bu Ayın Cihaz Satışları</a>
+              <a href={`/stok-bilgisi?${viewQuery}`}>{showAllStock ? "Stok Planına Dön" : "Tüm Stoğu Göster"}</a>
             </div>
             <span>Son güncelleme: {formatDate(dashboard.updatedAt)}</span>
           </section>
@@ -156,7 +162,7 @@ export default async function StockManagementPage({ searchParams }: Props) {
                   <b>{alarms.length}</b>
                   <a
                     className="stock-excel-button"
-                    href={`/stok-bilgisi/iade-excel${selectedBranch ? `?branch=${encodeURIComponent(selectedBranch)}` : ""}`}
+                    href={`/stok-bilgisi/iade-excel?${scopeQuery}`}
                     title="İade listesini Excel'e indir"
                   >
                     <svg viewBox="0 0 24 24" aria-hidden="true">

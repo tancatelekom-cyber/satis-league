@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 
 type Props = {
+  categories: string[];
+  selectedCategory: string;
   branches: string[];
   selectedBranch: string;
   products?: string[];
@@ -11,13 +13,14 @@ type Props = {
   view?: string;
 };
 
-export function StockBranchFilter({ branches, selectedBranch, products = [], selectedProduct = "", view = "" }: Props) {
+export function StockBranchFilter({ categories, selectedCategory, branches, selectedBranch, products = [], selectedProduct = "", view = "" }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  function navigate(branch: string, product: string) {
+  function navigate(branch: string, product: string, category = selectedCategory) {
     startTransition(() => {
       const query = new URLSearchParams();
+      if (category) query.set("category", category);
       if (view) query.set("view", view);
       if (branch) query.set("branch", branch);
       if (product) query.set("product", product);
@@ -27,6 +30,9 @@ export function StockBranchFilter({ branches, selectedBranch, products = [], sel
 
   return (
     <>
+    <label><span>Kategori</span><select aria-label="Kategori filtresi" value={selectedCategory} disabled={isPending} onChange={(event) => navigate(selectedBranch, "", event.target.value)}>
+      <option value="">Tüm kategoriler</option>{categories.map((category) => <option key={category} value={category}>{category}</option>)}
+    </select></label>
     <label>
       <span>Şube filtresi</span>
       <select

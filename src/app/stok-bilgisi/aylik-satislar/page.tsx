@@ -6,12 +6,13 @@ import { createClient } from "@/lib/supabase/server";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-type Props = { searchParams?: Promise<{ brand?: string; model?: string }> };
+type Props = { searchParams?: Promise<{ category?: string; brand?: string; model?: string }> };
 
 function number(value: number) { return value.toLocaleString("tr-TR", { maximumFractionDigits: 2 }); }
 
 export default async function MonthlyStockSalesPage({ searchParams }: Props) {
   const params = searchParams ? await searchParams : undefined;
+  const selectedCategory = String(params?.category ?? "").trim();
   const selectedBrand = String(params?.brand ?? "").trim();
   const selectedModel = String(params?.model ?? "").trim();
   const supabase = await createClient();
@@ -23,7 +24,7 @@ export default async function MonthlyStockSalesPage({ searchParams }: Props) {
 
   let dashboard: Awaited<ReturnType<typeof fetchStockManagementDashboard>> | null = null;
   let error = "";
-  try { dashboard = await fetchStockManagementDashboard(); }
+  try { dashboard = await fetchStockManagementDashboard(new Date(), selectedCategory); }
   catch (cause) { error = cause instanceof Error ? cause.message : "Satış verileri okunamadı."; }
 
   const allSales = dashboard?.monthlySales ?? [];
@@ -51,7 +52,7 @@ export default async function MonthlyStockSalesPage({ searchParams }: Props) {
 
   return <main className="page-shell stock-management-page stock-monthly-sales-page">
     <section className="stock-management-hero stock-monthly-sales-hero"><div><span className="stock-management-eyebrow">AYLIK ŞUBE SATIŞLARI</span><h1 className="page-title">Cihaz Satış Tablosu</h1><p>{monthLabel} dönemindeki cihaz satışları; marka, model ve cihaz kısa adı kırılımıyla şube şube gösterilir.</p></div><div className="stock-management-hero-badge"><strong>{number(grandTotal)}</strong><span>bu ay satılan cihaz</span></div></section>
-    <section className="stock-management-toolbar stock-monthly-toolbar"><StockMonthlySalesFilter brands={brands} modelsByBrand={modelsByBrand} selectedBrand={effectiveBrand} selectedModel={effectiveModel} /><a href="/stok-bilgisi">Stok yönetimine dön</a></section>
+    <section className="stock-management-toolbar stock-monthly-toolbar"><StockMonthlySalesFilter categories={dashboard?.categories ?? []} selectedCategory={selectedCategory} brands={brands} modelsByBrand={modelsByBrand} selectedBrand={effectiveBrand} selectedModel={effectiveModel} /><a href={`/stok-bilgisi?${new URLSearchParams(selectedCategory ? { category: selectedCategory } : {})}`}>Stok yönetimine dön</a></section>
     {error ? <section className="admin-card stock-alert-card"><h2>Satış tablosu açılamadı</h2><p>{error}</p></section> : null}
     {dashboard ? <section className="stock-management-panel stock-management-panel-wide"><header><div><span>MEVCUT AY</span><h2>Marka, model ve şube bazında cihaz satışları</h2></div><b>{products.length} cihaz</b></header><div className="stock-management-table-wrap"><table className="stock-matrix-table stock-monthly-sales-table">
       <thead><tr><th>Cihaz kısa adı</th><th>Marka</th><th>Model</th>{branches.map((branch) => <th key={branch}>{branch}</th>)}<th>Firma Toplamı</th></tr></thead>

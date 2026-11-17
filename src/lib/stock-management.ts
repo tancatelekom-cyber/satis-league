@@ -51,6 +51,7 @@ export type StockManagementDashboard = {
   expiredReturns: StockReturnAlarm[];
   returnUnits: StockReturnUnit[];
   branches: string[];
+  categories: string[];
   monthlySales: MonthlyDeviceSalesRow[];
   updatedAt: string;
   totals: {
@@ -182,11 +183,11 @@ function parseDate(value: string) {
   return Number.isNaN(nativeDate.getTime()) ? null : nativeDate;
 }
 
-function toRecords(text: string): CsvRow[] {
+function toRecords(text: string, categoryIndex: number): CsvRow[] {
   const rows = parseCsv(text);
   const headers = (rows[0] ?? []).map(normalizeText);
   return rows.slice(1).map((values) =>
-    Object.fromEntries(headers.map((header, index) => [header, normalizeText(values[index] ?? "")]))
+    ({ ...Object.fromEntries(headers.map((header, index) => [header, normalizeText(values[index] ?? "")])), __category: normalizeText(values[categoryIndex] ?? "") })
   );
 }
 
@@ -233,7 +234,7 @@ async function fetchCsv(gid: string, label: string) {
   return response.text();
 }
 
-export async function fetchStockManagementDashboard(now = new Date()): Promise<StockManagementDashboard> {
+export async function fetchStockManagementDashboard(now = new Date(), selectedCategory = ""): Promise<StockManagementDashboard> {
   const [stockResult, salesResult] = await Promise.allSettled([
     fetchCsv(STOCK_GID, "Stok Sheet"),
     fetchCsv(SALES_GID, "Satış Sheet")
@@ -242,8 +243,8 @@ export async function fetchStockManagementDashboard(now = new Date()): Promise<S
   const stockText = stockResult.value;
   // Satış sekmesindeki geçici bir hata mevcut stokların tamamını gizlememeli.
   const salesText = salesResult.status === "fulfilled" ? salesResult.value : "";
-  const stockRows = toRecords(stockText).filter(isDeviceRow);
-  if (!stockRows.length) {
+  const allStockRows = toRecords(stockText, 10).filter(isDeviceRow);
+  if (!allStockRows.length) {
     const headers = (parseCsv(stockText)[0] ?? []).map(normalizeText).filter(Boolean);
     throw new Error(
       headers.length
@@ -253,7 +254,11 @@ export async function fetchStockManagementDashboard(now = new Date()): Promise<S
   }
   // Sales sheet category/type labels are not always populated consistently.
   // Match sales to stock using the shared short-product-name and branch fields.
-  const salesRows = toRecords(salesText);
+  const allSalesRows = toRecords(salesText, 12);
+  const categories = Array.from(new Set([...allStockRows, ...allSalesRows].map((row) => row.__category).filter(Boolean))).sort((a, b) => a.localeCompare(b, "tr"));
+  const matchesCategory = (row: CsvRow) => !selectedCategory || normalizeKey(row.__category) === normalizeKey(selectedCategory);
+  const stockRows = allStockRows.filter(matchesCategory);
+  const salesRows = allSalesRows.filter(matchesCategory);
   const inventory: InventoryUnit[] = [];
 
   stockRows.forEach((row) => {
@@ -469,6 +474,7 @@ export async function fetchStockManagementDashboard(now = new Date()): Promise<S
     returnUnits,
     branches,
     monthlySales,
+    categories,
     updatedAt: now.toISOString(),
     totals: {
       currentStock: inventory.length,

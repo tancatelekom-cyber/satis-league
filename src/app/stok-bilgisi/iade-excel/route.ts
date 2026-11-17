@@ -35,7 +35,8 @@ export async function GET(request: Request) {
   }
 
   try {
-    const dashboard = await fetchStockManagementDashboard();
+    const category = new URL(request.url).searchParams.get("category")?.trim() ?? "";
+    const dashboard = await fetchStockManagementDashboard(new Date(), category);
     const branch = new URL(request.url).searchParams.get("branch")?.trim() ?? "";
     const units = dashboard.returnUnits.filter((unit) => !branch || unit.branchName === branch);
     const active = units.filter((unit) => unit.status === "İade alarmı");

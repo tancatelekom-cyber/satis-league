@@ -1517,7 +1517,8 @@ function buildCompanyRows(rows: GoalStoreRow[], workedDays = 0, totalDays = 0): 
       first.companyMode === "average"
         ? average
         : (values: number[]) => values.reduce((sum, value) => sum + value, 0);
-    const hasProjectionOverride = group.some((row) => goalActualCapApplies(row, "company"));
+    // F caps the aggregated company projection; only SF caps stores before aggregation.
+    const hasProjectionOverride = group.some((row) => row.actualCapScope === "store-and-company" && goalActualCapApplies(row, "company"));
     const projectedCap = hasProjectionOverride
       ? aggregate(
           group.map((row) => {

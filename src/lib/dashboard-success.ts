@@ -51,7 +51,8 @@ function aggregateCompanyRows(rows: GoalStoreRow[], dayStats: GoalDayStats) {
           ? values.reduce((sum, value) => sum + value, 0) / values.length
           : 0
         : values.reduce((sum, value) => sum + value, 0);
-    const hasApplicableCap = group.some((row) => goalActualCapApplies(row, "company"));
+    // F caps the aggregated company projection; only SF caps stores before aggregation.
+    const hasApplicableCap = group.some((row) => row.actualCapScope === "store-and-company" && goalActualCapApplies(row, "company"));
     const projectedCap = hasApplicableCap
       ? aggregate(
           group.map((row) => {
